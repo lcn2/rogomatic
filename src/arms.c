@@ -46,7 +46,7 @@
 int havearmor(int k, int print, int rustproof) {
     int i, j, w, t, n = 0;
     int armind[MAXINV], armval[MAXINV];
-    // Sort armor by armor class (best first)
+    /* Sort armor by armor class (best first) */
     for (i = 0; i < invcount; ++i) {
         if (inven[i].count && inven[i].type == armor &&
             !(rustproof && willrust(i))) {
@@ -103,14 +103,14 @@ int armorclass(int i) {
     else
         class = 1000;
 
-    // Know the modifier exactly
+    /* Know the modifier exactly */
     if (inven[i].phit != UNKNOWN) class -= inven[i].phit;
 
-    // Can remove curse, so assume it is +2 armor
+    /* Can remove curse, so assume it is +2 armor */
     else if (havenamed(Scroll, "remove curse") != NONE)
         class -= 2;
 
-    // Can't remove curse, assume it is -2 armor
+    /* Can't remove curse, assume it is -2 armor */
     else
         class += 2;
 

@@ -69,11 +69,13 @@ char *getname ()
 
   passwd = getpwuid (getuid ());
   strncpy (name, passwd->pw_name, 100);
+/*
 //  getpw (getuid (), name);
 //  i = 0;
 //  while (name[i] != ':' && name[i] != ',')
 //    i++;
 //  name[i] = '\0';
+*/
 
   return (name);
 }
@@ -130,11 +132,13 @@ static void   (*hstat)(int), (*istat)(int), (*qstat)(int), (*pstat)(int);
 
 critical ()
 {
+/*
 // FIXME: when uncommented, get bus errors :(
 //  hstat = signal (SIGHUP, SIG_IGN);
 //  istat = signal (SIGINT, SIG_IGN);
 //  pstat = signal (SIGPIPE, SIG_IGN);
 //  qstat = signal (SIGQUIT, SIG_IGN);
+*/
 }
 
 /*
@@ -143,11 +147,13 @@ critical ()
 
 uncritical ()
 {
+/*
 // FIXME: when uncommented, get bus errors :(
 //  signal (SIGHUP, hstat);
 //  signal (SIGINT, istat);
 //  signal (SIGPIPE, pstat);
 //  signal (SIGQUIT, qstat);
+*/
 }
 
 /*
@@ -317,8 +323,10 @@ char *small, *big;
 
 #define EXTRASIZE 5		/* increment to add to env. size */
 
+/*
 //char *index (), *malloc (), *realloc ();
 //int   strlen ();
+*/
 
 static int  envsize = -1;	/* current size of environment */
 extern char **environ;		/* the global which is your env. */

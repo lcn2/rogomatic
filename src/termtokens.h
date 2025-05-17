@@ -32,7 +32,7 @@
 # define CL_TOK ctrl('L')       /* Clear screen and go to home 0,0 */
 # define CM_TOK -3              /* Move to position number1, number2 */
 # define CR_TOK ctrl('M')       /* Move to column 0 */
-//# define DO_TOK -4
+/*# define DO_TOK -4*/
 # define ER_TOK -5
 # define LF_TOK ctrl('J')       /* Line feed, move down one row */
 # define ND_TOK -6              /* Move down number1 rows */

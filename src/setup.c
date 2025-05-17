@@ -179,8 +179,8 @@ char *argv[];
     exec_args[4] = roguename;
     exec_args[5] = NULL;
     st = execv(exec_args[0], exec_args);
-    //st = execl (PLAYER, "player", ft, rp, options, roguename, '\0');
-    //st = execl ("/bin/echo", "echo", ft, rp, options, roguename, '\0');
+    /*st = execl (PLAYER, "player", ft, rp, options, roguename, '\0');*/
+    /*st = execl ("/bin/echo", "echo", ft, rp, options, roguename, '\0');*/
     printf ("Rogomatic not available, '%s' binary missing. (%d)\n", exec_args[0], st);
     printf("\tft=%s, rp=%s, options=%s, roguename=%s\n", ft, rp, options, roguename);
     kill (child, SIGKILL);

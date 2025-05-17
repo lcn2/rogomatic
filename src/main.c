@@ -776,7 +776,7 @@ char *argv[];
   /* Print termination messages */
   at (23, 0);
   clrtoeol ();
-//  clear ();
+/*  clear (); */
   refresh ();
   endwin (); nocrmode (); noraw (); echo ();
 

@@ -91,7 +91,7 @@ void command(int tmode, char *cmd) {
     int times;
     char functionchar();
     /* Build the command */
-    // sprintf (cmd, f, a1, a2, a3, a4);
+    /* sprintf (cmd, f, a1, a2, a3, a4); */
 
     debuglog("command : command (%s)\n", cmd);
 
