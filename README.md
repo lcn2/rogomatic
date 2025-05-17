@@ -47,7 +47,7 @@ env PERL5LIB= PERL_LOCAL_LIB_ROOT= autoreconf -f -i
 
 ## To build
 
-./configure CC="cc --std=c90 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-deprecated-non-prototype -Wno-return-mismatch -Wno-parentheses -Wno-implicit-int -Wno-return-type -Wno-deprecated-declarations -Wno-unsequenced -Wno-format"
+./configure CC="cc --std=c90 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-parentheses -Wno-implicit-int -Wno-return-type -Wno-deprecated-declarations -Wno-format"
 
 make
 
