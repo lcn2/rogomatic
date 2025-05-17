@@ -27,7 +27,7 @@
  * This file contains functions which mess with Rog-O-Matics pack
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include <string.h>
 # include "types.h"
 # include "globals.h"

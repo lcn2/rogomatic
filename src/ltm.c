@@ -28,7 +28,7 @@
  * term memory"
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include <math.h>
 # include <string.h>
 # include "types.h"

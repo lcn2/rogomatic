@@ -31,7 +31,7 @@
  * defined here (otherwise the functions from -lcmu are used).
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include <pwd.h>
 # include <stdio.h>
 # include <stdlib.h>

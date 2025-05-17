@@ -38,13 +38,6 @@ They list the following dependencies:
 BTW: That original `README.org` was renamed `README.md` and converted into markdown.
 
 
-## To reset to source
-
-make distclean
-
-env PERL5LIB= PERL_LOCAL_LIB_ROOT= autoreconf -f -i
-
-
 ## To build
 
 ./configure CC="cc --std=c90 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-parentheses -Wno-implicit-int -Wno-return-type -Wno-deprecated-declarations -Wno-format"
@@ -72,3 +65,10 @@ It is also possible that a number of the compiler warnings, rather than being
 silenced via "-Wno-\*" flags, need to be addressed and fixed.
 
 XXX - This is a port in progress - XXX - Pull requests to fix are welcome!
+
+
+## If you must reset to source (do this only if you really need this)
+
+make distclean
+
+env PERL5LIB= PERL_LOCAL_LIB_ROOT= autoreconf -f -i

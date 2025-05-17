@@ -30,7 +30,7 @@
  * (because Rogue uses a different dungeon each time).
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include <setjmp.h>
 # include <string.h>
 #include <stdarg.h>

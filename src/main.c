@@ -93,7 +93,7 @@
  *	on a UTexas computer.
  *****************************************************************/
 
-# include <curses.h>
+# include <ncurses.h>
 # include <ctype.h>
 # include <fcntl.h>
 # include <signal.h>

@@ -28,7 +28,7 @@
  * the dungeon levels, rooms, and passages.
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include <ctype.h>
 # include "types.h"
 # include "globals.h"

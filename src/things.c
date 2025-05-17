@@ -28,7 +28,7 @@
  */
 
 # include <ctype.h>
-# include <curses.h>
+# include <ncurses.h>
 # include "types.h"
 # include "globals.h"
 #include "prototype.h"

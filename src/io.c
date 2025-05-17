@@ -27,7 +27,7 @@
  * This file contains all of the functions which deal with the real world.
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include <ctype.h>
 # include <string.h>
 # include <stdlib.h>

@@ -30,7 +30,7 @@
  */
 
 # include <stdio.h>
-# include <curses.h>
+# include <ncurses.h>
 # include "types.h"
 # include "globals.h"
 

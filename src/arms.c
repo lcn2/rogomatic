@@ -28,7 +28,7 @@
  * weapons and rings.
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include "types.h"
 # include "globals.h"
 

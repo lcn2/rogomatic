@@ -27,7 +27,7 @@
  * This file contains all of the functions which parse the message line.
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include <ctype.h>
 # include <string.h>
 # include "types.h"

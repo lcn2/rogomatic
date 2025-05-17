@@ -28,7 +28,7 @@
  * Rogue, this file and 'things.c' make up the effector interface.
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include <ctype.h>
 # include <string.h>
 # include "types.h"

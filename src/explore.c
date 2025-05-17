@@ -28,7 +28,7 @@
  * paths to explore, pick up something, or run away.
  */
 
-# include <curses.h>
+# include <ncurses.h>
 # include "types.h"
 # include "globals.h"
 #include "prototype.h"
