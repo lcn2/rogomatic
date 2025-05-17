@@ -3,6 +3,10 @@
 
 This repository is a fork of Rog-O-Matic, otherwise known as rogomatic.
 
+XXX - This is a port in progress - see the bugs section near the bottom - XXX
+
+Pull requests to help fix are welcome!
+
 
 ## ROG-O-MATIC
 
@@ -56,19 +60,38 @@ chmod +x ./r-o-m
 ./r-o-m 1
 
 
-# Known Bugs
-
-The rogomatic tool will crash with a "segmentation fault" after a few seconds.
-This problem needs to be debugged.
-
-It is also possible that a number of the compiler warnings, rather than being
-silenced via "-Wno-\*" flags, need to be addressed and fixed.
-
-XXX - This is a port in progress - XXX - Pull requests to fix are welcome!
-
-
 ## If you must reset to source (do this only if you really need this)
 
 make distclean
 
 env PERL5LIB= PERL_LOCAL_LIB_ROOT= autoreconf -f -i
+
+
+# Bugs
+
+
+## General bugs
+
+While running `r-o-m`, instances of `/usr/local/bin/rogue` processes will be orphaned in the background.
+To clean up, run:
+
+```sh
+killall rogue
+```
+
+It is also possible that a number of the compiler warnings, rather than being
+silenced via "-Wno-\*" flags, need to be addressed and fixed.
+
+
+## macOS bugs
+
+The rogomatic tool, via `r-o-m` will crash with a "segmentation fault" after a few seconds on macOS.
+
+
+## Linux bugs
+
+The rogomatic tool, via `r-o-m` will run somewhat.
+
+At the end of a run, rogomatic will display:
+
+> Unreachable! database/used
