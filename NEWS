@@ -72,7 +72,7 @@ install:
   9. make install
 
   - installdirs will check if /usr/local/bin and
-    /var/games/rogomatic exist, if not they will
+    /var/tmp/rogomatic exist, if not they will
     be created for you.  installdirs is a part of
     Makefile.am, so you can change it to suit your
     setup, but make sure that install.h.in matches
@@ -86,11 +86,11 @@ install:
     must be in the current directory.
 
   - data files and lock files should end up in 
-    /var/games/rogomatic.  permission should be 
+    /var/tmp/rogomatic.  permission should be 
     read/writeable to group games.  the user should 
     also be in group games.
 
-  - check permissions on /usr/local/bin and /var/games/rogomatic
+  - check permissions on /usr/local/bin and /var/tmp/rogomatic
     to make sure they conform to whatever policy or desires you
     may have.
 
@@ -128,7 +128,7 @@ install:
     staff).
 
   - if rogomatic takes a long time to start it is probably 
-    looking for the /var/games/rogomatic directory.  eventually,
+    looking for the /var/tmp/rogomatic directory.  eventually,
     it should quit and give an error message about not being 
     able to open a file for the GenePool(rogue-version).  create
     the directory using the above directions.
@@ -136,7 +136,7 @@ install:
   - debuglog.frogue, debuglog.player and roguelog can all 
     contain useful information for debugging if rogomatic 
     crashes or gives error messages.  also in 
-    /var/games/rogomatic/error(rogue-version) might be useful 
+    /var/tmp/rogomatic/error(rogue-version) might be useful 
     information about errors encountered.
 
 
@@ -147,7 +147,7 @@ genes, long term memory and replicable runs:
   at first there are no gene or long term memory files for
 rogomatic.  the first run will create them and then the 
 next runs will add to or change them.  they are created
-in the /var/games/rogomatic directory and are called:
+in the /var/tmp/rogomatic directory and are called:
 GeneLog544, GenePool544, ltm544, and rgmdelta5.4.4
 the first two are the gene related files and the last
 two are the long term memory files.
@@ -168,11 +168,11 @@ four files in an initial state.
 
   once you have those four initial files set up (before
 you run rogomatic) and the seed you can then replicate the
-run by copying the four files back to /var/games/rogomatic
+run by copying the four files back to /var/tmp/rogomatic
 set the SEED environment variable and then run rogomatic.
 
   to get the next SEED in sequence you leave the finished
-version of the four files in /var/games/rogomatic and use them 
+version of the four files in /var/tmp/rogomatic and use them 
 plus the next SEED number.
 
   oh, and of course, if later on you want to replicate a run

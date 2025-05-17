@@ -1,23 +1,322 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# r-o-m - Driver for Rog-O-Matic
+#
+# Copyright (c) 2025 by Landon Curt Noll.  All Rights Reserved.
+#
+# Permission to use, copy, modify, and distribute this software and
+# its documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright, this permission notice and text
+# this comment, and the disclaimer below appear in all of the following:
+#
+#       supporting documentation
+#       source copies
+#       source works derived from this source
+#       binaries derived from this source or from derived source
+#
+# LANDON CURT NOLL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+# INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO
+# EVENT SHALL LANDON CURT NOLL BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+# CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+# USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+#
+# chongo (Landon Curt Noll) /\oo/\
+#
+# http://www.isthe.com/chongo/index.html
+# https://github.com/lcn2
+#
+# Share and enjoy!  :-)
 
-if [ ! -z $1 ]; then # コマンド引数はrogomaticを繰り返す回数
-  numtry=$1
-  #echo $numtry
-  expr "$numtry" + 1 >/dev/null 2>&1
-  if [ $? -ge 2 ]; then
-    numtry=1
-  fi
-else
-  numtry=1
+
+# setup
+#
+export VERSION="1.0.0 2025-05-17"
+NAME=$(basename "$0")
+export NAME
+#
+export V_FLAG=0
+#
+export NOOP=
+export DO_NOT_PROCESS=
+#
+GIT_TOOL=$(type -P git)
+export GIT_TOOL
+if [[ -z $GIT_TOOL ]]; then
+    echo "$0: FATAL: git tool is not installed or not in \$PATH" 1>&2
+    exit 5
+fi
+"$GIT_TOOL" rev-parse --is-inside-work-tree >/dev/null 2>&1
+status="$?"
+if [[ $status -eq 0 ]]; then
+    TOPDIR=$("$GIT_TOOL" rev-parse --show-toplevel)
+fi
+export TOPDIR
+#
+export LOGMODE=""
+#
+ROGOMATIC=$(type -P rogomatic)
+export ROGOMATIC
+#
+ROGUE=/usr/local/bin/rogue  # this is where rogomatic expects to find the rogue game
+export ROGUE
+#
+export REPEAT=1
+
+
+# usage
+#
+export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-d topdir] [-L] [-r rogomatic] [repeat]
+
+    -h          print help message and exit
+    -v level    set verbosity level (def level: $V_FLAG)
+    -V          print version string and exit
+
+    -n          go thru the actions, but do not update any files (def: do the action)
+    -N          do not process anything, just parse arguments (def: process something)
+
+    -d topdir		set topdir (def: $TOPDIR)
+    -L			enable rogomatic log mode (def: do not)
+    -r rogomatic	path to rogomatic (def: $ROGOMATIC)
+
+    repeat     number of times to repeat rogomatic (def: repeat $REPEAT times)
+
+Exit codes:
+     0         all OK
+     2         -h and help string printed or -V and version string printed
+     3         command line error
+     5	       some internal tool is not found or not an executable file
+     6         problems found with or in the topdir
+ >= 10         internal error
+
+$NAME version: $VERSION"
+
+
+# parse command line
+#
+while getopts :hv:VnNd:Lr: flag; do
+  case "$flag" in
+    h) echo "$USAGE"
+	exit 2
+	;;
+    v) V_FLAG="$OPTARG"
+	;;
+    V) echo "$VERSION"
+	exit 2
+	;;
+    n) NOOP="-n"
+	;;
+    N) DO_NOT_PROCESS="-N"
+	;;
+    d) TOPDIR="$OPTARG"
+        ;;
+    L) LOGMODE="true"
+        ;;
+    r) ROGOMATIC="$OPTARG"
+        ;;
+    \?) echo "$0: ERROR: invalid option: -$OPTARG" 1>&2
+	echo 1>&2
+	echo "$USAGE" 1>&2
+	exit 3
+	;;
+    :) echo "$0: ERROR: option -$OPTARG requires an argument" 1>&2
+	echo 1>&2
+	echo "$USAGE" 1>&2
+	exit 3
+	;;
+    *) echo "$0: ERROR: unexpected value from getopts: $flag" 1>&2
+	echo 1>&2
+	echo "$USAGE" 1>&2
+	exit 3
+	;;
+  esac
+done
+if [[ $V_FLAG -ge 1 ]]; then
+    echo "$0: debug[1]: debug level: $V_FLAG" 1>&2
+fi
+#
+# remove the options
+#
+shift $(( OPTIND - 1 ));
+#
+# verify arg count
+#
+case "$#" in
+0) REPEAT=1
+    ;;
+1) REPEAT="$1"
+    ;;
+*) echo "$0: ERROR: expected 0 or 1 args, found: $#" 1>&2
+    echo "$USAGE" 1>&2
+    exit 3
+    ;;
+esac
+
+
+# verify that the rogomatic game is executable
+#
+if [[ ! -e $ROGOMATIC ]]; then
+    echo  "$0: ERROR: rogomatic does not exist: $ROGOMATIC" 1>&2
+    exit 5
+fi
+if [[ ! -f $ROGOMATIC ]]; then
+    echo  "$0: ERROR: rogomatic is not a regular file: $ROGOMATIC" 1>&2
+    exit 5
+fi
+if [[ ! -x $ROGOMATIC ]]; then
+    echo  "$0: ERROR: rogomatic is not an executable file: $ROGOMATIC" 1>&2
+    exit 5
 fi
 
-for ((i=1;i<=$numtry;i++))
-do
-  echo -n "Rogue Challenge: $i/$numtry"
-  for ((j=0;j<3;j++)); do sleep 1; echo -n "."; done ; echo # 起動前には3秒待つ
-  #rogomatic -e  # rogomaticでログを吐かせる
-  rogomatic      # rogomaticでログは吐かない
-  test $i -ne $numtry && sleep 10 # 待ち時間を変更するならココ
-  reset
-  rogue -s
+
+# verify that the rogue game is executable
+#
+if [[ ! -e $ROGUE ]]; then
+    echo  "$0: ERROR: rogue does not exist: $ROGUE" 1>&2
+    exit 5
+fi
+if [[ ! -f $ROGUE ]]; then
+    echo  "$0: ERROR: rogue is not a regular file: $ROGUE" 1>&2
+    exit 5
+fi
+if [[ ! -x $ROGUE ]]; then
+    echo  "$0: ERROR: rogue is not an executable file: $ROGUE" 1>&2
+    exit 5
+fi
+
+
+# cd to topdir
+#
+if [[ ! -e $TOPDIR ]]; then
+    echo "$0: ERROR: cannot cd to non-existent path: $TOPDIR" 1>&2
+    exit 6
+fi
+if [[ ! -d $TOPDIR ]]; then
+    echo "$0: ERROR: cannot cd to a non-directory: $TOPDIR" 1>&2
+    exit 6
+fi
+export CD_FAILED
+if [[ $V_FLAG -ge 5 ]]; then
+    echo "$0: debug[5]: about to: cd $TOPDIR" 1>&2
+fi
+cd "$TOPDIR" || CD_FAILED="true"
+if [[ -n $CD_FAILED ]]; then
+    echo "$0: ERROR: cd $TOPDIR failed" 1>&2
+    exit 6
+fi
+if [[ $V_FLAG -ge 3 ]]; then
+    echo "$0: debug[3]: now in directory: $(/bin/pwd)" 1>&2
+fi
+
+
+# print running info if verbose
+#
+# If -v 3 or higher, print exported variables in order that they were exported.
+#
+if [[ $V_FLAG -ge 3 ]]; then
+    echo "$0: debug[3]: VERSION=$VERSION" 1>&2
+    echo "$0: debug[3]: NAME=$NAME" 1>&2
+    echo "$0: debug[3]: V_FLAG=$V_FLAG" 1>&2
+    echo "$0: debug[3]: NOOP=$NOOP" 1>&2
+    echo "$0: debug[3]: DO_NOT_PROCESS=$DO_NOT_PROCESS" 1>&2
+    echo "$0: debug[3]: GIT_TOOL=$GIT_TOOL" 1>&2
+    echo "$0: debug[3]: TOPDIR=$TOPDIR" 1>&2
+    echo "$0: debug[3]: LOGMODE=$LOGMODE" 1>&2
+    echo "$0: debug[3]: ROGOMATIC=$ROGOMATIC" 1>&2
+    echo "$0: debug[3]: REPEAT=$REPEAT" 1>&2
+fi
+
+
+# -N stops early before any processing is performed
+#
+if [[ -n $DO_NOT_PROCESS ]]; then
+    if [[ $V_FLAG -ge 3 ]]; then
+	echo "$0: debug[3]: arguments parsed, -N given, exiting 0" 1>&2
+    fi
+    exit 0
+fi
+
+
+# run rogomatic possibly multiple times
+#
+
+for try in $(seq 1 "$REPEAT"); do
+
+    # announce
+    #
+    if [[ $V_FLAG -ge 1 ]]; then
+	echo -n "$0: debug[1]: Rogue Challenge $try of $REPEAT ." 1>&2
+	sleep 1
+	echo -n . 1>&2
+	sleep 1
+	echo . 1>&2
+    fi
+
+    # case: rogomatic with no logging
+    #
+    if [[ -z $LOGMODE ]]; then
+
+	if [[ -z $NOOP ]]; then
+	    "$ROGOMATIC"
+	    status="$?"
+	    if [[ $status -ne 0 ]]; then
+		echo "$0: Warning: $ROGOMATIC failed, error: $status" 1>&2
+	    fi
+	elif [[ $V_FLAG -ge 5 ]]; then
+	    echo "$0: debug[5]: because of -n, did not execute: $ROGOMATIC" 1>&2
+	fi
+
+    # case: rogomatic with logging
+    #
+    else
+
+	if [[ -z $NOOP ]]; then
+	    "$ROGOMATIC" -e
+	    status="$?"
+	    if [[ $status -ne 0 ]]; then
+		echo "$0: Warning: $ROGOMATIC -e failed, error: $status" 1>&2
+	    fi
+	elif [[ $V_FLAG -ge 5 ]]; then
+	    echo "$0: debug[5]: because of -n, did not execute: $ROGOMATIC -e" 1>&2
+	fi
+    fi
+
+    # reset the terminal
+    #
+    if [[ $V_FLAG -ge 1 ]]; then
+        echo "$0: debug[1]: about to run: reset" 1>&2
+    fi
+    sleep 2
+    if [[ -z $NOOP ]]; then
+	reset
+	status="$?"
+	if [[ $status -ne 0 ]]; then
+	    echo "$0: Warning: reset failed, error: $status" 1>&2
+	fi
+    elif [[ $V_FLAG -ge 5 ]]; then
+	echo "$0: debug[5]: because of -n, did not execute: reset" 1>&2
+    fi
+
+    # report on current rogue high scores
+    #
+    if [[ $V_FLAG -ge 1 ]]; then
+        echo "$0: debug[1]: about to run: $ROGUE -s" 1>&2
+    fi
+    if [[ -z $NOOP ]]; then
+	"$ROGUE" -s
+	status="$?"
+	if [[ $status -ne 0 ]]; then
+	    echo "$0: Warning: $ROGUE -s failed, error: $status" 1>&2
+	fi
+	sleep 2
+    elif [[ $V_FLAG -ge 5 ]]; then
+	echo "$0: debug[5]: because of -n, did not execute: $ROGUE -s" 1>&2
+    fi
+
 done
+
+
+# All Done!!! -- Jessica Noll, Age 2
+#
+exit 0

@@ -12,9 +12,9 @@ installdirs:
 	if test ! -d "$(HOME)/.terminfo/v"; then \
 		mkdir --mode=u+rwx -p "$(HOME)/.terminfo/v"; \
 	fi; \
-	if test ! -d "$(DESTDIR)/var/games/$(PACKAGE)"; then \
-		mkdir --mode=a+rwx,o-w -p "$(DESTDIR)/var/games/$(PACKAGE)"; \
-		chgrp games "$(DESTDIR)/var/games/$(PACKAGE)"; \
+	if test ! -d "$(DESTDIR)/var/tmp/$(PACKAGE)"; then \
+		mkdir --mode=a+rwx,o-w -p "$(DESTDIR)/var/tmp/$(PACKAGE)"; \
+		chgrp games "$(DESTDIR)/var/tmp/$(PACKAGE)"; \
 	fi; \
 	if test ! -d "$(DESTDIR)$(bindir)"; then \
 		mkdir --mode=a+rwx,o-w -p "$(DESTDIR)$(bindir)"; \
