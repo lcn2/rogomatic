@@ -232,7 +232,7 @@ FSANITIZE+= -fsanitize=vptr
 #
 # For Apple clang and Homebrew gcc:
 #
-# CCWARN+= -Wall
+# WARN+= -Wall
 # CCWARN+= -pedantic
 # CCWARN+= -Werror
 # COPT:= -O0
@@ -406,6 +406,13 @@ install: ${TARGETS}
 	${INSTALL} -d -m 0755 ${BINDIR}
 	${INSTALL} -m 0755 ${TARGETS} ${BINDIR}
 
+index: ${CFILES}
+	${RM} -f index
+	${CTAGS} -x ${C_SRC} > index
+
+tags: ${SRC}
+	${CTAGS} -w ${SRC}
+
 
 ###############################
 # easy backward compatibility #
@@ -454,10 +461,6 @@ words:
 # satisfy all possible cpp symbol definition combinations.
 #
 ###
-
-index: ${CFILES}
-	${RM} -f index
-	${CTAGS} -x ${C_SRC} > index
 
 depend: ${SRC}
 	${Q} if [ -f ${MAKE_FILE}.bak ]; then \
