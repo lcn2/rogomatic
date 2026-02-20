@@ -1,0 +1,22 @@
+# sort via: sort -d
+#
+anim
+datesub
+datesub.c
+gene
+genetest
+gplot
+histplot
+index
+lex.yy.c
+Makefile.bak
+NOTES
+*.o
+player
+rgmplot
+rogomatic
+rogomatic.6
+rogomatic.cat
+skel/
+tags
+testfind

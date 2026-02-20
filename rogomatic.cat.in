@@ -1,0 +1,317 @@
+[4mROGOMATIC[24m(6)                     Games Manual                     [4mROGOMATIC[24m(6)
+
+[1mNAME[0m
+       rogomatic,  rgmgene,  rgmhist, rgmscatter - Automatically Exploring The
+       Dungeons of Doom
+
+[1mSYNOPSIS[0m
+       [4mrogomatic[24m [ [4m-cefprstuw[24m or [4msave_file[24m ]
+
+[1mDESCRIPTION[0m
+       [4mRog-O-Matic[24m is a computer fantasy game with a newer twist.  It  is  crt
+       oriented and the object of the game is to automatically survive the at-
+       tacks  of various monsters and get a lot of gold, rather than having to
+       actually type the required commands yourself.
+
+       Once you have entered the world of [4mRog-O-Matic[24m  you  will  stay  there,
+       passively  watching  the  game  unfold before you much like a catatonic
+       teenager watching television.  Should you wish to intervene, type the [1mt[0m
+       command and [4mRog-O-Matic[24m will enter transparent mode. Here you can  type
+       several  commands,  the  most  useful of which is the [1m?  [22mcommand, which
+       prints out the next help line. Press the [1m?  [22mkey repeatedly to  see  all
+       of the help.  Some useful commands are: [1mh j k l H J K L b n y u f s > <[0m
+       [1mS Q.  [22mThese have the same meaning as in normal Rogue. To return to [4mRog-[0m
+       [4mO-Matic[24m mode, type the [1mt [22mcommand again.
+
+       Some useful commands are:
+
+       [1mt      [4m[22mToggle,[24m  toggles  the  setting  of the [4mtransparent[24m mode flag. In
+              transparent mode, [4mRog-O-Matic[24m will not automatically attack mon-
+              sters, pick up  treasure,  or  explore  around.   Unfortunately,
+              there is no way to enter complicated commands like [4mquaff[24m or [4mread[0m
+              in  transparent  mode.  Typing any [4mRogue[24m command, or single-step
+              command also enables transparent mode.
+
+       [1mQ      [4m[22mQuit,[24m tells [4mRog-O-Matic[24m to quit the game. The score is logged in
+              the score file, and possibly the [4mRogue[24m top ten, and the game  is
+              terminated.
+
+       [1mS      [4m[22mSave,[24m  the  game  is  saved to the default save file, set by the
+              [4m<file>[24m argument to [4mrogomatic[24m or the [4mROGUEOPTS[24m environment  vari-
+              able. The game may be restarted later.
+
+       [1mc      [4m[22mCheat,[24m  tells [4mRog-O-Matic[24m to take advantage of idiosyncracies in
+              the [4mRogue[24m game to get a higher score. This is unfortunately nec-
+              essary to allow fair competition with other human top ten  play-
+              ers  who  take advantage of the same bugs. Note that this option
+              should only be used on the Unix 3.6 version of Rogue, since  the
+              VMS  version does not exhibit the same bugs.  Note too that when
+              playing against [4mRogue[24m [4m5.2[24m and [4mRogue[24m [4m5.3[24m  no  cheating  is  done,
+              since  the  bugs are not widely known and used by human competi-
+              tion.
+
+       [1md      [4m[22mDebugging,[24m toggles the debugging flag, which is useless to  non-
+              wizard players (although it is entertaining if your terminal has
+              reverse video).
+
+       [1me      [4m[22mEchoing,[24m  causes  a  copy  of  the  game  to  be written to file
+              [4mroguelog[24m in the current directory. Typing [1me [22ma second time closes
+              the log file.  When the game is ended, the roguelog file is  re-
+              named to <killer>.<level>.<score> so if a troll killed poor [4mRog-[0m
+              [4mO-Matic[24m  on  level 14 leaving him with a score of 3088, the file
+              would be named [4mtrol.14.3088.[24m  Note  that  only  the  first  four
+              characters  of the killer are used.  The [1m-p [22moption will replay a
+              saved game.  Additionally, a stop action command  (carriage  re-
+              turn gives a single step) has been added.
+
+       [1mi      [4m[22mInventory,[24m dumps the current inventory on the screen.
+
+       [1mm      [4m[22mMonster[24m  [4mlist,[24m  shows the current long term memory evaluation of
+              the monsters.  [4mRog-O-Matic[24m nows keeps a long  term  memory  file
+              (for  each version of Rogue) in the score directory, and records
+              the meanness of each monster it finds.  This command prints  out
+              the  letter,  name,  and  strength of each monster.  Strength is
+              listed as three numbers: expected damage (scaled by 10) and max-
+              imum damage (unscaled) are shown in parentheses,  and  the  mean
+              number  of  arrows required to kill a monster is shown in square
+              brackets.
+
+       [1mCR     [4m[22mSingle[24m [4mstep,[24m a carriage return  enables  [4mtransparent[24m  mode,  and
+              causes  [4mRog-O-Matic[24m  to single-step. The command sent is printed
+              at the bottom right hand of the screen.
+
+       [1m/      [4m[22mSnapshot,[24m a timestamp, the current screen, and the  current  in-
+              ventory  are appended to file [4msnapshot.rgm[24m in the current direc-
+              tory.
+
+       [1m$      [4m[22mWeaponrank,[24m dumps [4mRog-O-Matic's[24m current estimate of his  weapons
+              rankings.
+
+       [1m%      [4m[22mArmorrank,[24m  dumps  [4mRog-O-Matic's[24m  current  estimate of his armor
+              rankings.
+
+       [1m=      [4m[22mRingrank,[24m dumps [4mRog-O-Matic's[24m current estimate of his ring rank-
+              ings.
+
+       [1m-      [4m[22mStatus,[24m prints out a status line indicating various things  like
+              whether  [4mRog-O-Matic[24m  is  confused,  has  red  hands, is wearing
+              cursed armor or wielding a cursed  weapon,  and  which  monsters
+              have been genocided.  It also prints the number of turns elapsed
+              in the game.
+
+       [1m`      [4m[22mSummary,[24m a backquote prints a short summary of the game.
+
+       [1m~      [4m[22mVersion,[24m prints the version of [4mRogue[24m and [4mRog-O-Matic[24m being used.
+              It also prints the current goal score.
+
+       [1mG      [4m[22mGenotype,[24m displays the settings of the genetically learned para-
+              meters  of the genotype playing now.  See section [4mGenes[24m for more
+              information about these parameters.
+
+       [1mR      [4m[22mReplay[24m [4mposition,[24m allows you to skip around in a  log  file  when
+              replaying  an  old game.  This key must be followed by either [1mf,[0m
+              [1mp, c, n, [22mor [1ml.  [22mThese indicate you wish to see the [4mfirst,[24m [4mprevi-[0m
+              [4mous,[24m [4mcurrent,[24m [4mnext,[24m or [1mlast [22mlevels of the game.  The first  time
+              you  enter  the [1mR [22mcommand, there will be a pause of several sec-
+              onds while the whole log file is digested.  After this  initial-
+              ization,  there  should  be no delay when skipping around in the
+              log file.  After you have skipped once, the program won't termi-
+              nate at the end of the file until you enter the  [1mQ  [4m[22m(quit)[24m  com-
+              mand.   This  way  you  can  replay  the  last  level  over (and
+              over...).
+
+       When the game ends, either by your death, when you quit, or when [4mRog-O-[0m
+       [4mMatic[24m dies horribly of some bug, you will not get a list of the top-ten
+       scorers.  The scoring is based entirely upon useless  criteria  anyway.
+       [4mRog-O-Matic[24m  does keep a list of its games. To see the best [4mRog-O-Matic[0m
+       games, use "rogomatic -s" which dumps the current scores in reverse or-
+       der.
+
+       For more detailed directions, read the source.
+
+[1mOPTIONS[0m
+       [1m-c     [22mTurns on cheat mode. See also the [1mc [22mcommand in transparent mode.
+
+       [1m-e     [22mTurns on logging. See also the [1me [22mcommand in transparent mode.
+
+       [1m-f     [22mFile command. The next argument is the file name  of  the  [4mRogue[0m
+              executable to use.  [4mRog-O-Matic[24m will play versions 3.6, 5.2, and
+              5.3; [4mrogomatic[24m [4m-f[24m [4m/usr/games/rogue[24m Would run [4mRog-O-Matic[24m against
+              the standard system [4mRogue[24m game.  You can run Rog-O-Matic on mod-
+              ified rogues using this option, but be warned that the interface
+              must  be completely compatible with one of the standard versions
+              of Rogue listed, and the version number printed must  be  either
+              "3.6," "5.2," or "5.3."
+
+       [1m-p     [22mReplay   option.  Typing  [4mrogomatic[24m  [4m-p[24m  will  replay  log  file
+              [4mroguelog.[24m  Or use [4mrogomatic[24m [4m-p[24m [4m<file>[24m to replay a specific file.
+
+       [1m-r     [22mRestore option. Plays the game saved in the default  [4mRogue[24m  save
+              file.
+
+       [1m-s     [22mScores. Lists the [4mRog-O-Matic[24m scoreboard.
+
+       [1m-t     [22mTerse mode. In terse mode, [4mRog-O-Matic[24m will only print a summary
+              after each level explored.
+
+       [1m-u     [22mUser mode. Tells [4mRog-O-Matic[24m to start up in transparent mode, so
+              the  user  can type commands before [4mRog-O-Matic[24m starts exploring
+              level 1.
+
+[1mGENES[0m
+       The [1mG [22mcommand lists the current settings for each [4mRog-O-Matic's[24m ``DNA''
+       settings. These numbers (from 0 to 99) specify  some  of  [4mRog-O-Matic's[0m
+       behaviors.   A  gene  pool  file  is  kept  in the score directory that
+       records the current population of explorers.  A  variant  of  Holland's
+       ``Genetic Algorithm'' is used to manipulate this gene pool.  The result
+       is that [4mRog-O-Matic[24m learns from his past games how to play better.  The
+       following genes are currently used:
+
+       [1mSr     [22mHow  many times to search each square for traps (0 to 4, depend-
+              ing on amount of food and how far below level 7 he is).
+
+       [1mDr     [22mHow many times to search each square for secret doors (0 to  19,
+              more for dead end passages not in mazes).
+
+       [1mRe     [22mHow much to rest up when injured (until 40% to 80% healed, based
+              on experience level).
+
+       [1mAr     [22mWhen to shoot arrows at enemies, the higher the number, the more
+              likely  [4mRog-O-Matic[24m is to shoot arrows at monsters (both smaller
+              monsters, and more arrows).
+
+       [1mEx     [22mHow soon to experiment with unknown potions and scrolls (between
+              levels 1 and 10).
+
+       [1mRn     [22mHow likely he is to run from an opponent (the higher the number,
+              the sooner he will run).
+
+       [1mWk     [22mHow likely he is to wake a sleeping  opponent  (the  higher  the
+              number, the bigger the monster he will attack, even though it is
+              sleeping).
+
+       [1mFd     [22mHow  likely  he  is  to hoard extra food.  This affects how many
+              rings he wears, and how much he searches for traps.
+
+[1mFILES[0m
+       There are two executable files: rogomatic and player.  Rogomatic  is  a
+       small  program  which  forks and execs the Rogue process and then execs
+       the player process.  Thus you must have access to all of  these  files.
+       These are available as
+
+            /usr/mlm/bin/rogomatic on the GP-Vax
+            /usr/mlm/bin/player on the GP-Vax
+
+       If  you are moving these files to another machine, you must either edit
+       the rogomatic module to change the name of the player process,  or  run
+       rogomatic from a directory containing the player module.
+
+       The score file is kept in
+
+            /usr/mlm/lib/rogomatic/rgmscore<version>
+            /usr/mlm/lib/rogomatic/rgmdelta<version>
+
+       If this file does not exist, it is created.  The gene pool is kept in
+
+            /usr/mlm/lib/rogomatic/GenePool<version>
+
+       A log of all mutations and crossovers is kept in
+
+            /usr/mlm/lib/rogomatic/GeneLog<version>
+
+       The long term memory of monster attributes is kept in
+
+            /usr/mlm/lib/rogomatic/ltm<version>
+
+       A log of internal errors and bugs is kept in
+
+            /usr/mlm/lib/rogomatic/error<version>
+
+[1mOTHER PROGRAMS[0m
+       Several  programs  are used to summarize and display [4mRog-O-Matic's[24m per-
+       formance.  The are in  /usr/misc/.rogomatic/bin.  The  [4mrgmgene[24m  command
+       summarizes  the  current  population  in the gene pool.  The [4mrgmscatter[0m
+       command prints a scatter plot of all  scores  in  the  scorefile.   The
+       [4mrgmhist[24m command prints a histogram of score (or levels if the [1m-l [22moption
+       is given).
+
+[1mSEE ALSO[0m
+       rogue(6)
+
+[1mBUGS[0m
+       Occasionally  [4mRog-O-Matic[24m  will dead-lock waiting for input from [4mRogue.[0m
+       When this happens, type an interrupt and enter  the  [4mt[24m  command  again.
+       This  usually  wakes  it up enough to re-start the game.  In completely
+       unusual cases, try interrupting and then entering the [4mS[24m command to save
+       the game, and then re-start with "rogomatic  -r".  Sometimes  you  will
+       have  to  use  transparent mode to get it down to the next level before
+       turning it loose again.
+
+[1mHISTORY[0m
+       03-Jul-86  Michael Mauldin (mlm) at Carnegie-Mellon University
+              Installed in /usr/misc, added documentation for rgmhist and rgm-
+              scatter.
+
+       01-Feb-85  Michael Mauldin (mlm) at CMU
+              Added genetic learning, UTexas mods, new titlepage, new  version
+              XIV.
+
+       01-Nov-83  Michael Mauldin (mlm) at CMU
+              Modified to include long term memory, and to play Rogue 5.3.
+
+       31-Aug-83  Michael Mauldin (mlm) at CMU
+              Modified the replay command to allow skipping around and replay-
+              ing individual levels over and over.
+
+       16-Jun-83  Michael Mauldin (mlm) at CMU
+              Added  error  logging, single-step mode, fixed several small bug
+              fixes, modified title animation to display correct version  num-
+              ber.
+
+       23-Apr-83  Hamey and Mauldin at CMU
+              Version XII, replaced [4mreplay[24m command with an option which causes
+              input  to  come from a log file, and not from the Rogue process.
+              This removes the necessity of a standalone replay command.
+
+       16-Apr-83  Leonard Hamey (lgh) at CMU
+              Added ability to infer unseen halls and  use  them  in  searchto
+              without  having trodden on them first.  Modified exploration al-
+              gorithm.
+
+       07-Nov-82  Michael Mauldin (mlm) at CMU
+              Added archery, homogenous  ring  handling,  removed  the  keyact
+              kluge.
+
+       27-Oct-82  Appel, Hamey, Jacobson, and Mauldin at CMU
+              Added  support for Rogue 5.2, and various other improvements and
+              fixes.
+
+       30-Sep-82  Michael Mauldin (mlm) at CMU
+              Added improved Invisible Stalker code, modified strength manage-
+              ment, Amulet handling, improved cheating. Was a total winner  on
+              Level 26 with a score of 14,655.
+
+       18-May-82  Appel, Jacobson, and Mauldin at CMU
+              Added running away, level searching, wand and staff usage.
+
+       26-Apr-82  Michael Mauldin (mlm) at CMU
+              Added replay ability.
+
+       22-Apr-82  Michael Mauldin (mlm) at CMU
+              Added cheating mode and enhanced magic handling abilities.
+
+       11-Apr-82  Michael Mauldin (mlm) at CMU
+              Added searching for secret doors.  Modified breadth first search
+              to  avoid  traps and prefer known safe squares.  Added detection
+              of potions of blindness.
+
+       21-Mar-82  Michael Mauldin (mlm) at CMU
+              Added termcap support.
+
+       12-Jan-82  Andrew Appel (awa) and Guy Jacobson (guy) at CMU
+              Added breadth first search.
+
+       14-Oct-81  Andrew Appel (awa) and Guy Jacobson (guy) at CMU
+              Created.
+
+4th Berkeley Distribution          06/03/86                       [4mROGOMATIC[24m(6)
