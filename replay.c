@@ -1,7 +1,7 @@
 /*
  * replay.c: Rog-O-Matic XIV (CMU) Wed Mar 20 00:13:45 1985 - mlm
  * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
- * 
+ *
  * Make a table of offsets to the beginning of each level of a
  * Rog-O-Matic log file.
  */
@@ -26,7 +26,7 @@ int numlev = 0;
 extern void fillstruct (FILE *, struct levstruct *);
 extern int findlevel (FILE *, struct levstruct *, int *, int);
 
-/* 
+/*
  * positionreplay: Called when user has typed the 'R' command, it fills
  * the level table by calling findlevel if necessary, and then positions
  * the log file to the level requested by the user.
@@ -65,7 +65,7 @@ void positionreplay ()
     logdigested++;
   }
 
-  /* Now figure out the current level (so relative commands will work) */  
+  /* Now figure out the current level (so relative commands will work) */
   for (curlev = 0; curlev < numlev-1; curlev++)
     if (levpos[curlev+1].pos > curpos) break;
 
@@ -85,10 +85,10 @@ void positionreplay ()
   }
 
   clearscreen ();	/* Clear the screen */
-  Level = -1; 		/* Force a newlevel() call */
+  Level = -1;		/* Force a newlevel() call */
 }
 
-/* 
+/*
  * findlevel: Make a table of offsets to the various levels of a
  *             Rog-O-Matic log file.
  */
@@ -102,24 +102,24 @@ int *nmlev, maxnum;
 
   *nmlev = 0;
 
-  /* Position file after first newline */  
+  /* Position file after first newline */
   rewind (f);
   while ((ch = getc (f)) != '\n' && (int) ch != EOF);
 
-  /* This is that start of level one */  
+  /* This is that start of level one */
   lvpos[l].pos = ftell (f);
-  
+
   if (!findmatch (f, FIRSTLEVSTR))
   { rewind (f);
     return (FAILURE);
   }
-  
+
   fillstruct (f, &lvpos[l]);
-  
+
   while (++l <= maxnum && findmatch (f, NEWLEVSTR))
   { fseek (f, (long) -strlen (POSITAT), 1);
     lvpos[l].pos = ftell (f);
-    fillstruct (f, &lvpos[l]);      
+    fillstruct (f, &lvpos[l]);
   }
 
   *nmlev = l;
@@ -127,7 +127,7 @@ int *nmlev, maxnum;
   return (SUCCESS);
 }
 
-/* 
+/*
  * fillstruct: scan the logfile from the current point, and fill in the
  * fields of a levstruct.
  */
@@ -135,7 +135,7 @@ int *nmlev, maxnum;
 void fillstruct (f, lev)
 FILE *f;
 struct levstruct *lev;
-{ 
+{
   lev->level  = 0;
   lev->gold   = 0;
   lev->hp     = 0;
@@ -145,7 +145,7 @@ struct levstruct *lev;
   lev->ac     = 0;
   lev->explev = 0;
   lev->exp    = 0;
-  
+
   if (!findmatch (f, "Level:")) return;
   fscanf (f, "%d", &lev->level);
 
@@ -167,7 +167,7 @@ struct levstruct *lev;
   saynow ("Found level %d, has %d gold...", lev->level, lev->gold);
 }
 
-/* 
+/*
  * findmatch: read from a stream until string 's' has been read. Returns 0
  * if EOF is read, and 1 if the match is found.  The stream is left
  * immediately after the matched string.
@@ -182,7 +182,7 @@ char *s;
 
   while (*m && (int) (ch = fgetc (f)) != EOF)
     if (ch != *(m++)) m = s;
-  
+
   if (*m) return (0);
   else    return (1);
 }

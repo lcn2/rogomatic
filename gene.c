@@ -75,7 +75,7 @@ char *argv[];
 
   critical ();				/* Disable interrupts */
   if (lock_file (genelock, MAXLOCK))
-  { if (init) 
+  { if (init)
     { srand (seed);			/* Set the random number generator */
       openlog (genelog);		/* Open the gene log file */
       initpool (MAXKNOB, m);		/* Random starting point */

@@ -46,7 +46,7 @@ int genericinit ()
  *
  *  Number of unsearched walls adjacent.
  *
- * 	Vert	Horiz	Value		Cont	Explanation
+ *	Vert	Horiz	Value		Cont	Explanation
  *	---------------------------------------------------
  *	0	0	0		0	Valueless
  *	0	1	N-24-dep	16	Prefer (0,2) 1 move later
@@ -73,7 +73,7 @@ static int secretvalues[16]= { 0, N-24, N-22, N-20,
 		               N,    N,    N,    N };
 
 static int secretcont[16] =  { 0, 16, 15, 14,
- 			       4,  2,  2,  2,
+			       4,  2,  2,  2,
 			       1,  0,  0,  0,
 			       0,  0,  0,  0 };
 
@@ -107,7 +107,7 @@ int gotoinit ()
 /* ARGSUSED */
 int gotovalue (r, c, depth, val, avd, cont)
 int r, c, depth, *val, *avd, *cont;
-{ 
+{
   *avd = onrc (SAFE, r, c)    ? 0 :
 	 onrc (ARROW, r, c)   ? 50 :
          onrc (TRAPDOR, r, c) ? 175 :
@@ -128,14 +128,14 @@ int r, c, depth, *val, *avd, *cont;
 }
 
 /*
- * sleepvalue: Squares with sleeping monsters have value. 
+ * sleepvalue: Squares with sleeping monsters have value.
  *             Use genericinit.		MLM
  */
 
 /* ARGSUSED */
 int sleepvalue (r, c, depth, val, avd, cont)
 int r, c, depth, *val, *avd, *cont;
-{ 
+{
   *avd = onrc (SAFE, r, c)    ? 0 :
 	 onrc (ARROW, r, c)   ? 50 :
          onrc (TRAPDOR, r, c) ? 175 :
@@ -167,10 +167,10 @@ int r, c, depth, *val, *avd, *cont;
 int wallkind (r, c)
 int r, c;
 {
-  switch (screen[r][c]) 
+  switch (screen[r][c])
   { case '|': if (onrc (ROOM, r, c+1)) return (LEFTW);
               else return (RIGHTW);
-    case '-': if (onrc (ROOM, r+1, c)) return (TOPW); 
+    case '-': if (onrc (ROOM, r+1, c)) return (TOPW);
               else if (onrc (ROOM, r-1, c)) return (BOTW);
               else return (CORNERW);
     case '+': return (DOORW);
@@ -178,8 +178,8 @@ int r, c;
   }
 }
 
-/* 
- * setpsd: Initialize secret door search 
+/*
+ * setpsd: Initialize secret door search
  *
  * Guy Jacobson 5/82
  * Modified to allow searching even when there are cango bits.	MLM.   10/82
@@ -203,7 +203,7 @@ int print;
   markmissingrooms ();
 
   /* Changed loop boundaries to ignore border around screen -- mlm 5/18/82 */
-  for (i=2; i<22; i++) for (j=1; j<79; j++) 
+  for (i=2; i<22; i++) for (j=1; j<79; j++)
   { unsetrc (PSD|DEADEND,i,j);
 
     /* If attempt > 3, allow ANYTHING to be a secret door! */
@@ -238,26 +238,26 @@ int print;
      *
      * Modified to allow PSD for !ROOM (including the old CANGO des.)
      * since potions and scrolls of detection can cause the CANGO bit to
-     * be set for a square on which we have never been. 
+     * be set for a square on which we have never been.
      * mlm 10/8/82
      *
      * If attempt > 2, then relax the constraint about empty space,
      * since we might have teleported into a disconnected part of the
      * level. This means after we have searched twice, we look for ANY
-     * possible door, not just doors leading to empty space. 
-     * mlm 10/11/82 
+     * possible door, not just doors leading to empty space.
+     * mlm 10/11/82
      *
-     * Check return code from whichroom. 
+     * Check return code from whichroom.
      * mlm 03/17/85
      */
-   
-    else 
+
+    else
     { if ((k = wallkind (i,j)) >= 0)		/* A legit sort of wall */
       { register int rm = whichroom (i,j);
-      
+
         if (rm >= 0 && rm < 9)
 	{ whereto = connect[rm][k];
-	  if (whereto >= 0 && whereto < 9 && 
+	  if (whereto >= 0 && whereto < 9 &&
 	      (attempt > 1 || room[whereto] == 0))
 	  { if (!onrc (PSD, i, j)) numberpsd++;
 	    setrc (PSD,i,j);
@@ -267,7 +267,7 @@ int print;
       }
     }
   }
-  
+
   /* Now remove PSD bits from walls which already have doors */
   for (i=2; i<22; i++) for (j=1; j<79; j++)
   { if (onrc (DOOR, i, j))
@@ -297,7 +297,7 @@ int print;
 /* ARGSUSED */
 int downvalue (r, c, depth, val, avd, cont)
 int r, c, depth, *val, *avd, *cont;
-{ 
+{
   *avd = onrc (SAFE, r, c)    ? 0 :
 	 onrc (ARROW, r, c)   ? 50 :
          onrc (TRAPDOR, r, c) ? 175 :
@@ -315,7 +315,7 @@ int r, c, depth, *val, *avd, *cont;
   return (1);
 }
 
-/* 
+/*
  * expruninit: same as expinit but don't bias against doors.
  */
 
@@ -348,7 +348,7 @@ int r, c, depth, *val, *avd, *cont;
   return (1);
 }
 
-/* 
+/*
  * expunpininit: same as exprunnit but try to unpin.
  */
 
@@ -402,7 +402,7 @@ int runinit ()
  *
  * Traps are avoided for a variable number of moves, except for target traps
  * Gave GasTraps and BearTraps infinite avoidance.	MLM 10/11/83
- * Don't avoid Trapdoors and Teleport Traps 		WEL 12/19/84
+ * Don't avoid Trapdoors and Teleport Traps		WEL 12/19/84
  */
 
 int runvalue (r, c, depth, val, avd, cont)
@@ -471,7 +471,7 @@ int rundoorinit()
 }
 
 /*
- * rundoorvalue: 
+ * rundoorvalue:
  *
  * Evaluate square for running into doorway.
  *
@@ -566,7 +566,7 @@ int *val, *avd, *cont;
   { for (k=0; k<8; k++)
     { nr = r + deltr[k];
       nc = c + deltc[k];
-      
+
       /* For each unseen neighbour: add 10 to value. */
       if (nr >= 1 && nr <= 22 && nc >= 0 && nc <= 80 &&
         !onrc (SEEN, nr, nc))
@@ -586,7 +586,7 @@ int *val, *avd, *cont;
 	else
 	{ /* Check for unseen boundary horiz/vert       */
 	  /* adjacent to neighbour and not a neighbour. */
-	  l = k / 2 * 2; 		     /* horizontal/vertical */
+	  l = k / 2 * 2;		     /* horizontal/vertical */
 	  if (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY)
 	    nearb = 1;
 	  else
@@ -625,7 +625,7 @@ int *val, *avd, *cont;
   *avd = a;
   *val = v;
   if (v < 50)
-    *cont = 4; 				     /* Look for something better */
+    *cont = 4;				     /* Look for something better */
   if (debug (D_SCREEN) && v > 0)
   { mvaddch (r, c, 'o'); dwait (D_SCREEN, "Value %d", v); }
 
@@ -668,7 +668,7 @@ int *val, *avd, *cont;
   { for (k=0; k<8; k++)
     { nr = r + deltr[k];
       nc = c + deltc[k];
-      
+
       /* For each unseen neighbour: add 10 to value. */
       if (nr >= 1 && nr <= 22 && nc >= 0 && nc <= 80 &&
         !onrc (SEEN, nr, nc))
@@ -693,7 +693,7 @@ int *val, *avd, *cont;
 
   *avd = a;
   *val = v;
-  *cont = 0; 				     /* Look for orphans */
+  *cont = 0;				     /* Look for orphans */
 
   return (1);
 }
@@ -748,13 +748,13 @@ int *val, *avd, *cont;
 
   if (v>0)
   { if (version >= RV53A &&
-        onrc (DOOR|BEEN, r, c) == (DOOR|BEEN) && 
+        onrc (DOOR|BEEN, r, c) == (DOOR|BEEN) &&
         (onrc (CANGO|WALL, r+1, c) == 0 || onrc (CANGO|WALL, r-1, c) == 0 ||
          onrc (CANGO|WALL, r, c+1) == 0 || onrc (CANGO|WALL, r, c-1) == 0))
     { *val = v+100; *cont = 5; }
     else
     { v = min (15, v);
-      *val = secretvalues[v]; *cont = secretcont[v];  
+      *val = secretvalues[v]; *cont = secretcont[v];
       if (onrc (DOOR, r, c)) a += expDor;
     }
   }
@@ -776,7 +776,7 @@ int avoidmonsters ()
 
   /* Clear old avoid monster values */
   for (i = 24*80; i--; ) avdmonsters[0][i] = 0;
-  
+
   /* Set stealth status */
   wearingstealth = (wearing ("stealth") != NONE);
 
@@ -787,7 +787,7 @@ int avoidmonsters ()
     { AVOID (mlist[i].mrow, mlist[i].mcol, '$')
     }
     /* If not a wimp and awake, avoid him all together */
-    else if (mlist[i].q == AWAKE) 
+    else if (mlist[i].q == AWAKE)
     { int d, dr, dc, mr = mlist[i].mrow, mc = mlist[i].mcol;
       d = direc (searchstartr-mr,searchstartc-mc);
       dr = (searchstartr-mr)/2+mr; dc=(searchstartc-mc)/2+mc;
@@ -795,7 +795,7 @@ int avoidmonsters ()
       { caddycorner (dr, dc, (d-1) & 7, (d-3)&7, '$');
         caddycorner (dr, dc, (d+1) & 7, (d+3)&7, '$');
       }
-      else 
+      else
       { caddycorner (dr, dc, (d-2) & 7, d, '$');
         caddycorner (dr, dc, (d+2) & 7, d, '$');
       }
@@ -807,16 +807,16 @@ int avoidmonsters ()
           AVOID (r, c, '$')
     }
     /* He's asleep, don't try to run through him */
-    else 
+    else
       AVOID (mlist[i].mrow, mlist[i].mcol, '$')
   }
-  
+
   /* Don't avoid current position */
   avdmonsters[searchstartr][searchstartc] = 0;
   dwait (D_SEARCH, "Avoidmonsters: avoiding the $s");
 }
 
-/* 
+/*
  * caddycorner: Find sqaures the monster can reach before we can and mark
  * them for avoidance
  */
@@ -850,7 +850,7 @@ int pinavoid ()
 
   /* Avoid each monster in turn */
   for (i=0; i<mlistlen; i++)
-  { if (mlist[i].q == AWAKE) 
+  { if (mlist[i].q == AWAKE)
     { register int d, dr, dc, mr = mlist[i].mrow, mc = mlist[i].mcol;
       d = direc (searchstartr-mr,searchstartc-mc);
       dr = (searchstartr-mr)/2+mr - deltr[d];		/* MLM */
@@ -859,14 +859,14 @@ int pinavoid ()
       { caddycorner (dr, dc, (d-1) & 7, (d-3)&7, '&');
         caddycorner (dr, dc, (d+1) & 7, (d+3)&7, '&');
       }
-      else 
+      else
       { caddycorner (dr, dc, (d-2) & 7, (d-4) & 7, '&'); /* MLM */
         caddycorner (dr, dc, (d+2) & 7, (d+4) & 7, '&'); /* MLM */
       }
     }
     AVOID (mlist[i].mrow, mlist[i].mcol, '&');
   }
-  
+
   /* Don't avoid current position */
   avdmonsters[searchstartr][searchstartc] = 0;
   dwait (D_SEARCH, "Pinavoid: avoiding the &s");
@@ -878,20 +878,20 @@ int pinavoid ()
 
 int secret ()
 { int secretinit(), secretvalue();
-  
+
   /* Secret passage adjacent to door? */
   if (version >= RV53A && on (DOOR) && !blinded &&
       (seerc (' ',atrow+1,atcol) || seerc (' ',atrow-1,atcol) ||
        seerc (' ',atrow,atcol+1) || seerc (' ',atrow,atcol-1)) &&
       SEARCHES (atrow, atcol) < timestosearch+20)
   { int count = timessearched[atrow][atcol]+1;
-    saynow ("Searching dead end door (%d,%d) for the %d%s time...", 
+    saynow ("Searching dead end door (%d,%d) for the %d%s time...",
               atrow, atcol, count, ordinal (count));
     command (T_DOORSRCH, "s"); return (1);
   }
 
   /* Verify that we are actually at a dead end */
-  if (onrc (CANGO,atrow-1,atcol) + onrc (CANGO,atrow,atcol-1) + 
+  if (onrc (CANGO,atrow-1,atcol) + onrc (CANGO,atrow,atcol-1) +
       onrc (CANGO,atrow+1,atcol) + onrc (CANGO,atrow,atcol+1) != CANGO)
     return (0);
 
@@ -905,13 +905,13 @@ int secret ()
 
   /* Found a dead end, should we search it? */
   if (nexttowall (atrow, atcol) ||
-      canbedoor (atrow, atcol) && 
+      canbedoor (atrow, atcol) &&
       (version >= RV53A || !isexplored (atrow, atcol)))
   { setrc (DEADEND, atrow, atcol);
 
     if ((SEARCHES (atrow, atcol) - timessearched[atrow][atcol]) > 0)
     { int count = timessearched[atrow][atcol]+1;
-      saynow ("Searching dead end (%d,%d) for the %d%s time...", 
+      saynow ("Searching dead end (%d,%d) for the %d%s time...",
               atrow, atcol, count, ordinal (count));
       command (T_DOORSRCH, "s");
       return (1);
@@ -925,7 +925,7 @@ int secret ()
   return (0);
 }
 
-/* 
+/*
  *   F I N D R O O M :  Try to find another room.
  */
 
@@ -942,7 +942,7 @@ int findroom ()
   return (0);
 }
 
-/* 
+/*
  *   E X P L O R E   R O O M :  Explore the current room.
  */
 
@@ -997,7 +997,7 @@ int doorexplore()
 }
 
 /*
- *   S A F E   S Q U A R E   S E A R C H 	Use genericinit.
+ *   S A F E   S Q U A R E   S E A R C H	Use genericinit.
  */
 
 /* ARGSUSED */
@@ -1033,7 +1033,7 @@ int r, c, depth, *val, *avd, *cont;
 /* findsafe: find a spot with 2 or fewer moves, for when blinded */
 
 int findsafe()
-{ 
+{
   return (makemove (FINDSAFE, genericinit, safevalue, REEVAL));
 }
 
@@ -1047,7 +1047,7 @@ int avoid ()
 
 /*
  * archery: Initialize a archery move. We find a good place to
- * shoot from and stand there. Then mark the monster as awake, and 
+ * shoot from and stand there. Then mark the monster as awake, and
  * battlestations will handle firing at him.
  */
 
@@ -1064,12 +1064,12 @@ register int trns;	/* Minimum number of arrows to make it worthwhile */
   if (! new_arch) return (0);
 
   /* Useless without arrows */
-  if (havemult (missile, "", trns) == NONE) 
-  { dwait (D_BATTLE, "archmonster, fewer than %d missiles", trns); 
+  if (havemult (missile, "", trns) == NONE)
+  { dwait (D_BATTLE, "archmonster, fewer than %d missiles", trns);
     return (0); }
 
   /* For now, only work for sleeping monsters */
-  if (mlist[m].q != ASLEEP) 
+  if (mlist[m].q != ASLEEP)
   { dwait (D_BATTLE, "archmonster, monster not asleep"); return (0); }
 
   /* Save globals */
@@ -1084,8 +1084,8 @@ register int trns;	/* Minimum number of arrows to make it worthwhile */
 
   /* On target: wake him up and set darkdir/turns if necessary */
   mr = mlist[m].mrow; mc = mlist[m].mcol; targetmonster = mlist[m].chr;
-  mlist[m].q = AWAKE; dwait (D_BATTLE, "archmonster, waking him up"); 
-    
+  mlist[m].q = AWAKE; dwait (D_BATTLE, "archmonster, waking him up");
+
   /* Set dark room archery variables, add goal of standing on square */
   if (darkroom ())
   { darkdir = direc (mr-atrow, mc-atcol);
@@ -1141,7 +1141,7 @@ int archeryinit ()
 /* ARGSUSED */
 int archeryvalue (r, c, depth, val, avd, cont)
 int r, c, depth, *val, *avd, *cont;
-{ 
+{
   *avd = (onrc (SAFE, r, c)	? 0 :
 	  onrc (TRAPDOR, r, c)	? INFINITY :
 	  onrc (HALL, r, c)	? INFINITY :
@@ -1163,7 +1163,7 @@ int r, c, depth, *val, *avd, *cont;
   return (1);
 }
 
-/* 
+/*
  *   M O V E   T O   R E S T :  Find a safe square to rest up on.
  */
 

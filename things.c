@@ -94,7 +94,7 @@ int obj;
        stlmatch (inven[obj].str, "remove curse")) &&
       reads (obj))
   { return (1); }
-  
+
   /* quaff unknown potions or good potions rather than dropping them */
   if (inven[obj].type == potion &&
       (!itemis (obj, KNOWN) ||
@@ -114,7 +114,7 @@ int obj;
   return (1);
 }
 
-/* 
+/*
  * quaff: build and send a quaff potion command.
  */
 
@@ -122,9 +122,9 @@ int quaff (obj)
 int obj;
 {
   if (inven[obj].type != potion)
-  { dwait (D_ERROR, "Trying to quaff %c", LETTER (obj)); 
+  { dwait (D_ERROR, "Trying to quaff %c", LETTER (obj));
     usesynch = 0;
-    return (0); 
+    return (0);
   }
 
   command (T_HANDLING, "q%c", LETTER (obj));
@@ -139,9 +139,9 @@ int reads (obj)
 int obj;
 {
   if (inven[obj].type != rscroll)
-  { dwait (D_ERROR, "Trying to read %c", LETTER (obj)); 
+  { dwait (D_ERROR, "Trying to read %c", LETTER (obj));
     usesynch = 0;
-    return (0); 
+    return (0);
   }
 
   command (T_HANDLING, "r%c", LETTER (obj));
@@ -156,8 +156,8 @@ int point (obj, dir)
 int obj, dir;
 {
   if (inven[obj].type != wand)
-  { dwait (D_ERROR, "Trying to point %c", LETTER (obj)); 
-    return (0); 
+  { dwait (D_ERROR, "Trying to point %c", LETTER (obj));
+    return (0);
   }
 
   command (T_HANDLING, "%c%c%c",
@@ -166,7 +166,7 @@ int obj, dir;
   return (1);
 }
 
-/* 
+/*
  * throw: build and send a throw object command.
  */
 
@@ -174,15 +174,15 @@ int throw (obj, dir)
 int obj, dir;
 {
   if (obj < 0 || obj >= invcount)
-  { dwait (D_ERROR, "Trying to throw %c", LETTER (obj)); 
-    return (0); 
+  { dwait (D_ERROR, "Trying to throw %c", LETTER (obj));
+    return (0);
   }
 
   command (T_HANDLING, "t%c%c", keydir[dir], LETTER (obj));
   return (1);
 }
 
-/* 
+/*
  * puton: build and send a command to put on a ring.
  */
 
@@ -282,7 +282,7 @@ char *s;
   msgonscreen=1;
 }
 
-/* 
+/*
  * prepareident: Set nextid and afterid to proper values
  */
 
@@ -294,8 +294,8 @@ int obj, iscroll;
 }
 
 /*
- * pickident: Pick an object to be identified.  This is a preference 
- * ordering of objects.  If nothing else, return 0 (the index of the 
+ * pickident: Pick an object to be identified.  This is a preference
+ * ordering of objects.  If nothing else, return 0 (the index of the
  * first item in the pack).
  */
 
@@ -322,7 +322,7 @@ int iscroll;
 }
 
 /*
- * unknown: Return the index of any unknown object of type otype 
+ * unknown: Return the index of any unknown object of type otype
  */
 
 int unknown (otype)
@@ -339,7 +339,7 @@ stuff otype;
 }
 
 /*
- * unidentified: Return the index of any unidentified object of type otype 
+ * unidentified: Return the index of any unidentified object of type otype
  */
 
 int unidentified (otype)
@@ -356,7 +356,7 @@ stuff otype;
 }
 
 /*
- * haveother: Return the index of any unknown object of type 'otype', 
+ * haveother: Return the index of any unknown object of type 'otype',
  * but not 'other'.
  */
 
@@ -449,11 +449,11 @@ char *name;
   else if (rightring != NONE && itemis (rightring, INUSE) &&
         streq (inven[rightring].str, name))
     result = rightring;
-  
-  return (result);  
+
+  return (result);
 }
 
-/* 
+/*
  * Return the index of any object of type otype and name name only
  * if we have count or more of them. This way we can avoid using the
  * last of something .
@@ -474,7 +474,7 @@ int   count;
   return (NONE);
 }
 
-/* 
+/*
  * haveminus: Return the index of something if it is a minus item
  * (used to throw away stuff at end)
  */
@@ -491,7 +491,7 @@ int haveminus ()
   return (NONE);
 }
 
-/* 
+/*
  * haveuseless: return the index of useless arrows, and empty wands.
  */
 
@@ -506,7 +506,7 @@ int haveuseless ()
   return (NONE);
 }
 
-/* 
+/*
  * willrust: return true if a suit of armor can rust
  */
 
@@ -524,25 +524,25 @@ int obj;
 
 int wielding (otype)
 stuff otype;
-{ 
+{
   return (inven[currentweapon].type == otype);
 }
 
-/* 
+/*
  * hungry: return true if we are hungry, weak, or fainting
  */
 
 int hungry ()
 { return (*Ms == 'H' || *Ms == 'W' || *Ms == 'F'); }
 
-/* 
+/*
  * weak: return true if we are weak or fainting
  */
 
 int weak ()
 { return (*Ms == 'W' || *Ms == 'F'); }
 
-/* 
+/*
  * fainting: return true if we are fainting
  */
 

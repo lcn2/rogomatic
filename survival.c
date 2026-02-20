@@ -69,8 +69,8 @@ int print;
                  i = (Scr[st[sp].where] & CHOKE) ? sp : st[sp].door;
                i !=  stop;
                i =st[i].door)
-          { Scr[st[i].where] |= RUNOK; 
-            highlight (st[i].where, SO) 
+          { Scr[st[i].where] |= RUNOK;
+            highlight (st[i].where, SO)
           }
        }
        else
@@ -108,7 +108,7 @@ int print;
          }
        }
        else
-       { if (! (Scr[st[sp].where] & RUNOK)) highlight (st[sp].where, SE) 
+       { if (! (Scr[st[sp].where] & RUNOK)) highlight (st[sp].where, SE)
          sp--;
          D -= 4+((st[sp].dirs-1)<<1);
        }
@@ -130,7 +130,7 @@ int print;
 int markchokepts ()
 { register int *Scr, *ScrEnd, loc;
 
-  for (Scr = scrmap[0], ScrEnd = &Scr[1920]; Scr<ScrEnd; Scr++) 
+  for (Scr = scrmap[0], ScrEnd = &Scr[1920]; Scr<ScrEnd; Scr++)
   { if (*Scr & DOOR) *Scr |= CHOKE;
     else if (*Scr & HALL)
     { register int nbrs = 0, k;
@@ -155,13 +155,13 @@ int markchokepts ()
   }
 }
 
-/* 
+/*
  * Runaway: Panic!
  */
 
 int runaway ()
 {
-  if (on (SCAREM)) 
+  if (on (SCAREM))
   { dwait (D_BATTLE, "Not running, on scare monster scroll!");
     return (0);
   }
@@ -174,7 +174,7 @@ int runaway ()
   if (canrun ())		/* If canrun finds a move, use it */
     return (followmap (RUNAWAY));
 
-  return (0);			/* Cant run away */  
+  return (0);			/* Cant run away */
 }
 
 /*
@@ -184,7 +184,7 @@ int runaway ()
 int canrun ()
 { int result, oldcomp = compression;
   int runinit(), runvalue(), expruninit(), exprunvalue();
-  
+
   if (on (STAIRS)) return (1);		/* Can run down stairs */
 
   compression = 0;			/* Be tense when fleeing */
@@ -210,7 +210,7 @@ int unpin ()
       exprunvalue (), expunpinvalue ();
   static int unpinned = 0;
 
-  if (on (SCAREM)) 
+  if (on (SCAREM))
   { dwait (D_BATTLE, "Not unpinning, on scare monster scroll!");
     return (0);
   }
@@ -218,7 +218,7 @@ int unpin ()
   if (++unpinned > 100) { unpinned = 0; return 0; };
 
   if (on (STAIRS) && !floating)
-  { if (!goupstairs (RUNNING)) godownstairs (RUNNING); 
+  { if (!goupstairs (RUNNING)) godownstairs (RUNNING);
     return (1);
   }
 
@@ -243,8 +243,8 @@ int backtodoor (dist)
 int dist;
 { int rundoorinit(), rundoorvalue();
   static int lastcall= -10, stillcount=0, notmoving=0, closest=99;
-  
-  /* 
+
+  /*
    * Keep track of the opponents distance.  If they stop advancing on us,
    * disable the rule for 10 turns.
    */
@@ -258,14 +258,14 @@ int dist;
 
   lastcall = turns;
 
-  /* 
+  /*
    * Now check whether we try to move back to the door
    */
 
   if (notmoving)
     dwait (D_BATTLE, "backtodoor: monsters not moving");
-  
-  else if (on (SCAREM)) 
+
+  else if (on (SCAREM))
     dwait (D_BATTLE, "Not backing up, on scare monster scroll!");
 
   else if (dist > 0 && (on (DOOR) || nextto (DOOR, atrow, atcol)))

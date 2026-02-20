@@ -2,7 +2,7 @@
  * mess.c: Rog-O-Matic XIV (CMU) Tue Mar 19 21:31:30 1985 - mlm
  * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
  *
- * mess.c: This file contains all of the functions which parse the 
+ * mess.c: This file contains all of the functions which parse the
  * message line.
  */
 
@@ -36,12 +36,12 @@ static char res1[NAMSIZ], res2[NAMSIZ], res3[NAMSIZ], res4[NAMSIZ];
 static char *result[] = { res1, res2, res3, res4 };
 
 /*
- * terpmes: called when a message from Rogue is on the top line, 
+ * terpmes: called when a message from Rogue is on the top line,
  * this function parses the message and notes the information.
- * Note that the messages are all lower cased, to help with 
+ * Note that the messages are all lower cased, to help with
  * compatability bewtween 3.6 and 5.2, since 5.2 capitalizes more
  * messages than does 3.6.  Trailing punctuation is also ignored.
- * 
+ *
  * As of Rogue 5.3, multiple messages are broken into single
  * messages before being passed to parsemsg.  Periods separate
  * multiple messages.
@@ -51,20 +51,20 @@ int terpmes ()
 { char mess[128];
   register char *m, *mend, *s = screen[0], *t;
 
-  /* Set 't' to the tail of the message, skip backward over blank & dot */  
+  /* Set 't' to the tail of the message, skip backward over blank & dot */
   for (t=s+79; *t==' ' || *t=='.'; t--) ;	/* Find last non-blank */
   t++;						/* t -> beyond string */
-  
-  /* 
-   * Loop through each message, finding the beginning and end, and 
+
+  /*
+   * Loop through each message, finding the beginning and end, and
    * copying it to mess, lower-casing it as we go. Then call parsemsg.
    */
- 
+
   while (s<t)				      /* While more chars in msg */
   { while (*s==' ' && s<t) s++;			/* Skip leading blanks */
     for (m = mess;				/* Copy text */
 	 s<t && (version < RV53A || *s != '.' || s[1] != ' ');
-	 s++)	
+	 s++)
       *m++ = isupper (*s) ? tolower (*s) : *s;	  /* Lower case the char */
     s++;					/* Skip the period, if any */
     *(mend = m) = '\0';				/* Add trailing null */
@@ -72,7 +72,7 @@ int terpmes ()
   }
 }
 
-/* 
+/*
  * parsemsg: Parse a single message, and if necessary set variables
  * or call functions.
  */
@@ -141,7 +141,7 @@ register char *mess, *mend;
       else unknown++;
       break;
 
-    case 'c': 
+    case 'c':
       if (MATCH("call it*")) echoit=0;   /* Handled in getrogue() */
       else unknown++;
       break;
@@ -161,7 +161,7 @@ register char *mess, *mend;
       else unknown++;
       break;
 
-    case 'f': 
+    case 'f':
       if (MATCH("flame *")) ;
       else if (MATCH("far out!  everything is all cosmic again")) blinded=0;
       else unknown++;
@@ -247,7 +247,7 @@ register char *mess, *mend;
       break;
 
     case 'r':
-      if (MATCH("range is 'a' to '*'")) 
+      if (MATCH("range is 'a' to '*'"))
       { echoit=0;
         if (*res1-'a'+1 != invcount)
         { dwait (D_INFORM, "Range check failed..."); usesynch = 0; }
@@ -291,7 +291,7 @@ register char *mess, *mend;
       { echoit = justreadid < 1; if (justreadid-- == 0) sendnow (" *");
         if (justreadid < -50) dwait (D_FATAL, "Caught in invalid item loop"); }
       else if (MATCH("the veil of darkness lifts")) blinded=0;
-      else if (MATCH("the scroll turns to dust*")) 
+      else if (MATCH("the scroll turns to dust*"))
       { deletestuff (atrow, atcol); unset(SCAREM | STUFF); droppedscare--; }
       else if (MATCH("this potion tastes * dull")) infer (potion, "thirst quenching");
       else if (MATCH("this potion tastes pretty")) infer (potion, "thirst quenching");
@@ -306,7 +306,7 @@ register char *mess, *mend;
       else if (MATCH("the munchies are interfering*")) ;
       else if (MATCH("the monsters around you freeze")) holdmonsters ();
       else if (MATCH("the monster freezes")) holdmonsters ();
-      else if (MATCH("that's inedible")) usesynch = 0; 
+      else if (MATCH("that's inedible")) usesynch = 0;
       else unknown++;
       break;
 
@@ -369,7 +369,7 @@ register char *mess, *mend;
       else if (MATCH("you float gently to the ground")) floating=0;
       else if (MATCH("you feel yourself moving much faster"))
       { infer (potion, "haste self"); hasted = 1; }
-      else if (MATCH("you feel yourself slowing down")) 
+      else if (MATCH("you feel yourself slowing down"))
       { hasted = 0; doublehasted = 0; }
       else if (MATCH("you faint from exhaustion"))
       { if (version < RV52A) doublehasted = 1; else hasted = 0; }
@@ -381,13 +381,13 @@ register char *mess, *mend;
       { infer (rscroll, "monster confusion"); redhands = 1; }
       else if (MATCH("your hands stop glowing *")) redhands = 0;
       else if (MATCH("you feel as if somebody is watching over you") ||
-               MATCH("you feel in touch with the universal onenes")) 
+               MATCH("you feel in touch with the universal onenes"))
       { infer (rscroll, "remove curse");
 	if (cursedarmor)  {forget (currentarmor, CURSED);  cursedarmor=0;}
 	if (cursedweapon) {forget (currentweapon, CURSED); cursedweapon=0;}
         newarmor = newweapon = 1; }
       else if (MATCH("your armor weakens"))
-      { inven[currentarmor].phit--; 
+      { inven[currentarmor].phit--;
         if (gushed) { gushed=0; nametrap (WATERAP,HERE); } }
       else if (MATCH("your armor is covered by a shimmering * shield"))
       { infer (rscroll, "protect armor"); protected++;
@@ -397,7 +397,7 @@ register char *mess, *mend;
         cursedarmor = 0; newarmor = 1; }
       else if (MATCH("your * glows * for a moment"))
       { infer (rscroll, "enchant weapon"); plusweapon (); newweapon = 1; }
-      else if (MATCH("you hear a high pitched humming noise")) 
+      else if (MATCH("you hear a high pitched humming noise"))
       { infer (rscroll, "aggravate monsters"); wakemonster (9); aggravated = 1; }
       else if (MATCH("you hear maniacal laughter*")) infer (rscroll, "scare monster");
       else if (MATCH("you hear a faint cry*")) infer (rscroll, "create monster");
@@ -439,7 +439,7 @@ register char *mess, *mend;
       else if (MATCH("(mctesq was here)")) echoit=0;
       else if (MATCH("'*'*: *")) { echoit=0; mapcharacter (*res1, res3); }
       else if (*mess == '+' || *mess == '-' || ISDIGIT (*mess)) ;
-      else unknown++;      
+      else unknown++;
       break;
   }
 
@@ -452,7 +452,7 @@ register char *mess, *mend;
     saynow (mess);
 }
 
-/* 
+/*
  * smatch: Given a data string and a pattern containing one or
  * more embedded stars (*) (which match any number of characters)
  * return true if the match succeeds, and set res[i] to the
@@ -466,26 +466,26 @@ register char *dat, *pat, **res;
 
   while (1)
   { if (*pat == '*')
-    { star = ++pat; 			     /* Pattern after * */
-      starend = dat; 			     /* Data after * match */
-      resp = res[nres++]; 		     /* Result string */
-      *resp = '\0'; 			     /* Initially null */
+    { star = ++pat;			     /* Pattern after * */
+      starend = dat;			     /* Data after * match */
+      resp = res[nres++];		     /* Result string */
+      *resp = '\0';			     /* Initially null */
     }
-    else if (*dat == *pat) 		     /* Characters match */
-    { if (*pat == '\0') 		     /* Pattern matches */
+    else if (*dat == *pat)		     /* Characters match */
+    { if (*pat == '\0')			     /* Pattern matches */
 	return (1);
-      pat++; 				     /* Try next position */
+      pat++;				     /* Try next position */
       dat++;
     }
     else
-    { if (*dat == '\0') 		     /* Pattern fails - no more */
-	return (0); 			     /* data */
-      if (star == 0) 			     /* Pattern fails - no * to */
-	return (0); 			     /* adjust */
-      pat = star; 			     /* Restart pattern after * */
-      *resp++ = *starend; 		     /* Copy character to result */
-      *resp = '\0'; 			     /* null terminate */
-      dat = ++starend; 			     /* Rescan after copied char */
+    { if (*dat == '\0')			     /* Pattern fails - no more */
+	return (0);			     /* data */
+      if (star == 0)			     /* Pattern fails - no * to */
+	return (0);			     /* adjust */
+      pat = star;			     /* Restart pattern after * */
+      *resp++ = *starend;		     /* Copy character to result */
+      *resp = '\0';			     /* null terminate */
+      dat = ++starend;			     /* Rescan after copied char */
     }
   }
 }
@@ -499,7 +499,7 @@ char *name;
 { int obj; char id = '*';	/* Default is "* for list" */
 
   if (!replaying && version < RV53A &&
-      (nextid < LETTER (0) || nextid > LETTER (invcount))) 
+      (nextid < LETTER (0) || nextid > LETTER (invcount)))
   { dwait (D_FATAL, "Readident: nextid %d, afterid %d, invcount %d.",
            nextid, afterid, invcount); }
 
@@ -526,7 +526,7 @@ char *name;
     }
     else if (streq (name, "identify weapon"))
     { if ((obj = unknown (hitter)) != NONE ||
-	  (obj = unknown (thrower)) != NONE || 
+	  (obj = unknown (thrower)) != NONE ||
           (obj = unknown (missile)) != NONE ||
 	  (obj = have (hitter)) != NONE ||
           (obj = have (thrower)) != NONE ||
@@ -614,11 +614,11 @@ int wieldreply ()
 /*
  * rampage: read a scroll of genocide.
  */
- 
+
 int rampage ()
 { char monc;
 
-  /* Check the next monster in the list, we may not fear him */ 
+  /* Check the next monster in the list, we may not fear him */
   while (monc = *genocide)
   { /* Do not waste genocide on stalkers if we have the right ring */
     if ((streq (monname (monc), "invisible stalker") ||
@@ -627,11 +627,11 @@ int rampage ()
     { genocide++; }
 
     /* Do not waste genocide on rusties if we have the right ring */
-    else if ((streq (monname (monc), "rust monster") || 
+    else if ((streq (monname (monc), "rust monster") ||
               streq (monname (monc), "aquator")) &&
              havenamed (ring, "maintain armor") != NONE)
     { genocide++; }
-    
+
     /* No fancy magic for this monster, use the genocide scroll */
     else break;
   }
@@ -668,7 +668,7 @@ void curseditem ()
     /* Is our armor cursed? */
     if (inven[lastdrop].type == armor)
     { currentarmor = lastdrop; cursedarmor = 1; return; }
-    
+
     /* Is it our weapon (may be wielding a hitter or a bogus magic arrow)? */
     else if (inven[lastdrop].type==hitter || inven[lastdrop].type==missile)
     { currentweapon = lastdrop; cursedweapon = 1; return; }
@@ -676,13 +676,13 @@ void curseditem ()
 
   /* Dont know what was cursed, so assume the worst */
   cursedarmor=1;
-  cursedweapon=1; 
+  cursedweapon=1;
 }
 
-/* 
- * First copy the title of the last scroll into the appropriate slot,  
+/*
+ * First copy the title of the last scroll into the appropriate slot,
  * then find the real name of the object by looking through the data
- * base, and then zap that name into all of the same objects 
+ * base, and then zap that name into all of the same objects
  */
 
 int infer (s, objname)
@@ -693,13 +693,13 @@ char *objname;
   /* Use streq so `tan' and `tangerine' are different. */
   if (*lastname && *objname && !streq (objname, lastname))
   { infername (s, 1, lastname, objname);
-  
+
     for (i=0; i<MAXINV; i++)
       if (s == inven[i].type && streq (inven[i].str, lastname))
       { strcpy (inven[i].str, objname);
         remember (i, KNOWN);
       }
-  }  
+  }
 }
 
 /*
@@ -729,12 +729,12 @@ register char *monster;
 
   /* Echo the number arrows we pumped into him */
   if (mh >=0 && mhit+mmiss > 0 && mtarget == mh)
-    dwait (D_BATTLE | D_MONSTER, "%d out of %d missiles hit the %s", 
+    dwait (D_BATTLE | D_MONSTER, "%d out of %d missiles hit the %s",
            mhit, mhit+mmiss, monster);
 
   /* If we killed it by hacking, add the result to long term memory */
   if (hitstokill > 0 && mh != NONE)
-    addstat (&monhist[mh].htokill, hitstokill); 
+    addstat (&monhist[mh].htokill, hitstokill);
 
   /* If we killed it with arrows, add that fact to long term memory */
   if (mhit > 0 && mh != NONE)
@@ -898,7 +898,7 @@ register char *amount;
   { sumgold += pot; sumsqgold += pot*pot; numgold ++; }
 }
 
-/* 
+/*
  * Summary: print a summary of the game.
  */
 
@@ -919,7 +919,7 @@ int sep;
 
   sprintf (s2, "%cTotal: %d%c%c", sep, totalkilled, sep, sep);
   strcat(s, s2);
-  
+
   sprintf (s2, "Hit %d out of %d times, was hit %d out of %d times.%c",
            hits, misses+hits,
            timeshit, timesmissed+timeshit, sep);
@@ -944,12 +944,12 @@ int versiondep ()
 {
   if (version >= RV53A)		genocide = "DMJGU";
   else if (version >= RV52A)	genocide = "UDVPX";
-  else				genocide = "UXDPW";  
+  else				genocide = "UXDPW";
 
   analyzeltm ();
 }
 
-/* 
+/*
  * getmonhist: Retrieve the index in the history array of a monster,
  * taking our status into account.  This code is responsible for determining
  * when we are being stalked by an invisible monster.

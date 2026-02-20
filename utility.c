@@ -83,7 +83,7 @@ char *fname, *mode;
   newlog = fopen (fname, mode);
   umask (oldmask);
 
-  return (newlog);  
+  return (newlog);
 }
 
 /*

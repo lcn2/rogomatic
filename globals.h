@@ -179,8 +179,8 @@ extern int	ontarget, targetrow, targetcol;
 /* Monster attribute and Long term memory arrays */
 extern attrec monatt[];		/* Monster attributes */
 extern lrnrec ltm;		/* Long term memory -- general */
-extern ltmrec monhist[]; 	/* Long term memory -- creatures */
-extern ltmrec delhist[]; 	/* Long term memory -- changes this game */
+extern ltmrec monhist[];	/* Long term memory -- creatures */
+extern ltmrec delhist[];	/* Long term memory -- changes this game */
 extern int nextmon;		/* Length of LTM */
 extern int monindex[];		/* Index into monhist array */
 

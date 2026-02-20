@@ -51,7 +51,7 @@ int   d, mode;
 /* VARARGS2 */
 int command (int tmode, char *f, ...)
 { int times;
-  char cmd[128], functionchar (); 
+  char cmd[128], functionchar ();
   static char lastcom[32] = "";
   va_list ap;
 
@@ -77,7 +77,7 @@ int command (int tmode, char *f, ...)
     default:  movedir = NOTAMOVE;
   }
   didfight = 0;
-  
+
   /* If in a real game (not replaying), then check for looping */
   if (!replaying)
   { if (streq (lastcom, cmd))
@@ -115,7 +115,7 @@ int command (int tmode, char *f, ...)
   send (cmd);
 }
 
-/* 
+/*
  * commandcount: Return the number of a times a command is to happen.
  */
 
@@ -126,7 +126,7 @@ char *cmd;
   return (max (times, 1));
 }
 
-/* 
+/*
  * functionchar: return the function character of a command.
  */
 
@@ -139,7 +139,7 @@ char *cmd;
   return (*s);
 }
 
-/* 
+/*
  * commandarg: return the nth argument of a command.
  */
 
@@ -153,7 +153,7 @@ int n;
   return (s[n]);
 }
 
-/* 
+/*
  * adjustpack: adjust pack in accordance with command.
  */
 
@@ -200,14 +200,14 @@ char *cmd;
 		useobj (wand, inven[lastwand].str);
 
 		/* Update number of charges */
-		if (inven[lastwand].charges > 0) 
+		if (inven[lastwand].charges > 0)
 		{ if (version >= RV52A &&
 		      stlmatch (inven[lastwand].str, "striking"))
 		  inven[lastwand].charges -= 2;
 		else
 		  inven[lastwand].charges--;
 		}
-  
+
 		hitstokill -= 1; /* Dont blame weapon if wand misses */
 		break;
 
@@ -243,7 +243,7 @@ char *cmd;
 
 		usemsg ("Taking off", lastdrop);
 
-  		forget (lastdrop, INUSE);
+		forget (lastdrop, INUSE);
 		setbonuses ();
 		newarmor = 1;
 
@@ -264,7 +264,7 @@ char *cmd;
   }
 }
 
-/* 
+/*
  * bumpsearchcount: Note that we just searched this square.
  */
 
@@ -277,7 +277,7 @@ int bumpsearchcount ()
       timessearched[atrow+dr][atcol+dc]++;
 }
 
-/* 
+/*
  * replaycommand: Find the old command in the log file and send it.
  */
 
@@ -285,11 +285,11 @@ int replaycommand ()
 { char oldcmd[128];
 
   getoldcommand (oldcmd);
-  command (T_OTHER, oldcmd); 
-  return (1); 
+  command (T_OTHER, oldcmd);
+  return (1);
 }
 
-/* 
+/*
  * showcommand:		Echo a string in the lower right hand corner.
  * clearcommand:	Remove the command we showed.
  */

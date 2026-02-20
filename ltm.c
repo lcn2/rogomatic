@@ -17,7 +17,7 @@
 static int nosave = 0;		/* True ==> dont write ltm back out */
 static char ltmnam[100];	/* Long term memory file name */
 
-/* 
+/*
  * mapcharacter: Read a character help message
  */
 
@@ -25,7 +25,7 @@ int mapcharacter (ch, str)
 int ch;
 char *str;
 {
-  dwait (D_CONTROL, "mapcharacter called: '%c' ==> '%s'", ch, str);  
+  dwait (D_CONTROL, "mapcharacter called: '%c' ==> '%s'", ch, str);
 
   /* Ancient versions of Rogue had no wands or staves */
   if (ch == '/' && stlmatch (str, "unknown"))
@@ -40,7 +40,7 @@ char *str;
   { monindex[ch-'a'+ 1] = addmonhist (str); }
 }
 
-/* 
+/*
  * addmonhist:  Return the monster index of a given monster name in the
  * history array.  Create an entry if none exists.
  */
@@ -61,7 +61,7 @@ char *monster;
   return (nextmon++);				/* Return the index */
 }
 
-/* 
+/*
  * findmonster:  Return the monster index of a given monster name in the
  * history array.  Return -1 if the monster is not in the table.
  */
@@ -78,7 +78,7 @@ char *monster;
   return (-1);
 }
 
-/* 
+/*
  * saveltm: Write the new monster information out to the long term memory
  * file for this version of Rogue.  Be careful about serializing
  * access to the output file.
@@ -88,7 +88,7 @@ void saveltm (score)
 int score;
 { register int m;
   register FILE *ltmfil;
-  
+
   if (nextmon < 1 || nosave) return;
 
   dwait (D_CONTROL, "Saveltm called, writing file '%s'", ltmnam);
@@ -117,17 +117,17 @@ int score;
         writestat (ltmfil, &monhist[m].atokill);  fprintf (ltmfil, "|\n");
       }
 
-      /* Close the file and unlock it */  
+      /* Close the file and unlock it */
       fclose (ltmfil);
     }
     unlock_file (LOCKFILE);
   }
-  
+
   /* Re-enable interrupts */
   uncritical ();
 }
 
-/* 
+/*
  * restoreltm: Read the long term memory file.
  */
 
@@ -147,7 +147,7 @@ int restoreltm ()
   if (lock_file (LOCKFILE, MAXLOCK))
   { if (fexists (ltmnam))
       readltm ();
-    else 
+    else
     { dwait (D_CONTROL | D_SAY,
              "Starting long term memory file '%s'...", ltmnam);
       ltm.gamecnt = ltm.gamesum = ltm.timeswritten = 0;
@@ -157,14 +157,14 @@ int restoreltm ()
     unlock_file (LOCKFILE);
   }
   else
-  { saynow ("Warning: could not lock long term memory file!");    
+  { saynow ("Warning: could not lock long term memory file!");
     nosave = 1;
   }
-  
+
   uncritical ();
 }
 
-/* 
+/*
  * readltm: Read in the long term memory file for this version of Rogue
  * into storage.  Be careful about serializing access to the file.
  */
@@ -172,7 +172,7 @@ int restoreltm ()
 int readltm ()
 { char buf[BUFSIZ];
   register FILE *ltmfil;
-  
+
   if ((ltmfil = fopen (ltmnam, "r")) == NULL)
   { nosave = 1;
     dwait (D_WARNING | D_SAY,
@@ -182,7 +182,7 @@ int readltm ()
   { /* Read the ltm file header */
     if (fgets (buf, BUFSIZ, ltmfil))
       sscanf (buf, "Count %d, sum %d, start %d, saved %d",
-	      &ltm.gamecnt, &ltm.gamesum, 
+	      &ltm.gamecnt, &ltm.gamesum,
 	      &ltm.inittime, &ltm.timeswritten);
 
     /* Read each monster line */
@@ -193,7 +193,7 @@ int readltm ()
   }
 }
 
-/* 
+/*
  * parsemonster: parse one line from the ltm file.
  */
 
@@ -219,7 +219,7 @@ char *monster;
   parsestat (attrs, &monhist[m].atokill);	SKIPTO ('|', attrs);
 }
 
-/* 
+/*
  * clearltm: Clear a whole long term memory array.
  */
 
@@ -238,7 +238,7 @@ register ltmrec *ltmarr;
   }
 }
 
-/* 
+/*
  * dumpmonstertable: Format and print the monster table on the screen
  */
 
@@ -265,7 +265,7 @@ int dumpmonstertable ()
   pauserogue ();
 }
 
-/* 
+/*
  * analyzeltm: Set the monatt array based on current long term memory.
  */
 
@@ -286,7 +286,7 @@ int analyzeltm ()
 
       avg_dam = mean_dam * prob (&monhist[m].theyhit);
       three_dev = mean_dam + 3 * stdev_dam;
-      
+
       if (max_dam > three_dev && monhist[m].damage.count > 10)
       { max_dam = mean_dam + stdev_dam;
         monhist[m].damage.high = max_dam;
@@ -301,7 +301,7 @@ int analyzeltm ()
       avg_arr = mean (&monhist[m].atokill) / phit;
     }
 
-    /* Now store the information in the monster tables */    
+    /* Now store the information in the monster tables */
     monatt[i].expdam = ceil (avg_dam*10);
     monatt[i].maxdam = ceil (max_dam);
     monatt[i].mtokill = ceil (avg_arr);

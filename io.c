@@ -32,7 +32,7 @@
  */
 # define charonscreen(X,Y)   mvinch(X,Y)
 
-char *month[] = 
+char *month[] =
 { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
@@ -59,8 +59,8 @@ int   head = 0, tail = 0;
 
 void getrogue (waitstr, onat)
 char *waitstr;                          /* String to synchronize with */
-int   onat;                             /* 0 ==> Wait for waitstr 
-                                           1 ==> Cursor on @ sufficient 
+int   onat;                             /* 0 ==> Wait for waitstr
+                                           1 ==> Cursor on @ sufficient
                                            2 ==> [1] + send ';' when ever
                                            we eat a --More-- message */
 { int   botprinted = 0, wasmapped = didreadmap, r, c, pending ();
@@ -102,7 +102,7 @@ int   onat;                             /* 0 ==> Wait for waitstr
     if (ch == *m)
     { if (*++m == 0)
       { /* More than 50 messages since last command ==> start logging */
-        if (++morecount > 50 && !logging) 
+        if (++morecount > 50 && !logging)
 	{ toggleecho (); dwait (D_WARNING, "Started logging --More-- loop."); }
 
         /* More than 100 messages since last command ==> infinite loop */
@@ -119,7 +119,7 @@ int   onat;                             /* 0 ==> Wait for waitstr
 
         /* This code gets rid of the "Studded leather arm" bug */
 	/* But it causes other problems.		MLM   */
-        /* sprintf (&screen[0][col - 7], "--More--"); */ 
+        /* sprintf (&screen[0][col - 7], "--More--"); */
       }
     }
     else m = "More--";
@@ -139,11 +139,11 @@ int   onat;                             /* 0 ==> Wait for waitstr
 
     /* Now figure out what the token means */
     switch (ch)
-    { case BS_TOK: 
+    { case BS_TOK:
         col--;
         break;
 
-      case CE_TOK: 
+      case CE_TOK:
         if (row && row < 23)
           for (i = col; i < 80; i++)
           { updatepos (' ', row, i);
@@ -157,15 +157,15 @@ int   onat;                             /* 0 ==> Wait for waitstr
         else if (col == 0) screen00 = ' ';
         break;
 
-      case CL_TOK: 
+      case CL_TOK:
         clearscreen ();
         break;
 
-      case CM_TOK: 
+      case CM_TOK:
         screen00 = screen[0][0];
         break;
 
-      case CR_TOK: 
+      case CR_TOK:
         if (row == 0) {
           if (stlmatch (&screen[0][0], "drop what") || stlmatch (&screen[0][0], "Drop what"))
             terpmes ();
@@ -185,7 +185,7 @@ int   onat;                             /* 0 ==> Wait for waitstr
         row++;
         break;
 
-      case ER_TOK: 
+      case ER_TOK:
         break;
 
       case LF_TOK:
@@ -197,17 +197,17 @@ int   onat;                             /* 0 ==> Wait for waitstr
         col++;
         break;
 
-      case SE_TOK: 
+      case SE_TOK:
         revvideo = 0;
 	standend ();
         break;
 
-      case SO_TOK: 
+      case SO_TOK:
         revvideo = 1;
 	standout ();
         break;
 
-      case TA_TOK: 
+      case TA_TOK:
         col = 8 * (1 + col / 8);
         break;
 
@@ -222,12 +222,12 @@ int   onat;                             /* 0 ==> Wait for waitstr
         row--;
         break;
 
-      default: 
+      default:
         if (ch < ' ')
         { saynow ("Unknown character '\\%o'--more--", ch);
-          waitforspace (); 
+          waitforspace ();
         }
-        else if (row) 
+        else if (row)
         { at (row, col);
           if (!emacs && !terse) addch (ch);
           if (row == 23) botprinted = 1;
@@ -247,14 +247,14 @@ int   onat;                             /* 0 ==> Wait for waitstr
 
   if (botprinted) terpbot ();
 
-  if (atrow != atrow0 || atcol != atcol0) 
+  if (atrow != atrow0 || atcol != atcol0)
   { updateat ();	/* Changed position, record the move */
     moved = 1;		/* Indicate that we moved */
     wakemonster (8);	/* Wake up adjacent mean monsters */
     currentrectangle();	/* Keep current rectangle up to date.   LGCH */
   }
 
-  if (!usesynch && !pending ()) 
+  if (!usesynch && !pending ())
   { usesynch = 1;
     lastobj = NONE;
     resetinv();
@@ -262,7 +262,7 @@ int   onat;                             /* 0 ==> Wait for waitstr
 
   if (version < RV53A && checkrange && !pending ())
   { command (T_OTHER, "Iz"); checkrange = 0; }
- 
+
   /* If mapping status has changed */
   if (didreadmap && wasmapped != didreadmap)
   { dwait (D_CONTROL | D_SEARCH, "wasmapped: %d   didreadmap: %d",
@@ -301,7 +301,7 @@ int   onat;                             /* 0 ==> Wait for waitstr
     }
   }
 
-  at (row, col); 
+  at (row, col);
   if (!emacs && !terse) refresh ();
 }
 
@@ -352,18 +352,18 @@ int terpbot ()
   if (oldhp < Hp)            newring = 1;
 
   lastdamage = max (0, oldhp - Hp);
-  
-  /* 
+
+  /*
    * Insert code here to monitor changes in attributes due to special
    * attacks					MLM October 26, 1983.
    */
-  
+
   setbonuses ();
 
-  /* 
+  /*
    * If in special output modes, generate output line
    */
-  
+
   if ((oldlev != Level || oldgold != Gold || oldstr != Str ||
        oldAc != Ac || oldExp != Explev))
   {
@@ -371,7 +371,7 @@ int terpbot ()
     sprintf (modeline, "Rgm %d: Id%d L%d %d %d(%d) s%d a%d e%d    ",
              rogpid, geneid, Level, Gold, Hp, Hpmax, Str / 100, 10-Ac, Explev);
     modeline[arglen-1] = '\0';
-    strcpy (parmstr, modeline);    
+    strcpy (parmstr, modeline);
 
     /* Handle Emacs and Terse mode */
     if (emacs || terse)
@@ -444,7 +444,7 @@ int sendnow (char *f, ...)
 { char cmd[128];
   register char *s = cmd;
   va_list ap;
-  
+
   va_start (ap, f);
   vsprintf (cmd, f, ap);
   va_end (ap);
@@ -520,7 +520,7 @@ int resend ()
 
 int pending ()
 { return (head != tail);
-} 
+}
 
 /*
  * getroguetoken: get a command from Rogue (either a character or a
@@ -581,7 +581,7 @@ int getroguetoken ()
     }
     fflush (fecho);
   }
-  
+
   return (ch);
 }
 
@@ -629,7 +629,7 @@ int deadrogue ()
 }
 
 /*
- * quitrogue: we are going to quit. Log the game and send a \n to 
+ * quitrogue: we are going to quit. Log the game and send a \n to
  * the Rogue process, then wait for it to die before returning.
  */
 
@@ -640,7 +640,7 @@ int terminationtype;            /* SAVED, FINSISHED, or DIED */
 { struct tm *localtime(), *ts;
   long clock;
   char  *k, *r;
-  
+
   /* Save the killer and score */
   for (k=ourkiller, r=reason; *r && *r != ' '; ++k, ++r) *k = *r;
   *k = '\0';
@@ -650,21 +650,21 @@ int terminationtype;            /* SAVED, FINSISHED, or DIED */
   if (!replaying || !logdigested)
     playing = 0;
 
-  /* Now get the current time, so we can date the score */    
+  /* Now get the current time, so we can date the score */
   clock = time(&clock);
   ts = localtime(&clock);
 
-  /* Build a summary line */  
+  /* Build a summary line */
   sprintf (sumline, "%3s %2d, %4d %-8.8s %7d%s%-17.17s %3d %3d ",
            month[ts -> tm_mon], ts -> tm_mday, 1900 + ts -> tm_year,
            getname (), gld, cheat ? "*" : " ", reason, MaxLevel, Hpmax);
-  
+
   if (Str % 100)
     sprintf (sumline, "%s%2d.%2d", sumline, Str/100, Str%100);
   else
     sprintf (sumline, "%s  %2d ", sumline, Str/100);
-  
-  sprintf (sumline, "%s %2d %2d/%-6d  %d", 
+
+  sprintf (sumline, "%s %2d %2d/%-6d  %d",
            sumline, Ac, Explev, Exp, ltm.gamecnt);
 
   /* Now write the summary line to the log file */
@@ -718,7 +718,7 @@ int terminationtype;            /* SAVED, FINSISHED, or DIED */
  *          The characters are echoed to the users screen.
  *
  *          The string must not contain a valid prefix of itself
- *          internally.                         
+ *          internally.
  *
  * MLM 8/27/82
  */
@@ -783,9 +783,9 @@ int saynow (char *f, ...)
 int waitforspace ()
 {  char ch;
 
-   refresh (); 
+   refresh ();
 
-   if (!noterm) 
+   if (!noterm)
      while ((ch = getch()) != ' ')
        if (ch == '/') dosnapshot ();
 
@@ -794,10 +794,10 @@ int waitforspace ()
 
 /*
  * givehelp: Each time a ? is pressed, this routine prints the next
- * help message in a sequence of help messages. Nexthelp is an 
+ * help message in a sequence of help messages. Nexthelp is an
  */
 
-char *nexthelp[] = 
+char *nexthelp[] =
 { "Rgm commands: t=toggle run mode, e=logging, i=inventory, -=status    [?]",
   "Rgm commands: <ret>=singlestep, `=summary, /=snapshot, R=replay      [?]",
   "Rgm commands: m=long term memory display, G=display gene settings    [?]",
@@ -813,7 +813,7 @@ char *nexthelp[] =
 char **helpline = nexthelp;
 
 int givehelp ()
-{ 
+{
   if (*helpline == NULL) helpline = nexthelp;
   saynow (*helpline++);
 }
@@ -825,7 +825,7 @@ int givehelp ()
  */
 
 int pauserogue ()
-{ 
+{
   at (23, 0);
   addstr ("--press space to continue--");
   clrtoeol ();
@@ -838,8 +838,8 @@ int pauserogue ()
 
 /*
  * getrogver: Read the output of the Rogue version command
- *            and set version. RV36B = 362 (3.6 with wands) 
- *            and RV52A = 521 (5.2). Note that RV36A is 
+ *            and set version. RV36B = 362 (3.6 with wands)
+ *            and RV52A = 521 (5.2). Note that RV36A is
  *            infered when we send a "//" command to identify
  *            wands.
  *
@@ -851,11 +851,11 @@ int pauserogue ()
 int getrogver ()
 { register char *vstr = versionstr, *m = VERMSG;
   register int cnt = 2000, ch;
- 
+
   if (replaying)			/* Look for version string in log */
   { while (cnt-- > 0 && *m)
     { if (fgetc (logfile) == *m) m++; else m = VERMSG;}
-  
+
     if (*m == '\0')			/* Found VERMSG, get version string */
     { while ((ch = fgetc (logfile)) != ' ') *(vstr++) = ch;
       *--vstr = '\0';
@@ -891,7 +891,7 @@ int getrogver ()
 int charsavail ()
 { long n;
   int retc;
-  
+
   if (retc = ioctl (READ, FIONREAD, &n))
   { saynow ("Ioctl returns %d, n=%ld.\n", retc, n);
     n=0;
@@ -908,7 +908,7 @@ int charsavail ()
 int redrawscreen ()
 { register int i, j;
   char ch;
-  
+
   clear ();
 
   for (i = 1; i < 24; i++) for (j = 0; j < 80; j++)
@@ -916,7 +916,7 @@ int redrawscreen ()
 
   at (row, col);
 
-  refresh ();  
+  refresh ();
 }
 
 /*
@@ -933,7 +933,7 @@ void toggleecho ()
       saynow ("can't open %s", ROGUELOG);
     }
     else
-    { fprintf (fecho, "Rogomatic Game Log\n\n"); 
+    { fprintf (fecho, "Rogomatic Game Log\n\n");
       saynow ("Logging to file %s", ROGUELOG);
       cecho = 1;
       if (*versionstr) command (T_OTHER, "v");
@@ -997,11 +997,11 @@ FILE *f;
   char *statusline();
   long clock;
 
-  /* Now get the current time, so we can date the snapshot */    
+  /* Now get the current time, so we can date the snapshot */
   clock = time(&clock);
   ts = localtime(&clock);
 
-  /* Print snapshot timestamp */  
+  /* Print snapshot timestamp */
   fprintf (f, "\nSnapshot taken on %s %d, %d at %02d:%02d:%02d:\n\n",
            month[ts -> tm_mon], ts -> tm_mday, 1900 + ts -> tm_year,
            ts -> tm_hour, ts -> tm_min, ts -> tm_sec);
@@ -1018,17 +1018,17 @@ FILE *f;
 
   /* Print status variables */
   fprintf (f, "\n\n%s\n\n", statusline ());
-  
+
   /* Print the inventory */
-  
-  dumpinv (f); 
+
+  dumpinv (f);
   fprintf (f, "\n");
   putn ('-', f, 79);
   fprintf (f, "\n");
 }
 
 /*
- * getlogtoken: routine to retrieve a rogue token from the log file. 
+ * getlogtoken: routine to retrieve a rogue token from the log file.
  * This allows us to replay a game with all the diagnostic commands of
  * Rog-O-Matic at our disposal.					LGCH.
  */
@@ -1050,7 +1050,7 @@ int getlogtoken()
       while ((int) ch != NEWLINE && (int) ch != EOF)
 	ch = GETLOGCHAR;
   }
-  
+
   if (ch == '{')
   { ch1 = GETLOGCHAR;
     ch2 = GETLOGCHAR;
@@ -1189,7 +1189,7 @@ statusline ()
   if (*genocided) sprintf (s, "%sgenocided '%s', ", s, genocided);
 
   sprintf (s, "%s%d food%s, %d missile%s, %d turn%s, (%d,%d %d,%d) bonus",
-           s, larder, plural(larder), ammo, plural(ammo), turns, 
+           s, larder, plural(larder), ammo, plural(ammo), turns,
            plural(turns), gplushit, gplusdam, wplushit, wplusdam);
 
   return (s);

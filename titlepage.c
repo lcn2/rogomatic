@@ -57,7 +57,7 @@ NULL};
 
 # define NEXTCHAR (*cbf?*cbf++:(cbf=1+ *movie++)[-1])
 
-/* 
+/*
  * animate: Display a movie on the screen.  A movie is a list of strings
  * wherein each character is either a bell command '}', a synchronize
  * command '~', or a triplet <row+32, col+32, char> indicating a character
@@ -107,7 +107,7 @@ char *movie[];
 }
 
 /*
- * halftimeshow: If its time for a halftime show, call movie.  Variable 
+ * halftimeshow: If its time for a halftime show, call movie.  Variable
  * 'nohalf' is true if the user does not want to see a halftime show.
  */
 

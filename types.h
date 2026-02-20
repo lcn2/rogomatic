@@ -2,7 +2,7 @@
  * types.h: Rog-O-Matic XIV (CMU) Sat Mar  7 12:40:14 1987 - mlm
  * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
  *
- * Miscellaneous Macros and Constants 
+ * Miscellaneous Macros and Constants
  *
  * EDITLOG
  *	LastEditDate = Sat Mar  7 12:40:14 1987 - Michael Mauldin
@@ -321,7 +321,7 @@ typedef struct { char m_name[NAMSIZ];
 		 probability wehit, theyhit, arrowhit;
 		 statistic htokill, damage, atokill; } ltmrec;
 
-typedef struct { stuff type; 
+typedef struct { stuff type;
                  int   count, phit, pdam, charges, traits;
 		 char  *str;  } invrec;
 

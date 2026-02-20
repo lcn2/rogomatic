@@ -1,8 +1,8 @@
 /*
  * arms.c: Rog-O-Matic XIV (CMU) Sat Feb 16 09:47:34 1985 - mlm
  * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
- * 
- * This file contains all utility functions which exist for armor, 
+ *
+ * This file contains all utility functions which exist for armor,
  * weapons and rings.
  */
 
@@ -44,7 +44,7 @@ int k, print, rustproof;
     for (i = 0; i<n; i++)
       mvprintw (i+3, 8, "%2d: %3d %s", i+1, armval[i], itemstr (armind[i]));
   }
-  
+
   return ((k <= n) ? armind[k-1] : NONE);
 }
 
@@ -60,7 +60,7 @@ int i;
 
   if (inven[i].type != armor)
     return (1000);
-    
+
   if (stlmatch (inven[i].str, "leather"))        class = 8;
   else if (stlmatch (inven[i].str, "ring"))      class = 7;
   else if (stlmatch (inven[i].str, "studded"))   class = 7;
@@ -109,7 +109,7 @@ int k, print;
 
     /*
      * Put enchanted weapons above unenchanted ones if the weapon
-     * ratings are equal.  DR UTexas 25 Jan 84 
+     * ratings are equal.  DR UTexas 25 Jan 84
      */
 
     for (j = n-1; j > 0; j--)
@@ -132,7 +132,7 @@ int k, print;
 }
 
 /*
- * weaponclass: Given the index of a weapon, return the weapon class. 
+ * weaponclass: Given the index of a weapon, return the weapon class.
  *              This is the average damage done + 3/2 the plus to
  *              hit, multiplied by 10. Magic arrows are given very
  *              high numbers.
@@ -142,7 +142,7 @@ int weaponclass (i)
 int i;
 { int class, hitplus = 0, damplus = 0;
 
-  /* Swords and maces are always valid weapons */   
+  /* Swords and maces are always valid weapons */
   if (inven[i].type == hitter)
     ;
   /* Under special circumstances, arrows are valid weapons (Hee hee) */
@@ -153,10 +153,10 @@ int i;
   else
     return (0);
 
-  /* 
-   * Set the basic expected damage done by the weapon. 
+  /*
+   * Set the basic expected damage done by the weapon.
    */
-    
+
   if (stlmatch (inven[i].str, "mace"))
     class =  50;
   else if (stlmatch (inven[i].str, "two handed sword"))
@@ -173,10 +173,10 @@ int i;
   { hitplus += inven[i].phit;
 
     if (inven[i].pdam != UNKNOWN)
-      damplus = inven[i].pdam; 
+      damplus = inven[i].pdam;
   }
 
-  /* 
+  /*
    * Strategy for "Magic Arrows". These are single arrows when
    * we are cheating. Since arrows normally come in clumps, and
    * since we have never (in cheat mode) thrown any, then a
@@ -189,7 +189,7 @@ int i;
     return (1800);
 
   else if (cheat && version <= RV36B && stlmatch (inven[i].str, "arrow") &&
-           inven[i].count == 1 && !itemis (i, WORTHLESS) && 
+           inven[i].count == 1 && !itemis (i, WORTHLESS) &&
            (!badarrow || i != currentweapon))
   { hitplus = 50;  damplus = 50; }
 
@@ -226,7 +226,7 @@ int k, print;
       mvprintw (i+3, 8, "%2d: %5d  %s", i+1, ringval[i], itemstr (ringind[i]));
   }
 
-  /* 
+  /*
    * Since rings are class [1-1000] if we don't want to wear them,
    * return the ring index only if its value is greater than 1000.
    */
@@ -235,7 +235,7 @@ int k, print;
 }
 
 /*
- * ringclass: Given the index of a ring, return the ring class. 
+ * ringclass: Given the index of a ring, return the ring class.
  *            This is a subjective measure of how much good it
  *            would do us to wear this ring. Values of [1-1000] indicates
  *            that we should not wear this ring at all. A value of 0
@@ -284,14 +284,14 @@ int i;
 
   /* A ring of sustain strength */
   else if (stlmatch (inven[i].str, "sustain strength"))
-  { 
+  {
     /* A second ring of sustain strength is useless */
     if (!itemis (i, INUSE) && wearing ("sustain strength") != NONE)
       class = 0;
 
     else
-      class = (havefood (3) ? 1000 : 0) + 
-              (Level > 12 ? 150 : 
+      class = (havefood (3) ? 1000 : 0) +
+              (Level > 12 ? 150 :
                Str > 2000 ? 700 :
                Str > 1600 ? Str - 1200 :
                             100);
@@ -303,12 +303,12 @@ int i;
 
   /* A ring of see invisible */
   else if (stlmatch (inven[i].str, "see invisible"))
-  { 
+  {
     /* A second ring of see invisible is useless */
     if (!itemis (i, INUSE) && wearing ("see invisible") != NONE)
       class = 0;
 
-    /* 
+    /*
      * If we are beingstalked and we are wearing this ring, then
      * we should take it off and put it on to set the Rogue CANSEE
      * bit, which can be unset by a second ring of see invisible or
@@ -350,13 +350,13 @@ int i;
     /* the character after any level. They each add one hit point per */
     /* turn of rest regardless of your level!			MLM   */
 
-    class = 50*(Hpmax-Hp-Explev) + 500; 
+    class = 50*(Hpmax-Hp-Explev) + 500;
     if (foughtmonster && class < 1100) class = 1100;
   }
 
   /* A ring of slow digestion */
   else if (stlmatch (inven[i].str, "slow digestion"))
-  { 
+  {
     /* A second ring of slow digestion is not too useful */
     if (havefood (0) && !itemis (i, INUSE) &&
 	wearing ("slow digestion") != NONE)
@@ -372,7 +372,7 @@ int i;
   }
 
   /* A ring of teleportation */
-  else if (stlmatch (inven[i].str, "telportation") || 
+  else if (stlmatch (inven[i].str, "telportation") ||
            stlmatch (inven[i].str, "teleportation"))
   { class = 0; }
 
@@ -384,7 +384,7 @@ int i;
       class = 0;
 
     else
-    { class = (havefood (1) ? 1000 : 0) + 
+    { class = (havefood (1) ? 1000 : 0) +
              (Level > 17 ? 850 : Level > 12 ? 700 : 300);
     }
   }
@@ -395,7 +395,7 @@ int i;
 
     /* No rust monsters yet or cursed armor */
     if (Level < 9 || cursedarmor) return (900);
-    
+
     /* Past the rust monsters */
     else if (Level > 18) return (300);
 
@@ -464,7 +464,7 @@ int k, print;
 }
 
 /*
- * bowclass: Given the index of a bow, return the bow class. 
+ * bowclass: Given the index of a bow, return the bow class.
  *           This is the average damage done + 6/5 the plus to
  *           hit, multiplied by 10.
  */
@@ -485,7 +485,7 @@ int i;
   { hitplus += inven[i].phit;
 
     if (inven[i].pdam != UNKNOWN)
-      damplus = inven[i].pdam; 
+      damplus = inven[i].pdam;
   }
 
   return (class + 12*hitplus + 10*damplus);
@@ -512,9 +512,9 @@ int havemissile ()
 	  inven[i].count < fewest &&
 	  !itemis (i, INUSE) &&
           (inven[i].type == missile ||
-           stlmatch(inven[i].str,"spear") || 
-           stlmatch(inven[i].str,"dagger") || 
-           stlmatch(inven[i].str,"mace") && inven[i].phit <= 0 || 
+           stlmatch(inven[i].str,"spear") ||
+           stlmatch(inven[i].str,"dagger") ||
+           stlmatch(inven[i].str,"mace") && inven[i].phit <= 0 ||
            stlmatch(inven[i].str,"long sword") && inven[i].phit < 0))
       { obj = i; fewest = inven[i].count; }
   }
@@ -556,34 +556,34 @@ int plusweapon ()
   usesynch = 0;
 }
 
-/* 
+/*
  * hitbonus: Return the bonus to hit.
  */
 
 int hitbonus (strength)
 int strength;
 { int bonus = 0;
-  
+
   if (strength < 700) bonus = strength/100 - 7;
 
   else if (version > RV36B)
   { if (strength < 1700) bonus = 0;
     else if (strength < 2100) bonus = 1;
     else if (strength < 3100) bonus = 2;
-    else bonus = 3;    
+    else bonus = 3;
   }
 
-  else 
+  else
   { if (strength < 1700) bonus = 0;
     else if (strength < 1851) bonus = 1;
     else if (strength < 1900) bonus = 2;
-    else bonus = 3;    
+    else bonus = 3;
   }
 
   return (bonus);
 }
 
-/* 
+/*
  * damagebonus: bonus = the damage bonus.
  */
 
@@ -603,20 +603,20 @@ int strength;
     else bonus = 6;
   }
 
-  else 
+  else
   { if (strength < 1600) bonus = 0;
     else if (strength < 1800) bonus = 1;
     else if (strength < 1801) bonus = 2;
     else if (strength < 1876) bonus = 3;
     else if (strength < 1891) bonus = 4;
     else if (strength < 1900) bonus = 5;
-    else bonus = 6;    
+    else bonus = 6;
   }
 
   return (bonus);
 }
 
-/* 
+/*
  * setbonuses: Set global hit and damage pluses.
  */
 

@@ -33,7 +33,7 @@ char *argv[];
   int bucket[NUMBUK], killed[NUMBUK][NOMON], level = 0, dolev = 0;
   int total[NOMON];
   register int i, j, h, f;
-  char killer[100], plot[128];  
+  char killer[100], plot[128];
 
   /* Zero the buckets */
   for (i = NUMBUK; i--; )
@@ -74,7 +74,7 @@ char *argv[];
     else       { if ((h = BUCKET(score)) >= NUMBUK) h = NUMBUK-1; }
 
     bucket[h]++;
-    
+
     if (stlmatch ("arrow", killer))			killnum = 1;
     else if (stlmatch ("black unicorn", killer))	killnum = 'u'-'a'+2;
     else if (stlmatch ("bolt", killer))			killnum = 1;
@@ -92,7 +92,7 @@ char *argv[];
     else killnum = *killer - 'a' + 2;
 
     killed[h][killnum]++;
-        
+
     if (bucket[h] > maxfreq) maxfreq = bucket[h];
   }
 
@@ -113,7 +113,7 @@ char *argv[];
       else
         sprintf (plot, "|         |         |         |         |         |");
     }
-    
+
     for (i = 0; i < NUMBUK; i++)
       if (bucket[i] >= f)
       { plot[i] = '#';
@@ -126,7 +126,7 @@ char *argv[];
 	  }
 	}
       }
-    
+
     if (f%5 == 0)
       printf ("     %3d %s\n", f, plot);
     else

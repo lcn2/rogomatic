@@ -1,8 +1,8 @@
 /*
  * rgmplot.c: Rog-O-Matic XIV (CMU) Tue Feb  5 15:00:59 1985 - mlm
  * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
- * 
- * This program takes a Rog-O-Matic score file sorted by date and score, 
+ *
+ * This program takes a Rog-O-Matic score file sorted by date and score,
  * and produces a scatter plot of the scores.
  */
 
@@ -14,7 +14,7 @@
 # define SCALE(n) (((n)+100)/200)
 # define isdigit(c) ((c) >= '0' && (c) <= '9')
 
-char *month[] = 
+char *month[] =
 { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
@@ -29,7 +29,7 @@ char *argv[];
 { int mm, dd, yy, score = 0, lastday = -1, lastmon = -1, lastyy = -1, h;
   int sumscores = 0, numscores = 0, i;
   int sum[AVLEN], num[AVLEN], rsum, rnum, davg, ravg;
-  char player[100], plot[128], buf[15], cheated;  
+  char player[100], plot[128], buf[15], cheated;
 
   /* Clear out the rolling average statistics */
   for (i = 0; i < AVLEN; i++)
@@ -50,7 +50,7 @@ char *argv[];
 
   /*  Print out the header */
   printf ("\t\t   Scatter Plot of Rog-O-Matic Scores versus time\n\n");
-  if (min > 0) 
+  if (min > 0)
     printf ("\t\t              Scores greater than %d\n\n", min);
   printf ("\t\t0      2000      4000      6000      8000     10000\n");
   printf ("\t\t|----+----|----+----|----+----|----+----|----+----|\n");
@@ -61,7 +61,7 @@ char *argv[];
 
   /* While more scores do action for each score */
   while (getscore (&mm, &dd, &yy, player, &score, &cheated) != EOF)
-  { 
+  {
     /* Change days, overprint the average for day, rolling avg */
     if ((dd != lastday || mm != lastmon || yy != lastyy) && lastday > 0)
     { if (doavg)
@@ -74,8 +74,8 @@ char *argv[];
 
         /* Roll the daily average statistics */
         for (i = AVLEN-1; i > 0; i--)
-        { sum[i] = sum[i-1]; num[i] = num[i-1]; } 
-        *sum = *num = 0;	  	
+        { sum[i] = sum[i-1]; num[i] = num[i-1]; }
+        *sum = *num = 0;
 
         /* Print a '*' for the daily average */
         if (davg > 0 && davg < WIDTH)
@@ -85,12 +85,12 @@ char *argv[];
         if (ravg > 0 && ravg < WIDTH-1)
 	  plot[ravg-1] = plot[ravg] = plot[ravg+1] = '#';
       }
-          
+
       printf ("%3s %2d %4d\t%s\n", month[lastmon-1], lastday, lastyy, plot);
       strcpy (plot, "|                                                 |");
-      
+
     }
-    
+
     if (score > EOF)
     { if ((h = SCALE(score)) >= WIDTH) { sprintf (buf, " %d", score);  strcat(plot, buf); }
       else if (plot[h] == '9')          ;
@@ -109,14 +109,14 @@ char *argv[];
 
   printf ("\t\t|----+----|----+----|----+----|----+----|----+----|\n");
   printf ("\t\t0      2000      4000      6000      8000     10000\n");
-  
+
 
   if (numscores > 0)
-    printf ("\nAverage score %d, total games %d.\n\n", 
+    printf ("\nAverage score %d, total games %d.\n\n",
             sumscores/numscores, numscores);
 
   printf ("1-9    Number of games in range.\n");
-    
+
   if (doavg)
   { printf (" *     Average of day's scores.\n");
     printf ("###    Rolling %d day average.\n", AVLEN);
@@ -135,7 +135,7 @@ char *s;
     s[i] = ch;
 
   s[i] = '\0';
-  
+
   if (ch == EOF)
   { endfile = 1;
     strcpy (s, "-1 -1, -1 string -1 ");

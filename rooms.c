@@ -585,7 +585,7 @@ register int row, col;
       if ((!cosmic || onrc (BEEN, row, col)) && onrc (STUFF, row, col))
         deletestuff (row, col);
       setrc (SEEN | CANGO | SAFE | ROOM | STAIRS | EVERCLR, row, col);
-      unsetrc (DOOR | HALL | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP | 
+      unsetrc (DOOR | HALL | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP |
 	       BEARTRP | DARTRAP | MONSTER | SCAREM | SLEEPER,
                row, col);
       stairrow = row;
@@ -822,7 +822,7 @@ register int r, c;
 
   if (dir < 0) return;
 
-  if (dir % 4 == 0) 			     /* If horizontal dir */
+  if (dir % 4 == 0)			     /* If horizontal dir */
   { inc = -deltc[dir]; rm = whichroom (r, c);
     end1 = bounds[rm].top; end2 = bounds[rm].bot;
     if (inc < 0) end = bounds[rm-1].left;
@@ -896,7 +896,7 @@ register int r1, c1, r2, c2;
 
   for (r = min (r1, r2) - 1; r <= endr + 1; r++)
     for (c = min (c1, c2) - 1; c <= endc + 1; c++)
-      setrc (SEEN, r, c); 		     /* Nothing to see here */
+      setrc (SEEN, r, c);		     /* Nothing to see here */
 }
 
 /*
@@ -1010,7 +1010,7 @@ int dumpmazedoor ()
   at (row, col);
 }
 
-/* 
+/*
  * foundnew: Reactivate rules which new new squares to work
  */
 

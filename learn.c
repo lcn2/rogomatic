@@ -105,13 +105,13 @@ int full;
   { statistic gs;
     register int k;
     extern char *knob_name[];
-    
+
     for (k=0; k<MAXKNOB; k++)
     { clearstat (&gs);
-      
+
       for (g=0; g<length; g++)
       { addstat (&gs, genes[g]->dna[k]); }
-      
+
       printf ("%s%5.2lf+%1.2lf\n", knob_name[k], mean (&gs), stdev (&gs));
     }
   }
@@ -141,7 +141,7 @@ int full;
 int setknobs (newid, knb, best, avg)
 int *newid, *knb, *best, *avg;
 { register int i, g;
-  
+
   ++trialno;
 
   g = pickgenotype ();	/* Pick one genotype */
@@ -166,7 +166,7 @@ int gid, score, level;
   for (g=0; g<length; g++)
     if (gid == genes[g]->id) break;
 
-  /* If he got deleted by someone else, blow it off */  
+  /* If he got deleted by someone else, blow it off */
   if (g >= length) return;
 
   /* Add information about performance */
@@ -192,7 +192,7 @@ int gid, score, level;
 
 FILE *openlog (genelog)
 register char *genelog;
-{ glog = wopen (genelog, "a");    
+{ glog = wopen (genelog, "a");
   return (glog);
 }
 
@@ -210,12 +210,12 @@ int closelog ()
 
 int pickgenotype ()
 { register int youth, father, mother, new;
-  
+
   /* Find genotype with fewer trials than needed to measure its performance */
   youth = untested ();
   if (youth >= 0) return (youth);
 
-  /* 
+  /*
    * Have a good measure of all genotypes, pick a father, a mother, and
    * a loser and create a new genotype using genetic operators.
    */
@@ -226,14 +226,14 @@ int pickgenotype ()
 
   /* If no losers yet, return the youngest */
   if (new < 0) return (youngest ());
- 
+
   /* Shift a single genotype with probability pshift */
   if (randint (100) < pshift)
   { if (glog)
     { fprintf (glog, "Select: "); summgene (glog, genes[father]);
       fprintf (glog, "Death:  "); summgene (glog, genes[new]);
     }
- 
+
     shift (father, new);
   }
 
@@ -243,7 +243,7 @@ int pickgenotype ()
     { fprintf (glog, "Select: "); summgene (glog, genes[father]);
       fprintf (glog, "Death:  "); summgene (glog, genes[new]);
     }
- 
+
     mutate (father, new);
   }
 
@@ -254,14 +254,14 @@ int pickgenotype ()
       fprintf (glog, "Select: "); summgene (glog, genes[mother]);
       fprintf (glog, "Death:  "); summgene (glog, genes[new]);
     }
- 
+
     cross (father, mother, new);
   }
 
   /* Log the birth */
   if (glog) birth (glog, genes[new]);
 
-  return (new);  		/* Evaluate the new genotype */
+  return (new);			/* Evaluate the new genotype */
 }
 
 /*
@@ -363,7 +363,7 @@ register char *genepool;
   /* Loop through each genotype */
   for (g=0; g<length; g++)
     writegene (gfil, genes[g]);
-  
+
   fclose (gfil);
 }
 
@@ -381,7 +381,7 @@ register genotype *g;
 	  g->father, g->mother);
 
   /* Write out dna */
-  for (i=0; i<MAXKNOB; i++) 
+  for (i=0; i<MAXKNOB; i++)
   { fprintf (gfil, "%2d", g->dna[i]);
     if (i < MAXKNOB-1) fprintf (gfil, " ");
   }
@@ -421,7 +421,7 @@ static int compgene (a, b)
 genotype **a, **b;
 { register int result;
 
-  result = (int) mean (&((*b)->score)) - 
+  result = (int) mean (&((*b)->score)) -
            (int) mean (&((*a)->score));
 
   if (result) return (result);
@@ -496,7 +496,7 @@ register int father, mother, new;
   genes[new]->mother = genes[mother]->id;
   clearstat (&(genes[new]->score));
   clearstat (&(genes[new]->level));
-  
+
   /* Pick a crossover point and dominant parent */
   cpoint = randint (MAXKNOB-1) + 1;
 
@@ -511,12 +511,12 @@ register int father, mother, new;
 
   makeunique (new);
 
-  /* Log the crossover */  
+  /* Log the crossover */
   if (glog)
   { fprintf (glog, "Crossing %d and %d produces %d\n",
 		genes[father]->id,  genes[mother]->id, genes[new]->id);
   }
-  
+
   crosses++;
 }
 
@@ -536,7 +536,7 @@ register int father, new;
   clearstat (&(genes[new]->score));
   clearstat (&(genes[new]->level));
 
-  /* Copy the dna over */  
+  /* Copy the dna over */
   for (i=0; i<MAXKNOB; i++)
     genes[new]->dna[i] = genes[father]->dna[i];
 
@@ -563,7 +563,7 @@ register int father, new;
 static int shift (father, new)
 register int father, new;
 { register int i, offset;
-  
+
   /* Set the new genotypes info */
   genes[new]->id = ++lastid;
   genes[new]->creation = trialno;
@@ -575,7 +575,7 @@ register int father, new;
   /* Pick an offset, triangularly distributed around 0, until unique */
   offset = triangle (20);
   for (i=0; i<MAXKNOB; i++)
-    genes[new]->dna[i] = (genes[father]->dna[i] + 
+    genes[new]->dna[i] = (genes[father]->dna[i] +
 			  offset + ALLELE) % ALLELE;
 
   makeunique (new);
@@ -607,7 +607,7 @@ register int m;
     for (i=0; i<MAXKNOB; i++) genes[g]->dna[i] = randint (ALLELE);
     birth (glog, genes[g]);
   }
-  
+
   length = m;
 }
 
@@ -626,7 +626,7 @@ register int e1, e2;
     /* total += (int) mean (&(genes[g]->score)); */
     total += genes[g]->score.high;
   }
-  
+
   /* Pick a random number and find the corresponding gene */
   if (total > 0)
   { for (g=0, total=randint (total); g<length; g++)
@@ -660,7 +660,7 @@ register int new;
       if (sumsquares < mindiff) return (0);
     }
   }
-  
+
   return (1);
 }
 
@@ -672,7 +672,7 @@ register int new;
 
 static int untested ()
 { register int g, y= -1, trials=1e9, newtrials, count=length;
-  
+
   for (g = randint (length); count-- > 0; g = (g+1) % length)
   { if (TRIALS (genes[g]) >= trials) continue;
 
@@ -691,7 +691,7 @@ static int untested ()
 
 static int youngest ()
 { register int g, y=0, trials=1e9, newtrials, count=length;
-  
+
   for (g = randint (length); count-- > 0; g = (g+1) % length)
   { newtrials = TRIALS (genes[g]);
     if (newtrials < trials) { y=g; trials=newtrials; }
@@ -726,7 +726,7 @@ register int n;
   do
   { val = randint (n) - randint (n);
   } while (val==0);
-  
+
   return (val);
 }
 
@@ -742,10 +742,10 @@ register int e1, e2;
 
   worst = -1; worstval = 1.0e9;
   bestval = -1.0e9;
-    
+
   for (g=0; g<length; g++)
   { if ((trials = TRIALS (genes[g])) < mintrials) continue;
-    avg = mean (&(genes[g]->score));    
+    avg = mean (&(genes[g]->score));
     dev = stdev (&(genes[g]->score)) / sqrt ((double) trials);
     value = avg - step * dev;
     if (value > bestval) { bestval=value; }

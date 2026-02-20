@@ -7,7 +7,7 @@
  * Automatically exploring the dungeons of doom
  * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin
  *
- * The right is granted to any person, university, or company 
+ * The right is granted to any person, university, or company
  * to copy, modify, or distribute (for free) these files,
  * provided that any person receiving a copy notifies Michael Mauldin
  *
@@ -98,7 +98,7 @@
 # include <curses.h>
 # include <ctype.h>
 # include <signal.h>
-# include <setjmp.h>  
+# include <setjmp.h>
 # include <stdlib.h>
 # include <string.h>
 # include <unistd.h>
@@ -169,7 +169,7 @@ int   debugging = D_NORMAL;	/* Debugging options in effect */
 int   didfight = 0;             /* Last command caused fighting */
 int   didreadmap = 0;		/* Last level we read a map on */
 int   doorlist[40];		/* List of doors on this level */
-int   doublehasted = 0; 	/* True if double hasted (Rogue 3.6) */
+int   doublehasted = 0;		/* True if double hasted (Rogue 3.6) */
 int   droppedscare = 0;		/* True if we dropped 'scare' on this level */
 int   emacs = 0;		/* True ==> format output for Emacs */
 int   exploredlevel = 0;	/* We completely explored this level */
@@ -249,7 +249,7 @@ char getroguetoken (), *getname();
 FILE *openlog();
 
 /* Stuff list, list of objects on this level */
-stuffrec slist[MAXSTUFF]; 	int slistlen=0;
+stuffrec slist[MAXSTUFF];	int slistlen=0;
 
 /* Monster list, list of monsters on this level */
 monrec mlist[MAXMONST];		int mlistlen=0;
@@ -354,15 +354,15 @@ char *argv[];
   /*
    * Initialize some storage
    */
-  
+
   strcpy(genocided, "");
   sprintf (lastcmd, "i");
   sprintf (ourkiller, "unknown");
   strcpy(sumline, "");
   strcpy(versionstr, "");
   for (i = 80 * 24; i--; ) screen[0][i] = ' ';
- 
-  /* 
+
+  /*
    * The first argument to player is a two character string encoding
    * the file descriptors of the pipe ends. See setup.c for call.
    *
@@ -384,10 +384,10 @@ char *argv[];
   }
 
   /* The second argument to player is the process id of Rogue */
-  if (argc > 2) rogpid = atoi (argv[2]);                  
+  if (argc > 2) rogpid = atoi (argv[2]);
 
   /* The third argument is an option list */
-  if (argc > 3) sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d", 
+  if (argc > 3) sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d",
 			&cheat, &noterm, &startecho, &nohalf,
 			&emacs, &terse, &transparent, &quitat);
 
@@ -416,21 +416,21 @@ char *argv[];
   getrogver ();				/* Figure out Rogue version */
 
   if (!replaying)
-  { restoreltm ();			/* Get long term memory of version */ 
+  { restoreltm ();			/* Get long term memory of version */
     startlesson ();			/* Start genetic learning */
   }
 
-  /* 
+  /*
    * Give a hello message
    */
 
   if (replaying)
-    sprintf (msg, " Replaying log file %s, version %s.", 
+    sprintf (msg, " Replaying log file %s, version %s.",
 	     logfilename, versionstr);
   else
     sprintf (msg, " %s: version %s, genotype %d, quit at %d.",
 	     roguename, versionstr, geneid, quitat);
-  
+
   if (emacs)
   { fprintf (realstdout, "%s  (%%b)", msg); fflush (realstdout); }
   else if (terse)
@@ -438,7 +438,7 @@ char *argv[];
   else
   { saynow (msg); }
 
-  /* 
+  /*
    * Now that we have the version figured out, we can properly
    * interpret the screen.  Force a redraw by sending a redraw
    * screen command (^L for old, ^R for new).
@@ -452,23 +452,23 @@ char *argv[];
   else
     sendnow ("%c;", ctrl('r'));
 
-  /* 
+  /*
    * If we are not replaying an old game, we must position the
    * input after the next form feed, which signals the start of
    * the level drawing.
    */
-  
+
   if (!replaying)
     while ((int) (ch = GETROGUECHAR) != CL_TOK && (int) ch != EOF);
 
   clearscreen ();
 
-  /* 
+  /*
    * Note: If we are replaying, the logfile is now in synch
    */
 
   getrogue (ill, 2);  /* Read the input up to end of first command */
-  
+
   /* Identify all 26 monsters */
   if (!replaying)
     for (ch = 'A'; ch <= 'Z'; ch++) send ("/%c", ch);
@@ -490,10 +490,10 @@ char *argv[];
     interrupted = 0;
     transparent = 1;
   }
-  
+
   if (transparent) noterm = 0;
 
-  while (playing) 
+  while (playing)
   { refresh ();
 
     /* If we have any commands to send, send them */
@@ -501,12 +501,12 @@ char *argv[];
     { if (startingup) showcommand (lastcmd);
       sendnow (";"); getrogue (ill, 2);
     }
-    
+
     if (startingup)		/* All monsters identified */
     { versiondep ();			/* Do version specific things */
       startingup = 0;			/* Clear starting flag */
     }
-    
+
     if (!playing) break;	/* In case we died */
 
     /*
@@ -525,13 +525,13 @@ char *argv[];
 
       switch (ch)
       { case '?': givehelp (); break;
-      
-        case '\n': if (terse) 
+
+        case '\n': if (terse)
 	           { printsnap (realstdout); fflush (realstdout); }
 	           else
                    { singlestep = 1; transparent = 1; }
 		   break;
-	           
+
         /* Rogue Command Characters */
         case 'H': case 'J': case 'K': case 'L':
         case 'Y': case 'U': case 'B': case 'N':
@@ -542,8 +542,8 @@ char *argv[];
         case 'f': ch = getch ();
                   for (s = "hjklyubnHJKLYUBN"; *s; s++)
                   { if (ch == *s)
-                    { if (version < RV53A) command (T_OTHER, "f%c", ch); 
-		      else                 command (T_OTHER, "%c", ctrl (ch)); 
+                    { if (version < RV53A) command (T_OTHER, "f%c", ch);
+		      else                 command (T_OTHER, "%c", ctrl (ch));
 		    }
                   }
                   transparent = 1; break;
@@ -554,7 +554,7 @@ char *argv[];
 
         case 'M':   dumpmazedoor (); break;
 
-        case '>': if (atrow == stairrow && atcol == staircol) 
+        case '>': if (atrow == stairrow && atcol == staircol)
                     command (T_OTHER, ">");
                   transparent = 1; break;
 
@@ -582,7 +582,7 @@ char *argv[];
                   break;
 
         case '~': if (replaying)
-		    saynow ("Replaying log file %s, version %s.", 
+		    saynow ("Replaying log file %s, version %s.",
 			    logfilename, versionstr);
 		  else
 		    saynow (" %s: version %s, genotype %d, quit at %d.",
@@ -670,10 +670,10 @@ char *argv[];
                     saynow ("Replay position only works in replay mode.");
                   break;
 
-        case 'S': quitrogue ("saved", Gold, SAVED); 
+        case 'S': quitrogue ("saved", Gold, SAVED);
                   playing = 0; break;
 
-        case 'Q': quitrogue ("user typing quit", Gold, FINISHED); 
+        case 'Q': quitrogue ("user typing quit", Gold, FINISHED);
                   playing = 0; break;
 
         case ROGQUIT: dwait (D_ERROR, "Strategize failed, gave up.");
@@ -684,20 +684,20 @@ char *argv[];
     { singlestep = 0;
     }
   }
-  
+
   if (! replaying)
   { saveltm (Gold);			/* Save new long term memory */
-    endlesson ();			/* End genetic learning */  
+    endlesson ();			/* End genetic learning */
   }
 
   /* Print termination messages */
   at (23, 0); clrtoeol (); refresh ();
   nocrmode (); noraw (); echo (); endwin ();
-  
-  if (emacs)  
+
+  if (emacs)
   { if (*sumline) fprintf (realstdout, " %s", sumline);
   }
-  else if (terse)  
+  else if (terse)
   { if (*sumline) fprintf (realstdout, "%s\n",sumline);
     fprintf (realstdout, "%s %s est.\n", gamename, termination);
   }
@@ -706,7 +706,7 @@ char *argv[];
     printf ("%s %s est.\n", gamename, termination);
   }
 
-  /* 
+  /*
    * Rename log file, if it is open
    */
 
@@ -806,7 +806,7 @@ int endlesson ()
       closelog ();
       unlock_file (genelock);		/* Disable interrupts */
     }
-    else 
+    else
       fprintf (stderr, "Cannot lock gene pool to evaluate '%s'\n", genepool);
 
     uncritical ();			/* Re-enable interrupts */

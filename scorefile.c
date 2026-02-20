@@ -23,7 +23,7 @@
 
 static char lokfil[100];
 
-/* 
+/*
  * add_score: Write a new score line out to the correct rogomatic score
  * file by creating a temporary copy and inserting the new line in the
  * proper place. Be tense about preventing simultaneous access to the
@@ -33,7 +33,7 @@ static char lokfil[100];
 void add_score (new_line, vers, ntrm)
 char *new_line, *vers;
 int ntrm;
-{ 
+{
   int   wantscore = 1;
   char  ch;
   char  newfil[100];
@@ -45,12 +45,12 @@ int ntrm;
   /* Defer interrupts while mucking with the score file */
   critical ();
 
-  /* 
+  /*
    * Lock the score file. If lock_file fails, asks the user whether he
    * wishes to wait. If so, then try lock_file five times and then ask
    * again.
    */
-  
+
   while (lock_file (lokfil, MAXLOCK) == 0)
     if (--wantscore < 1 && !ntrm)
     { printf ("The score file is busy, do you wish to wait? [y/n] ");
@@ -60,7 +60,7 @@ int ntrm;
       else
       { uncritical (); return; }
     }
-  
+
   /* Now create a temporary to copy into */
   if ((newlog = wopen (newfil, "a")) == NULL)
   { printf ("\nUnable to write %s\n", newfil); }
@@ -76,13 +76,13 @@ int ntrm;
   uncritical ();
 }
 
-/* 
+/*
  * dumpscore: Print out the scoreboard.
  */
 
 int dumpscore (vers)
 char *vers;
-{ 
+{
   char  ch, scrfil[100], delfil[100], newfil[100], allfil[100], cmd[550];
   FILE *scoref, *deltaf;
   int   oldmask;
@@ -101,7 +101,7 @@ char *vers;
   { printf ("Score file busy.\n");
     exit (1);
   }
-  
+
   deltaf = fopen (delfil, "r");
   scoref = fopen (scrfil, "r");
 
@@ -112,13 +112,13 @@ char *vers;
     /* Defer interrupts while mucking with the score file */
     critical ();
 
-    /* Make certain any new files are world writeable */    
+    /* Make certain any new files are world writeable */
     oldmask = umask (0);
 
     /* If we have an old file and a delta file, merge them */
     if (scoref != NULL)
     { fclose (scoref);
-      sprintf (cmd, "sort +4nr -o %s %s; sort -m +4nr -o %s %s %s", 
+      sprintf (cmd, "sort +4nr -o %s %s; sort -m +4nr -o %s %s %s",
                newfil, delfil, allfil, newfil, scrfil);
       system (cmd);
       if (filelength (allfil) != filelength (delfil) + filelength (scrfil))
@@ -131,7 +131,7 @@ char *vers;
       { /* New file is okay, unlink old files and pointer swap score file */
         unlink (delfil); unlink (newfil);
 	unlink (scrfil); link (allfil, scrfil); unlink (allfil);
-      }      
+      }
       scoref = fopen (scrfil, "r");
     }
     else
@@ -141,7 +141,7 @@ char *vers;
       unlink (delfil);
       scoref = fopen (scrfil, "r");
     }
- 
+
     /* Restore umask */
     umask (oldmask);
 
@@ -169,7 +169,7 @@ char *vers;
   exit (0);
 }
 
-/* 
+/*
  * intrupscore: We have an interrupt, clean up and unlock the score file.
  */
 

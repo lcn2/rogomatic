@@ -37,18 +37,18 @@ register char *rogue, *roguename;
   {
   /* Run 'rogue -s', and put the scores into a temp file */
   sprintf (cmd, "%s -s >%s", rogue, tmpfname);
-  system (cmd); 
+  system (cmd);
   }
 
   /* If no temp file created, return default score */
   if (fd <= 0 || (tmpfil = fdopen(fd,"r")) == NULL)
-    return (best); 
+    return (best);
 
   /* Skip to the line starting with 'Rank...'. */
   while (fgets (buffer, BUFSIZ, tmpfil) != NULL)
     if (stlmatch (buffer, "Rank")) break;
 
-  if (! feof (tmpfil)) 
+  if (! feof (tmpfil))
   { while (fgets (buffer, BUFSIZ, tmpfil) != NULL)
     { s = buffer;				/* point s at buffer */
       while (ISDIGIT (*s)) s++;			/* Skip over rank */
@@ -62,13 +62,13 @@ register char *rogue, *roguename;
 	break;					/* 'best' is now target */
       }
 
-      if (score < BOGUS && 
+      if (score < BOGUS &&
 	  (score < best || best < 0))		/* Save smallest score */
         best = score;				/*  above Rogy's score */
     }
   }
 
-  unlink (tmpfname); 
+  unlink (tmpfname);
 
   /* Don't quit for very small scores, it's not worth it */
   if (best < 2000) best = -1;

@@ -1,7 +1,7 @@
 /*
  * stats.c: Rog-O-Matic XIV (CMU) Fri Dec 28 23:28:59 1984 - mlm
  * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
- * 
+ *
  * A package for maintaining probabilities and statistics.
  *
  * Functions:
@@ -28,7 +28,7 @@
 # include <math.h>
 # include "types.h"
 
-/* 
+/*
  * clearprob: zero a probability structure.
  */
 
@@ -37,19 +37,19 @@ register  probability *p;
 { p->fail = p->win = 0;
 }
 
-/* 
+/*
  * addprob: Add a data point to a probability
  */
 
 int addprob (p, success)
 register probability *p;
 register int success;
-{ 
+{
   if (success)	p->win++;
   else		p->fail++;
 }
 
-/* 
+/*
  * prob: Calculate a probability
  */
 
@@ -61,7 +61,7 @@ register probability *p;
   else			return ((double) p->win / trials);
 }
 
-/* 
+/*
  * parseprob: Parse a probability structure from buffer 'buf'
  */
 
@@ -72,7 +72,7 @@ register probability *p;
   sscanf (buf, "%d %d", &p->fail, &p->win);
 }
 
-/* 
+/*
  * writeprob. Write the value of a probability structure to file 'f'.
  */
 
@@ -82,7 +82,7 @@ register probability *p;
 { fprintf (f, "%d %d", p->fail, p->win);
 }
 
-/* 
+/*
  * clearstat: zero a statistic structure.
  */
 
@@ -92,7 +92,7 @@ register  statistic * s;
   s->sum = s->sumsq = s->low = s->high = 0.0;
 }
 
-/* 
+/*
  * addstat: Add a data point to a statistic
  */
 
@@ -110,7 +110,7 @@ register int datum;
   else if (d > s->high)	s->high = d;
 }
 
-/* 
+/*
  * mean: Return the mean of a statistic
  */
 
@@ -121,7 +121,7 @@ register statistic *s;
   else			return (s->sum / s->count);
 }
 
-/* 
+/*
  * stdev: Return the standard deviation of a statistic
  */
 
@@ -133,7 +133,7 @@ register statistic *s;
   else		return (sqrt ((n * s->sumsq - s->sum * s->sum) / (n * (n-1))));
 }
 
-/* 
+/*
  * parsestat: Parse a statistic structure from buffer 'buf'
  */
 
@@ -146,7 +146,7 @@ register statistic *s;
       &s->count, &s->sum, &s->sumsq, &s->low, &s->high);
 }
 
-/* 
+/*
  * writestat. Write the value of a statistic structure to file 'f'.
  */
 

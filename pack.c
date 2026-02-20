@@ -1,7 +1,7 @@
 /*
  * pack.c: Rog-O-Matic XIV (CMU) Sat Feb 16 08:58:04 1985 - mlm
  * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
- * 
+ *
  * This file contains functions which mess with Rog-O-Matics pack
  */
 
@@ -43,7 +43,7 @@ register int i;
       sprintf (item, "%s [%d]", item, inven[i].charges);
 
     sprintf (item, "%s %s%s%s%s%s%s%s%s%s.",	  /* DR UTexas */
-            item, inven[i].str, 
+            item, inven[i].str,
              (itemis (i, KNOWN) ? "" : ", unknown"),
              (used (inven[i].type, inven[i].str) ? ", tried" : ""),
              (itemis (i, CURSED) ? ", cursed" : ""),
@@ -65,7 +65,7 @@ register int i;
 
 int dumpinv (f)
 register FILE *f;
-{ register int i; 
+{ register int i;
 
   if (f == NULL)
     at (1,0);
@@ -86,7 +86,7 @@ register FILE *f;
 
 int removeinv (pos)
 int pos;
-{ 
+{
   if (--(inven[pos].count) == 0)
   { clearpack  (pos);		/* Assure nothing at that spot  DR UT */
     rollpackup (pos);		/* Close up the hole */
@@ -104,7 +104,7 @@ int pos;
 
 int deleteinv (pos)
 int pos;
-{ 
+{
   if (--(inven[pos].count) == 0 || inven[pos].type == missile)
   { clearpack  (pos);		/* Assure nothing at that spot  DR UT */
     rollpackup (pos);		/* Close up the hole */
@@ -129,10 +129,10 @@ int pos;
   inven[pos].charges = UNKNOWN;
   forget (pos, (KNOWN | CURSED | ENCHANTED | PROTECTED | UNCURSED |
                 INUSE | WORTHLESS));
-  
+
 }
 
-/* 
+/*
  * rollpackup: We have deleted an item, move up the objects behind it in
  * the pack.
  */
@@ -146,13 +146,13 @@ register int pos;
 
   if (pos < currentarmor) currentarmor--;
   else if (pos == currentarmor) currentarmor = NONE;
-       
+
   if (pos < currentweapon) currentweapon--;
   else if (pos == currentweapon) currentweapon = NONE;
-       
+
   if (pos < leftring) leftring--;
   else if (pos == leftring) leftring = NONE;
-       
+
   if (pos < rightring) rightring--;
   else if (pos == rightring) rightring = NONE;
 
@@ -165,7 +165,7 @@ register int pos;
   inven[invcount].count = 0;
 }
 
-/* 
+/*
  * rollpackdown: Open up a new spot in the pack, and move down the
  * objects behind that position.
  */
@@ -179,7 +179,7 @@ register int pos;
 
   if (invcount >= MAXINV)
   {
-    usesynch = 0; 
+    usesynch = 0;
     dwait (D_WARNING, "inventory full");
     return;
   }
@@ -203,7 +203,7 @@ register int pos;
  */
 
 int resetinv()
-{ 
+{
   if (!replaying) command (T_OTHER, "i");
 }
 
@@ -213,19 +213,19 @@ int resetinv()
 
 int doresetinv ()
 { int i;
-  static char space[MAXINV][80]; 
+  static char space[MAXINV][80];
 
   usesynch = 1;
   checkrange = 0;
 
-  for(i=0; i<MAXINV; ++i) 
+  for(i=0; i<MAXINV; ++i)
   { inven[i].str = space[i];
     clearpack (i);
   }
 
   invcount = objcount = urocnt = 0;
   currentarmor = currentweapon = leftring = rightring = NONE;
-  
+
   if (version >= RV53A) invcount = MAXINV;
 }
 
@@ -241,7 +241,7 @@ char *msgstart, *msgend;
   char objname[100], *realname();
   int  n, ipos, xknow = 0, newitem = 0, inuse = 0, printed = 0;
   int  plushit = UNKNOWN, plusdam = UNKNOWN, charges = UNKNOWN;
-  stuff what; 
+  stuff what;
   char *xbeg, *xend;
 
   xbeg = xend = "";
@@ -256,10 +256,10 @@ char *msgstart, *msgend;
     deletestuff (atrow, atcol);
     unsetrc (USELESS, atrow, atcol);
     newitem = 1; }
-         
+
   if (ISDIGIT(*mess))
   { n=atoi(mess); mess += 2+(n>9); }
-  else 
+  else
   { n=1;
     if (*mess == 'a') mess++;   /* Eat the determiner A/An/The */
     if (*mess == 'n') mess++;
@@ -270,7 +270,7 @@ char *msgstart, *msgend;
 
   /* Read the plus to hit */
   if (*mess=='+' || *mess=='-')
-  { plushit = atoi(mess++); 
+  { plushit = atoi(mess++);
     while (ISDIGIT (*mess)) mess++;
     xknow = KNOWN;}
 
@@ -279,7 +279,7 @@ char *msgstart, *msgend;
 
   /* Read the plus damage */
   if (*mess=='+' || *mess=='-')
-  { plusdam = atoi(mess++); 
+  { plusdam = atoi(mess++);
     while (ISDIGIT (*mess)) mess++;
     xknow = KNOWN;}
 
@@ -391,13 +391,13 @@ char *msgstart, *msgend;
   }
 
   /* If new item, record the change */
-  if (newitem && what == armor) 
+  if (newitem && what == armor)
     newarmor = 1;
   else if (newitem && what == ring)
     newring = 1;
   else if (newitem && what == food)
   { newring = 1; lastfoodlevel = Level; }
-  else if (newitem && (what == hitter || what == missile || what == wand)) 
+  else if (newitem && (what == hitter || what == missile || what == wand))
     newweapon = 1;
 
   /* If the object is an old object, set its count, else allocate */
@@ -405,7 +405,7 @@ char *msgstart, *msgend;
 
   if (n > 1 && ipos < invcount && inven[ipos].type == what &&
       n == inven[ipos].count+1 &&
-      stlmatch(objname, inven[ipos].str) && 
+      stlmatch(objname, inven[ipos].str) &&
       inven[ipos].phit == plushit &&
       inven[ipos].pdam == plusdam)
   {
@@ -421,7 +421,7 @@ char *msgstart, *msgend;
 
   /* New item, in older Rogues, open up a spot in the pack */
   else
-  { if (version < RV53A) rollpackdown (ipos);		
+  { if (version < RV53A) rollpackdown (ipos);
 
     inven[ipos].type = what;
     inven[ipos].count = n;
@@ -456,14 +456,14 @@ char *msgstart, *msgend;
   else if (newitem)		forget (ipos, WORTHLESS);
 
   checkrange = 1;
-  
+
   return (printed);
 }
 
-/* 
+/*
  * countpack: Count objects, missiles, and food in the pack.
  */
- 
+
 int countpack ()
 { register int i, cnt;
 

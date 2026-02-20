@@ -24,21 +24,21 @@ static char mvdir[24][80];
 static int mvtype=0;
 static int didinit=0;
 
-/* 
+/*
  * makemove: repeat move from here towards some sort of target.
  * Modified to use findmove.			5/13	MLM
  */
 
 int makemove (movetype, evalinit, evaluate, reevaluate)
 int movetype, (*evalinit)(), (*evaluate)(), reevaluate;
-{ 
+{
   if (findmove (movetype, evalinit, evaluate, reevaluate))
     return (followmap (movetype));
 
   return (0);
 }
 
-/* 
+/*
  * findmove: search for a move of type movetype.  The move map is left in
  *           the correct state for validatemap or followmap to work.	MLM
  */
@@ -79,7 +79,7 @@ int movetype, (*evalinit)(), (*evaluate)(), reevaluate;
   return (1);
 }
 
-/* 
+/*
  * followmap: Assuming that the mvdir map is correct, send a movement
  *            command following the map (possibly searching first).
  *
@@ -143,7 +143,7 @@ register int movetype;
   if (timemode != T_RUNNING && onrc (WATERAP, atrow+dr, atcol+dc) &&
       currentarmor != NONE && willrust (currentarmor) && takeoff ())
   { rmove (1, dir, timemode); return (1); }
-  
+
   /* If we are about to step onto a scare monster scroll, use the 'm' cmd */
   if (version >= RV53A && onrc (SCAREM, atrow+dr, atcol+dc))
   { mmove (dir, timemode); return (1); }
@@ -235,7 +235,7 @@ int setnewgoal ()
   goalr = goalc = NONE;
 }
 
-/* 
+/*
  * searchfrom: By means of breadth first search, find a path
  * from the given row and column to a target.  This is done by using
  * searchto and then reversing the path to the row, col from the selected
@@ -287,9 +287,9 @@ char dir[24][80];
  * prefers moves onto SAFE squares to moves onto other squares.	       LGCH
  */
 
-/* 
+/*
  * Since this code is the single most time consuming subroutine, I am
- * attempting to hack it into a faster form. 			11/6/82 MLM
+ * attempting to hack it into a faster form.			11/6/82 MLM
  */
 
 int searchto (row, col, evaluate, dir, trow, tcol)
@@ -312,7 +312,7 @@ char dir[24][80];
   for (c = 23*80; c--; ) dir[0][c] = NOTTRIED;		/* MLM */
   for (c = 80; c--; ) dir[0][c] = 0;			/* MLM */
 
-  *(tail++) = row;  *(tail++) = col; 
+  *(tail++) = row;  *(tail++) = col;
   *(tail++) = QUEUEBREAK;  *(tail++) = QUEUEBREAK;
   dir[row][col] = TARGET;  moveval[row][col] = NONE;
   any = 1;
@@ -327,7 +327,7 @@ char dir[24][80];
       if (searchcontinue <= 0 || !any)
       { if (havetarget) dwait (D_SEARCH, "Searchto wins.");
 	else dwait (D_SEARCH, "Searchto fails.");
-	
+
         return (havetarget);  /* have found somewhere to go */
       }
 
@@ -366,7 +366,7 @@ char dir[24][80];
         { saveavd[r][c]=avd;
         }
       }
-      else 		/* If evaluate fails, forget it for now. */
+      else		/* If evaluate fails, forget it for now. */
       { dwait (D_SEARCH, "Searchto: evaluate failed.");
 	continue;
       }

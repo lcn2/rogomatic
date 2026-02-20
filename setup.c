@@ -50,13 +50,13 @@ char *argv[];
         case 'u': user++;         break; /* Start up in user mode */
         case 'w': noterm = 0;     break; /* Watched mode */
         case 'E': emacs++;        break; /* Emacs mode */
-        default:  printf 
+        default:  printf
                   ("Usage: rogomatic [-cefhprstuwE] or rogomatic [file]\n");
                   exit (1);
       }
     }
 
-    if (rf) 
+    if (rf)
     { if (--argc) rfilearg = *++argv;
       rf = 0;
     }
@@ -151,7 +151,7 @@ char *argv[];
   }
 }
 
-/* 
+/*
  * replaylog: Given a log file name and an options string, exec the player
  * process to replay the game.  No Rogue process is needed (since we are
  * replaying an old game), so the rfrogue and rtrogue file descrptiors are

@@ -18,7 +18,7 @@
 
 # include <curses.h>
 # include <string.h>
-# include <setjmp.h>  
+# include <setjmp.h>
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -26,7 +26,7 @@
 /*
  * Debugging wait loop: Handle the usual Rogomatic command chars, and also
  * allows dumping the flags '^' command. Exits when a non-command char is
- * typed. To use, just put a "dwait (type, "message");" wherever you need 
+ * typed. To use, just put a "dwait (type, "message");" wherever you need
  * debugging messages, and hit a space or a cr to continue
  */
 
@@ -74,15 +74,15 @@ int dwait(int msgtype, char *f, ...)
   if (*msg) { mvaddstr (0, 0, msg); clrtoeol (); }	/* Write msg */
   if (noterm) return (1);				/* Exit if no user */
 
-  /* Debugging loop, accept debugging commands from user */  
+  /* Debugging loop, accept debugging commands from user */
   while (1)
   { refresh ();
     switch (getch())
-    { case '?': 
+    { case '?':
         say ("i=inv, d=debug !=stf, @=mon, #=wls, $=id, ^=flg, &=chr");
         break;
       case 'i': at (1,0); dumpinv ((FILE *) NULL); at (row, col); break;
-      case 'd': toggledebug (); 	break;
+      case 'd': toggledebug ();		break;
       case 't': transparent = 1;        break;
       case '!': dumpstuff ();           break;
       case '@': dumpmonster ();         break;
@@ -101,7 +101,7 @@ int dwait(int msgtype, char *f, ...)
   }
 }
 
-/* 
+/*
  * promptforflags: Prompt the user for a location and dump its flags.
  */
 
@@ -116,13 +116,13 @@ int promptforflags ()
   }
 }
 
-/* 
+/*
  * dumpflags: Create a message line for the scrmap flags of a particular
  *            square.  Note that the fnames[] array must match the
  *            various flags defined in "types.h".
  */
 
-char *fnames[] = 
+char *fnames[] =
 { "been",    "cango",    "door",     "hall",     "psd",     "room",
   "safe",    "seen",     "deadend",  "stuff",    "trap",    "arrow",
   "trapdor", "teltrap",  "gastrap",  "beartrap", "dartrap", "waterap",
@@ -140,7 +140,7 @@ int   r, c;
         printw ("%s:", *f);
 }
 
-/* 
+/*
  * Timehistory: print a time analysis of the game.
  */
 
@@ -176,7 +176,7 @@ int sep;
     fprintf (f, "%s", s);
 }
 
-/* 
+/*
  * toggledebug: Set the value of the debugging word.
  */
 
@@ -195,7 +195,7 @@ int toggledebug ()
   else if (type == D_SCREEN)      debugging = D_NORMAL | D_WARNING;
   else if (!debug (D_INFORM))     debugging = D_NORMAL | D_WARNING | D_INFORM;
   else                            debugging = D_ALL;
-  
+
   strcpy (debugstr, "Debugging :");
 
   if (debug(D_FATAL))     strcat (debugstr, "fatal:");
@@ -209,11 +209,11 @@ int toggledebug ()
   if (debug(D_CONTROL))   strcat (debugstr, "ctrl:");
   if (debug(D_SCREEN))    strcat (debugstr, "screen:");
   if (debug(D_MONSTER))   strcat (debugstr, "monster:");
-  
+
   saynow (debugstr);
 }
 
-/* 
+/*
  * getscrpos: Prompt the user for an x,y coordinate on the screen.
  */
 

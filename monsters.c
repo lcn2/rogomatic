@@ -77,7 +77,7 @@ int dumpmonster ()
   at (1, 0);
   for (i = 0; i < mlistlen; ++i)
     printw ("%s at %d,%d(%c) \n",
-            mlist[i].q == AWAKE ? "alert" : 
+            mlist[i].q == AWAKE ? "alert" :
               mlist[i].q == ASLEEP ? "sleeping" :
               mlist[i].q == HELD ? "held" : "unknown",
             mlist[i].mrow, mlist[i].mcol,
@@ -100,7 +100,7 @@ int sleepmonster ()
   { if (mlist[m].q == 0 && ! ADJACENT (m))
     { dwait (D_MONSTER, "Found a sleeping %s at %d,%d",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
-      
+
       mlist[m].q = ASLEEP;
     }
   }
@@ -119,7 +119,7 @@ int holdmonsters ()
               abs (mlist[m].mcol - atcol)) < 3))
     { dwait (D_MONSTER, "Holding %s at %d,%d",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
-      
+
       mlist[m].q = HELD;
     }
   }
@@ -140,13 +140,13 @@ int dir;
 
   for (m = 0; m < mlistlen; ++m)
   { if (mlist[m].q != AWAKE &&
-        (dir == ALL || 
+        (dir == ALL ||
 	 (dir < 0 && ADJACENT(m) && mlist[m].chr == -dir + 'A' - 1) ||
          (dir >= 0 && dir < 8 &&
           mlist[m].mrow == atdrow(dir) && mlist[m].mcol == atdcol(dir))))
     { dwait (D_MONSTER, "Waking up %s at %d,%d",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
-      
+
       mlist[m].q = AWAKE;
       setrc (EVERCLR, mlist[m].mrow, mlist[m].mcol);
     }
@@ -169,7 +169,7 @@ char *monster;
 }
 
 /*
- * seeawakemonster: Returns true if there is a particular awake 
+ * seeawakemonster: Returns true if there is a particular awake
  * monster on the monster list.		DR UTexas 26 Jan 84
  */
 
@@ -194,14 +194,14 @@ int monsternum (monster)
 char *monster;
 { int m, mh;
 
-  if ((mh = findmonster (monster)) != NONE) 
+  if ((mh = findmonster (monster)) != NONE)
     for (m=0; m<=26; m++)
       if (monindex[m] == mh) return (m);
 
   return (0);
 }
 
-/* 
+/*
  * newmonsterlevel: Starting a new level. Set the initial sleep status of
  * each monster.
  */
@@ -223,12 +223,12 @@ int newmonsterlevel ()
   }
 }
 
-/* 
+/*
  * isholder: Return true if the monster can hold us.
  */
 
 int isholder (monster)
 register char *monster;
-{ 
+{
   return (streq (monster, "venus flytrap") || streq (monster, "violet fungi"));
 }

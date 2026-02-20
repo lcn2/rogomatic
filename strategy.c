@@ -2,7 +2,7 @@
  * strategy.c: Rog-O-Matic XIV (CMU) Tue Mar 19 21:49:33 1985 - mlm
  * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
  *
- * This file contains all of the 'high level intelligence' of Rog-O-Matic. 
+ * This file contains all of the 'high level intelligence' of Rog-O-Matic.
  */
 
 # include <stdio.h>
@@ -66,7 +66,7 @@ int   strategize ()
   if (dinnertime ())            /* Soups on! */
     return (1);
 
-  /* 
+  /*
    * These variables are short term memory.  Slowed and
    * cancelled are fuses which are disabled after a small
    * number of turns.
@@ -74,7 +74,7 @@ int   strategize ()
 
   lyinginwait = 0;			/* No more monsters to wait for */
   if (foughtmonster) foughtmonster--;	/* Turns since fought monster */
-  if (slowed) slowed--; 	        /* Turns since we slowed a monster */
+  if (slowed) slowed--;		        /* Turns since we slowed a monster */
   if (cancelled) cancelled--;		/* Turns since we zapped 'cancel' */
   if (beingheld) beingheld--;		/* Turns since held by a fungus */
 
@@ -82,7 +82,7 @@ int   strategize ()
 
   if (dropjunk ())		/* Send it back */
     return (1);
- 
+
   if (readscroll ())		/* Get out the reading glasses */
     return (1);			  /* Must come before handlearmor() */
 
@@ -134,7 +134,7 @@ int   strategize ()
   if (findroom ())		/* Look for another room */
     return (1);
 
-  /* 
+  /*
    * 'attempt' records the number of times we have completely searched
    * this level for secret doors.  If attempt is greater than 0, then we
    * have failed once to find the stairs and go down.  If this happens
@@ -142,7 +142,7 @@ int   strategize ()
    * the SLEEPER bit for each square with a sleeping monster.  Go find
    * such a monster and kill it to see whether (s)he was on the stairs).
    */
-  
+
   if (attempt > 4 && makemove (ATTACKSLEEP, genericinit, sleepvalue, REUSE))
   { display ("No stairs, attacking sleeping monster...");
     return (1);
@@ -157,19 +157,19 @@ int   strategize ()
   if ((Level<2 || larder<1) && doorexplore())   /* Grub around anyway */
     return (1);
 
-  /* 
+  /*
    * If we think we are on the stairs, but arent, maybe they were moved
    * (ie we were hallucinating when we saw them last time).
    */
-  
+
   if (on (STAIRS) && (atrow != stairrow || atcol != staircol))
   { dwait (D_ERROR, "Stairs moved!"); unset (STAIRS); findstairs (NONE, NONE); return (1); }
 
-  /* 
+  /*
    * If we failed to find the stairs, explore each possible secret door
    * another ten times.
    */
-  
+
   while (attempt++ < MAXATTEMPTS)
   { int newsearch = timestosearch + max (3, k_door / 5);
     /* Avoid char overflow */
@@ -182,7 +182,7 @@ int   strategize ()
     if (doorexplore ()) return (1);
   }
 
-  /* 
+  /*
    * Don't give up, start all over!
    */
 
@@ -198,7 +198,7 @@ int   strategize ()
 
 /*
  * fightmonster: looks for adjacent monsters. If found, it calls
- * battlestations to prepare for battle otherwise hacks with the 
+ * battlestations to prepare for battle otherwise hacks with the
  * weapon already in hand.
  */
 
@@ -220,14 +220,14 @@ int   fightmonster ()
       }
     }
   }
-  
+
   if (!melee) return (0);               /* No one to fight */
 
   /* Loop to find worst monster and tally danger & number adjacent */
   for (i = 0; i < mlistlen; i++)
   { rr = mlist[i].mrow; cc = mlist[i].mcol;	/* Monster position */
 
-    /* 
+    /*
      * If the monster is adjacent and is either awake or
      * we dont know yet whether he is asleep, but we havent
      * see any alert monsters yet.
@@ -243,7 +243,7 @@ int   fightmonster ()
       /* If he is adjacent, add to the adj count */
       if (onrc (CANGO, rr, atcol) && onrc (CANGO, atrow, cc))
       { adjacent++; howmean = isholder (monster) ? 10000 : avghit(i);
-            
+
 	/* If he is adjacent and the worst monster yet, save him */
         if (howmean > mbad)
         { wanddir = mdir = direc (rr-atrow, cc-atcol);
@@ -278,21 +278,21 @@ int   fightmonster ()
 
   monster = monname (monc);
   if (battlestations (m, monster, mbad, danger, adjacent ? mdir : wanddir,
-                      adjacent ? 1 : 2, alertmonster, max (1, adjacent))) 
+                      adjacent ? 1 : 2, alertmonster, max (1, adjacent)))
   { foughtmonster = DIDFIGHT; return (1); }
 
-  /* 
+  /*
    * If we did not wait for him last turn, and he is not adjacent,
    * let him move to us (otherwise, he gets to hits us first).
    */
-  
+
   if (!lyinginwait && !adjacent)
   { command (T_FIGHTING, "s");
     dwait (D_BATTLE, "Lying in wait...");
     lyinginwait = 1;
     foughtmonster = DIDFIGHT;
     return (1);
-  }  
+  }
 
   /* If we are here but have no direction, there was a bug somewhere */
   if (mdir < 0)
@@ -302,16 +302,16 @@ int   fightmonster ()
 
   /* If we could die this round, tell the user about it */
   if (danger >= Hp) display ("In trouble...");
-  
+
   /* Well, nothing better than to hit the beast! Tell dwait about it */
-  dwait (D_BATTLE, "Attacking %s(%d) direction %d (total danger %d)...", 
+  dwait (D_BATTLE, "Attacking %s(%d) direction %d (total danger %d)...",
          monster, mbad, mdir, danger);
 
   /* Record the monster type */
   lastmonster = monc-'A'+1;
 
   /* Move towards the monster (this causes us to hit him) */
-  rmove (1, mdir, T_FIGHTING);    
+  rmove (1, mdir, T_FIGHTING);
   lyinginwait = 0;
   foughtmonster = DIDFIGHT;
   return (1);
@@ -334,11 +334,11 @@ int   tomonster ()
   if (mlistlen==0)
     return (0);
 
-  /* 
-   * Loop through the monsters, 'which' and 'closest' record the index 
+  /*
+   * Loop through the monsters, 'which' and 'closest' record the index
    * and distance of the closest monster worth fighting.
    */
-    
+
   for (i = 0, which = NONE, closest = 999; i < mlistlen; i++)
   { dist = max (abs (mlist[i].mrow - atrow), abs (mlist[i].mcol - atcol));
     monchar = mlist[i].chr;
@@ -353,17 +353,17 @@ int   tomonster ()
 	continue;
     }
 
-    /* 
+    /*
      * IF   we are not using a magic arrow OR
      *      we want to wake this monster up AND we can beat him OR
-     *      he is standing near something we want and we will have to 
+     *      he is standing near something we want and we will have to
      *        fight him anywhay
      * THEN consider fighting the monster.
      *
-     * Don't pick fights with sleepers if cosmic.  DR UTexas 25 Jan 84 
+     * Don't pick fights with sleepers if cosmic.  DR UTexas 25 Jan 84
      */
-    
-    if (usingarrow || mlist[i].q == AWAKE || 
+
+    if (usingarrow || mlist[i].q == AWAKE ||
         (!cosmic && wanttowake (monchar) &&
 	 (avghit (i) <= 50 || (maxhit (i) + 50 - k_wake) < Hp)) ||
 	(mlist[i].q == HELD && Hp >= Hpmax))
@@ -386,7 +386,7 @@ int   tomonster ()
   }
 
   /* No monsters worth bothering, return failure */
-  if (which < 0) return (0); 
+  if (which < 0) return (0);
 
   /* Save the monsters location in registers */
   rr = mlist[which].mrow - atrow; cc = mlist[which].mcol - atcol;
@@ -426,11 +426,11 @@ int   tomonster ()
  * Some monsters are included here because we want to shoot arrows at them.
  */
 
-int wanttowake(c) 
+int wanttowake(c)
 char c;
 { char *monster = monname (c);
 
-  if (missedstairs) 
+  if (missedstairs)
     return (1);
 
   /*
@@ -461,9 +461,9 @@ char c;
  */
 
 int aftermelee ()
-{ 
+{
   if (foughtmonster > 0)
-  { lyinginwait = 1;  
+  { lyinginwait = 1;
     command (T_RESTING, "s");
     dwait (D_BATTLE, "Aftermelee: waiting for %d rounds.", foughtmonster);
     return (1);
@@ -527,7 +527,7 @@ int adj;		/* How many attackers are there? */
 
   scaremcount = 0;  /* Prevent waiting on SCAREM forever */
 
-  /* 
+  /*
    * Take invisible stalkers into account into account,
    * fightmonster() and tomonster() cant see stalkers.
    */
@@ -536,27 +536,27 @@ int adj;		/* How many attackers are there? */
 
   /* Debugging breakpoint */
   dwait (D_BATTLE,
-        "Battlestations: %s(%d), total danger %d, dir %d, %d turns, %d adj.", 
+        "Battlestations: %s(%d), total danger %d, dir %d, %d turns, %d adj.",
         monster, mbad, danger, mdir, turns, adj);
 
-  /* 
+  /*
    * Switch back to our mace or sword?
    */
 
-  if (live_for (1) && turns < 2 && wielding (thrower) && handleweapon ())  
+  if (live_for (1) && turns < 2 && wielding (thrower) && handleweapon ())
   { dwait (D_BATTLE, "Switching to sword [2]"); return (1); }
 
-  /* 
+  /*
    * Dont waste magic when on a scare monster scroll
    */
-  
+
   if (on (SCAREM) && !streq (monster, "dragon") &&
       (targetmonster == 0 || turns < 2))
   { dwait (D_BATTLE, "Battlestations: hitting from scaremonster.");
     return (0);
   }
 
-  /* 
+  /*
    * If we were busy resting on the stairs and we see a monster, go down
    * Go on down if about to be attacked by a monster with an effective
    * magic attack.  DR UTexas 25 Jan 84
@@ -574,16 +574,16 @@ int adj;		/* How many attackers are there? */
       return (1);
   }
 
-  /* 
+  /*
    * Are healing potions worthwhile?
    */
-   
+
   if (die_in (1) && Hpmax-Hp > 10 && turns > 0 &&
       ((obj = havenamed (potion, "extra healing")) != NONE ||
        (obj = havenamed (potion, "healing")) != NONE))
     return (quaff (obj));
-  
-  /* 
+
+  /*
    * Run away if we are sure of the direction and we are in trouble
    * Dont try to run if a fungi has ahold of us. If we are confused,
    * we will try other things, and we will decide to run later.
@@ -591,36 +591,36 @@ int adj;		/* How many attackers are there? */
    * we can shoot arrows at him, if we want to).
    * Don't run away from Dragons!!!  They'll just flame you.
    */
-   
+
   if (!confused && !beingheld && (!on(DOOR) || turns < 1) &&
       (!streq (monster, "dragon") || cosmic) && Hp+Explev < Hpmax &&
       ((die_in(1) || Hp <= danger + between (Level-10, 0, 10)) || chicken) &&
       runaway ())
-  { display ("Run away! Run away!"); 
+  { display ("Run away! Run away!");
     darkdir = NONE; darkturns = 0;
-    return(1); } 
+    return(1); }
 
-  /* 
+  /*
    * Be clever when facing multiple monsters?
    */
-   
+
   if (adj > 1 && !confused && !beingheld && !on (STAIRS | DOOR) &&
       backtodoor (turns))
     return (1);
 
-  /* 
+  /*
    * stepback to see if he is awake.
    */
-   
+
   if (!alert && !beingheld && !stepback && mdir != NONE &&
       turns == 0 && !on (DOOR | STAIRS))
   { int rdir = (mdir+4)%8;
     if (onrc (CANGO | TRAP, atdrow(rdir), atdcol(rdir)) == CANGO)
     { move1 (rdir); stepback = 7; return (1); }
   }
-  
+
   if (stepback) stepback--;     /* Decrement turns until step back again */
-  
+
   /*
    * Should we put on our ring of maintain armor?   DR UTexas 19 Jan 84
    */
@@ -659,12 +659,12 @@ int adj;		/* How many attackers are there? */
       findring ("sustain strength"))
     return (1);
 
-  /* 
+  /*
    * Should we put on our ring of regeneration? Make sure we wont kill
    * ourselves trying to do it, by checking how many turns it will take to
    * get it on compared to the number of hits we can take.
    */
-  
+
   /* Have a ring and a free hand, one turn */
   if (die_in (4) && (live_for (1) || turns > 0) &&
       (leftring == NONE || rightring == NONE) &&
@@ -682,41 +682,41 @@ int adj;		/* How many attackers are there? */
       findring ("regeneration"))
     return (1);
 
-  /* 
+  /*
    * Haste ourselves?
    */
-   
+
   if (!hasted && version > RV36B && (turns > 0 || live_for (1)) &&
       die_in (2) && (obj = havenamed (potion, "haste self")) != NONE &&
       quaff (obj))
     return (1);
 
-  /* 
+  /*
    * Confuse the poor beast?
    */
-   
+
   if (die_in (2) && turns > 0 && !redhands &&
       ((obj = havenamed (rscroll, "monster confusion")) != NONE))
     return (reads (obj));
-  
-  /* 
+
+  /*
    * Put them all to sleep? This does us little good, since we cant
    * currently infer that we have a scroll of Hold Monster. But we
    * will read scrolls of identify on the second one.  Bug, this
    * does not put them to sleep, it just holds them in place.
    * We have a lot more programming to do here!!!!   Fuzzy
    */
-   
+
   if (die_in (1) && (obj = havenamed (rscroll, "hold monster")) != NONE &&
       reads (obj))
   { holdmonsters ();
     return (1);
   }
-   
-  /* 
+
+  /*
    * Drop a scare monster?
    */
-   
+
   if (die_in (1) && !streq(monster, "dragon") &&
       (obj = havenamed (rscroll, "scare monster")) != NONE &&
       (m == NONE || mlist[m].q != ASLEEP) &&
@@ -726,11 +726,11 @@ int adj;		/* How many attackers are there? */
     droppedscare++;
     return (1);
   }
-  
-  /* 
+
+  /*
    * Buy buy birdy!
    */
-   
+
   if (die_in (1) && mdir != NONE && turns == 0 &&
       (obj = havewand ("teleport away")) != NONE &&
       point (obj, mdir))
@@ -739,20 +739,20 @@ int adj;		/* How many attackers are there? */
     return (1);
   }
 
-  /* 
+  /*
    * Eat dust, turkey!
    */
-   
+
   if (die_in (1) && turns == 0 &&
       (obj = havenamed (rscroll, "teleportation")) != NONE)
   { beingheld = 0;
     return (reads (obj));
   }
 
-  /* 
+  /*
    * The better part of valor...
    */
-   
+
   if ((die_in (1) && turns == 0 || fainting ()) && quitforhonors ())
     return (1);
 
@@ -763,7 +763,7 @@ int adj;		/* How many attackers are there? */
   if (!confused && cheat && usingarrow && goodarrow > 10 && turns == 0)
     return (0);
 
-  /* 
+  /*
    * Try to protect our armor from Rusties.
    */
 
@@ -776,10 +776,10 @@ int adj;		/* How many attackers are there? */
       takeoff ())
   { return (1); }
 
-  /* 
+  /*
    * Any life saving wands?
    */
-   
+
   if (die_in (2) && Hp > 40 && turns < 3 &&
       !(streq (monster, "purple worm") || streq (monster, "jabberwock")) &&
       (obj = havewand ("drain life")) != NONE)
@@ -787,18 +787,18 @@ int adj;		/* How many attackers are there? */
 
   if (mdir != NONE && die_in (2) &&
       (!cosmic || Level > 18) &&          /* DR UTexas 31 Jan 84 */
-      (streq (monster, "dragon")     || streq (monster, "purple worm")   || 
+      (streq (monster, "dragon")     || streq (monster, "purple worm")   ||
        streq (monster, "jabberwock") || streq (monster, "medusa")        ||
-       streq (monster, "xorn")       || streq (monster, "violet fungi")  || 
+       streq (monster, "xorn")       || streq (monster, "violet fungi")  ||
        streq (monster, "griffin")    || streq (monster, "venus flytrap") ||
        streq (monster, "umber hulk") || streq (monster, "black unicorn")) &&
       (obj = havewand ("polymorph")) != NONE)
     return (point (obj, mdir));
-  
-  /* 
+
+  /*
    * Any life prolonging wands?
    */
-   
+
   if ((die_in (1) || (turns == 0 && streq (monster, "floating eye")) ||
       (turns == 0 && streq (monster, "ice monster"))) &&
       mdir != NONE && mdist < 6 && !on(DOOR) &&
@@ -807,7 +807,7 @@ int adj;		/* How many attackers are there? */
        (obj = havewand ("lightning")) != NONE))
     return (point (obj, mdir));
 
-  if (die_in (2) && mdir != NONE && !slowed && (turns>0 || live_for (2)) && 
+  if (die_in (2) && mdir != NONE && !slowed && (turns>0 || live_for (2)) &&
       (obj = havewand ("slow monster")) != NONE &&
       (slowed = 5))
     return (point (obj, mdir));
@@ -819,7 +819,7 @@ int adj;		/* How many attackers are there? */
        streq (monster, "ice monster") ||
        streq (monster, "leprechaun") ||
        streq (monster, "violet fungi") ||
-       streq (monster, "venus flytrap")) &&      
+       streq (monster, "venus flytrap")) &&
       (obj = havewand ("cancellation")) != NONE &&
       (cancelled = 10))
   { if (streq (monster, "violet fungi") || streq (monster, "venus flytrap"))
@@ -835,19 +835,19 @@ int adj;		/* How many attackers are there? */
        ((obj = havewand ("striking")) != NONE && turns == 0)))
     return (point (obj, mdir));
 
-  /* 
+  /*
    * Since we have no directional things, we will try to run even though
    * we are confused. Again, wait at door until the monster is on us.
    * Don't run away from dragons, they'll just flame you!!
    */
-   
+
   if (confused && !beingheld && (!on(DOOR) || turns < 1) &&
       ! streq (monster, "dragon") &&
-      ((die_in (1) && Hp+Explev/2+3 < Hpmax) || chicken) && 
+      ((die_in (1) && Hp+Explev/2+3 < Hpmax) || chicken) &&
       runaway ())
   { display ("Run away! Run away!"); return(1); }
-  
-  /* 
+
+  /*
    * We can live for a while, try to get to a position where we can run
    * away if we really get into trouble.  Dont run away from dragons,
    * they'll just flame you!!!
@@ -859,25 +859,25 @@ int adj;		/* How many attackers are there? */
       unpin ())
   { display ("Unpinning!!!"); return(1); }
 
-  /* 
+  /*
    * Light up the room if we are in combat.
    */
-   
+
   if (turns > 0 && die_in (3) && lightroom ())
     return (1);
 
-  /* 
+  /*
    * We arent yet in danger and can shoot at the old monster.
    */
-   
+
   if ((live_for (5) || turns > 1) && shootindark ())
     return (1);
 
-  /* 
-   * Try out an unknown wand?  Try shooting unknown wands at 
+  /*
+   * Try out an unknown wand?  Try shooting unknown wands at
    * rattlesnakes since they are such a pain.   DR UTexas  19 Jan 84
    */
-   
+
   if (live_for (2) && (Level > 8 || streq (monster, "rattlesnake") ||
                                     streq (monster, "giant ant")) &&
       mdir != NONE && on(ROOM) && mdist < 6 &&
@@ -887,10 +887,10 @@ int adj;		/* How many attackers are there? */
     return (1);
   }
 
-  /* 
+  /*
    * Wait to see if he is really awake.
    */
-   
+
   if (!alert && !lyinginwait && turns > 0)
   { command (T_FIGHTING, "s");
     dwait (D_BATTLE, "Waiting to see if he is awake...");
@@ -898,7 +898,7 @@ int adj;		/* How many attackers are there? */
     return (1);
   }
 
-  /* 
+  /*
    * Archery: try to move into a better position, and after that, try to
    * shoot an arrow at the beast. Conserve arrows below SAVEARROWS.
    */
@@ -915,7 +915,7 @@ int adj;		/* How many attackers are there? */
        die_in (1+k_arch/20) || ammo > SAVEARROWS+5-k_arch/10) &&
       (obj = havemissile ()) != NONE)
   {
-    /* Move into position */  
+    /* Move into position */
     if ((!alert || mdir < 0) && turns > 0 && archmonster (m, 1))
       return (1);
 
@@ -934,22 +934,22 @@ int adj;		/* How many attackers are there? */
     }
   }
 
-  /* 
+  /*
    * Switch back to our mace or sword?
    */
 
-  if (!cursedweapon && wielding (thrower) && handleweapon ())  
+  if (!cursedweapon && wielding (thrower) && handleweapon ())
   { dwait (D_BATTLE, "Switching to sword [3]"); return (1); }
 
-  /* 
+  /*
    * No bright ideas. Return and let the caller figure out what to do.
    */
-   
+
   return (0);
 }
 
 /*
- * tostuff: if we see something to pick up, go to it. If our pack is full, 
+ * tostuff: if we see something to pick up, go to it. If our pack is full,
  * try to drop our least useful item. If pack is still full, fail.
  */
 
@@ -959,9 +959,9 @@ int tostuff ()
   stuff what;
 
   /* If we don't see anything (or dont care), return failure */
-  if (slistlen == 0 || Level == 1 && have (amulet) != NONE) return (0);  
+  if (slistlen == 0 || Level == 1 && have (amulet) != NONE) return (0);
 
-  /* 
+  /*
    * Now find the closest thing to pick up.  Dont consider things we have
    * already dropped (those squares have the USELESS bit set), unless we
    * have dropped a scroll of SCARE MONSTER, in which case we want our
@@ -1009,7 +1009,7 @@ int tostuff ()
     { worst = i; worstval = w; }
 
     /* Once we have found a toally useless item, stop looking */
-    if (worstval == 0) break; 
+    if (worstval == 0) break;
   }
 
   /* Found an item, drop it */
@@ -1034,11 +1034,11 @@ int fightinvisible ()
   if (beingstalked > INVPRES && Hp < INVDAM && quitforhonors ())
   { return (1); }
 
-  /* Can we teleport out of here? */  
+  /* Can we teleport out of here? */
   if (Hp < INVDAM && beingstalked > INVPRES &&
       (obj = havenamed (rscroll, "teleport")) != NONE && reads (obj))
   { beingstalked = INVPRES-1;
-    return (1); }  
+    return (1); }
 
   /* Can we quaff a potion of see invisible? */
   if ((obj = havenamed (potion, "see invisible")) != NONE && quaff (obj))
@@ -1075,7 +1075,7 @@ int fightinvisible ()
     if (atdrow(dir) > 0 && atdrow(dir) < 23 &&
         onrc(CANGO, atdrow(dir), atdcol(dir)) &&
         onrc(CANGO, atdrow(dir), atcol) &&
-        onrc(CANGO, atrow, atdcol(dir))) 
+        onrc(CANGO, atrow, atdcol(dir)))
     { liberties++; lastdir = dir; }
 
   /* If can only go two ways, then go back and forth (will hit) */
@@ -1117,7 +1117,7 @@ int archery ()
   for (m=0; m < mlistlen; m++)		/* Find a sleeping monster */
   { monster = monname (mlist[m].chr);
 
-    /* 
+    /*
      * If he is not awake and either
      *   we are much stronger than he is or
      *   he is a known target for archery and
@@ -1126,7 +1126,7 @@ int archery ()
      *
      * Then try calling archmonster to move to the right place.
      */
-     
+
     if (mlist[m].q != AWAKE && gplushit != NONE &&
 	!(mlist[m].q == HELD && Hp < Hpmax)  &&	/* DR UTexas 26 Jan 84 */
         (maxhit(m) > Hp/3 ||
@@ -1147,7 +1147,7 @@ int archery ()
       dwait (D_BATTLE, "Archmonster failed in archery.");
     }
   }
-  
+
   return (0);
 }
 
@@ -1164,13 +1164,13 @@ int pickupafter ()
   if (agoalr < 0 || agoalc < 0)
     return (0);
 
-  /* If on goal */  
+  /* If on goal */
   if (atrow == agoalr && atcol == agoalc)
   { agoalr = agoalc = NONE;
     return (0);
   }
-  
-  /* Else go for it */  
+
+  /* Else go for it */
   return (gotowards (agoalr, agoalc, 0));
 }
 
