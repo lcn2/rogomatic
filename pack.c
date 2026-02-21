@@ -24,27 +24,39 @@ static char *stuffmess [] = {
 
 char *
 itemstr (int i)
-{ static char ispace[128];
+{ static char ispace[BIGBUF + 1]; /* +1 for paranoia */
   char *item = ispace;
+  static char ispace2[BIGBUF + 1]; /* +1 for paranoia */
 
+  memset (ispace, 0, sizeof(ispace)); /* paranoia */
   if (i < 0 || i >= MAXINV)
-  { sprintf (item, "%d out of bounds", i); }
+  { snprintf (ispace, MU_BUF, "%d out of bounds", i); }
   else if (inven[i].count < 1)
-  { sprintf (item, "%c)      nothing", LETTER(i)); }
+  { snprintf (ispace, MU_BUF, "%c)      nothing", LETTER(i)); }
   else
-  { sprintf (item, "%c) %4d %d*%s:", LETTER(i), worth(i),
-             inven[i].count, stuffmess[(int)inven[i].type]);
+  { snprintf (ispace, TY_BUF, "%c) %4d %d*%.*s:", LETTER(i), worth(i),
+             inven[i].count, MU_BUF, stuffmess[(int)inven[i].type]);
 
     if (inven[i].phit != UNKNOWN && inven[i].pdam == UNKNOWN)
-      sprintf (item, "%s (%d)", item, inven[i].phit);
+    { memset (ispace2, 0, sizeof(ispace2)); /* paranoia */
+      snprintf (ispace2, SM_BUF, "%.*s (%d)", TY_BUF, ispace, inven[i].phit);
+      strncpy (ispace, ispace2, SM_BUF);
+    }
     else if (inven[i].phit != UNKNOWN)
-      sprintf (item, "%s (%d,%d)", item, inven[i].phit, inven[i].pdam);
+    { memset (ispace2, 0, sizeof(ispace2)); /* paranoia */
+      snprintf (ispace2, SM_BUF, "%.*s (%d,%d)", TY_BUF, ispace, inven[i].phit, inven[i].pdam);
+      strncpy (ispace, ispace2, SM_BUF);
+    }
 
     if (inven[i].charges != UNKNOWN)
-      sprintf (item, "%s [%d]", item, inven[i].charges);
+    { memset (ispace2, 0, sizeof(ispace2)); /* paranoia */
+      snprintf (ispace2, SM_BUF, "%.*s [%d]", TY_BUF, ispace, inven[i].charges);
+      strncpy (ispace, ispace2, SM_BUF);
+    }
 
-    sprintf (item, "%s %s%s%s%s%s%s%s%s%s.",	  /* DR UTexas */
-            item, inven[i].str,
+    memset (ispace2, 0, sizeof(ispace2)); /* paranoia */
+    snprintf (ispace2, BIGBUF, "%.*s %s%s%s%s%s%s%s%s%s.",	  /* DR UTexas */
+             SM_BUF, ispace, inven[i].str,
              (itemis (i, KNOWN) ? "" : ", unknown"),
              (used (inven[i].type, inven[i].str) ? ", tried" : ""),
              (itemis (i, CURSED) ? ", cursed" : ""),
@@ -55,6 +67,7 @@ itemstr (int i)
              (!itemis (i, INUSE) ? "" :
               (inven[i].type == armor || inven[i].type == ring) ?
               ", being worn" : ", in hand"));
+      strncpy (ispace, ispace2, BIGBUF);
   }
 
   return (item);
@@ -292,7 +305,7 @@ inventory (char *msgstart, char *msgend)
 
   /* Read any parenthesized strings at the end of the message */
   while (mend[-1]==')')
-  { while (*--mend != '(') ;		/* on exit mend -> '(' */
+  { while (*--mend != '(') { }		/* on exit mend -> '(' */
     if (stlmatch(mend,"(being worn)") )
     { currentarmor = ipos; inuse = INUSE; }
     else if (stlmatch(mend,"(weapon in hand)") )
@@ -307,7 +320,7 @@ inventory (char *msgstart, char *msgend)
 
   /* Read the charges on a wand (or armor class or ring bonus) */
   if (mend[-1] == ']')
-  { while (*--mend != '[');		/* on exit mend -> '[' */
+  { while (*--mend != '[') { }		/* on exit mend -> '[' */
     if (mend[1] == '+')	charges = atoi(mend+2);
     else		charges = atoi(mend+1);
     xknow = KNOWN;

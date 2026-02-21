@@ -643,12 +643,18 @@ rampage (void)
 
   /* If we found a monster, send his character, else send ESC */
   if (monc)
-  { saynow ("About to rampage against %s", monname (monc));
+  { size_t len;	/* length of genocided */
+    saynow ("About to rampage against %s", monname (monc));
     sendnow (" %c;", monc);	/* Send the monster */
 
     /* Add to the list of 'gone' monsters */
-    sprintf (genocided, "%s%c", genocided, monc);
-    genocide++;
+    len = strlen(genocided);
+    if (len+1 < sizeof(genocided)) /* paranoia */
+    {
+	genocided[len] = monc;
+	genocided[len+1] = '\0'; /* paranoia */
+	genocide++;
+    }
   }
   else
   { dwait (D_ERROR, "Out of monsters to genocide!");
@@ -660,7 +666,7 @@ rampage (void)
  * curseditem: the last object we tried to drop (unwield, etc.)  was cursed.
  *
  * Note that cursed rings are not a problem since we only put on
- * Good rings we have identified, so dont bother marking rings.
+ * Good rings we have identified, so don't bother marking rings.
  */
 
 void
@@ -912,29 +918,36 @@ countgold (char *amount)
 void
 summary (FILE *f, int sep)
 { int m;
-  char s[1024], s2[100];
+  char s[BIGBUF + 1], s2[BIGBUF + 1];
 
-  sprintf (s, "Monsters killed:%c%c", sep, sep);
+  memset (s, 0, sizeof(s)); /* paranoia */
+  snprintf (s, MU_BUF, "Monsters killed:%c%c", sep, sep);
 
   for (m=0; m<=26; m++)
-    if (monkilled[m] > 0)
-    { sprintf (s2, "\t%d %s%s%c", monkilled[m],  monname (m+'A'-1),
-               plural (monkilled[m]), sep);
-      strcat(s, s2);
+  { if (monkilled[m] > 0)
+    { memset (s2, 0, sizeof(s2)); /* paranoia */
+      snprintf (s2, SM_BUF, "\t%d %.*s%.*s%c",
+	        monkilled[m], MU_BUF, monname (m+'A'-1),
+                MU_BUF, plural (monkilled[m]), sep);
+      strncat (s, s2, SM_BUF);
     }
+  }
 
-  sprintf (s2, "%cTotal: %d%c%c", sep, totalkilled, sep, sep);
-  strcat(s, s2);
+  memset (s2, 0, sizeof(s2)); /* paranoia */
+  snprintf (s2, MU_BUF, "%cTotal: %d%c%c", sep, totalkilled, sep, sep);
+  strncat (s, s2, TY_BUF);
 
-  sprintf (s2, "Hit %d out of %d times, was hit %d out of %d times.%c",
-           hits, misses+hits,
-           timeshit, timesmissed+timeshit, sep);
-  strcat(s, s2);
+  memset (s2, 0, sizeof(s2)); /* paranoia */
+  snprintf (s2, MU_BUF, "Hit %d out of %d times, was hit %d out of %d times.%c",
+            hits, misses+hits, timeshit, timesmissed+timeshit, sep);
+  strncat (s, s2, TY_BUF);
 
-  if (numgold > 0)
-    sprintf (s2, "Gold %d total, %d pots, %d average.%c",
-             sumgold, numgold, (sumgold*10+5) / (numgold*10), sep);
-    strcat(s, s2);
+  if (numgold > 0) {
+    memset (s2, 0, sizeof(s2)); /* paranoia */
+    snprintf (s2, MU_BUF, "Gold %d total, %d pots, %d average.%c",
+              sumgold, numgold, (sumgold*10+5) / (numgold*10), sep);
+    strncat (s, s2, TY_BUF);
+  }
 
   if (f == NULL)
     addstr (s);

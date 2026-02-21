@@ -122,11 +122,13 @@ whichroom (int r, int c)
 { int rm;
 
   for (rm=0; rm<9; ++rm)
-    if (r >= bounds[rm].top  && r <= bounds[rm].bot &&
+  { if (r >= bounds[rm].top  && r <= bounds[rm].bot &&
         c >= bounds[rm].left && c <= bounds[rm].right)
-      return(rm);
+    { return(rm);
+    }
+  }
 
-    return (-1);
+  return (-1);
 }
 
 /*
@@ -187,9 +189,9 @@ nametrap (int traptype, int standingonit)
 
 #define vertwall(r,c) (seerc ('|',(r),(c)) || seerc ('-',(r),(c)))
 #define doorat(r,c) \
-	(seerc ('|', (r)-1, (c)) && vertwall ((r)+1, (c)) || \
-	 seerc ('|', (r)+1, (c)) && vertwall ((r)-1, (c)) || \
-         seerc ('-', (r), (c)-1) && seerc ('-', (r), (c)+1))
+	((seerc ('|', (r)-1, (c)) && vertwall ((r)+1, (c))) || \
+	 (seerc ('|', (r)+1, (c)) && vertwall ((r)-1, (c))) || \
+         (seerc ('-', (r), (c)-1) && seerc ('-', (r), (c)+1)))
 
 /*
  * findstairs: Look for STAIRS somewhere and set the stairs to that square.
@@ -374,10 +376,10 @@ currentrectangle (void)
 
     /* Fill in the corners of the room without seeing them */
     /* Prevents looking at corners to find missing doors */
-    if ((flags & fT+fR) == 0)  setrc (SEEN + WALL, curt-1, curr+1);
-    if ((flags & fT+fL) == 0)  setrc (SEEN + WALL, curt-1, curl-1);
-    if ((flags & fB+fR) == 0)  setrc (SEEN + WALL, curb+1, curr+1);
-    if ((flags & fB+fL) == 0)  setrc (SEEN + WALL, curb+1, curl-1);
+    if ((flags & (fT+fR)) == 0)  setrc (SEEN + WALL, curt-1, curr+1);
+    if ((flags & (fT+fL)) == 0)  setrc (SEEN + WALL, curt-1, curl-1);
+    if ((flags & (fB+fR)) == 0)  setrc (SEEN + WALL, curb+1, curr+1);
+    if ((flags & (fB+fL)) == 0)  setrc (SEEN + WALL, curb+1, curl-1);
   }
 }
 
@@ -427,7 +429,7 @@ updateat (void)
   if (direc (dr, dc) != movedir ||
       (zonechg && movedir != NOTAMOVE &&
        onrc (TRAP, atrow0 + deltr[movedir], atcol0 + deltc[movedir])) ||
-      dr && dc && abs(dr) != abs(dc))
+      (dr && dc && abs(dr) != abs(dc)))
     teleport ();
   else
   { dist = (abs(dr)>abs(dc)) ? abs(dr) : abs(dc);
@@ -545,7 +547,7 @@ updatepos (int ch, int row, int col)
       /* in the same room, then a floor '.' means no stuff there     */
       if ((version < RV52A ||
            oldch == '@' ||
-           oldch == ')' && functionchar (lastcmd) == 't' ||
+           (oldch == ')' && functionchar (lastcmd) == 't') ||
            (on (ROOM) && whichroom (row, col) == whichroom (atrow, atcol))) &&
           onrc (STUFF, row, col))
       { deletestuff (row, col); }

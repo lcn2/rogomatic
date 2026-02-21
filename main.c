@@ -127,12 +127,13 @@ char  genelock[100];		/* Gene pool lock file */
 char  genelog[100];		/* Genetic learning log file */
 char  genepool[100];		/* Gene pool */
 char  *genocide;		/* List of monsters to be genocided */
-char  genocided[100];		/* List of monsters genocided */
+char  genocided[MU_BUF + 1];	/* List of monsters genocided */
 char  lastcmd[64];		/* Copy of last command sent to Rogue */
 char  lastname[64];		/* Name of last potion/scroll/wand */
 char  nextid = '\0';            /* Next object to identify */
 char  screen[24][80];		/* Map of current Rogue screen */
-char  sumline[128];		/* Termination message for Rogomatic */
+char  sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
+char  sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
 char  ourkiller[64];		/* How we died */
 char  versionstr[32];		/* Version of Rogue being used */
 char  *parmstr;			/* Pointer to process arguments */
@@ -353,10 +354,11 @@ main (int argc, char *argv[])
    * Initialize some storage
    */
 
-  strcpy(genocided, "");
+  memset (genocided, 0, sizeof(genocided)); /* paranoia */
   sprintf (lastcmd, "i");
   sprintf (ourkiller, "unknown");
-  strcpy(sumline, "");
+  memset (sumline, 0, sizeof(sumline)); /* paranoia */
+  memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
   strcpy(versionstr, "");
   for (i = 80 * 24; i--; ) screen[0][i] = ' ';
 

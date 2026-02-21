@@ -759,7 +759,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
    * The better part of valor...
    */
 
-  if ((die_in (1) && turns == 0 || fainting ()) && quitforhonors ())
+  if (((die_in (1) && turns == 0) || fainting ()) && quitforhonors ())
     return (1);
 
   /*
@@ -808,7 +808,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
   if ((die_in (1) || (turns == 0 && streq (monster, "floating eye")) ||
       (turns == 0 && streq (monster, "ice monster"))) &&
       mdir != NONE && mdist < 6 && !on(DOOR) &&
-      ((obj = havewand ("fire")) != NONE &&  !streq(monster, "dragon") ||
+      (((obj = havewand ("fire")) != NONE && !streq(monster, "dragon")) ||
        (obj = havewand ("cold")) != NONE ||
        (obj = havewand ("lightning")) != NONE))
     return (point (obj, mdir));
@@ -965,16 +965,16 @@ tostuff (void)
   int   which, wrow, wcol;
   stuff what;
 
-  /* If we don't see anything (or dont care), return failure */
-  if (slistlen == 0 || Level == 1 && have (amulet) != NONE) return (0);
+  /* If we don't see anything (or don't care), return failure */
+  if (slistlen == 0 || (Level == 1 && have (amulet) != NONE)) return (0);
 
   /*
-   * Now find the closest thing to pick up.  Dont consider things we have
+   * Now find the closest thing to pick up.  Don't consider things we have
    * already dropped (those squares have the USELESS bit set), unless we
    * have dropped a scroll of SCARE MONSTER, in which case we want our
-   * pack to be full.  Dont be fooled by stairs when hallucinating.
+   * pack to be full.  Don't be fooled by stairs when hallucinating.
    *
-   * NOTE: Dont pick up the scaremonster scroll!!!    MLM
+   * NOTE: Don't pick up the scaremonster scroll!!!    MLM
    */
 
   for (i = 0, which = NONE, closest = 99999; i < slistlen; i++)
@@ -1131,7 +1131,7 @@ archery (void)
      *   we are much stronger than he is or
      *   he is a known target for archery and
      * we have enough arrows to wipe this dude out and
-     * we have food or he is a leprechaun and we arent hungry yet
+     * we have food or he is a leprechaun and we aren't hungry yet
      *
      * Then try calling archmonster to move to the right place.
      */
@@ -1147,9 +1147,9 @@ archery (void)
 	 streq (monster, "centaur")	  ||
 	 streq (monster, "ice monster"))  &&
         ammo >= (mtk = monatt[mlist[m].chr-'A'].mtokill - gplushit) &&
-        larder > 0 ||
-        ((streq (monster, "leprechaun") && !hungry ()) ||
-          streq (monster, "nymph")))
+        (larder > 0 ||
+         ((streq (monster, "leprechaun") && !hungry ()) ||
+          streq (monster, "nymph"))))
     { dwait (D_BATTLE, "Arching at %c at (%d,%d)",
 	     mlist[m].chr, mlist[m].mrow, mlist[m].mcol);
       if (archmonster (m, mtk)) return (1);
@@ -1165,7 +1165,7 @@ archery (void)
  *              If (s)he left something behind (evens just arrows
  *		that missed) we will find it and pick it up.
  *
- * Bug:		Sometimes goes the long way around and doesnt see things.
+ * Bug:		Sometimes goes the long way around and doesn't see things.
  */
 
 int

@@ -9,6 +9,19 @@
 #define INCLUDE_GLOBALS_H
 
 
+/* BIGBUF is about to the common size of BUFSIZ - 8k us a good size */
+#define BIGBUF BUFSIZ
+
+/* SM_BUF MUST be smaller than BIGBUF - 1/2 BUFSIZ (4096) is a good size */
+#define SM_BUF (BIGBUF/2)
+
+/* TY_BUF MUST be smaller than SM_BUF - 1/2 SM_BUF (2048) is a good size */
+#define TY_BUF (SM_BUF/2)
+
+/* MU_BUF MUST be smaller than TY_BUF - 1/2 SM_BUF (1024) is a good size */
+#define MU_BUF (TY_BUF/2)
+
+
 /* global files */
 extern FILE *frogue,*trogue;	/* From Rogue, To Rogue */
 extern FILE *fecho;		/* Rogomatic score file */
@@ -22,16 +35,17 @@ extern char afterid;		/* Index of object after identify */
 extern char dropid;		/* Next object to drop */
 extern char wieldid;		/* Next item to wield */
 extern char *genocide;		/* List of monsters to genocide */
-extern char genocided[];	/* List of monsters genocided */
+extern char genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
 extern char lastcmd[];		/* Copy of last command sent to Rogue */
 extern char lastname[];		/* Name of last potion/scroll/wand */
 extern char nextid;		/* Next object to identify */
 extern char ourkiller[];	/* What was listed on the tombstone */
 extern char *parmstr;		/* Pointer to argument space */
 extern char queue[];		/* stuff to be sent to Rogue */
-extern char roguename[241];		/* Name we are playing under */
+extern char roguename[241];	    /* Name we are playing under */
 extern char screen[24][80];	/* characters drawn by Rogue */
-extern char sumline[];		/* Summation line */
+extern char sumline[BIGBUF + 1];    /* Summation line, +1 for paranoia */
+extern char sumline2[BIGBUF + 1];   /* alternate sumline buffer, +1 for paranoia */
 extern char *termination;	/* Latin verb for how we died */
 extern char versionstr[];	/* Version of Rogue we are playing */
 

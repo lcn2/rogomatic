@@ -294,6 +294,9 @@ all: ${TARGETS}
 .c.o:
 	${CC} ${CFLAGS} -c $*.c
 
+datesub.o: datesub.c
+	${CC} ${CFLAGS} -Wno-unused-function -c $*.c
+
 datesub: datesub.o
 	${CC} ${LDFLAGS} datesub.o -o $@
 
@@ -346,8 +349,7 @@ form_rogomatic_cat_in: rogomatic.6.in
 
 datesub.c: datesub.l
 	${RM} -f datesub.c
-	${LEX} datesub.l
-	${MV} -f lex.yy.c datesub.c
+	${LEX} datesub.l -o datesub.c
 
 
 ################################
@@ -393,7 +395,7 @@ rogomatic.cat: rogomatic.6 rogomatic.cat.in
 ###################################
 
 clean:
-	${RM} -f datesub.c lex.yy.c
+	${RM} -f datesub.c
 	${RM} -f ${MISC_OBJS}
 	${RM} -f ${OBJS}
 

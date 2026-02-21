@@ -97,8 +97,9 @@ int
 haveweapon (int k, int print)
 { int i, j, w, t, n=0;
   int weapind[MAXINV], weapval[MAXINV];
+
   for (i=0; i<invcount; ++i)
-    if (inven[i].count && (w = weaponclass (i)) > 0)
+  { if (inven[i].count && (w = weaponclass (i)) > 0)
     { n++;
       for (j = n-1; j > 0 && w >= weapval[j-1]; j--)
       { swap (weapind[j], weapind[j-1]);
@@ -107,21 +108,22 @@ haveweapon (int k, int print)
       weapind[j] = i;
       weapval[j] = w;
     }
+  }
 
-    /*
-     * Put enchanted weapons above unenchanted ones if the weapon
-     * ratings are equal.  DR UTexas 25 Jan 84
-     */
+  /*
+   * Put enchanted weapons above unenchanted ones if the weapon
+   * ratings are equal.  DR UTexas 25 Jan 84
+   */
 
-    for (j = n-1; j > 0; j--)
-    { if (weapval[j] == weapval[j-1])
-      { i = weapind[j];
-        w = weapind[j-1];
-        if (!itemis (w, ENCHANTED) && itemis (i, ENCHANTED) &&
-            !itemis (w, KNOWN) && !itemis (i, KNOWN))
-        { swap (weapind[j], weapind[j-1]); }
-      }
+  for (j = n-1; j > 0; j--)
+  { if (weapval[j] == weapval[j-1])
+    { i = weapind[j];
+      w = weapind[j-1];
+      if (!itemis (w, ENCHANTED) && itemis (i, ENCHANTED) &&
+	  !itemis (w, KNOWN) && !itemis (i, KNOWN))
+      { swap (weapind[j], weapind[j-1]); }
     }
+  }
 
   if (print)
   { mvaddstr (1, 0, "Current Weapon Rankings");
@@ -510,15 +512,16 @@ havemissile (void)
 
   if (obj < 0)			/* Not wielding bow or no arrows */
   { for (i=0; i<invcount; ++i)
-      if (inven[i].count > 0 &&
+    { if (inven[i].count > 0 &&
 	  inven[i].count < fewest &&
 	  !itemis (i, INUSE) &&
           (inven[i].type == missile ||
            stlmatch(inven[i].str,"spear") ||
            stlmatch(inven[i].str,"dagger") ||
-           stlmatch(inven[i].str,"mace") && inven[i].phit <= 0 ||
-           stlmatch(inven[i].str,"long sword") && inven[i].phit < 0))
+           (stlmatch(inven[i].str,"mace") && inven[i].phit <= 0) ||
+           (stlmatch(inven[i].str,"long sword") && inven[i].phit < 0)))
       { obj = i; fewest = inven[i].count; }
+    }
   }
 
   if (obj != NONE)

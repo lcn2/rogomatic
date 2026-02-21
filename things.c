@@ -102,7 +102,7 @@ drop (int obj)
       (!itemis (obj, KNOWN) ||
        stlmatch (inven[obj].str, "extra healing") ||
        stlmatch (inven[obj].str, "gain strength") ||
-       stlmatch (inven[obj].str, "haste self") && !hasted ||
+       (stlmatch (inven[obj].str, "haste self") && !hasted) ||
        stlmatch (inven[obj].str, "healing") ||
        stlmatch (inven[obj].str, "magic detection") ||
        stlmatch (inven[obj].str, "monster detection") ||
@@ -498,9 +498,8 @@ int
 haveuseless (void)
 { int i;
   for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        inven[i].type == wand && inven[i].charges == 0 ||
-        itemis (i, WORTHLESS) && streq (inven[i].str, "arrow"))
+    if ((inven[i].count && inven[i].type == wand && inven[i].charges == 0) ||
+        (itemis (i, WORTHLESS) && streq (inven[i].str, "arrow")))
       return (i);
 
   return (NONE);
@@ -515,7 +514,7 @@ willrust (int obj)
 { return (! (protected ||
 	     armorclass (obj) > 8 || armorclass (obj) < -5 ||
 	     itemis (obj, PROTECTED) ||
-	     stlmatch (inven[obj].str, "leather") && version > RV36B));
+	     (stlmatch (inven[obj].str, "leather") && version > RV36B)));
 }
 
 /*

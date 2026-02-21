@@ -130,7 +130,7 @@ markcycles (int print)
 
 void
 markchokepts (void)
-{ int *Scr, *ScrEnd, loc;
+{ int *Scr, *ScrEnd;
 
   for (Scr = scrmap[0], ScrEnd = &Scr[1920]; Scr<ScrEnd; Scr++)
   { if (*Scr & DOOR) *Scr |= CHOKE;

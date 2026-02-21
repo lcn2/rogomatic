@@ -158,7 +158,7 @@ commandarg (char *cmd, int n)
 
 void
 adjustpack (char *cmd)
-{ int neww, obj;
+{ int obj;
 
   switch (functionchar (cmd))
   { case 'd':	break;

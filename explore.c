@@ -907,8 +907,8 @@ secret (void)
     return (0);
 
   /* If Level 1 or edge of screen: dead end cannot be room, mark and return */
-  if (Level == 1 && attempt == 0 ||
-      version < RV53A && (atrow<=1 || atrow>=22 || atcol<=0 || atcol>=79))
+  if ((Level == 1 && attempt == 0) ||
+      (version < RV53A && (atrow<=1 || atrow>=22 || atcol<=0 || atcol>=79)))
   { markexplored (atrow, atcol); return (0); }
 
   /* Have we mapped this level? */
@@ -916,8 +916,8 @@ secret (void)
 
   /* Found a dead end, should we search it? */
   if (nexttowall (atrow, atcol) ||
-      canbedoor (atrow, atcol) &&
-      (version >= RV53A || !isexplored (atrow, atcol)))
+      (canbedoor (atrow, atcol) &&
+       (version >= RV53A || !isexplored (atrow, atcol))))
   { setrc (DEADEND, atrow, atcol);
 
     if ((SEARCHES (atrow, atcol) - timessearched[atrow][atcol]) > 0)

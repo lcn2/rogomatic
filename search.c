@@ -403,7 +403,7 @@ searchto (int row, int col, int (*evaluate)(int, int, int, int *, int *, int *),
 	/* IF we have not considered stepping on the square yet */
 	/* and if it is accessible    THEN: Put it on the queue */
         if (dir[nr][nc] == NOTTRIED && (CANGO&S) && (type&S) == type &&
-	    (k<4 || onrc (CANGO,r,nc) && onrc (CANGO,nr,c)))
+	    (k<4 || (onrc (CANGO,r,nc) && onrc (CANGO,nr,c))))
         { moveval[nr][nc] = NONE;  /* flag unevaluated */
 
 	  *(tail++) = nr;  *(tail++) = nc; if (tail == end) tail = begin;
@@ -411,7 +411,7 @@ searchto (int row, int col, int (*evaluate)(int, int, int, int *, int *, int *),
 	  dir[nr][nc] = sdirect[k];  /* direction we used to get here */
 
 	  if (debug (D_SCREEN | D_SEARCH | D_INFORM))
-	  { at (nr, nc); printw ("%c", ">/^\\</v\\  ~"[dir[nr][nc]]);}
+	  { at (nr, nc); printw ("%c", ">/^\\</v\\  ~"[(int)(dir[nr][nc])]);}
         }
       }
       if (type == 0) break;

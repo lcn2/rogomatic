@@ -73,13 +73,15 @@ positionreplay (void)
 
   /* Now clear the screen, position the log file, and return */
   switch (cmd)
-  { case 'f': fseek (logfile, levpos[0].pos, 0); break;
-    case 'p': if (curlev > 0) fseek (logfile, levpos[curlev-1].pos, 0);
-              else            fseek (logfile, levpos[0].pos, 0); break;
+  { case 'f': fseek (logfile, levpos[0].pos, 0);
 	      break;
-    case 'c': fseek (logfile, levpos[curlev].pos, 0); break;
+    case 'p': if (curlev > 0) fseek (logfile, levpos[curlev-1].pos, 0);
+              else            fseek (logfile, levpos[0].pos, 0);
+	      break;
+    case 'c': fseek (logfile, levpos[curlev].pos, 0);
+	      break;
     case 'n': if (curlev < numlev-1) fseek (logfile, levpos[curlev+1].pos, 0);
-              else            fseek (logfile, levpos[curlev].pos, 0); break;
+              else            fseek (logfile, levpos[curlev].pos, 0);
 	      break;
     case 'l': fseek (logfile, levpos[numlev-1].pos, 0);
 	      break;

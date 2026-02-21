@@ -38,10 +38,11 @@ findentry (stuff s, char *string)
 { int i;
 
   for (i = 0; i < datalen; i++)
-    if (s == dbase[i].st &&
+  { if (s == dbase[i].st &&
         (streq (dbase[i].fakename, string) ||
-         *dbase[i].roguenam && streq (dbase[i].roguenam, string)))
+         (*dbase[i].roguenam && streq (dbase[i].roguenam, string))))
       return (i);
+  }
 
   return (NOTFOUND);
 }

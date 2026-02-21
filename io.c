@@ -414,13 +414,13 @@ dumpwalls (void)
            (TRAP&S)                    ? '^' :
            (STAIRS&S)                  ? '>' :
            (RUNOK&S)                   ? '%' :
-           ((DOOR+BEEN&S)==DOOR+BEEN)  ? 'D' :
+           (((DOOR+BEEN)&S)==DOOR+BEEN) ? 'D' :
            (DOOR&S)                    ? 'd' :
-           ((BOUNDARY+BEEN&S)==BOUNDARY+BEEN) ? 'B' :
-           ((ROOM+BEEN&S)==ROOM+BEEN)  ? 'R' :
+           (((BOUNDARY+BEEN)&S)==BOUNDARY+BEEN) ? 'B' :
+           (((ROOM+BEEN)&S)==ROOM+BEEN)  ? 'R' :
            (BEEN&S)                    ? ':' :
            (HALL&S)                    ? '#' :
-           ((BOUNDARY+WALL&S)==BOUNDARY+WALL) ? 'W' :
+           (((BOUNDARY+WALL)&S)==BOUNDARY+WALL) ? 'W' :
            (BOUNDARY&S)                ? 'b' :
            (ROOM&S)                    ? 'r' :
            (CANGO&S)                   ? '.' :
@@ -658,18 +658,21 @@ quitrogue (char *reason, int gld, int terminationtype)
   clock = time(&clock);
   ts = localtime(&clock);
 
-  /* Build a summary line */
-  sprintf (sumline, "%3s %2d, %4d %-8.8s %7d%s%-17.17s %3d %3d ",
+  /* Build a summary line - limit formatting to SM_BUF chars in a BIGBUF sized buffer */
+  memset (sumline, 0, sizeof(sumline)); /* paranoia */
+  snprintf (sumline, SM_BUF, "%3s %2d, %4d %-8.8s %7d%s%-17.17s %3d %3d ",
            month[ts -> tm_mon], ts -> tm_mday, 1900 + ts -> tm_year,
            getname (), gld, cheat ? "*" : " ", reason, MaxLevel, Hpmax);
 
+  memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
   if (Str % 100)
-    sprintf (sumline, "%s%2d.%2d", sumline, Str/100, Str%100);
+    snprintf (sumline2, BIGBUF, "%.*s%2d.%2d", SM_BUF, sumline, Str/100, Str%100);
   else
-    sprintf (sumline, "%s  %2d ", sumline, Str/100);
+    snprintf (sumline2, BIGBUF, "%.*s  %2d ", SM_BUF, sumline, Str/100);
 
-  sprintf (sumline, "%s %2d %2d/%-6d  %d",
-           sumline, Ac, Explev, Exp, ltm.gamecnt);
+  memset (sumline, 0, sizeof(sumline)); /* paranoia */
+  snprintf (sumline, BIGBUF, "%.*s %2d %2d/%-6d  %d",
+            SM_BUF, sumline2, Ac, Explev, Exp, ltm.gamecnt);
 
   /* Now write the summary line to the log file */
   at (23, 0); clrtoeol (); refresh ();
@@ -1021,8 +1024,8 @@ printsnap (FILE *f)
   putn ('-', f, 79);
   fprintf (f, "\n");
   for (i = 0; i < 24; i++)
-  { for (length = 79; length >= 0 && charonscreen(i,length) == ' '; length--);
-    for (j=0; j <= length; j++) fprintf (f, "%c", charonscreen(i,j));
+  { for (length = 79; length >= 0 && charonscreen(i,length) == ' '; length--) { }
+    for (j=0; j <= length; j++) { fprintf (f, "%c", charonscreen(i,j)); }
     fprintf (f, "\n");
   }
   putn ('-', f, 79);
@@ -1180,31 +1183,43 @@ clearscreen (void)
 
 char *
 statusline (void)
-{ static char staticarea[256];
-  char *s=staticarea;
+{ static char staticarea[BIGBUF + 1]; /* +1 for paranoia */
+  static char staticarea2[BIGBUF + 1]; /* +1 for paranoia */
+  char *ret;	/* static buffer to return as a NUL terminated string */
 
-  sprintf (s, "Status: ");
+  memset (staticarea, 0, sizeof(staticarea)); /* paranoia */
+  strncpy (staticarea, "Status: ", MU_BUF);
 
-  if (aggravated)		strcat (s, "aggravated, ");
-  if (beingheld)		strcat (s, "being held, ");
-  if (blinded)			strcat (s, "blind, ");
-  if (confused)			strcat (s, "confused, ");
-  if (cosmic)			strcat (s, "cosmic, ");
-  if (cursedarmor)		strcat (s, "cursed armor, ");
-  if (cursedweapon)		strcat (s, "cursed weapon, ");
-  if (doublehasted)		strcat (s, "perm hasted, ");
-  if (droppedscare)		strcat (s, "dropped scare, ");
-  if (floating)			strcat (s, "floating, ");
-  if (hasted)			strcat (s, "hasted, ");
-  if (protected)		strcat (s, "protected, ");
-  if (redhands)			strcat (s, "red hands, ");
-  if (Level == didreadmap)	strcat (s, "mapped, ");
+  /* use strncat with small strings into a mostly zeroized buffer for paranoia */
+  if (aggravated)		strncat (staticarea, "aggravated, ", MU_BUF);
+  if (beingheld)		strncat (staticarea, "being held, ", MU_BUF);
+  if (blinded)			strncat (staticarea, "blind, ", MU_BUF);
+  if (confused)			strncat (staticarea, "confused, ", MU_BUF);
+  if (cosmic)			strncat (staticarea, "cosmic, ", MU_BUF);
+  if (cursedarmor)		strncat (staticarea, "cursed armor, ", MU_BUF);
+  if (cursedweapon)		strncat (staticarea, "cursed weapon, ", MU_BUF);
+  if (doublehasted)		strncat (staticarea, "perm hasted, ", MU_BUF);
+  if (droppedscare)		strncat (staticarea, "dropped scare, ", MU_BUF);
+  if (floating)			strncat (staticarea, "floating, ", MU_BUF);
+  if (hasted)			strncat (staticarea, "hasted, ", MU_BUF);
+  if (protected)		strncat (staticarea, "protected, ", MU_BUF);
+  if (redhands)			strncat (staticarea, "red hands, ", MU_BUF);
+  if (Level == didreadmap)	strncat (staticarea, "mapped, ", MU_BUF);
 
-  if (*genocided) sprintf (s, "%sgenocided '%s', ", s, genocided);
+  memset (staticarea2, 0, sizeof(staticarea2)); /* paranoia */
+  if (*genocided)
+  { snprintf (staticarea2, SM_BUF, "%.*sgenocided '%.*s', ", MU_BUF, staticarea, MU_BUF, genocided);
+    snprintf (staticarea, BIGBUF, "%.*s%d food%s, %d missile%s, %d turn%s, (%d,%d %d,%d) bonus",
+              SM_BUF, staticarea2, larder, plural(larder), ammo, plural(ammo), turns,
+              plural(turns), gplushit, gplusdam, wplushit, wplusdam);
+    ret = staticarea;
+  }
+  else
+  { snprintf (staticarea2, BIGBUF, "%.*s%d food%.*s, %d missile%.*s, %d turn%.*s, (%d,%d %d,%d) bonus",
+	      SM_BUF, staticarea, larder, MU_BUF, plural(larder), ammo, MU_BUF, plural(ammo), turns,
+	      MU_BUF, plural(turns), gplushit, gplusdam, wplushit, wplusdam);
+    ret = staticarea2;
+  }
 
-  sprintf (s, "%s%d food%s, %d missile%s, %d turn%s, (%d,%d %d,%d) bonus",
-           s, larder, plural(larder), ammo, plural(ammo), turns,
-           plural(turns), gplushit, gplusdam, wplushit, wplusdam);
-
-  return (s);
+  return (ret);
 }
