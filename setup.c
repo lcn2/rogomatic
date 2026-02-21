@@ -11,6 +11,7 @@
 # include <fcntl.h>
 # include <sys/ioctl.h>
 # include <unistd.h>
+
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -23,12 +24,10 @@
 # define ROGUETERM "rg|rterm:am:bs:ce=^[^S:cl=^L:cm=^[a%+ %+ :co#80:li#24:so=^[D:se=^[d:pt:ta=^I:up=^[;:db:xn:"
 
 int   rfrogue, rtrogue;
-extern char *getname();
+extern char *getname(void);
 
-int main (argc, argv)
-int   argc;
-char *argv[];
-
+int
+main (int argc, char *argv[])
 { int   ptc[2], ctp[2];
   int   child, score = 0, oldgame = 0;
   int   cheat = 0, noterm = 1, echo = 0, nohalf = 0, replay = 0;
@@ -158,8 +157,8 @@ char *argv[];
  * given the fake value 'Z'.
  */
 
-int replaylog (fname, options)
-char *fname, *options;
+int
+replaylog (char *fname, char *options)
 { execl ("player", "player", "ZZ", "0", options, fname, NULL);
 # ifdef PLAYER
   execl (PLAYER, "player", "ZZ", "0", options, fname, NULL);
@@ -173,7 +172,8 @@ char *fname, *options;
  *	See if a user is an author of the program
  */
 
-int author()
+int
+author (void)
 {
   switch (getuid())
   { case 1337:	/* Fuzzy */

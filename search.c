@@ -7,6 +7,7 @@
 
 # include <stdio.h>
 # include <curses.h>
+
 # include "types.h"
 # include "globals.h"
 
@@ -29,8 +30,8 @@ static int didinit=0;
  * Modified to use findmove.			5/13	MLM
  */
 
-int makemove (movetype, evalinit, evaluate, reevaluate)
-int movetype, (*evalinit)(), (*evaluate)(), reevaluate;
+int
+makemove (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int *, int *, int *), int reevaluate)
 {
   if (findmove (movetype, evalinit, evaluate, reevaluate))
     return (followmap (movetype));
@@ -43,8 +44,8 @@ int movetype, (*evalinit)(), (*evaluate)(), reevaluate;
  *           the correct state for validatemap or followmap to work.	MLM
  */
 
-int findmove (movetype, evalinit, evaluate, reevaluate)
-int movetype, (*evalinit)(), (*evaluate)(), reevaluate;
+int
+findmove (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int *, int *, int *), int reevaluate)
 { int result;
 
   didinit = ontarget = 0;
@@ -88,9 +89,9 @@ int movetype, (*evalinit)(), (*evaluate)(), reevaluate;
  * May 13, MLM
  */
 
-int followmap (movetype)
-register int movetype;
-{ register int dir, dr, dc, r, c;
+int
+followmap (int movetype)
+{ int dir, dr, dc, r, c;
   int timemode, searchit, count=1;
 
   dir=mvdir[atrow][atcol]-FROM; dr=deltr[dir]; dc=deltc[dir];
@@ -160,9 +161,9 @@ register int movetype;
  * Called only by findmove.	MLM
  */
 
-int validatemap (movetype, evalinit, evaluate)
-int movetype, (*evalinit)(), (*evaluate)();
-{ register int thedir, dir, r, c;
+int
+validatemap (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int *, int *, int *))
+{ int thedir, dir, r, c;
   int val, avd, cont;
 
   dwait (D_CONTROL | D_SEARCH, "Validatemap: type %d", movetype);
@@ -221,8 +222,8 @@ int movetype, (*evalinit)(), (*evaluate)();
  * cancelmove: Invalidate all stored moves of a particular type.
  */
 
-int cancelmove (movetype)
-int movetype;
+void
+cancelmove (int movetype)
 { if (movetype == mvtype) mvtype = 0;
 }
 
@@ -230,7 +231,8 @@ int movetype;
  * setnewgoal: Invalidate all stored moves.
  */
 
-int setnewgoal ()
+void
+setnewgoal (void)
 { mvtype = 0;
   goalr = goalc = NONE;
 }
@@ -245,11 +247,9 @@ int setnewgoal ()
  * arguments and results otherwise the same as searchto.	LGCH
  */
 
-int searchfrom (row, col, evaluate, dir, trow, tcol)
-int row, col, *trow, *tcol;
-int (*evaluate)();
-char dir[24][80];
-{ register int r, c, sdir, tempdir;
+int
+searchfrom (int row, int col, int (*evaluate)(int, int, int, int *, int *, int *), char dir[24][80], int *trow, int *tcol)
+{ int r, c, sdir, tempdir;
   if (!searchto (row, col, evaluate, dir, trow, tcol))
   { return (0);
   }
@@ -292,13 +292,11 @@ char dir[24][80];
  * attempting to hack it into a faster form.			11/6/82 MLM
  */
 
-int searchto (row, col, evaluate, dir, trow, tcol)
-int row, col, *trow, *tcol;
-int (*evaluate)();
-char dir[24][80];
+int
+searchto (int row, int col, int (*evaluate)(int, int, int, int *, int *, int *), char dir[24][80], int *trow, int *tcol)
 { int searchcontinue = 10000000, type, havetarget=0, depth=0;
-  register int r, c, nr, nc;
-  register int k;
+  int r, c, nr, nc;
+  int k;
   char begin[QSIZE], *end, *head, *tail;
   int saveavd[24][80], val, avd, cont;
   int any;
@@ -395,7 +393,7 @@ char dir[24][80];
     type = SAFE;
     while (1)
     { for (k=0; k<8; k++)
-      { register int S;
+      { int S;
 
 	/* examine adjacent squares. */
 	nr = r + sdeltr[k];

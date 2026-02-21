@@ -10,6 +10,7 @@
 # include <ctype.h>
 # include <stdlib.h>
 # include <string.h>
+
 # include "types.h"
 # include "globals.h"
 
@@ -47,9 +48,10 @@ static char *result[] = { res1, res2, res3, res4 };
  * multiple messages.
  */
 
-int terpmes ()
+void
+terpmes (void)
 { char mess[128];
-  register char *m, *mend, *s = screen[0], *t;
+  char *m, *mend, *s = screen[0], *t;
 
   /* Set 't' to the tail of the message, skip backward over blank & dot */
   for (t=s+79; *t==' ' || *t=='.'; t--) ;	/* Find last non-blank */
@@ -77,8 +79,8 @@ int terpmes ()
  * or call functions.
  */
 
-int parsemsg (mess, mend)
-register char *mess, *mend;
+void
+parsemsg (char *mess, char *mend)
 { int unknown = 0;
 
   echoit = 1;
@@ -459,9 +461,9 @@ register char *mess, *mend;
  * characters matched by the 'i'th *.
  */
 
-int smatch (dat, pat, res)
-register char *dat, *pat, **res;
-{ register char *star = 0, *starend, *resp;
+int
+smatch (char *dat, char *pat, char **res)
+{ char *star = 0, *starend, *resp;
   int nres = 0;
 
   while (1)
@@ -494,8 +496,8 @@ register char *dat, *pat, **res;
  * readident: read an identify scroll.
  */
 
-int readident (name)
-char *name;
+void
+readident (char *name)
 { int obj; char id = '*';	/* Default is "* for list" */
 
   if (!replaying && version < RV53A &&
@@ -508,7 +510,7 @@ char *name;
   if (version < RV53A)		/* Rogue 3.6, Rogue 5.2 */
   { deleteinv (OBJECT (afterid));	/* Assume object gone */
     sendnow (" %c", nextid);		/* Identify it */
-    send ("I%c", afterid);		/* Generate a message about it */
+    my_send ("I%c", afterid);		/* Generate a message about it */
     knowident = identifying = 1;	/* Set variables */
   }
   else				/* Rogue 5.3 */
@@ -552,7 +554,8 @@ char *name;
  * dropreply: issue reply for drop request
  */
 
-int dropreply ()
+void
+dropreply (void)
 {
   if (!replaying &&
       (dropid < LETTER (0) || dropid > LETTER (invcount)))
@@ -576,7 +579,8 @@ int dropreply ()
  * wieldreply: issue reply for wield request
  */
 
-int wieldreply ()
+void
+wieldreply (void)
 {
   int neww = wieldid;
   usemsg ("About to wield", OBJECT(neww));
@@ -615,11 +619,12 @@ int wieldreply ()
  * rampage: read a scroll of genocide.
  */
 
-int rampage ()
+void
+rampage (void)
 { char monc;
 
   /* Check the next monster in the list, we may not fear him */
-  while (monc = *genocide)
+  while ((monc = *genocide))
   { /* Do not waste genocide on stalkers if we have the right ring */
     if ((streq (monname (monc), "invisible stalker") ||
          streq (monname (monc), "phantom")) &&
@@ -658,7 +663,8 @@ int rampage ()
  * Good rings we have identified, so dont bother marking rings.
  */
 
-void curseditem ()
+void
+curseditem (void)
 { usesynch = 0;    /* Force a reset inventory */
 
   /* lastdrop is index of last item we tried to use which could be cursed */
@@ -685,10 +691,9 @@ void curseditem ()
  * base, and then zap that name into all of the same objects
  */
 
-int infer (s, objname)
-stuff s;
-char *objname;
-{ register int i;
+void
+infer (stuff s, char *objname)
+{ int i;
 
   /* Use streq so `tan' and `tangerine' are different. */
   if (*lastname && *objname && !streq (objname, lastname))
@@ -706,9 +711,9 @@ char *objname;
  * Killed: called whenever we defeat a monster.
  */
 
-int killed (monster)
-register char *monster;
-{ register int m = 0, mh = 0;
+void
+killed (char *monster)
+{ int m = 0, mh = 0;
 
   /* Find out what we really killed */
   if (!cosmic && !blinded && targetmonster>0 && streq (monster, "it"))
@@ -760,9 +765,9 @@ register char *monster;
  * washit: Record being hit by a monster.
  */
 
-int washit (monster)
-char *monster;
-{ register int mh = 0, m = 0;
+void
+washit (char *monster)
+{ int mh = 0, m = 0;
 
   /* Find out what really hit us */
   if ((mh = getmonhist (monster, 1)) != NONE)
@@ -786,9 +791,9 @@ char *monster;
  * wasmissed: Record being missed by a monster.
  */
 
-int wasmissed (monster)
-char *monster;
-{ register int mh = 0, m = 0;
+void
+wasmissed (char *monster)
+{ int mh = 0, m = 0;
 
   /* Find out what really missed us */
   if ((mh = getmonhist (monster, 1)) != NONE)
@@ -810,8 +815,9 @@ char *monster;
  * didhit: Record hitting a monster.
  */
 
-int didhit ()
-{ register int m = 0;
+void
+didhit (void)
+{ int m = 0;
 
   didfight = 1;
 
@@ -829,8 +835,9 @@ int didhit ()
  * didmiss: Record missing a monster.
  */
 
-int didmiss ()
-{ register int m = 0;
+void
+didmiss (void)
+{ int m = 0;
 
   didfight = 1;
 
@@ -848,9 +855,9 @@ int didmiss ()
  * mshit: Record hitting a monster with a missile.
  */
 
-void mshit (monster)
-char *monster;
-{ register int mh;
+void
+mshit (char *monster)
+{ int mh;
 
   /* Arching in a dark room? */
   if (!cosmic && !blinded && targetmonster > 0 && streq (monster, "it"))
@@ -868,9 +875,9 @@ char *monster;
  * msmiss: Record missing a monster with a missile.
  */
 
-void msmiss (monster)
-char *monster;
-{ register int mh;
+void
+msmiss (char *monster)
+{ int mh;
 
   /* Arching in a dark room? */
   if (!cosmic && !blinded && targetmonster > 0 && streq (monster, "it"))
@@ -890,8 +897,8 @@ char *monster;
  *            statistics about the amount of gold picked up.
  */
 
-int countgold (amount)
-register char *amount;
+void
+countgold (char *amount)
 { int pot;
 
   if ((pot = atoi (amount)) > 0)
@@ -902,11 +909,10 @@ register char *amount;
  * Summary: print a summary of the game.
  */
 
-int summary (f, sep)
-FILE *f;
-int sep;
-{ register int m;
-  char s[1024], s2[100], *monname ();
+void
+summary (FILE *f, int sep)
+{ int m;
+  char s[1024], s2[100];
 
   sprintf (s, "Monsters killed:%c%c", sep, sep);
 
@@ -940,7 +946,8 @@ int sep;
  * versiondep: Set version dependent variables.
  */
 
-int versiondep ()
+void
+versiondep (void)
 {
   if (version >= RV53A)		genocide = "DMJGU";
   else if (version >= RV52A)	genocide = "UDVPX";
@@ -955,9 +962,8 @@ int versiondep ()
  * when we are being stalked by an invisible monster.
  */
 
-int getmonhist (monster, hitormiss)
-char *monster;
-int hitormiss;
+int
+getmonhist (char *monster, int hitormiss)
 { if (cosmic || blinded)
   { return (findmonster ("it")); }
   else

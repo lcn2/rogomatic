@@ -20,14 +20,9 @@
 # include <fcntl.h>
 # include <sys/types.h>
 # include <sys/stat.h>
+# include <time.h>
 
 # include "install.h"
-
-# ifdef BSD41
-#     include <time.h>
-# else
-#     include <sys/time.h>
-# endif
 
 # define TRUE 1
 # define FALSE 0
@@ -37,7 +32,8 @@
  */
 
 #if defined(BSD41) || defined(BSD42)
-int baudrate ()
+int
+baudrate (void)
 { static short  baud_convert[] =
   { 0, 50, 75, 110, 135, 150, 200, 300, 600, 1200, 1800, 2400, 4800, 9600 };
   static struct sgttyb  sg;
@@ -56,7 +52,8 @@ int baudrate ()
  * getname: get userid of player.
  */
 
-char *getname ()
+char *
+getname (void)
 { static char name[100] = "";
   struct passwd *pw;
 
@@ -74,8 +71,8 @@ char *getname ()
  * wopen: Open a file for world access.
  */
 
-FILE *wopen(fname, mode)
-char *fname, *mode;
+FILE *
+wopen(char *fname, char *mode)
 { int oldmask;
   FILE *newlog;
 
@@ -90,8 +87,8 @@ char *fname, *mode;
  * fexists: return a boolean if the named file exists
  */
 
-int fexists (fn)
-char *fn;
+int
+fexists (char *fn)
 { struct stat pbuf;
 
   return (stat (fn, &pbuf) == 0);
@@ -101,8 +98,8 @@ char *fn;
  * filelength: Do a stat and return the length of a file.
  */
 
-int filelength (f)
-char *f;
+int
+filelength (char *f)
 { struct stat sbuf;
 
   if (stat (f, &sbuf) == 0)
@@ -115,9 +112,10 @@ char *f;
  * critical: Disable interrupts
  */
 
-static void   (*hstat)(), (*istat)(), (*qstat)(), (*pstat)();
+static void   (*hstat)(int), (*istat)(int), (*qstat)(int), (*pstat)(int);
 
-int critical ()
+void
+critical (void)
 {
   hstat = signal (SIGHUP, SIG_IGN);
   istat = signal (SIGINT, SIG_IGN);
@@ -129,7 +127,8 @@ int critical ()
  * uncritical: Enable interrupts
  */
 
-int uncritical ()
+void
+uncritical (void)
 {
   signal (SIGHUP, hstat);
   signal (SIGINT, istat);
@@ -141,7 +140,8 @@ int uncritical ()
  * reset_int: Set all interrupts to default
  */
 
-int reset_int ()
+void
+reset_int (void)
 {
   signal (SIGHUP, SIG_DFL);
   signal (SIGINT, SIG_DFL);
@@ -153,8 +153,8 @@ int reset_int ()
  * int_exit: Set up a function to call if we get an interrupt
  */
 
-int int_exit (exitproc)
-void (*exitproc)();
+void
+int_exit (void (*exitproc)(int))
 {
   if (signal (SIGHUP, SIG_IGN) != SIG_IGN)  signal (SIGHUP, exitproc);
   if (signal (SIGINT, SIG_IGN) != SIG_IGN)  signal (SIGINT, exitproc);
@@ -169,12 +169,10 @@ void (*exitproc)();
 
 # define NOWRITE 0
 
-int lock_file (lokfil, maxtime)
-char *lokfil;
-int maxtime;
+int
+lock_file (char *lokfil, int maxtime)
 { int try;
   struct stat statbuf;
-  long time ();
 
   start:
   if (creat (lokfil, NOWRITE) > 0)
@@ -204,8 +202,8 @@ int maxtime;
  * unlock_file: Unlock a lock file.
  */
 
-int unlock_file (lokfil)
-char *lokfil;
+void
+unlock_file (char *lokfil)
 { unlink (lokfil);
 }
 
@@ -215,7 +213,8 @@ char *lokfil;
  */
 
 /* VARARGS2 */
-int quit (int code, char *fmt, ...)
+int
+quit (int code, char *fmt, ...)
 { va_list ap;
   va_start (ap, fmt);
   vfprintf (stderr, fmt, ap);
@@ -242,9 +241,9 @@ int quit (int code, char *fmt, ...)
  *  Originally from klg (Ken Greer) on IUS/SUS UNIX
  */
 
-int stlmatch (big, small)
-char *small, *big;
-{ register char *s, *b;
+int
+stlmatch (char *big, char *small)
+{ char *s, *b;
   s = small;
   b = big;
   do
@@ -302,10 +301,10 @@ static int  findenv ();		/* look for a name in the env. */
 static int  newenv ();		/* copy env. from stack to heap */
 static int  moreenv ();		/* incr. size of env. */
 
-int   putenv (name, value)
-char *name, *value;
-{ register int  i, j;
-  register char *p;
+int
+putenv (char *name, char *value)
+{ int  i, j;
+  char *p;
 
   if (envsize < 0)
   {				/* first time putenv called */
@@ -354,10 +353,10 @@ char *name, *value;
   return (0);
 }
 
-static int  findenv (name)
-char *name;
-{ register char *namechar, *envchar;
-  register int  i, found;
+static int
+findenv (char *name)
+{ char *namechar, *envchar;
+  int  i, found;
 
   found = 0;
   for (i = 0; environ[i] && !found; i++)
@@ -372,9 +371,10 @@ char *name;
   return (found ? i - 1 : -1);
 }
 
-static int  newenv ()
-{ register char **env, *elem;
-  register int  i, esize;
+static int
+newenv (void)
+{ char **env, *elem;
+  int  i, esize;
 
   for (i = 0; environ[i]; i++);
   esize = i + EXTRASIZE + 1;
@@ -396,9 +396,10 @@ static int  newenv ()
   return (0);
 }
 
-static int  moreenv ()
-{ register int  esize;
-  register char **env;
+static int
+moreenv (void)
+{ int  esize;
+  char **env;
 
   esize = envsize + EXTRASIZE;
   env = (char **) realloc (environ, esize * sizeof (*env));

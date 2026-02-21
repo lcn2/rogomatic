@@ -9,6 +9,7 @@
 # include <ctype.h>
 # include <curses.h>
 # include <string.h>
+
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -22,7 +23,7 @@
 
 # define DIDFIGHT 3
 
-extern int genericinit(), sleepvalue();	/* From explore.c */
+extern int genericinit(void), sleepvalue(int, int, int, int*, int*, int*);	/* From explore.c */
 
 /*
  * strategize: Run through each rule until something fires. Return 1 if an
@@ -30,7 +31,8 @@ extern int genericinit(), sleepvalue();	/* From explore.c */
  * from the user).
  */
 
-int   strategize ()
+int
+strategize (void)
 {
   char msg[128];
   dwait (D_CONTROL, "Strategizing...");
@@ -202,8 +204,9 @@ int   strategize ()
  * weapon already in hand.
  */
 
-int   fightmonster ()
-{ register int i, rr, cc, mdir = NONE, mbad  = NONE, danger = 0;
+int
+fightmonster (void)
+{ int i, rr, cc, mdir = NONE, mbad  = NONE, danger = 0;
   int  melee = 0, adjacent = 0, alertmonster = 0;
   int  wanddir = NONE, m = NONE, howmean;
   char mon, monc = ':', *monster;
@@ -325,8 +328,9 @@ int   fightmonster ()
  * charging after him. Special case for sitting on a door.
  */
 
-int   tomonster ()
-{ register int i, dist, rr, cc, mdir = NONE, mbad = NONE;
+int
+tomonster (void)
+{ int i, dist, rr, cc, mdir = NONE, mbad = NONE;
   int   closest, which, danger = 0, adj = 0;
   char  monc = ':', monchar = ':', *monster;
 
@@ -426,8 +430,8 @@ int   tomonster ()
  * Some monsters are included here because we want to shoot arrows at them.
  */
 
-int wanttowake(c)
-char c;
+int
+wanttowake (char c)
 { char *monster = monname (c);
 
   if (missedstairs)
@@ -460,7 +464,8 @@ char c;
  *		Also rest if we are critically weak and have some food.
  */
 
-int aftermelee ()
+int
+aftermelee (void)
 {
   if (foughtmonster > 0)
   { lyinginwait = 1;
@@ -489,15 +494,16 @@ int aftermelee ()
 # define die_in(n)	(Hp/n < danger*50/(100-k_run))
 # define live_for(n)	(! die_in(n))
 
-int battlestations (m, monster, mbad, danger, mdir, mdist, alert, adj)
-int m;			/* Monster index */
-char *monster;          /* What is it? */
-int mbad;               /* How bad is it? */
-int danger;             /* How many points damage per round? */
-int mdir;               /* Which direction (clear line of sight)? */
-int mdist;              /* How many turns until battle? */
-int alert;              /* Is he known to be awake? */
-int adj;		/* How many attackers are there? */
+/* m - Monster index */
+/* monster - What is it? */
+/* mbad - How bad is it? */
+/* danger - How many points damage per round? */
+/* mdir - Which direction (clear line of sight)? */
+/* mdist - How many turns until battle? */
+/* alert - Is he known to be awake? */
+/* adj - How many attackers are there? */
+int
+battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist, int alert, int adj)
 { int obj, turns;
   static int stepback = 0;
   static int scaremcount = 0;
@@ -953,8 +959,9 @@ int adj;		/* How many attackers are there? */
  * try to drop our least useful item. If pack is still full, fail.
  */
 
-int tostuff ()
-{ register int i, closest, dist, w, worst, worstval;
+int
+tostuff (void)
+{ int i, closest, dist, w, worst, worstval;
   int   which, wrow, wcol;
   stuff what;
 
@@ -1023,8 +1030,9 @@ int tostuff ()
  * fightinvisible: being hounded by unseen beasties, try something clever.
  */
 
-int fightinvisible ()
-{ char cmd[20]; register int dir, liberties = 0, lastdir, obj;
+int
+fightinvisible (void)
+{ char cmd[20]; int dir, liberties = 0, lastdir, obj;
 
   /* Count down the time since we were last hit by a stalker */
   if (--beingstalked < 0)
@@ -1110,8 +1118,9 @@ int fightinvisible ()
  * Note: some monsters are to wimpy archery, and some too mean.     MLM
  */
 
-int archery ()
-{ register int m, mtk;
+int
+archery (void)
+{ int m, mtk;
   char *monster;
 
   for (m=0; m < mlistlen; m++)		/* Find a sleeping monster */
@@ -1159,7 +1168,8 @@ int archery ()
  * Bug:		Sometimes goes the long way around and doesnt see things.
  */
 
-int pickupafter ()
+int
+pickupafter (void)
 { /* If no goal */
   if (agoalr < 0 || agoalc < 0)
     return (0);
@@ -1183,7 +1193,8 @@ int pickupafter ()
  *           and mistake them for fresh wands.
  */
 
-int dropjunk ()
+int
+dropjunk (void)
 { int obj;
 
   if ((obj = haveuseless ()) != NONE && (gotocorner () || throw (obj, 7)))
@@ -1203,7 +1214,8 @@ int dropjunk ()
  * Assumes a 10 percent death tax.
  */
 
-int quitforhonors ()
+int
+quitforhonors (void)
 {
   if (Gold > quitat && (Gold-Gold/10) <= quitat)
   { quitrogue ("quit (scoreboard)", Gold, 0);

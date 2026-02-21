@@ -5,6 +5,11 @@
  * Various tokens used by the screen reading package.
  */
 
+
+#if !defined(INCLUDE_TERMTOKENS_H)
+#define INCLUDE_TERMTOKENS_H
+
+
 # define BS_TOK ctrl('H')
 # define CE_CHR ctrl('S')
 # define CE_TOK -2
@@ -26,3 +31,6 @@
 # define TA_TOK ctrl('I')
 # define UP_CHR ';'
 # define UP_TOK -9
+
+
+#endif

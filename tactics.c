@@ -8,6 +8,7 @@
 # include <stdio.h>
 # include <ctype.h>
 # include <curses.h>
+
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -25,7 +26,8 @@
  * Note that leather armor does not rust.
  */
 
-int handlearmor ()
+int
+handlearmor (void)
 { int obj;
 
   /* Only check when armor status is different */
@@ -83,7 +85,8 @@ int handlearmor ()
  *  The current strategy is to wield the best weapon from haveweapon.
  */
 
-int handleweapon ()
+int
+handleweapon (void)
 { int obj;
 
   if ((!newweapon || cursedweapon) && !wielding (thrower)) return (0);
@@ -108,7 +111,8 @@ int handleweapon ()
 
 # define MAXSTR (version < RV52A ? 1900 : 3100)
 
-int quaffpotion ()
+int
+quaffpotion (void)
 { int obj = NONE, obj2 = NONE;
 
   /* Take advantage of double haste bug -- assures permanent haste */
@@ -215,8 +219,9 @@ int quaffpotion ()
  * armor).
  */
 
-int readscroll ()
-{ register int obj, obj2;
+int
+readscroll (void)
+{ int obj, obj2;
 
   /* Check the item specific identify scrolls first */
   if (((obj = havenamed (rscroll, "identify armor")) != NONE &&
@@ -317,7 +322,8 @@ int readscroll ()
  * much food we need to use each ring.
  */
 
-int handlering ()
+int
+handlering (void)
 { int ring1, ring2;
 
   if (!newring && !beingstalked) return (0);
@@ -363,8 +369,8 @@ int handlering ()
  * Could be extended to have an ordering of rings to wear.
  */
 
-int findring (name)
-char *name;
+int
+findring (char *name)
 { int obj;
 
   if ((obj = havenamed (ring, name)) == NONE ||
@@ -391,9 +397,9 @@ char *name;
  * fails to move us).		MLM
  */
 
-int grope (turns)
-register int turns;
-{ register int k, moves;
+int
+grope (int turns)
+{ int k, moves;
 
   if (atrow < 2 || atcol < 1)
   { command (T_GROPING, "%ds", (turns > 0) ? turns : 1);
@@ -426,7 +432,8 @@ register int turns;
  *            magic arrow. Make certain we have some food.
  */
 
-int findarrow ()
+int
+findarrow (void)
 {
   /* If wrong version, not cheating or must go find food, then forget it */
   if (version > RV36B || !cheat || hungry())
@@ -449,9 +456,9 @@ int findarrow ()
  * we can fire from a door, even if we cant shoot through one).
  */
 
-int checkcango (dir, turns)
-register int dir, turns;
-{ register int r, c, dr, dc;
+int
+checkcango (int dir, int turns)
+{ int r, c, dr, dc;
 
   for (dr = deltr[dir], dc = deltc[dir], r=atrow+dr, c=atcol+dc;
        turns > 0 && onrc (CANGO | DOOR, r, c) == CANGO;
@@ -465,10 +472,10 @@ register int dir, turns;
  * godownstairs: issues a down command and check for the halftimeshow.
  */
 
-int godownstairs (running)
-register int running; /* True ==> dont do anything fancy */
-{ register int p;
-  int genericinit(), downvalue();
+/* running - True ==> dont do anything fancy */
+int
+godownstairs (int running)
+{ int p;
 
   /* We dont want to go down if we have just gotten an arrow, since */
   /* It is probably bad, and we will want to go back to the trap;   */
@@ -544,7 +551,8 @@ register int running; /* True ==> dont do anything fancy */
  * we head down immediately.
  */
 
-int plunge ()
+int
+plunge (void)
 {
   /* Check for applicability of this rule */
   if (stairrow == NONE && !foundtrapdoor) return (0);
@@ -596,12 +604,14 @@ static int gc = 0; /* Goal corner from 0..3 */
  * Try running to each corner of the level.
  */
 
-int waitaround ()
-{ register int i, j;
+int
+waitaround (void)
+{ int i, j;
 
   if (gotowardsgoal ()) return (1);
 
-  gc = ++gc % 4;
+  ++gc;
+  gc = gc % 4;
 
   for (i = cb[gc].vertstart; i != cb[gc].vertend; i += cb[gc].vertdelt)
     for (j = cb[gc].horstart; j != cb[gc].horend; j += cb[gc].hordelt)
@@ -620,8 +630,8 @@ int waitaround ()
  *      game, and issues the proper calls to get the score written.
  */
 
-int goupstairs (running)
-int running;
+int
+goupstairs (int running)
 { int obj;
 
   /* Check for applicability of this rule */
@@ -686,8 +696,9 @@ int running;
  *				Dont rest when hungry (and no food)
  */
 
-int restup ()
-{ register int obj, turns;
+int
+restup (void)
+{ int obj, turns;
 
   /* If we are confused, sit still so we dont bump into anything bad */
   if (confused) { command (T_RESTING, "s"); return (1); }
@@ -746,7 +757,8 @@ int restup ()
  * that square. Calls gotowards which calls bfsearch.
  */
 
-int gotowardsgoal ()
+int
+gotowardsgoal (void)
 { if (goalr > 0 && goalc > 0)   /* Keep on trucking */
   { if (goalr == atrow && goalc == atcol) { goalr = NONE; goalc = NONE; }
     else if (gotowards (goalr, goalc, 0)) { return (1); }
@@ -762,7 +774,8 @@ int gotowardsgoal ()
  *		them into the corner (which destroys them).
  */
 
-int gotocorner ()
+int
+gotocorner (void)
 { int r, c;
   if (!downright (&r, &c)) return (0);
   if (debug (D_SCREEN))
@@ -775,7 +788,8 @@ int gotocorner ()
  * lightroom: Try to light up the room if we are below level 17.
  */
 
-int light ()
+int
+light (void)
 { if (Level < 17) return (0);
   return (lightroom ());
 }
@@ -784,8 +798,9 @@ int light ()
  * shootindark: If we are arching at an old monster, fire another arrow.
  */
 
-int shootindark ()
-{ register int obj, bow;
+int
+shootindark (void)
+{ int obj, bow;
 
   /* If no longer arching in the dark, fail */
   if (darkturns < 1 || darkdir == NONE || !darkroom ()) return (0);
@@ -812,7 +827,8 @@ int shootindark ()
  * dinnertime: Eat if we are hungry or if we have a surplus of food.
  */
 
-int dinnertime ()
+int
+dinnertime (void)
 {
   if ((havefood (5) && objcount == maxobj && ! droppedscare) ||
       (larder > 0 && hungry ()))
@@ -826,8 +842,9 @@ int dinnertime ()
  * to generate a message which identifies the wand.
  */
 
-int trywand ()
-{ register int obj, dir, r, c, count;
+int
+trywand (void)
+{ int obj, dir, r, c, count;
 
   /* If we arent in a room, if there are monsters around,  */
   /* or we are in the dark, then we cant try this strategy */
@@ -859,7 +876,8 @@ int trywand ()
  * eat: If we have food, eat it.
  */
 
-int eat ()
+int
+eat (void)
 { int obj;
 
   if ((obj = have (food)) != NONE)

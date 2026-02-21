@@ -7,23 +7,22 @@
 int yywrap(void) { return 1; }
 %}
 %%
-"Jan"				printf ("1"); 
-"Feb"				printf ("2"); 
-"Mar"				printf ("3"); 
-"Apr"				printf ("4"); 
-"May"				printf ("5"); 
-"Jun"				printf ("6"); 
-"Jul"				printf ("7"); 
-"Aug"				printf ("8"); 
-"Sep"				printf ("9"); 
-"Oct"				printf ("10"); 
-"Nov"				printf ("11"); 
-"Dec"				printf ("12"); 
+"Jan"				printf ("1");
+"Feb"				printf ("2");
+"Mar"				printf ("3");
+"Apr"				printf ("4");
+"May"				printf ("5");
+"Jun"				printf ("6");
+"Jul"				printf ("7");
+"Aug"				printf ("8");
+"Sep"				printf ("9");
+"Oct"				printf ("10");
+"Nov"				printf ("11");
+"Dec"				printf ("12");
 %%
 
-int main (argc, argv)
-int argc;
-char *argv[];
+int
+main (int argc, char *argv[])
 { while (yylex ())
-    ; 
+    ;
 }

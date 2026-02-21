@@ -9,6 +9,7 @@
 # include <string.h>
 # include <ctype.h>
 # include <curses.h>
+
 # include "types.h"
 # include "globals.h"
 
@@ -19,8 +20,8 @@
  * monname: Return a monster name given letter '@ABC..Z'
  */
 
-char *monname (m)
-char m;
+char *
+monname (char m)
 { return (monhist[monindex[m-'A'+1]].m_name);
 }
 
@@ -29,9 +30,8 @@ char m;
  * list which are in the same square.
  */
 
-int addmonster (ch, r, c, quiescence)
-int  ch;
-int   r, c, quiescence;
+void
+addmonster (int ch, int r, int c, int quiescence)
 { char *monster = monname (ch);
 
   if (r > 1 || c > 3)
@@ -56,8 +56,8 @@ int   r, c, quiescence;
  * deletemonster: remove a monster from the list at location (row, col).
  */
 
-int deletemonster (r, c)
-int   r, c;
+void
+deletemonster (int r, int c)
 { int   i;
 
   new_arch = 1;
@@ -72,7 +72,8 @@ int   r, c;
  * dumpmonsters: (debugging) dump the list of monsters on this level.
  */
 
-int dumpmonster ()
+void
+dumpmonster (void)
 { int   i;
   at (1, 0);
   for (i = 0; i < mlistlen; ++i)
@@ -93,8 +94,9 @@ int dumpmonster ()
  * it sat still for a turn and must be asleep.
  */
 
-int sleepmonster ()
-{  register int m;
+void
+sleepmonster (void)
+{  int m;
 
   for (m = 0; m < mlistlen; ++m)
   { if (mlist[m].q == 0 && ! ADJACENT (m))
@@ -110,8 +112,9 @@ int sleepmonster ()
  * holdmonsters: Mark all close monsters as being held.
  */
 
-int holdmonsters ()
-{ register int m;
+void
+holdmonsters (void)
+{ int m;
 
   for (m = 0; m < mlistlen; ++m)
   { if (mlist[m].q == 0 &&
@@ -134,9 +137,9 @@ int holdmonsters ()
  * dir = -m  means wake up all adjacent monsters of type m.
  */
 
-int wakemonster (dir)
-int dir;
-{ register int m;
+void
+wakemonster (int dir)
+{ int m;
 
   for (m = 0; m < mlistlen; ++m)
   { if (mlist[m].q != AWAKE &&
@@ -157,9 +160,9 @@ int dir;
  * seemonster: Return true if a particular monster is on the monster list.
  */
 
-int seemonster (monster)
-char *monster;
-{ register int m;
+int
+seemonster (char *monster)
+{ int m;
 
   for (m = 0; m < mlistlen; ++m)
     if (streq (monname (mlist[m].chr), monster))
@@ -173,9 +176,9 @@ char *monster;
  * monster on the monster list.		DR UTexas 26 Jan 84
  */
 
-int seeawakemonster (monster)
-char *monster;
-{ register int m;
+int
+seeawakemonster (char *monster)
+{ int m;
 
   for (m = 0; m < mlistlen; ++m)
    if (streq (monname (mlist[m].chr), monster) && mlist[m].q == AWAKE)
@@ -190,8 +193,8 @@ char *monster;
  *             is used for unknown monsters (e.g. "it").
  */
 
-int monsternum (monster)
-char *monster;
+int
+monsternum (char *monster)
 { int m, mh;
 
   if ((mh = findmonster (monster)) != NONE)
@@ -206,9 +209,10 @@ char *monster;
  * each monster.
  */
 
-int newmonsterlevel ()
-{ register int m;
-  register char *monster;
+void
+newmonsterlevel (void)
+{ int m;
+  char *monster;
 
   for (m=0; m<mlistlen; m++)
   { monster = monname (mlist[m].chr);
@@ -227,8 +231,8 @@ int newmonsterlevel ()
  * isholder: Return true if the monster can hold us.
  */
 
-int isholder (monster)
-register char *monster;
+int
+isholder (char *monster)
 {
   return (streq (monster, "venus flytrap") || streq (monster, "violet fungi"));
 }

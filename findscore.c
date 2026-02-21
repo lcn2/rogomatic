@@ -16,17 +16,19 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
+
 # include "install.h"
 # include "types.h"
 # include "globals.h"
+
 # define TEMPFL "/tmp/RscoreXXXXXX"
 # define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 
-int findscore (rogue, roguename)
-register char *rogue, *roguename;
-{ register int score, best = -1;
+int
+findscore (char *rogue, char *roguename)
+{ int score, best = -1;
   char cmd[100], buffer[BUFSIZ];
-  register char *s;
+  char *s;
   char tmpfname[18] = TEMPFL;
   FILE *tmpfil;
   int fd;

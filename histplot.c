@@ -13,6 +13,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
+
 # define SKIPARG	while (*++(*argv)); --(*argv)
 
 # define BWIDTH 200
@@ -26,13 +27,12 @@ int cheat = 0;
 extern int getscore (int *, char *, int *);
 extern int stlmatch (char *, char *);
 
-int main (argc, argv)
-int argc;
-char *argv[];
+int
+main (int argc, char *argv[])
 { int score = 0, maxfreq = 0, lowscore = 0, min = 200, killnum = 0;
   int bucket[NUMBUK], killed[NUMBUK][NOMON], level = 0, dolev = 0;
   int total[NOMON];
-  register int i, j, h, f;
+  int i, j, h, f;
   char killer[100], plot[128];
 
   /* Zero the buckets */
@@ -159,9 +159,8 @@ char *argv[];
 
 # define LEVELPOS 47
 
-int getscore (score, killer, level)
-int *score, *level;
-char *killer;
+int
+getscore (int *score, char *killer, int *level)
 { int dd, yy;
   char line[128], mmstr[8], player[16], cheated=' ';
   while (fgets (line, 128, stdin))

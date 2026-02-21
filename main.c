@@ -19,7 +19,7 @@
  *				Pittsburgh, PA  15213
  *
  * All other rights, including those of publication and sale, are reserved.
- *========================================================================/
+ *========================================================================*/
 
 /*****************************************************************
  * EDITLOG
@@ -102,6 +102,7 @@
 # include <stdlib.h>
 # include <string.h>
 # include <unistd.h>
+
 # include "types.h"
 # include "globals.h"
 # include "termtokens.h"
@@ -245,8 +246,6 @@ int   zonemap[9][9];		/* Map of zones connections */
 /* Functions */
 void (*istat)(int);
 void onintr (int);
-char getroguetoken (), *getname();
-FILE *openlog();
 
 /* Stuff list, list of objects on this level */
 stuffrec slist[MAXSTUFF];	int slistlen=0;
@@ -344,12 +343,11 @@ jmp_buf  commandtop;
  * Main program
  */
 
-int main (argc, argv)
-int   argc;
-char *argv[];
-{ char  ch, *s, *getenv(), *statusline(), msg[350];
+int
+main (int argc, char *argv[])
+{ char  ch, *s, msg[350];
   int startingup = 1;
-  register int  i;
+  int  i;
 
   /*
    * Initialize some storage
@@ -398,7 +396,7 @@ char *argv[];
   /* Now count argument space and assign a global pointer to it */
   arglen = 0;
   for (i=0; i<argc; i++)
-  { register int len = strlen (argv[i]);
+  { int len = strlen (argv[i]);
     arglen += len + 1;
     while (len >= 0) argv[i][len--] = ' ';
   }
@@ -471,7 +469,7 @@ char *argv[];
 
   /* Identify all 26 monsters */
   if (!replaying)
-    for (ch = 'A'; ch <= 'Z'; ch++) send ("/%c", ch);
+    for (ch = 'A'; ch <= 'Z'; ch++) my_send ("/%c", ch);
 
   /*
    * Signal handling. On an interrupt, Rogomatic goes into transparent
@@ -737,8 +735,8 @@ char *argv[];
  * and reset some goal variables.
  */
 
-void onintr (signum)
-int signum;
+void
+onintr (int signum)
 { sendnow ("n\033");            /* Tell Rogue we don't want to quit */
   if (logging) fflush (fecho);  /* Print out everything */
   refresh ();                   /* Clear terminal output */
@@ -755,12 +753,13 @@ int signum;
  * test this game, and set the parameters (or "knobs") accordingly.
  */
 
-int startlesson ()
+void
+startlesson (void)
 { sprintf (genelog, "%s/GeneLog%d", RGMDIR, version);
   sprintf (genepool, "%s/GenePool%d", RGMDIR, version);
   sprintf (genelock, "%s/GeneLock%d", RGMDIR, version);
 
-  srand (0);				/* Start random number generator */
+  my_srand (0);				/* Start random number generator */
   critical ();				/* Disable interrupts */
 
   /* Serialize access to the gene pool */
@@ -791,7 +790,8 @@ int startlesson ()
  * evaluate the performance of this genotype and save in genepool.
  */
 
-int endlesson ()
+void
+endlesson (void)
 { if (geneid > 0 &&
       (stlmatch (termination, "perditus") ||
        stlmatch (termination, "victorius") ||

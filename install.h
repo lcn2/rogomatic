@@ -6,6 +6,11 @@
  * This version of Rog-O-Matic runs with Rogue version 5.3.
  */
 
+
+#if !defined(INCLUDE_INSTALL_H)
+#define INCLUDE_INSTALL_H
+
+
 /*
  * BSD41: Defined for 4.1bsd Unix systems (Undefined means 4.2bsd)
  */
@@ -121,3 +126,6 @@
  */
 
 # define SNAPSHOT	"snapshot.rgm"
+
+
+#endif

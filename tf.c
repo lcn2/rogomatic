@@ -1,10 +1,10 @@
 # include <stdio.h>
+
 # include "types.h"
 # include "globals.h"
 
-int main (argc, argv)
-int argc;
-char *argv[];
+int
+main (int argc, char *argv[])
 {
   if (argc != 3)
     quit (1, "Usage: tf <rogue-binary> <user-name>\n");

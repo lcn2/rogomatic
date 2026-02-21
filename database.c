@@ -15,6 +15,7 @@
 
 # include <curses.h>
 # include <string.h>
+
 # include "types.h"
 # include "globals.h"
 
@@ -32,10 +33,9 @@ int datalen = 0;
  * findentry: find the database entry for 'string'
  */
 
-int findentry (s, string)
-stuff s;
-char *string;
-{ register int i;
+int
+findentry (stuff s, char *string)
+{ int i;
 
   for (i = 0; i < datalen; i++)
     if (s == dbase[i].st &&
@@ -51,9 +51,8 @@ char *string;
  *         object with name 'oldname'.
  */
 
-int useobj (s, oldname)
-stuff s;
-char *oldname;
+void
+useobj (stuff s, char *oldname)
 { if (findentry (s, oldname) == NOTFOUND)
   { dbase[datalen].st = s;
     dbase[datalen].used = 1;
@@ -68,12 +67,9 @@ char *oldname;
  * light).
  */
 
-int infername (s, used, oldname, name)
-stuff s;
-int used;
-char *oldname;
-char *name;
-{ register int i;
+void
+infername (stuff s, int used, char *oldname, char *name)
+{ int i;
 
   i = findentry (s, oldname);
 
@@ -96,10 +92,9 @@ char *name;
  * used: Return true if we have marked 'oldname' as used.
  */
 
-int used (s, oldname)
-stuff s;
-char *oldname;
-{ register int i;
+int
+used (stuff s, char *oldname)
+{ int i;
 
   for (i = 0; i < datalen; i++)
     if (s == dbase[i].st && streq (dbase[i].fakename, oldname))
@@ -112,10 +107,9 @@ char *oldname;
  * know: Return true if we know what the fake name for 'name' is.
  */
 
-int know (s, name)
-stuff s;
-char *name;
-{ register int i;
+int
+know (stuff s, char *name)
+{ int i;
 
   for (i = 0; i < datalen; i++)
     if ((s == dbase[i].st) &&
@@ -129,10 +123,9 @@ char *name;
  * realname: Returns the real name of an object nmed 'oldname'.
  */
 
-char *realname (s, oldname)
-stuff s;
-char *oldname;
-{ register int i;
+char *
+realname (stuff s, char *oldname)
+{ int i;
 
   for (i = 0; i < datalen; i++)
     if (s == dbase[i].st &&
@@ -146,8 +139,9 @@ char *oldname;
  * dumpdatabase: Debugging, dump the database one the screen.
  */
 
-int dumpdatabase ()
-{ register int i;
+void
+dumpdatabase (void)
+{ int i;
 
   for (i = 0; i < datalen; i++)
   { at (i+1, 0);

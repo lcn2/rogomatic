@@ -9,8 +9,8 @@
  * Two generators are used to derive the high and low parts of sequence X,
  * and another for sequence Y. These were derived by Michael Mauldin.
  *
- * Usage:  initialize by calling srand(seed), then rand() returns a random
- *         number from 0..2147483647. srand(0) uses the current time as
+ * Usage:  initialize by calling my_srand(seed), then my_rand() returns a random
+ *         number from 0..2147483647. my_srand(0) uses the current time as
  *         the seed.
  *
  * Author: Michael Mauldin, June 14, 1983.
@@ -47,9 +47,9 @@
 # define AUXLEN 97
 static int seed1=872978, seed2=518652, seed3=226543, auxtab[AUXLEN];
 
-int srand (seed)
-int seed;
-{ register int i;
+void
+my_srand (int seed)
+{ int i;
 
   if (seed == 0) seed = time (0);
 
@@ -62,8 +62,9 @@ int seed;
     auxtab[i] = X;
 }
 
-int rand ()
-{ register int j, result;
+int
+my_rand (void)
+{ int j, result;
 
   j = AUXLEN * Y / MOD1;	/* j random from 0..AUXLEN-1 */
   result = auxtab[j];
@@ -71,9 +72,9 @@ int rand ()
   return (result);
 }
 
-int randint (max)
-register int max;
-{ register int j, result;
+int
+randint (int max)
+{ int j, result;
 
   j = AUXLEN * Y / MOD1;	/* j random from 0..AUXLEN-1 */
   result = auxtab[j];

@@ -21,6 +21,7 @@
 # include <stdio.h>
 # include <ctype.h>
 # include <curses.h>
+
 # include "types.h"
 # include "globals.h"
 
@@ -45,11 +46,11 @@
  * runaway code.
  */
 
-int markcycles (print)
-int print;
+int
+markcycles (int print)
 { short mark[1920];
   struct {short where,door,dirs;} st[1000];
-  register int sp,newsquare; int *Scr; int whichdir; int D;
+  int sp,newsquare; int *Scr; int whichdir; int D;
 
   if (!new_mark) return (0);
 
@@ -57,7 +58,7 @@ int print;
 
   markchokepts ();
 
-  { register int count=1920; register short *m=mark; while(count--) *m++=0;}
+  { int count=1920; register short *m=mark; while(count--) *m++=0;}
   sp=1; st[1].where=atrow*80+atcol; st[1].dirs=1; st[1].door=0;
 
   for (D = 0; D < 8; D += 2)
@@ -87,7 +88,7 @@ int print;
        { /* whichdir is 6,2, or 4. */
          if ((Scr[newsquare= (st[sp].where+deltrc[(whichdir+D)&7])])&CANGO)
          { if (mark[newsquare])
-           { register int stop,i;
+           { int stop,i;
              if (mark[newsquare]<sp)
              { for (stop=st[mark[newsquare]].door,
 		    i=(Scr[st[sp].where]&CHOKE)?sp:st[sp].door;
@@ -127,13 +128,14 @@ int print;
  * Added: 3/7/87 by mlm
  */
 
-int markchokepts ()
-{ register int *Scr, *ScrEnd, loc;
+void
+markchokepts (void)
+{ int *Scr, *ScrEnd, loc;
 
   for (Scr = scrmap[0], ScrEnd = &Scr[1920]; Scr<ScrEnd; Scr++)
   { if (*Scr & DOOR) *Scr |= CHOKE;
     else if (*Scr & HALL)
-    { register int nbrs = 0, k;
+    { int nbrs = 0, k;
 
       for (k=0; k<8; k++)
       { if (Scr[deltrc[k]] & CANGO) nbrs++; }
@@ -145,7 +147,7 @@ int markchokepts ()
 	     Scr[ 80] & Scr[ 81] & Scr[  1] & CANGO))
       { *Scr |= CHOKE;
 	if (debug (D_SCREEN))
-	{ register int rowcol = Scr - scrmap[0];
+	{ int rowcol = Scr - scrmap[0];
 	  standout ();
 	  mvprintw (rowcol/80, rowcol%80, "C");
 	  standend ();
@@ -159,7 +161,8 @@ int markchokepts ()
  * Runaway: Panic!
  */
 
-int runaway ()
+int
+runaway (void)
 {
   if (on (SCAREM))
   { dwait (D_BATTLE, "Not running, on scare monster scroll!");
@@ -181,9 +184,9 @@ int runaway ()
  * Canrun: set up a move which will get us away from danger.
  */
 
-int canrun ()
+int
+canrun (void)
 { int result, oldcomp = compression;
-  int runinit(), runvalue(), expruninit(), exprunvalue();
 
   if (on (STAIRS)) return (1);		/* Can run down stairs */
 
@@ -204,10 +207,9 @@ int canrun ()
  *		"The Love Song of J. Alfred Prufrock", T.S. Eliot
  */
 
-int unpin ()
+int
+unpin (void)
 { int result, oldcomp = compression;
-  int unpininit (), runvalue (), expunpininit (),
-      exprunvalue (), expunpinvalue ();
   static int unpinned = 0;
 
   if (on (SCAREM))
@@ -239,10 +241,9 @@ int unpin ()
  *             door.
  */
 
-int backtodoor (dist)
-int dist;
-{ int rundoorinit(), rundoorvalue();
-  static int lastcall= -10, stillcount=0, notmoving=0, closest=99;
+int
+backtodoor (int dist)
+{ static int lastcall= -10, stillcount=0, notmoving=0, closest=99;
 
   /*
    * Keep track of the opponents distance.  If they stop advancing on us,

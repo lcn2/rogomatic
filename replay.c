@@ -9,6 +9,7 @@
 # include <curses.h>
 # include <string.h>
 # include <ctype.h>
+
 # include "types.h"
 # include "globals.h"
 
@@ -32,7 +33,8 @@ extern int findlevel (FILE *, struct levstruct *, int *, int);
  * the log file to the level requested by the user.
  */
 
-void positionreplay ()
+void
+positionreplay (void)
 { int curlev;
   long curpos;
   char cmd;
@@ -93,10 +95,8 @@ void positionreplay ()
  *             Rog-O-Matic log file.
  */
 
-int findlevel (f, lvpos, nmlev, maxnum)
-FILE *f;
-struct levstruct *lvpos;
-int *nmlev, maxnum;
+int
+findlevel (FILE *f, struct levstruct *lvpos, int *nmlev, int maxnum)
 { char ch;
   int l=0;
 
@@ -132,9 +132,8 @@ int *nmlev, maxnum;
  * fields of a levstruct.
  */
 
-void fillstruct (f, lev)
-FILE *f;
-struct levstruct *lev;
+void
+fillstruct (FILE *f, struct levstruct *lev)
 {
   lev->level  = 0;
   lev->gold   = 0;
@@ -175,9 +174,8 @@ struct levstruct *lev;
  * Restriction: 's' must not contain prefix of itself as a substring.
  */
 
-int findmatch (f, s)
-FILE *f;
-char *s;
+int
+findmatch (FILE *f, char *s)
 { char *m = s, ch;
 
   while (*m && (int) (ch = fgetc (f)) != EOF)

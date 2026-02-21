@@ -9,6 +9,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
+
 # define WIDTH 50
 # define AVLEN 7
 # define SCALE(n) (((n)+100)/200)
@@ -23,9 +24,8 @@ int doavg = 0, cheat = 0, min = -1;
 extern int stlmatch (char *, char *);
 extern int getscore (int *, int *, int *, char *, int *, char *);
 
-int main (argc, argv)
-int argc;
-char *argv[];
+int
+main (int argc, char *argv[])
 { int mm, dd, yy, score = 0, lastday = -1, lastmon = -1, lastyy = -1, h;
   int sumscores = 0, numscores = 0, i;
   int sum[AVLEN], num[AVLEN], rsum, rnum, davg, ravg;
@@ -124,8 +124,8 @@ char *argv[];
 }
 
 
-int getlin (s)
-char *s;
+int
+getlin (char *s)
 { int ch, i;
   static int endfile = 0;
 
@@ -145,9 +145,8 @@ char *s;
   return (i);
 }
 
-int getscore (mm, dd, yy, player, score, cheated)
-int *mm, *dd, *yy, *score;
-char *player, *cheated;
+int
+getscore (int *mm, int *dd, int *yy, char *player, int *score, char *cheated)
 { char line[128], reason[32];
   while (getlin (line) != EOF)
   { sscanf (line, "%d %d, %d %10s%d%c%17s",

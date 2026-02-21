@@ -13,6 +13,11 @@
  *	Created.
  */
 
+
+#if !defined(INCLUDE_TYPES_H)
+#define INCLUDE_TYPES_H
+
+
 /* The unctrl macro for systems where curses doesn't define it */
 
 # ifndef unctrl
@@ -327,3 +332,6 @@ typedef struct { stuff type;
 
 typedef struct { int activity[T_LISTLEN];
 		 int timestamp; } timerec;
+
+
+#endif

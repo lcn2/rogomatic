@@ -15,6 +15,7 @@
 
 # include <stdio.h>
 # include <stdlib.h>
+
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -35,9 +36,8 @@ char genelock[100];
 char genelog[100];
 char genepool[100];
 
-int main (argc, argv)
-int   argc;
-char *argv[];
+int
+main (int argc, char *argv[])
 { int m=10, init=0, seed=0, version=DEFRV, full=0;
 
   /* Get the options */
@@ -76,7 +76,7 @@ char *argv[];
   critical ();				/* Disable interrupts */
   if (lock_file (genelock, MAXLOCK))
   { if (init)
-    { srand (seed);			/* Set the random number generator */
+    { my_srand (seed);			/* Set the random number generator */
       openlog (genelog);		/* Open the gene log file */
       initpool (MAXKNOB, m);		/* Random starting point */
       writegenes (genepool);		/* Write out the gene pool */

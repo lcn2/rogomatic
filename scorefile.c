@@ -14,6 +14,7 @@
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <unistd.h>
+
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -30,9 +31,8 @@ static char lokfil[100];
  * score file and catching interrupts and things.
  */
 
-void add_score (new_line, vers, ntrm)
-char *new_line, *vers;
-int ntrm;
+void
+add_score (char *new_line, char *vers, int ntrm)
 {
   int   wantscore = 1;
   char  ch;
@@ -80,13 +80,12 @@ int ntrm;
  * dumpscore: Print out the scoreboard.
  */
 
-int dumpscore (vers)
-char *vers;
+int
+dumpscore (char *vers)
 {
   char  ch, scrfil[100], delfil[100], newfil[100], allfil[100], cmd[550];
   FILE *scoref, *deltaf;
   int   oldmask;
-  void intrupscore ();
 
   sprintf (lokfil, "%s %s", LOCKFILE, vers);
   sprintf (scrfil, "%s/rgmscore%s", RGMDIR, vers);
@@ -173,7 +172,9 @@ char *vers;
  * intrupscore: We have an interrupt, clean up and unlock the score file.
  */
 
-void intrupscore ()
+/* ARGSUSED */
+void
+intrupscore (int dummy)
 { unlock_file (lokfil);
   exit (1);
 }

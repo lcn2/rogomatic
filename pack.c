@@ -8,6 +8,7 @@
 # include <curses.h>
 # include <stdlib.h>
 # include <string.h>
+
 # include "types.h"
 # include "globals.h"
 
@@ -21,10 +22,10 @@ static char *stuffmess [] = {
  * itemstr: print the inventory message for a single item.
  */
 
-char *itemstr (i)
-register int i;
+char *
+itemstr (int i)
 { static char ispace[128];
-  register char *item = ispace;
+  char *item = ispace;
 
   if (i < 0 || i >= MAXINV)
   { sprintf (item, "%d out of bounds", i); }
@@ -63,9 +64,9 @@ register int i;
  * dumpinv: print the inventory. calls itemstr.
  */
 
-int dumpinv (f)
-register FILE *f;
-{ register int i;
+void
+dumpinv (FILE *f)
+{ int i;
 
   if (f == NULL)
     at (1,0);
@@ -84,8 +85,8 @@ register FILE *f;
  * removeinv: remove an item from the inventory.
  */
 
-int removeinv (pos)
-int pos;
+void
+removeinv (int pos)
 {
   if (--(inven[pos].count) == 0)
   { clearpack  (pos);		/* Assure nothing at that spot  DR UT */
@@ -102,8 +103,8 @@ int pos;
  * things can be dropped all at once.
  */
 
-int deleteinv (pos)
-int pos;
+void
+deleteinv (int pos)
 {
   if (--(inven[pos].count) == 0 || inven[pos].type == missile)
   { clearpack  (pos);		/* Assure nothing at that spot  DR UT */
@@ -118,8 +119,8 @@ int pos;
  * clearpack: zero out slot in pack.  DR UTexas 01/05/84
  */
 
-void clearpack (pos)
-int pos;
+void
+clearpack (int pos)
 {
   if (pos >= MAXINV) return;
   inven[pos].count = 0;
@@ -137,10 +138,10 @@ int pos;
  * the pack.
  */
 
-void rollpackup (pos)
-register int pos;
-{ register char *savebuf;
-  register int i;
+void
+rollpackup (int pos)
+{ char *savebuf;
+  int i;
 
   if (version >= RV53A) return;
 
@@ -170,10 +171,10 @@ register int pos;
  * objects behind that position.
  */
 
-void rollpackdown (pos)
-register int pos;
-{ register char *savebuf;
-  register int i;
+void
+rollpackdown (int pos)
+{ char *savebuf;
+  int i;
 
   if (version >= RV53A) return;
 
@@ -202,7 +203,8 @@ register int pos;
  * doresetinv, which is called by a demon in the command handler.
  */
 
-int resetinv()
+void
+resetinv (void)
 {
   if (!replaying) command (T_OTHER, "i");
 }
@@ -211,7 +213,8 @@ int resetinv()
  * doresetinv: reset the inventory.  DR UTexas 01/05/84
  */
 
-int doresetinv ()
+void
+doresetinv (void)
 { int i;
   static char space[MAXINV][80];
 
@@ -235,10 +238,10 @@ int doresetinv ()
 
 # define xtr(w,b,e,k) {what=(w);xbeg=mess+(b);xend=mend-(e);xknow|=(k);}
 
-int inventory (msgstart, msgend)
-char *msgstart, *msgend;
-{ register char *p, *q, *mess = msgstart, *mend = msgend;
-  char objname[100], *realname();
+int
+inventory (char *msgstart, char *msgend)
+{ char *p, *q, *mess = msgstart, *mend = msgend;
+  char objname[100];
   int  n, ipos, xknow = 0, newitem = 0, inuse = 0, printed = 0;
   int  plushit = UNKNOWN, plusdam = UNKNOWN, charges = UNKNOWN;
   stuff what;
@@ -412,7 +415,7 @@ char *msgstart, *msgend;
     inven[ipos].count = n;
     /* Work around problem with multiple object groups for missiles */
     /* If we have 11 darts at position r) in the pack and find */
-    /* 12 extra darts at position r), the pack ist out of sync,
+    /* 12 extra darts at position r), the pack ist out of sync, */
     /* as the extra darts are not added to the pack. */
     /* Resync inventory for missiles as a workaorund. */
     if (what == missile)
@@ -464,8 +467,9 @@ char *msgstart, *msgend;
  * countpack: Count objects, missiles, and food in the pack.
  */
 
-int countpack ()
-{ register int i, cnt;
+void
+countpack (void)
+{ int i, cnt;
 
   for (objcount=0, larder=0, ammo=0, i=0; i<invcount; i++)
   { if (! (cnt = inven[i].count))	; /* No object here */
