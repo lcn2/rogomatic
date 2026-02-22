@@ -11,7 +11,8 @@
 # include <string.h>
 
 # define WIDTH 50
-# define AVLEN 7
+# define AVLEN 30
+# define MU_BUF 256  /* we might as well use a similar value to that used in global.h */
 # define SCALE(n) (((n)+100)/200)
 # define isdigit(c) ((c) >= '0' && (c) <= '9')
 
@@ -28,12 +29,22 @@ int
 main (int argc, char *argv[])
 { int mm, dd, yy, score = 0, lastday = -1, lastmon = -1, lastyy = -1, h;
   int sumscores = 0, numscores = 0, i;
-  int sum[AVLEN], num[AVLEN], rsum, rnum, davg, ravg;
-  char player[100], plot[128], buf[15], cheated;
+  int sum[AVLEN + 1]; /* daily score accumulated sum, +1 for paranoia */
+  int num[AVLEN + 1]; /* daily score, +1 for paranoia */
+  int rsum, rnum, davg, ravg;
+  char player[MU_BUF + 1]; /* rogue player, +1 for paranoia */
+  char plot[MU_BUF + 1]; /* plot string, +1 for paranoia */
+  char cheated;
+  char buf[MU_BUF + 1]; /* message buffer, +1 for paranoia */
+
+  /* zeroize arrays */
+  memset (player, 0, sizeof(player)); /* paranoia */
+  memset (plot, 0, sizeof(plot)); /* paranoia */
+  memset (buf, 0, sizeof(buf)); /* paranoia */
 
   /* Clear out the rolling average statistics */
-  for (i = 0; i < AVLEN; i++)
-    sum[i] = num[i] = 0;
+  memset (sum, 0, sizeof(sum));
+  memset (num, 0, sizeof(num));
 
   /* Get the options */
   while (--argc > 0 && (*++argv)[0] == '-')
@@ -92,7 +103,7 @@ main (int argc, char *argv[])
     }
 
     if (score > EOF)
-    { if ((h = SCALE(score)) >= WIDTH) { sprintf (buf, " %d", score);  strcat(plot, buf); }
+    { if ((h = SCALE(score)) >= WIDTH) { snprintf (buf, MU_BUF, " %d", score);  strcat(plot, buf); }
       else if (plot[h] == '9')          ;
       else if (isdigit(plot[h]))        plot[h]++;
       else                              plot[h] = '1';

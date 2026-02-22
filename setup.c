@@ -11,6 +11,7 @@
 # include <fcntl.h>
 # include <sys/ioctl.h>
 # include <unistd.h>
+# include <string.h>
 
 # include "types.h"
 # include "globals.h"
@@ -32,8 +33,15 @@ main (int argc, char *argv[])
   int   child, score = 0, oldgame = 0;
   int   cheat = 0, noterm = 1, echo = 0, nohalf = 0, replay = 0;
   int   emacs = 0, rf = 0, terse = 0, user = 0, quitat = 2147483647;
-  char  *rfile = "", *rfilearg = "", options[32];
-  char  ropts[256], roguename[128];
+  char  *rfile = "", *rfilearg = "";
+  char	options[MU_BUF + 1]; /* rogomatic options, +1 for paranoia */
+  char  ropts[SM_BUF + 1]; /* rogue options, +1 for paranoia */
+  char  roguename[MU_BUF + 1]; /* rogue player name, +1 for paranoia */
+
+  /* zeroize arrays */
+  memset (options, 0, sizeof(options)); /* paranoia */
+  memset (ropts, 0, sizeof(ropts)); /* paranoia */
+  memset (roguename, 0, sizeof(roguename)); /* paranoia */
 
   while (--argc > 0 && (*++argv)[0] == '-')
   { while (*++(*argv))
@@ -85,12 +93,12 @@ main (int argc, char *argv[])
 
   if (!replay && !score) quitat = findscore (rfile, "Rog-O-Matic");
 
-  sprintf (options, "%d,%d,%d,%d,%d,%d,%d,%d",
-           cheat, noterm, echo, nohalf, emacs, terse, user,quitat);
-  sprintf (roguename, "Rog-O-Matic %s for %s", RGMVER, getname ());
-  sprintf (ropts, "name=%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-           roguename, "fruit=apricot", "terse", "noflush", "noask",
-           "jump", "step", "nopassgo", "inven=slow", "seefloor");
+  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
+            cheat, noterm, echo, nohalf, emacs, terse, user,quitat);
+  snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
+  snprintf (ropts, SM_BUF, "name=%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
+            roguename, "fruit=apricot", "terse", "noflush", "noask",
+            "jump", "step", "nopassgo", "inven=slow", "seefloor");
 
   if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
   if (replay) { replaylog (argc==1 ? argv[0] : ROGUELOG, options); exit (0); }
@@ -131,13 +139,17 @@ main (int argc, char *argv[])
   else
   { /* Encode the open files into a two character string */
 
-    char ft[3] = "aa", rp[32]; ft[0] += rfrogue; ft[1] += rtrogue;
+    char ft[3] = "aa"; ft[0] += rfrogue; ft[1] += rtrogue;
+    char rp[MU_BUF + 1]; /* rogue pid, +1 for paranoia */
+
+    /* zeroize arrays */
+    memset (rp, 0, sizeof(rp)); /* paranoia */
 
     close (ptc[READ]); /* Close child's (rogue's) unused end of the pipes */
     close (ctp[WRITE]);
 
     /* Pass the process ID of the Rogue process as an ASCII string */
-    sprintf (rp, "%d", child);
+    snprintf (rp, MU_BUF, "%d", child);
 
     if (!author ()) nice (4);
 

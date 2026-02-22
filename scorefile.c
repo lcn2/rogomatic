@@ -14,6 +14,7 @@
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <unistd.h>
+# include <string.h>
 
 # include "types.h"
 # include "globals.h"
@@ -22,7 +23,7 @@
 # define LINESIZE	2048
 # define SCORE(s,p)     (atoi (s+p))
 
-static char lokfil[100];
+static char lokfil[MU_BUF + 1];
 
 /*
  * add_score: Write a new score line out to the correct rogomatic score
@@ -36,11 +37,15 @@ add_score (char *new_line, char *vers, int ntrm)
 {
   int   wantscore = 1;
   char  ch;
-  char  newfil[100];
+  char  newfil[MU_BUF + 1]; /* new filename, +1 for paranoia */
   FILE *newlog;
 
-  sprintf (lokfil, "%s %s", LOCKFILE, vers);
-  sprintf (newfil, "%s/rgmdelta%s", RGMDIR, vers);
+  /* zeroize arrays */
+  memset (lokfil, 0, sizeof(lokfil)); /* paranoia */
+  memset (newfil, 0, sizeof(newfil)); /* paranoia */
+
+  snprintf (lokfil, MU_BUF, "%s %s", LOCKFILE, vers);
+  snprintf (newfil, MU_BUF, "%s/rgmdelta%s", RGMDIR, vers);
 
   /* Defer interrupts while mucking with the score file */
   critical ();
@@ -83,15 +88,28 @@ add_score (char *new_line, char *vers, int ntrm)
 int
 dumpscore (char *vers)
 {
-  char  ch, scrfil[100], delfil[100], newfil[100], allfil[100], cmd[550];
+  char  ch;
+  char  scrfil[MU_BUF + 1]; /* rogomatic score file path, +1 for paranoia */
+  char  delfil[MU_BUF + 1]; /* rogomatic delta file path, +1 for paranoia */
+  char  newfil[MU_BUF + 1]; /* rogomatic new file path, +1 for paranoia */
+  char  allfil[MU_BUF + 1]; /* rogomatic all scores file path, +1 for paranoia */
+  char  cmd[BIGBUF + 1]; /* shell command buffer, +1 for paranoia */
   FILE *scoref, *deltaf;
   int   oldmask;
 
-  sprintf (lokfil, "%s %s", LOCKFILE, vers);
-  sprintf (scrfil, "%s/rgmscore%s", RGMDIR, vers);
-  sprintf (delfil, "%s/rgmdelta%s", RGMDIR, vers);
-  sprintf (newfil, "%s/NewScore%s", RGMDIR, vers);
-  sprintf (allfil, "%s/AllScore%s", RGMDIR, vers);
+  /* zeroize arrays */
+  memset (lokfil, 0, sizeof(lokfil)); /* paranoia */
+  memset (scrfil, 0, sizeof(scrfil)); /* paranoia */
+  memset (delfil, 0, sizeof(delfil)); /* paranoia */
+  memset (newfil, 0, sizeof(newfil)); /* paranoia */
+  memset (allfil, 0, sizeof(allfil)); /* paranoia */
+  memset (cmd, 0, sizeof(cmd)); /* paranoia */
+
+  snprintf (lokfil, MU_BUF, "%s.%s", LOCKFILE, vers);
+  snprintf (scrfil, MU_BUF, "%s/rgmscore%s", RGMDIR, vers);
+  snprintf (delfil, MU_BUF, "%s/rgmdelta%s", RGMDIR, vers);
+  snprintf (newfil, MU_BUF, "%s/NewScore%s", RGMDIR, vers);
+  snprintf (allfil, MU_BUF, "%s/AllScore%s", RGMDIR, vers);
 
   /* On interrupts we must relinquish control of the score file */
   int_exit (intrupscore);
@@ -117,7 +135,7 @@ dumpscore (char *vers)
     /* If we have an old file and a delta file, merge them */
     if (scoref != NULL)
     { fclose (scoref);
-      sprintf (cmd, "sort +4nr -o %s %s; sort -m +4nr -o %s %s %s",
+      snprintf (cmd, BIGBUF, "sort +4nr -o %s %s; sort -m +4nr -o %s %s %s",
                newfil, delfil, allfil, newfil, scrfil);
       system (cmd);
       if (filelength (allfil) != filelength (delfil) + filelength (scrfil))
@@ -135,7 +153,7 @@ dumpscore (char *vers)
     }
     else
     /* Only have delta file, sort into scorefile and unlink delta */
-    { sprintf (cmd, "sort +4nr -o %s %s", scrfil, delfil);
+    { snprintf (cmd, BIGBUF, "sort +4nr -o %s %s", scrfil, delfil);
       system (cmd);
       unlink (delfil);
       scoref = fopen (scrfil, "r");

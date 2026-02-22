@@ -21,6 +21,7 @@
 # define BUCKET(n) (((n)+BWIDTH/2)/BWIDTH)
 # define isdigit(c) ((c) >= '0' && (c) <= '9')
 # define NOMON 29
+# define MU_BUF 256  /* we might as well use a similar value to that used in global.h */
 
 int cheat = 0;
 
@@ -33,16 +34,14 @@ main (int argc, char *argv[])
   int bucket[NUMBUK], killed[NUMBUK][NOMON], level = 0, dolev = 0;
   int total[NOMON];
   int i, j, h, f;
-  char killer[100], plot[128];
+  char killer[MU_BUF + 1];  /* name of killer, +1 for paranoia */
+  char plot[MU_BUF + 1];  /* plot line, +1 for paranoia */
 
-  /* Zero the buckets */
-  for (i = NUMBUK; i--; )
-  { bucket[i] = 0;
-    for (j = NOMON; j--; )
-      killed[i][j] = 0;
-  }
-  for (j = NOMON; j--;)
-    total[j] = 0;
+  /* zeroize arrays */
+  memset (bucket, 0, sizeof(bucket)); /* paranoia */
+  memset (killed, 0, sizeof(killed)); /* paranoia */
+  memset (total, 0, sizeof(total)); /* paranoia */
+  memset (killer, 0, sizeof(killer)); /* paranoia */
 
   /* Get the options */
   while (--argc > 0 && (*++argv)[0] == '-')
@@ -97,21 +96,22 @@ main (int argc, char *argv[])
   }
 
   for (f = ((maxfreq+9)/10)*10; f; f--)
-  { if (dolev)
+  { memset(plot, 0, sizeof(plot)); /* paranoia */
+    if (dolev)
     { if (f%10 == 0)
-        sprintf (plot, "|----+----|----+----|----+----|");
+        strncpy (plot, "|----+----|----+----|----+----|", MU_BUF);
       else if (f%5 == 0)
-        sprintf (plot, "|    +    |    +    |    +    |");
+        strncpy (plot, "|    +    |    +    |    +    |", MU_BUF);
       else
-        sprintf (plot, "|         |         |         |");
+        strncpy (plot, "|         |         |         |", MU_BUF);
     }
     else
     { if (f%10 == 0)
-        sprintf (plot, "|----+----|----+----|----+----|----+----|----+----|");
+        strncpy (plot, "|----+----|----+----|----+----|----+----|----+----|", MU_BUF);
       else if (f%5 == 0)
-        sprintf (plot, "|    +    |    +    |    +    |    +    |    +    |");
+        strncpy (plot, "|    +    |    +    |    +    |    +    |    +    |", MU_BUF);
       else
-        sprintf (plot, "|         |         |         |         |         |");
+        strncpy (plot, "|         |         |         |         |         |", MU_BUF);
     }
 
     for (i = 0; i < NUMBUK; i++)

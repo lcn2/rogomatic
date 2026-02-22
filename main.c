@@ -123,19 +123,19 @@ char  logfilename[100];		/* Name of log file */
 char  afterid = '\0';           /* Letter of obj after identify */
 char  dropid = '\0';		/* Letter of next object to drop */
 char  wieldid = '\0';		/* Letter of next object to wield */
-char  genelock[100];		/* Gene pool lock file */
-char  genelog[100];		/* Genetic learning log file */
-char  genepool[100];		/* Gene pool */
+char  genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
+char  genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
+char  genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
 char  *genocide;		/* List of monsters to be genocided */
-char  genocided[MU_BUF + 1];	/* List of monsters genocided */
-char  lastcmd[64];		/* Copy of last command sent to Rogue */
+char  genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
+char  lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
 char  lastname[64];		/* Name of last potion/scroll/wand */
 char  nextid = '\0';            /* Next object to identify */
 char  screen[24][80];		/* Map of current Rogue screen */
 char  sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
 char  sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
-char  ourkiller[64];		/* How we died */
-char  versionstr[32];		/* Version of Rogue being used */
+char  ourkiller[MU_BUF + 1];	/* How we died, +1 for paranoia */
+char  versionstr[MU_BUF + 1];	/* Version of Rogue being used, +1 for paranoia */
 char  *parmstr;			/* Pointer to process arguments */
 
 /* Integers */
@@ -335,7 +335,7 @@ timerec timespent[100];
 /* End of the game messages */
 char *termination = "perditus";
 char *gamename = "Rog-O-Matic";
-char roguename[241] = "Rog-O-Matic                             ";
+char roguename[MU_BUF + 1];    /* Name we are playing under, +1 for paranoia */
 
 /* Used by onintr() to restart Rgm at top of command loop */
 jmp_buf  commandtop;
@@ -346,21 +346,31 @@ jmp_buf  commandtop;
 
 int
 main (int argc, char *argv[])
-{ char  ch, *s, msg[350];
+{ char  ch, *s;
+  char msg[TY_BUF + 1];	/* message buffer, +1 for paranoia */
   int startingup = 1;
-  int  i;
+  int i;
 
   /*
    * Initialize some storage
    */
 
+  /* zeroize arrays */
+  memset (msg, 0, sizeof(msg)); /* paranoia */
   memset (genocided, 0, sizeof(genocided)); /* paranoia */
-  sprintf (lastcmd, "i");
-  sprintf (ourkiller, "unknown");
+  memset (lastcmd, 0, sizeof(lastcmd)); /* paranoia */
+  lastcmd[0] = 'i';
+  memset (ourkiller, 0, sizeof(ourkiller)); /* paranoia */
+  strcpy (ourkiller, "unknown");
   memset (sumline, 0, sizeof(sumline)); /* paranoia */
   memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
-  strcpy(versionstr, "");
-  for (i = 80 * 24; i--; ) screen[0][i] = ' ';
+  memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
+  memset (screen, ' ', sizeof(screen));
+  memset (roguename, 0, sizeof(roguename)); /* paranoia */
+  memset (msg, 0, sizeof(msg)); /* paranoia */
+  memset (genelock, 0, sizeof(genelock)); /* paranoia */
+  memset (genelog, 0, sizeof(genelog)); /* paranoia */
+  memset (genepool, 0, sizeof(genepool)); /* paranoia */
 
   /*
    * The first argument to player is a two character string encoding
@@ -392,8 +402,9 @@ main (int argc, char *argv[])
 			&emacs, &terse, &transparent, &quitat);
 
   /* The fourth argument is the Rogue name */
-  if (argc > 4)	strcpy (roguename, argv[4]);
-  else		sprintf (roguename, "Rog-O-Matic %s", RGMVER);
+  if (argc > 4)	strncpy (roguename, argv[4], MU_BUF);
+  else		snprintf (roguename, MU_BUF, "Rog-O-Matic %s", RGMVER);
+  roguename[MU_BUF] = '\0'; /* paranoia */
 
   /* Now count argument space and assign a global pointer to it */
   arglen = 0;
@@ -425,11 +436,12 @@ main (int argc, char *argv[])
    */
 
   if (replaying)
-    sprintf (msg, " Replaying log file %s, version %s.",
+    snprintf (msg, TY_BUF, " Replaying log file %s, version %s.",
 	     logfilename, versionstr);
   else
-    sprintf (msg, " %s: version %s, genotype %d, quit at %d.",
+    snprintf (msg, TY_BUF, " %s: version %s, genotype %d, quit at %d.",
 	     roguename, versionstr, geneid, quitat);
+  msg[TY_BUF] = '\0'; /* paranoia */
 
   if (emacs)
   { fprintf (realstdout, "%s  (%%b)", msg); fflush (realstdout); }
@@ -711,10 +723,13 @@ main (int argc, char *argv[])
    */
 
   if (logging)
-  { char lognam[128];
+  { char lognam[MU_BUF + 1];	/* log filename, +1 for paranoia */
+
+    /* zeroize arrays */
+    memset (lognam, 0, sizeof(lognam)); /* paranoia */
 
     /* Make up a new log file name */
-    sprintf (lognam, "%.4s.%d.%d", ourkiller, MaxLevel, ourscore);
+    snprintf (lognam, MU_BUF, "%.4s.%d.%d", ourkiller, MaxLevel, ourscore);
 
     /* Close the open file */
     toggleecho ();
@@ -757,9 +772,9 @@ onintr (int signum)
 
 void
 startlesson (void)
-{ sprintf (genelog, "%s/GeneLog%d", RGMDIR, version);
-  sprintf (genepool, "%s/GenePool%d", RGMDIR, version);
-  sprintf (genelock, "%s/GeneLock%d", RGMDIR, version);
+{ snprintf (genelog, MU_BUF, "%s/GeneLog%d", RGMDIR, version);
+  snprintf (genepool, MU_BUF, "%s/GenePool%d", RGMDIR, version);
+  snprintf (genelock, MU_BUF, "%s/GeneLock%d", RGMDIR, version);
 
   my_srand (0);				/* Start random number generator */
   critical ();				/* Disable interrupts */

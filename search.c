@@ -7,6 +7,7 @@
 
 # include <stdio.h>
 # include <curses.h>
+# include <string.h>
 
 # include "types.h"
 # include "globals.h"
@@ -307,8 +308,28 @@ searchto (int row, int col, int (*evaluate)(int, int, int, int *, int *, int *),
   head = tail = begin;
   end = begin + QSIZE;
 
+#if 0
+  /*
+   * This code by MLM seems wrong.  It overwrites the 1st row twice,
+   * and it ignores the final row.
+   */
   for (c = 23*80; c--; ) dir[0][c] = NOTTRIED;		/* MLM */
   for (c = 80; c--; ) dir[0][c] = 0;			/* MLM */
+#else
+  /*
+   * Based on what we think was the intent of MKM:
+   *
+   * Our estimate is that the 1st row needs to be set to 0,
+   * while the next 23 rows needs to be set to NOTTRIED.
+   *
+   * BTW: The 1st row is the bottom row of the rogue screen where
+   *	  the Level, Gold, Hp, Str, Arm, and Exp stats are displayed.
+   *
+   * The memset(3) function can be faster than the for loops used by MKM.
+   */
+  memset (&(dir[0][0]), 0, 80);
+  memset (&(dir[1][0]), NOTTRIED, 23*80);
+#endif
 
   *(tail++) = row;  *(tail++) = col;
   *(tail++) = QUEUEBREAK;  *(tail++) = QUEUEBREAK;

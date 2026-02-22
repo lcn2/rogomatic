@@ -17,7 +17,7 @@
 # include "install.h"
 
 static int nosave = 0;		/* True ==> dont write ltm back out */
-static char ltmnam[100];	/* Long term memory file name */
+static char ltmnam[MU_BUF + 1];	/* Long term memory file name, +1 for paranoia */
 
 /*
  * mapcharacter: Read a character help message
@@ -135,7 +135,8 @@ saveltm (int score)
 void
 restoreltm (void)
 {
-  sprintf (ltmnam, "%s/ltm%d", RGMDIR, version);
+  memset (ltmnam, 0, sizeof(ltmnam));
+  snprintf (ltmnam, MU_BUF, "%s/ltm%d", RGMDIR, version);
   dwait (D_CONTROL, "Restoreltm called, reading file '%s'", ltmnam);
 
   clearltm (monhist);			/* Clear the original sums */

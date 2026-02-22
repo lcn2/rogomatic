@@ -68,8 +68,26 @@ TRUE= true
 
 PREFIX= /usr/local
 BINDIR= ${PREFIX}/bin
-DESTDOC= ${PREFIX}/share/rogomatic
-MAN6DIR= ${PREFIX}/man/man6
+SHAREDIR= ${PREFIX}/share
+DESTDOC= ${SHAREDIR}/rogomatic
+MANDIR= ${PREFIX}/man
+MAN6DIR= ${MANDIR}/man6
+
+# RGMDIR - rogomatic directory
+#
+# NOTE: RGMDIR will contain logs of Rogomatic's
+# scores, an error.log file, and the long term memory file.
+# It must be writable by everyone, since score files must be
+# created and destroyed by anyone running the program.
+#
+TMPDIR= /usr/local/tmp
+RGMDIR= ${TMPDIR}/rogomatic
+
+# ROGUE - default location of the rogue game
+#
+# See: https://github.com/lcn2/rogue5.4
+#
+ROGUE= /usr/local/bin/rogue
 
 
 #####################
@@ -101,7 +119,7 @@ S= >/dev/null 2>&1
 
 CSTD= -std=gnu17
 CCWARN=
-CPPFLAGS=
+CPPFLAGS= -DRGMDIR='"${RGMDIR}"' -DROGUE='"${ROGUE}"'
 COPT= -O3
 DEBUG= -ggdb3
 
@@ -136,7 +154,7 @@ endif
 
 OTHER_TARGES= anim testfind genetest gplot tf
 
-TARGETS= rogomatic player rgmplot datesub histplot gene rogomatic.6 rogomatic.cat
+TARGETS= rogomatic player rgmplot datesub histplot gene
 
 
 ################################
@@ -166,8 +184,10 @@ MISC_OBJS= datesub.o gene.o histplot.o rgmplot.o setup.o findscore.o anim.o \
 
 OTHERS= datesub.l rplot rgmhist rgmscatter
 
+DOC_SRC= rogomatic.6.in rogomatic.cat.in
+
 MISC_DOC= knowledge LICENSE ORIG_CHANGES ORIG_CHANGES ORIG_COPYRGHT ORIG_MANPAGE \
-	ORIG_README README.md rnotes rogomatic.6.in rogomatic.cat.in rogo.mss \
+	ORIG_README README.md rnotes rogo.mss \
 	rogtitle.mss rterm.tic strike.mss title.ani titlepage.ani title.start \
 	CODE_OF_CONDUCT.md CONTRIBUTING.md SECURITY.md
 
@@ -284,7 +304,7 @@ FSANITIZE+= -fsanitize=vptr
 # all - default rule - must be first #
 ######################################
 
-all: ${TARGETS}
+all: rogomatic.6 ${TARGETS}
 
 
 ##################
@@ -348,8 +368,8 @@ form_rogomatic_cat_in: rogomatic.6.in
 #####################
 
 datesub.c: datesub.l
-	${RM} -f datesub.c
-	${LEX} datesub.l -o datesub.c
+	${RM} -f $@
+	${LEX} -o $@ datesub.l
 
 
 ################################
@@ -404,9 +424,17 @@ clobber: clean
 	${RM} -f ${OTHER_TARGES}
 	${RM} -f ${TARGETS}
 
-install: ${TARGETS}
+install: all
 	${INSTALL} -d -m 0755 ${BINDIR}
 	${INSTALL} -m 0755 ${TARGETS} ${BINDIR}
+	${INSTALL} -d -m 1777 ${TMPDIR}
+	${INSTALL} -d -m 1777 ${RGMDIR}
+	${INSTALL} -d -m 0755 ${SHAREDIR}
+	${INSTALL} -d -m 0755 ${DESTDOC}
+	${INSTALL} -m 0444 ${MISC_DOC} ${DESTDOC}
+	${INSTALL} -d -m 0755 ${MANDIR}
+	${INSTALL} -d -m 0755 ${MAN6DIR}
+	${INSTALL} -m 0444 rogomatic.6 ${MAN6DIR}
 
 index: ${CFILES}
 	${RM} -f index

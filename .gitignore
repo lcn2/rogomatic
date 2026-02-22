@@ -18,5 +18,8 @@ rogomatic
 rogomatic.6
 rogomatic.cat
 skel/
+*.swn
+*.swo
+*.swp
 tags
 testfind

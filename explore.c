@@ -7,6 +7,7 @@
  */
 
 # include <curses.h>
+# include <string.h>
 
 # include "types.h"
 # include "globals.h"
@@ -787,7 +788,7 @@ avoidmonsters (void)
 { int i, r, c, wearingstealth;
 
   /* Clear old avoid monster values */
-  for (i = 24*80; i--; ) avdmonsters[0][i] = 0;
+  memset (avdmonsters, 0, sizeof(avdmonsters));
 
   /* Set stealth status */
   wearingstealth = (wearing ("stealth") != NONE);
@@ -858,7 +859,7 @@ pinavoid (void)
 { int i;
 
   /* Clear old avoid monster values */
-  for (i = 24*80; i--; ) avdmonsters[0][i] = 0;
+  memset (avdmonsters, 0, sizeof(avdmonsters));
 
   /* Avoid each monster in turn */
   for (i=0; i<mlistlen; i++)
@@ -973,7 +974,10 @@ exploreroom (void)
 int
 doorexplore (void)
 { static int searchcount = 0;
-  char msg[128];
+  char msg[MU_BUF + 1];	/* message buffer, +1 for paranoia */
+
+  /* zeroize arrays */
+  memset (msg, 0, sizeof(msg)); /* paranoia */
 
   /* If no new squares or read map, dont bother */
   if (! new_search || Level == didreadmap)
@@ -990,7 +994,7 @@ doorexplore (void)
 
   if (ontarget)  /* Moved to a possible secret door, search it */
   { searchcount++;
-    sprintf(msg, "Searching square (%d,%d) [%d] for the %d%s time...",
+    snprintf(msg, MU_BUF, "Searching square (%d,%d) [%d] for the %d%s time...",
             atrow, atcol, timessearched[atrow][atcol],
 	    searchcount, ordinal (searchcount));
     if (attempt > 0)

@@ -53,13 +53,16 @@ mmove (int d, int mode)
 void
 command (int tmode, char *f, ...)
 { int times;
-  char cmd[128], functionchar (char *);
-  static char lastcom[32] = "";
+  char cmd[MU_BUF + 1]; /* rogue command, +1 for paranoia */
+  static char lastcom[MU_BUF + 1] = "";	/* last command issued, +1 for paranoia */
   va_list ap;
+
+  /* zeroize arrays */
+  memset (cmd, 0, sizeof(cmd)); /* paranoia */
 
   /* Build the command */
   va_start (ap, f);
-  vsprintf (cmd, f, ap);
+  vsnprintf (cmd, MU_BUF, f, ap);
   va_end (ap);
 
   /* Echo the command if in transparent mode */

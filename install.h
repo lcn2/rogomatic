@@ -18,18 +18,23 @@
 /* # define BSD41 */
 
 /*
- * Rog-O-Matic's best score against Rogue 5.3  (UTexas, Feb 1984)
- * Printed when no score file is available in dumpscore()
+ * BEST - Printed when no score file is available in dumpscore()
+ *
+ * Set to a low rogue score value of 999 for rogue 5.4.5.
+ *
+ * Was:
+ *
+ * Rog-O-Matic's best score against Rogue 5.3  (UTexas, Feb 1984) was 11316.
  */
 
-# define BEST		(11316)
+# define BEST		(4095)
 
 /*
  * Rog-O-Matic will not try to beat scores higher than BOGUS which
  * appear on the Rogue scoreboard.
  */
 
-# define BOGUS		(50000)
+# define BOGUS		(99999)
 
 /*
  * This variable defines the version of Rogue we are assumed to be playing
@@ -38,16 +43,16 @@
  * the corresponding internal version code defined in types.h.
  */
 
-# define DEFVER		"5.3"
-# define DEFRV		RV53A
+# define DEFVER		"5.4.5"
+# define DEFRV		RV54B
 
 /*
  * This file is created whenever the Rog-O-Matic score file is accessed to
  * prevent simultaneous accesses. This variable must be defined, but will
- * not be used unless RGMDIR is also defined.
+ *rogomatic.cat.in not be used unless RGMDIR is also defined.
  */
 
-# define LOCKFILE	"/tmp/Rgm Lock"
+# define LOCKFILE	"/tmp/Rgm.Lock"
 
 /*
  * This variable is the level at which we always start logging the game
@@ -73,7 +78,7 @@
  * defined.
  */
 
-# define NEWROGUE	"/usr/mlm/bin/rogue"
+# undef NEWROGUE
 
 /*
  * This is the location of the player executable, which is the main
@@ -83,7 +88,7 @@
  * directory).
  */
 
-# define PLAYER		"/usr/mlm/bin/player"
+# define PLAYER		"/usr/local/bin/player"
 
 /*
  * This is the version of the "current" Rog-O-Matic, and is an uppercase
@@ -99,7 +104,9 @@
  * current directory.
  */
 
-# define ROGUE		"/usr/games/rogue"
+# if !defined(ROGUE)
+#   define ROGUE		"/usr/local/bin/rogue"
+# endif
 
 /*
  * This file is created in the current directory if the logging option is
@@ -112,13 +119,15 @@
 /*
  * This directory must be defined.  It will contain logs of Rogomatic's
  * scores, an error.log file, and the long term memory file.  It must
- * be writeable by everyone, since score files must be created and
+ * be writable by everyone, since score files must be created and
  * destroyed by anyone running the program.  Alternatively, the
  * player process could be made setuid, with that uid owning this
  * directory.
  */
 
-# define RGMDIR		"/usr/mlm/lib/rogomatic"
+# if !defined(RGMDIR)
+#   define RGMDIR		"/usr/local/tmp/rogomatic"
+# endif
 
 /*
  * This file is created in the current directory if the snapshot command

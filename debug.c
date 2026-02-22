@@ -34,19 +34,26 @@
 /* VARARGS2 */
 int
 dwait(int msgtype, char *f, ...)
-{ char msg[128];
+{ char msg[MU_BUF + 1];	/* message buffer, +1 for paranoia */
   int r, c;
   va_list ap;
 
+  /* zeroize arrays */
+  memset (msg, 0, sizeof(msg)); /* paranoia */
+
   /* Build the actual message */
   va_start(ap,f);
-  vsprintf (msg, f, ap);
+  vsnprintf (msg, MU_BUF, f, ap);
   va_end(ap);
   /* Log the message if the error is severe enough */
   if (!replaying && (msgtype & (D_FATAL | D_ERROR | D_WARNING)))
-  { char errfn[128]; FILE *errfil;
+  { char errfn[MU_BUF + 1];	/* error filename, +1 for paranoia */
+    FILE *errfil;
 
-    sprintf (errfn, "%s/error%s", RGMDIR, versionstr);
+    /* zeroize arrays */
+    memset (errfn, 0, sizeof(errfn)); /* paranoia */
+
+    snprintf (errfn, MU_BUF, "%s/error%s", RGMDIR, versionstr);
     if ((errfil = wopen (errfn, "a")) != NULL)
     { fprintf (errfil, "User %s, error type %d:  %s\n\n",
                getname(), msgtype, msg);
@@ -150,24 +157,28 @@ dumpflags (int r, int c)
 void
 timehistory (FILE *f, int sep)
 { int i, j;
-  char s[2048];
-  char s2[20];
+  char s[BUFSIZ + 1];	/* time history message, +1 for paranoia */
+  char s2[MU_BUF + 1];	/* level message, +1 for paranoia */
+
+  /* zeroize arrays */
+  memset (s, 0, sizeof(s)); /* paranoia */
 
   timespent[0].timestamp = 0;
 
-  sprintf (s, "Time Analysis: %s%c%c",
+  snprintf (s, BUFSIZ, "Time Analysis: %s%c%c",
            "othr hand fght rest move expl rung grop srch door total",
            sep, sep);
 
   for (i=1; i<=MaxLevel; i++)
-  { sprintf (s2, "level %2d:     ", i);
+  { memset (s2, 0, sizeof(s2)); /* paranoia */
+    snprintf (s2, MU_BUF, "level %2d:     ", i);
     strcat(s,s2);
     for (j = T_OTHER; j < T_LISTLEN; j++)
     {
-      sprintf (s2, "%5d", timespent[i].activity[j]);
+      snprintf (s2, MU_BUF, "%5d", timespent[i].activity[j]);
       strcat(s,s2);
     }
-    sprintf (s2, "%6d%c",
+    snprintf (s2, MU_BUF, "%6d%c",
              timespent[i].timestamp - timespent[i-1].timestamp, sep);
     strcat(s,s2);
   }

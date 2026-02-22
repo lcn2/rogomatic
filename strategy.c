@@ -34,7 +34,11 @@ extern int genericinit(void), sleepvalue(int, int, int, int*, int*, int*);	/* Fr
 int
 strategize (void)
 {
-  char msg[128];
+  char msg[MU_BUF + 1];	/* message buffer, +1 for paranoia */
+
+  /* zeroize arrays */
+  memset (msg, 0, sizeof(msg)); /* paranoia */
+
   dwait (D_CONTROL, "Strategizing...");
 
   /* If replaying, instead of making an action, return the old one */
@@ -177,8 +181,8 @@ strategize (void)
     /* Avoid char overflow */
     attempttosearch = timestosearch;
     timestosearch = min (newsearch, 127);
-    sprintf(msg, "Secret door attempt %d, timestosearch %d",
-	    attempt, timestosearch);
+    snprintf(msg, MU_BUF, "Secret door attempt %d, timestosearch %d",
+	     attempt, timestosearch);
     display(msg);
     foundnew ();
     if (doorexplore ()) return (1);

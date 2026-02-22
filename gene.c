@@ -15,6 +15,7 @@
 
 # include <stdio.h>
 # include <stdlib.h>
+# include <string.h>
 
 # include "types.h"
 # include "globals.h"
@@ -32,13 +33,18 @@ char *knob_name[MAXKNOB] = {
 	"hoarding food:    "
 };
 
-char genelock[100];
-char genelog[100];
-char genepool[100];
+char genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
+char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
+char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
 
 int
 main (int argc, char *argv[])
 { int m=10, init=0, seed=0, version=DEFRV, full=0;
+
+  /* zeroize arrays */
+  memset (genelock, 0, sizeof(genelock)); /* paranoia */
+  memset (genelog, 0, sizeof(genelog)); /* paranoia */
+  memset (genepool, 0, sizeof(genepool)); /* paranoia */
 
   /* Get the options */
   while (--argc > 0 && (*++argv)[0] == '-')
@@ -69,9 +75,9 @@ main (int argc, char *argv[])
   }
 
   /* No file argument, assign the gene log and pool file names */
-  sprintf (genelock, "%s/GeneLock%d", RGMDIR, version);
-  sprintf (genelog, "%s/GeneLog%d", RGMDIR, version);
-  sprintf (genepool, "%s/GenePool%d", RGMDIR, version);
+  snprintf (genelock, MU_BUF, "%s/GeneLock%d", RGMDIR, version);
+  snprintf (genelog, MU_BUF, "%s/GeneLog%d", RGMDIR, version);
+  snprintf (genepool, MU_BUF, "%s/GenePool%d", RGMDIR, version);
 
   critical ();				/* Disable interrupts */
   if (lock_file (genelock, MAXLOCK))

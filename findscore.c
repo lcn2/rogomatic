@@ -16,6 +16,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
+# include <string.h>
 
 # include "install.h"
 # include "types.h"
@@ -27,19 +28,24 @@
 int
 findscore (char *rogue, char *roguename)
 { int score, best = -1;
-  char cmd[100], buffer[BUFSIZ];
+  char cmd[MU_BUF + 1]; /* rogue -s command, +1 for paranoia */
+  char buffer[BUFSIZ + 1]; /* read buffer, +1 for paranoia */
   char *s;
-  char tmpfname[18] = TEMPFL;
+  char tmpfname[MU_BUF + 1] = TEMPFL;
   FILE *tmpfil;
   int fd;
+
+  /* zeroize arrays */
+  memset (cmd, 0, sizeof(cmd)); /* paranoia */
+  memset (buffer, 0, sizeof(buffer)); /* paranoia */
+  memset (tmpfname, 0, sizeof(tmpfname)); /* paranoia */
 
   fd = mkstemp(tmpfname);
 
   if (fd > 0)
-  {
-  /* Run 'rogue -s', and put the scores into a temp file */
-  sprintf (cmd, "%s -s >%s", rogue, tmpfname);
-  system (cmd);
+  { /* Run 'rogue -s', and put the scores into a temp file */
+    snprintf (cmd, MU_BUF, "%s -s >%s", rogue, tmpfname);
+    system (cmd);
   }
 
   /* If no temp file created, return default score */

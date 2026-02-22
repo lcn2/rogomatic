@@ -309,10 +309,16 @@ getrogue (char *waitstr, int onat)
 
 void
 terpbot (void)
-{ char sstr[30], modeline[256];
+{ char sstr[MU_BUF + 1];	/* scanned string, +1 for paranoia */
+  char modeline[SM_BUF + 1];	/* mode line, +1 for paranoia */
+
   int oldlev = Level, oldgold = Gold, oldhp = Hp, Str18 = 0;
   extern int geneid;
   int i, oldstr = Str, oldAc = Ac, oldExp = Explev;
+
+  /* zeroize arrays */
+  memset (sstr, 0, sizeof(sstr)); /* paranoia */
+  memset (modeline, 0, sizeof(modeline)); /* paranoia */
 
   /* Since we use scanf to read this field, it must not be left blank */
   if (screen[23][78] == ' ') screen[23][78] = 'X';
@@ -365,8 +371,8 @@ terpbot (void)
        oldAc != Ac || oldExp != Explev))
   {
     /* Stuff the new values into the argument space (for ps command) */
-    sprintf (modeline, "Rgm %d: Id%d L%d %d %d(%d) s%d a%d e%d    ",
-             rogpid, geneid, Level, Gold, Hp, Hpmax, Str / 100, 10-Ac, Explev);
+    snprintf (modeline, SM_BUF, "Rgm %d: Id%d L%d %d %d(%d) s%d a%d e%d    ",
+              rogpid, geneid, Level, Gold, Hp, Hpmax, Str / 100, 10-Ac, Explev);
     modeline[arglen-1] = '\0';
     strcpy (parmstr, modeline);
 
@@ -377,8 +383,8 @@ terpbot (void)
       screen[23][++i] = '\0';
 
       if (emacs)
-      { sprintf (modeline, " %s (%%b)", screen[23]);
-        if (strlen (modeline) > 72) sprintf (modeline, " %s", screen[23]);
+      { snprintf (modeline, SM_BUF, " %s (%%b)", screen[23]);
+        if (strlen (modeline) > 72) snprintf (modeline, SM_BUF, " %s", screen[23]);
         fprintf (realstdout, "%s", modeline);
         fflush (realstdout);
       }
@@ -440,12 +446,15 @@ dumpwalls (void)
 /* VARARGS1 */
 void
 sendnow (char *f, ...)
-{ char cmd[128];
+{ char cmd[MU_BUF + 1];	/* command string, +1 for paranoia */
   char *s = cmd;
   va_list ap;
 
+  /* zeroize arrays */
+  memset (cmd, 0, sizeof(cmd)); /* paranoia */
+
   va_start (ap, f);
-  vsprintf (cmd, f, ap);
+  vsnprintf (cmd, MU_BUF, f, ap);
   va_end (ap);
 
   while (*s) sendcnow (*s++);
@@ -478,12 +487,15 @@ sendcnow (int c)
 /* VARARGS1 */
 void
 my_send (char *f, ...)
-{ char cmd[128];
+{ char cmd[MU_BUF + 1]; /* command string, +1 for paranoia */
   char *s = cmd;
   va_list ap;
 
+  /* zeroize arrays */
+  memset (cmd, 0, sizeof(cmd)); /* paranoia */
+
   va_start (ap, f);
-  vsprintf (s, f, ap);
+  vsnprintf (s, MU_BUF, f, ap);
   va_end (ap);
 
   for (; *s; bump (tail, SENDQ))
@@ -699,7 +711,7 @@ quitrogue (char *reason, int gld, int terminationtype)
   /* Send the requisite handshaking to Rogue */
   if (terminationtype == DIED)
   { sendnow ("\n");
-    if (version == RV54A)
+    if (version == RV54A || version == RV54B)
       sendnow ("\n");
   }
   else if (terminationtype == FINISHED)
@@ -741,18 +753,22 @@ waitfor (char *mess)
 }
 
 /*
- * say: Display a messsage on the top line. Restore cursor to Rogue.
+ * say: Display a message on the top line. Restore cursor to Rogue.
  */
 
 /* VARARGS1 */
 void
 say (char *f, ...)
-{ char buf[BUFSIZ], *b;
+{ char buf[BUFSIZ + 1]; /* message buffer, +1 for paranoia */
+  char *b;
   va_list ap;
+
+  /* zeroize arrays */
+  memset (buf, 0, sizeof(buf)); /* paranoia */
 
   if (!emacs && !terse)
   { va_start (ap,f);
-    vsprintf (buf, f, ap);
+    vsnprintf (buf, BUFSIZ, f, ap);
     va_end (ap);
     at (0,0);
     for (b=buf; *b; b++) printw ("%s", unctrl (*b));
@@ -769,12 +785,16 @@ say (char *f, ...)
 /* VARARGS1 */
 void
 saynow (char *f, ...)
-{ char buf[BUFSIZ], *b;
+{ char buf[BUFSIZ + 1]; /* message buffer, +1 for paranoia */
+  char *b;
   va_list ap;
+
+  /* zeroize arrays */
+  memset (buf, 0, sizeof(buf)); /* paranoia */
 
   if (!emacs && !terse)
   { va_start (ap,f);
-    vsprintf (buf, f, ap);
+    vsnprintf (buf, BUFSIZ, f, ap);
     va_end (ap);
     at (0,0);
     for (b=buf; *b; b++) printw ("%s", unctrl (*b));
@@ -851,9 +871,10 @@ pauserogue (void)
 /*
  * getrogver: Read the output of the Rogue version command
  *            and set version. RV36B = 362 (3.6 with wands)
- *            and RV52A = 521 (5.2). Note that RV36A is
- *            infered when we send a "//" command to identify
- *            wands.
+ *            and RV52A = 521 (5.2) and RV54B = 525.
+ *
+ *            Note that RV36A is inferred when we send a "//"
+ *            command to identify wands.
  *
  * Get version from first 2000 chars of a log file	Feb 9, 1985 - mlm
  */
@@ -874,7 +895,9 @@ getrogver (void)
       *--vstr = '\0';
     }
     else				/* Use default version */
-    { sprintf (versionstr, DEFVER); }
+    { memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
+      snprintf (versionstr, MU_BUF, DEFVER);
+    }
 
     rewind (logfile);			/* Put log file back to start */
   }
@@ -891,6 +914,7 @@ getrogver (void)
   if (stlmatch (versionstr, "3.6"))		version = RV36B;
   else if (stlmatch (versionstr, "5.2"))	version = RV52A;
   else if (stlmatch (versionstr, "5.3"))	version = RV53A;
+  else if (stlmatch (versionstr, "5.4.5"))	version = RV54B;
   else if (stlmatch (versionstr, "5.4"))	version = RV54A;
   else saynow ("What a strange version of Rogue! ");
 }

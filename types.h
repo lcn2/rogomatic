@@ -153,6 +153,7 @@ extern char	*_unctrl[];
 # define RV52B		(522)	/* Rogue 5.2 with maze rooms */
 # define RV53A		(531)	/* Rogue 5.3 new monsters */
 # define RV54A		(541)	/* Rogue 5.4 */
+# define RV54B		(545)	/* Rogue 5.4.5 - Rogue 5.4.4 with lots of bug fixes */
 
 /* Ways to spend time */
 
