@@ -47,13 +47,13 @@ dwait(int msgtype, char *f, ...)
   va_end(ap);
   /* Log the message if the error is severe enough */
   if (!replaying && (msgtype & (D_FATAL | D_ERROR | D_WARNING)))
-  { char errfn[MU_BUF + 1];	/* error filename, +1 for paranoia */
+  { char errfn[TY_BUF + 1];	/* error filename, +1 for paranoia */
     FILE *errfil;
 
     /* zeroize arrays */
     memset (errfn, 0, sizeof(errfn)); /* paranoia */
 
-    snprintf (errfn, MU_BUF, "%s/error%s", RGMDIR, versionstr);
+    snprintf (errfn, TY_BUF, "%s/error%s", RGMDIR, versionstr);
     if ((errfil = wopen (errfn, "a")) != NULL)
     { fprintf (errfil, "User %s, error type %d:  %s\n\n",
                getname(), msgtype, msg);

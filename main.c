@@ -347,7 +347,7 @@ jmp_buf  commandtop;
 int
 main (int argc, char *argv[])
 { char  ch, *s;
-  char msg[TY_BUF + 1];	/* message buffer, +1 for paranoia */
+  char msg[SM_BUF + 1];	/* message buffer, +1 for paranoia */
   int startingup = 1;
   int i;
 
@@ -436,12 +436,12 @@ main (int argc, char *argv[])
    */
 
   if (replaying)
-    snprintf (msg, TY_BUF, " Replaying log file %s, version %s.",
+    snprintf (msg, SM_BUF, " Replaying log file %s, version %s.",
 	     logfilename, versionstr);
   else
-    snprintf (msg, TY_BUF, " %s: version %s, genotype %d, quit at %d.",
+    snprintf (msg, SM_BUF, " %s: version %s, genotype %d, quit at %d.",
 	     roguename, versionstr, geneid, quitat);
-  msg[TY_BUF] = '\0'; /* paranoia */
+  msg[SM_BUF] = '\0'; /* paranoia */
 
   if (emacs)
   { fprintf (realstdout, "%s  (%%b)", msg); fflush (realstdout); }

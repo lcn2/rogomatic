@@ -28,10 +28,10 @@
 int
 findscore (char *rogue, char *roguename)
 { int score, best = -1;
-  char cmd[MU_BUF + 1]; /* rogue -s command, +1 for paranoia */
+  char cmd[TY_BUF + 1]; /* rogue -s command, +1 for paranoia */
   char buffer[BUFSIZ + 1]; /* read buffer, +1 for paranoia */
   char *s;
-  char tmpfname[MU_BUF + 1] = TEMPFL;
+  char tmpfname[MU_BUF + 1];
   FILE *tmpfil;
   int fd;
 
@@ -44,7 +44,7 @@ findscore (char *rogue, char *roguename)
 
   if (fd > 0)
   { /* Run 'rogue -s', and put the scores into a temp file */
-    snprintf (cmd, MU_BUF, "%s -s >%s", rogue, tmpfname);
+    snprintf (cmd, MU_BUF, "%s -s >%s", rogue, TEMPFL);
     system (cmd);
   }
 
