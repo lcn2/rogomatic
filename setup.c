@@ -126,17 +126,9 @@ main (int argc, char *argv[])
     close (ptc[WRITE]); /* Close parent's (player's) unused end of the pipes */
     close (ctp[READ]);
 
-#if !defined(BSD41) && !defined(BSD42)
-    setenv ("TERMCAP", ROGUETERM, 1);
-    setenv ("TERM", "rg", 1);
-    setenv ("ROGUEOPTS", ropts, 1);
-    setenv ("LINES","24", 1);
-    setenv ("COLUMNS","80", 1);
-#else
     putenv ("TERMINFO", ROGUETERMINFO);
     putenv ("TERM", "rg");
     putenv ("ROGUEOPTS", ropts);
-#endif
     if (oldgame)  execl (rfile, rfile, "-r", NULL);
     if (argc)     execl (rfile, rfile, argv[0], NULL);
     execl (rfile, rfile, NULL);

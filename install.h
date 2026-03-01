@@ -12,12 +12,6 @@
 
 
 /*
- * BSD41: Defined for 4.1bsd Unix systems (Undefined means 4.2bsd)
- */
-
-/* # define BSD41 */
-
-/*
  * BEST - Printed when no score file is available in dumpscore()
  *
  * Set to a low rogue score value of 999 for rogue 5.4.5.
