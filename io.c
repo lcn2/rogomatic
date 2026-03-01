@@ -378,9 +378,13 @@ terpbot (void)
 
     /* Handle Emacs and Terse mode */
     if (emacs || terse)
-    { /* Skip backward over blanks and nulls */
-      for (i = 79; screen[23][i] == ' ' || screen[23][i] == '\0'; i--);
-      screen[23][++i] = '\0';
+    { /* Skip backward over blanks and NULs */
+      for (i = 79; (screen[23][i] == ' ' || screen[23][i] == '\0') && i > 0; i--);
+      if (i < 79) {
+	  screen[23][i+1] = '\0';
+      } else {
+	  screen[23][79] = '\0';
+      }
 
       if (emacs)
       { snprintf (modeline, SM_BUF, " %s (%%b)", screen[23]);
@@ -501,7 +505,7 @@ my_send (char *f, ...)
   for (; *s; bump (tail, SENDQ))
     queue[tail] = *(s++);
 
-  /* Appends null, so resend will treat as a unit */
+  /* Appends NUL, so resend will treat as a unit */
   queue[tail] = '\0';
   bump (tail, SENDQ);
 }
@@ -517,7 +521,7 @@ resend (void)
   morecount = 0;			/* Clear message count */
   if (head == tail) return (0);		/* Fail if no commands */
 
-  /* Send all queued characters until the next queued NULL */
+  /* Send all queued characters until the next queued NUL */
   while (queue[head])
   { sendcnow (*l++ = queue[head]); bump (head, SENDQ); }
   bump (head, SENDQ);
