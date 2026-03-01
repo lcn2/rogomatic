@@ -135,7 +135,7 @@ char  screen[24][80];		/* Map of current Rogue screen */
 char  sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
 char  sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
 char  ourkiller[MU_BUF + 1];	/* How we died, +1 for paranoia */
-char  versionstr[MU_BUF + 1];	/* Version of Rogue being used, +1 for paranoia */
+char  versionstr[MU_BUF + 1] = DEFVER;	/* Version of Rogue being used, +1 for paranoia */
 char  *parmstr;			/* Pointer to process arguments */
 
 /* Integers */
@@ -238,7 +238,7 @@ int   trapr = NONE;		/* Location of arrow trap, this level (row) */
 int   urocnt = 0;               /* Un-identified Rogue Object count */
 int   usesynch = 0;             /* Set when the inventory is correct */
 int   usingarrow = 0;		/* True ==> wielding an arrow froma trap */
-int   version;			/* Rogue version, integer */
+int   version = DEFRV;		/* Rogue version, integer */
 int   wplusdam = 2;		/* Our plus damage from weapon bonus */
 int   wplushit = 1;		/* Our plus hit from weapon bonus */
 int   zone = NONE;		/* Current screen zone, 0..8 */
