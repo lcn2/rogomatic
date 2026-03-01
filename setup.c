@@ -23,6 +23,11 @@
 /* Define the Rog-O-Matic pseudo-terminal (Concept Based) */
 
 # define ROGUETERM "rg|rterm:am:bs:ce=^[^S:cl=^L:cm=^[a%+ %+ :co#80:li#24:so=^[D:se=^[d:pt:ta=^I:up=^[;:db:xn:"
+# define ROGUETERMINFO "rg|rterm|Rog-O-Matic Pseudo Terminal,auto_right_margin,eat_newline_glitch,memory_below,columns#80," \
+		       "init_tabs#8,lines#24,bell=^G,carriage_return=^M,clear_screen=^L,clr_eol=\\E^S," \
+		       "cursor_address=\\Ea%p1%' '%+%c%p2%' '%+%c,cursor_down=\\E<,cursor_left=^H,cursor_up=\\E;," \
+		       "enter_standout_mode=\\ED,exit_standout_mode=\\Ed,key_backspace=^H,key_down=^J,key_left=^H," \
+		       "newline=^M^J,scroll_forward=^J,tab=^I,"
 
 int   rfrogue, rtrogue;
 extern char *getname(void);
@@ -96,9 +101,11 @@ main (int argc, char *argv[])
   snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
             cheat, noterm, echo, nohalf, emacs, terse, user,quitat);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
-  snprintf (ropts, SM_BUF, "name=%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-            roguename, "fruit=apricot", "terse", "noflush", "noask",
-            "jump", "step", "nopassgo", "inven=slow", "seefloor");
+  snprintf (ropts, SM_BUF, "name=rogo-%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
+            getname (), "fruit=apricot", "terse", "noflush", "noask",
+            "jump", "step", "nopassgo", "inven=slow", "seefloor",
+	    "tombstone", "file=/tmp/rogue.sav", "score=/tmp/rogue.scr",
+	    "lock=/tmp/rogue.lck");
 
   if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
   if (replay) { replaylog (argc==1 ? argv[0] : ROGUELOG, options); exit (0); }
@@ -126,7 +133,7 @@ main (int argc, char *argv[])
     setenv ("LINES","24", 1);
     setenv ("COLUMNS","80", 1);
 #else
-    putenv ("TERMCAP", ROGUETERM);
+    putenv ("TERMINFO", ROGUETERMINFO);
     putenv ("TERM", "rg");
     putenv ("ROGUEOPTS", ropts);
 #endif
@@ -165,7 +172,7 @@ main (int argc, char *argv[])
 /*
  * replaylog: Given a log file name and an options string, exec the player
  * process to replay the game.  No Rogue process is needed (since we are
- * replaying an old game), so the rfrogue and rtrogue file descrptiors are
+ * replaying an old game), so the rfrogue and rtrogue file descriptors are
  * given the fake value 'Z'.
  */
 

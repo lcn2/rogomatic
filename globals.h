@@ -9,19 +9,6 @@
 #define INCLUDE_GLOBALS_H
 
 
-/* BIGBUF - 2k us a good size */
-#define BIGBUF 2048
-
-/* SM_BUF MUST be smaller than BIGBUF - 1/2 BUFSIZ (1024) is a good size */
-#define SM_BUF (BIGBUF/2)
-
-/* TY_BUF MUST be smaller than SM_BUF - 1/2 SM_BUF (512) is a good size */
-#define TY_BUF (SM_BUF/2)
-
-/* MU_BUF MUST be smaller than TY_BUF - 1/2 SM_BUF (256) is a good size */
-#define MU_BUF (TY_BUF/2)
-
-
 /* global files */
 extern FILE *frogue,*trogue;	/* From Rogue, To Rogue */
 extern FILE *fecho;		/* Rogomatic score file */

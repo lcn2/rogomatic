@@ -22,6 +22,7 @@
 # include <sys/stat.h>
 # include <time.h>
 
+# include "types.h"
 # include "install.h"
 
 # define TRUE 1
@@ -54,15 +55,26 @@ baudrate (void)
 
 char *
 getname (void)
-{ static char name[100] = "";
+{ static char name[MU_BUF + 1]; /* +1 for paranoia */
   struct passwd *pw;
 
+  /*
+   * lookup the password entry relating to the creal user ID of the calling process
+   */
   pw = getpwuid(getuid());
 
-  if (pw != NULL)
-      strncpy(name, pw->pw_name, 100);
-
-  name[99] = 0;
+  /*
+   * paranoia check
+   *
+   * Only use the username of the real user ID of the calling process,
+   * if the username is a non-empty string
+   * */
+  memset(name, 0, sizeof(name)); /* paranoia */
+  if (pw != NULL && pw->pw_name != NULL && pw->pw_name[0] != '\0') {
+      strncpy(name, pw->pw_name, MU_BUF);
+  } else {
+      strncpy(name, "nobody", MU_BUF);
+  }
 
   return (name);
 }
