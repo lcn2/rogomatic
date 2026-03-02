@@ -38,7 +38,7 @@ getname (void)
   struct passwd *pw;
 
   /*
-   * lookup the password entry relating to the creal user ID of the calling process
+   * lookup the password entry relating to the real user ID of the calling process
    */
   pw = getpwuid(getuid());
 

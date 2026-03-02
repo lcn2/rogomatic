@@ -665,7 +665,7 @@ quitrogue (char *reason, int gld, int terminationtype)
   *k = '\0';
   ourscore = gld;
 
-  /* Dont need to make up any more commands */
+  /* Don't need to make up any more commands */
   if (!replaying || !logdigested)
     playing = 0;
 
@@ -675,7 +675,7 @@ quitrogue (char *reason, int gld, int terminationtype)
 
   /* Build a summary line - limit formatting to SM_BUF chars in a BIGBUF sized buffer */
   memset (sumline, 0, sizeof(sumline)); /* paranoia */
-  snprintf (sumline, SM_BUF, "%3s %2d, %4d %-8.8s %7d%s%-17.17s %3d %3d ",
+  snprintf (sumline, SM_BUF, "%3s %2d, %4d rogo-%-.32s %7d%s%-17.17s %3d %3d ",
            month[ts -> tm_mon], ts -> tm_mday, 1900 + ts -> tm_year,
            getname (), gld, cheat ? "*" : " ", reason, MaxLevel, Hpmax);
 

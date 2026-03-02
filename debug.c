@@ -55,7 +55,7 @@ dwait(int msgtype, char *f, ...)
 
     snprintf (errfn, TY_BUF, "%s/error%s", RGMDIR, versionstr);
     if ((errfil = wopen (errfn, "a")) != NULL)
-    { fprintf (errfil, "User %s, error type %d:  %s\n\n",
+    { fprintf (errfil, "User rogo-%s, error type %d:  %s\n\n",
                getname(), msgtype, msg);
       if (msgtype & (D_FATAL | D_ERROR))
       { printsnap (errfil);

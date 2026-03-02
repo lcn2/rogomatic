@@ -100,7 +100,7 @@ main (int argc, char *argv[])
 
   snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
             cheat, noterm, echo, nohalf, emacs, terse, user,quitat);
-  snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
+  snprintf (roguename, MU_BUF, "Rog-O-Matic %s for rogo-%s", RGMVER, getname ());
   snprintf (ropts, SM_BUF, "ROGUEOPTS=name=rogo-%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
             getname (), "fruit=apricot", "terse", "noflush", "noask",
             "jump", "step", "nopassgo", "inven=slow", "seefloor",
