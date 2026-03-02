@@ -131,7 +131,7 @@ char  genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
 char  lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
 char  lastname[64];		/* Name of last potion/scroll/wand */
 char  nextid = '\0';            /* Next object to identify */
-char  screen[24][80];		/* Map of current Rogue screen */
+char  screen[24][80 + 1];	/* Map of current Rogue screen, +1 for paranoia */
 char  sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
 char  sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
 char  ourkiller[MU_BUF + 1];	/* How we died, +1 for paranoia */
@@ -365,7 +365,10 @@ main (int argc, char *argv[])
   memset (sumline, 0, sizeof(sumline)); /* paranoia */
   memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
   memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
-  memset (screen, ' ', sizeof(screen));
+  for (i=0; i < 24; ++i) {
+      memset(&(screen[i][0]), ' ', 80); /* screen lines initialize with ASCII space */
+      screen[i][80] = '\0'; /* paranoia */
+  }
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
   memset (msg, 0, sizeof(msg)); /* paranoia */
   memset (genelock, 0, sizeof(genelock)); /* paranoia */

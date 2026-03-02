@@ -29,10 +29,10 @@ extern char nextid;			/* Next object to identify */
 extern char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone, +1 for paranoia */
 extern char *parmstr;			/* Pointer to argument space */
 extern char queue[];			/* stuff to be sent to Rogue */
-extern char roguename[MU_BUF + 1];      /* Name we are playing under, +1 for paranoia */
-extern char screen[24][80];	        /* characters drawn by Rogue */
-extern char sumline[BIGBUF + 1];        /* Summation line, +1 for paranoia */
-extern char sumline2[BIGBUF + 1];       /* alternate sumline buffer, +1 for paranoia */
+extern char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
+extern char screen[24][80 + 1];		/* characters drawn by Rogue, +1 for paranoia */
+extern char sumline[BIGBUF + 1];	/* Summation line, +1 for paranoia */
+extern char sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
 extern char *termination;		/* Latin verb for how we died */
 extern char versionstr[MU_BUF + 1];	/* Version of Rogue being used, +1 for paranoia */
 

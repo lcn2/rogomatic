@@ -382,9 +382,8 @@ terpbot (void)
       for (i = 79; (screen[23][i] == ' ' || screen[23][i] == '\0') && i > 0; i--);
       if (i < 79) {
 	  screen[23][i+1] = '\0';
-      } else {
-	  screen[23][79] = '\0';
       }
+      screen[23][80] = '\0'; /* paranoia */
 
       if (emacs)
       { snprintf (modeline, SM_BUF, " %s (%%b)", screen[23]);
