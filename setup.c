@@ -22,12 +22,18 @@
 
 /* Define the Rog-O-Matic pseudo-terminal (Concept Based) */
 
-# define ROGUETERMINFO "TERMINFO=" \
-       "rg|rterm|Rog-O-Matic Pseudo Terminal,auto_right_margin,eat_newline_glitch,memory_below,columns#80," \
-       "init_tabs#8,lines#24,bell=^G,carriage_return=^M,clear_screen=^L,clr_eol=\\E^S," \
-       "cursor_address=\\Ea%p1%' '%+%c%p2%' '%+%c,cursor_down=\\E<,cursor_left=^H,cursor_up=\\E;," \
-       "enter_standout_mode=\\ED,exit_standout_mode=\\Ed,key_backspace=^H,key_down=^J,key_left=^H," \
-       "newline=^M^J,scroll_forward=^J,tab=^I,"
+/*
+ * ROGUETERMINFO was produced by the ./rterm.2.b64.sh script
+ */
+#define ROGUETERMINFO \
+    "TERMINFO=b64:GgElAA0AAwCHAD0Acmd8cnRlcm18Um9nLU8tTWF0aWMgUHNldWRvIFRlcm1" \
+    "pbmFsAAABAAABAAAAAAAAAAFQAAgAGAD__wAAAgD_____BAAGAP_______wkAIgD_____JQD" \
+    "__________ycA________________________________________KgD________________" \
+    "__y0A_____________________________zAA_____________zIA___________________" \
+    "__________________________zQA___________________________________________" \
+    "__________________zYA___________________________________________________" \
+    "_______________85AP__________OwAHAA0ADAAbEwAbYSVwMSUnICclKyVjJXAyJScgJyU" \
+    "rJWMAGzwACAAbOwAbRAAbZAAIAAoACAANCgAKAAkA"
 
 int   rfrogue, rtrogue;
 extern char *getname(void);
@@ -161,7 +167,7 @@ main (int argc, char *argv[])
 
     if (!author ()) nice (4);
 
-    execl ("player", "player", ft, rp, options, roguename, NULL);
+    execl ("./player", "player", ft, rp, options, roguename, NULL); /* XXX - ./ for debugging - XXX */
 # ifdef PLAYER
     execl (PLAYER, "player", ft, rp, options, roguename, NULL);
 # endif
@@ -179,7 +185,7 @@ main (int argc, char *argv[])
 
 int
 replaylog (char *fname, char *options)
-{ execl ("player", "player", "ZZ", "0", options, fname, NULL);
+{ execl ("./player", "player", "ZZ", "0", options, fname, NULL); /* XXX - ./ for debugging - XXX */
 # ifdef PLAYER
   execl (PLAYER, "player", "ZZ", "0", options, fname, NULL);
 # endif
