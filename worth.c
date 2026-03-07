@@ -1,6 +1,28 @@
 /*
- * worth.c: Rog-O-Matic XIV (CMU) Sun Feb 10 23:16:40 1985 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * worth.c:
  *
  * This file contains the function worth (obj) which does the impossible
  * job of deciding how much each item in the pack is worth.
@@ -16,24 +38,28 @@
 # include "types.h"
 # include "globals.h"
 
-int   objval[] = {
-/* strange */      0,
-/* food */       900,
-/* potion */     500,
-/* scroll */     400,
-/* wand */       600,
-/* ring */       800,
-/* hitter */     100,
-/* thrower */    100,
-/* missile */    300,
-/* armor */      200,
-/* amulet */    5000,
-/* gold */      1000,
-/* none */         0};
+/* static declarations */
+
+static int   objval[] = {
+  /* strange */      0,
+  /* food */       900,
+  /* potion */     500,
+  /* scroll */     400,
+  /* wand */       600,
+  /* ring */       800,
+  /* hitter */     100,
+  /* thrower */    100,
+  /* missile */    300,
+  /* armor */      200,
+  /* amulet */    5000,
+  /* gold */      1000,
+  /* none */         0
+};
 
 int
 worth (int obj)
-{ int value, w;
+{
+  int value, w;
 
   /* Do we have an easy out? */
   if (useless (obj)) return (0);
@@ -53,8 +79,8 @@ worth (int obj)
    * best, third best, or leather armor (leather doesnt rust)
    */
 
-  if (inven[obj].type == armor)
-  { value = (11 - armorclass (obj)) * 120;
+  if (inven[obj].type == armor) {
+    value = (11 - armorclass (obj)) * 120;
 
     if (obj == havearmor (1, NOPRINT, ANY))		value += 2000;
     else if (obj == havearmor (2, NOPRINT, ANY))	value += 1500;
@@ -68,30 +94,31 @@ worth (int obj)
    * or second best.
    */
 
-  else if (inven[obj].type == thrower)
-  { value = (bowclass (obj));
+  else if (inven[obj].type == thrower) {
+    value = (bowclass (obj));
 
     if (obj == havebow (1, NOPRINT)) value += 1500;
     else if (obj == havebow (2, NOPRINT)) value += 300;
   }
 
   /* Weapons values are counted by hit potential, bonus for best */
-  else if ((w = weaponclass (obj)) > 0)
-  { value = w * 5;
+  else if ((w = weaponclass (obj)) > 0) {
+    value = w * 5;
 
     if (obj == haveweapon (1, NOPRINT)) value += 2500;
     else if (obj == haveweapon (2, NOPRINT)) value += 1500;
   }
 
   /* Rings values are counted by bonus */
-  else if ((w = ringclass (obj)) > 0)
-  { if (w > 1000) w -= 500; /* Subtract part of food bonus */
+  else if ((w = ringclass (obj)) > 0) {
+    if (w > 1000) w -= 500; /* Subtract part of food bonus */
+
     value = w + 400;
   }
 
   /* For arbitrary things, bonus for plus item */
-  else
-  { if (inven[obj].phit != UNKNOWN)
+  else {
+    if (inven[obj].phit != UNKNOWN)
       value += inven[obj].phit * 75;
   }
 
@@ -130,6 +157,10 @@ useless (int i)
   if (itemis (i, INUSE))
     return (0);
 
+  /* item has been tagged WORTHLESS someplace else */
+  if (itemis (i, WORTHLESS))
+    return (1);
+
   /* Worn out or bad wands are useless */
   if ((inven[i].type == wand) &&
       (inven[i].charges == 0 ||
@@ -152,7 +183,7 @@ useless (int i)
     return (1);
 
   /* So are many scrolls */
-  if (inven[i].type == rscroll && itemis (i, KNOWN) &&
+  if (inven[i].type == Scroll && itemis (i, KNOWN) &&
       (stlmatch (inven[i].str, "blank") ||
        stlmatch (inven[i].str, "create monster") ||
        stlmatch (inven[i].str, "sleep") ||

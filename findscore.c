@@ -1,16 +1,30 @@
 /*
- * findscore.c: Rog-O-Matic XIV (CMU) Sun Jul  6 20:13:19 1986 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * findscore.c:
  *
  * Read the Rogue scoreboard to determine a goal score.
- *
- * EDITLOG
- *	LastEditDate = Sun Jul  6 20:13:19 1986 - Michael Mauldin
- *	LastFileName = /usre3/mlm/src/rog/ver14/findscore.c
- *
- * HISTORY
- *  6-Jul-86  Michael Mauldin (mlm) at Carnegie-Mellon University
- *	Created.
  */
 
 # include <stdio.h>
@@ -27,7 +41,8 @@
 
 int
 findscore (char *rogue, char *roguename)
-{ int score, best = -1;
+{
+  int score, best = -1;
   char cmd[TY_BUF + 1]; /* rogue -s command, +1 for paranoia */
   char buffer[BUFSIZ + 1]; /* read buffer, +1 for paranoia */
   char *s;
@@ -42,8 +57,8 @@ findscore (char *rogue, char *roguename)
 
   fd = mkstemp(tmpfname);
 
-  if (fd > 0)
-  { /* Run 'rogue -s', and put the scores into a temp file */
+  if (fd > 0) {
+    /* Run 'rogue -s', and put the scores into a temp file */
     snprintf (cmd, MU_BUF, "%s -s >%s", rogue, TEMPFL);
     system (cmd);
   }
@@ -56,22 +71,28 @@ findscore (char *rogue, char *roguename)
   while (fgets (buffer, BUFSIZ, tmpfil) != NULL)
     if (stlmatch (buffer, "Rank")) break;
 
-  if (! feof (tmpfil))
-  { while (fgets (buffer, BUFSIZ, tmpfil) != NULL)
-    { s = buffer;				/* point s at buffer */
+  if (! feof (tmpfil)) {
+    while (fgets (buffer, BUFSIZ, tmpfil) != NULL) {
+      s = buffer;				/* point s at buffer */
+
       while (ISDIGIT (*s)) s++;			/* Skip over rank */
+
       while (*s == ' ' || *s == '\t') s++;	/* Skip to score */
+
       score = atoi (s);				/* Read score */
+
       while (ISDIGIT (*s)) s++;			/* Skip over score */
+
       while (*s == ' ' || *s == '\t') s++;	/* Skip to player */
 
-      if (stlmatch (s, roguename))		/* Found our heros name */
-      { if (best < 0) best = score;		/* Rogy is on top! */
-	break;					/* 'best' is now target */
+      if (stlmatch (s, roguename)) {	/* Found our heros name */
+        if (best < 0) best = score;		/* Rogy is on top! */
+
+        break;					/* 'best' is now target */
       }
 
       if (score < BOGUS &&
-	  (score < best || best < 0))		/* Save smallest score */
+          (score < best || best < 0))		/* Save smallest score */
         best = score;				/*  above Rogy's score */
     }
   }

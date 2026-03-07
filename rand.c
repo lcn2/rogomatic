@@ -1,6 +1,30 @@
 /*
- * rand.c: Rog-O-Matic XIV (CMU) Tue Mar 19 21:42:34 1985 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+# include <time.h>
+
+/*
+ * rand.c:
  *
  * A very random generator, period approx 6.8064e16.
  *
@@ -9,14 +33,12 @@
  * Two generators are used to derive the high and low parts of sequence X,
  * and another for sequence Y. These were derived by Michael Mauldin.
  *
- * Usage:  initialize by calling my_srand(seed), then my_rand() returns a random
- *         number from 0..2147483647. my_srand(0) uses the current time as
+ * Usage:  initialize by calling srand(seed), then rand() returns a random
+ *         number from 0..2147483647. srand(0) uses the current time as
  *         the seed.
  *
  * Author: Michael Mauldin, June 14, 1983.
  */
-
-# include <time.h>
 
 /* Rand 1, period length 444674 */
 # define MUL1 1156
@@ -48,8 +70,9 @@
 static int seed1=872978, seed2=518652, seed3=226543, auxtab[AUXLEN];
 
 void
-my_srand (int seed)
-{ int i;
+rogo_srand (int seed)
+{
+  int i;
 
   if (seed == 0) seed = time (0);
 
@@ -63,8 +86,9 @@ my_srand (int seed)
 }
 
 int
-my_rand (void)
-{ int j, result;
+rogo_rand (void)
+{
+  int j, result;
 
   j = AUXLEN * Y / MOD1;	/* j random from 0..AUXLEN-1 */
   result = auxtab[j];
@@ -73,8 +97,9 @@ my_rand (void)
 }
 
 int
-randint (int max)
-{ int j, result;
+rogo_randint (int max)
+{
+  int j, result;
 
   j = AUXLEN * Y / MOD1;	/* j random from 0..AUXLEN-1 */
   result = auxtab[j];

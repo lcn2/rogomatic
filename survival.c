@@ -1,21 +1,38 @@
 /*
- * survival.c: Rog-O-Matic XIV (CMU) Sat Mar  7 12:29:22 1987 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * survival.c:
  *
  * This file contains all of the "Run Away" code.
  * Well, almost all of the run away code.
  * At least I think it has something to do with running away.
  *
- * EDITLOG
- *	LastEditDate = Sat Mar  7 12:29:22 1987 - Michael Mauldin
- *	LastFileName = /usre3/mlm/src/rog/ver14/survival.c
- *
- * HISTORY
- *  7-Mar-87  Michael Mauldin (mlm) at Carnegie-Mellon University
- *	Modified markcycles() to check for choke points in corridors,
- *	as possible RUNOK squares, in addition to doors.  This fixes the
- *	bug where a cycle through corridors was not noticed because
- *	there was no door there.
+ * 7-Mar-87  Michael Mauldin (mlm) at Carnegie-Mellon University
+ * Modified markcycles() to check for choke points in corridors,
+ * as possible RUNOK squares, in addition to doors.  This fixes the
+ * bug where a cycle through corridors was not noticed because
+ * there was no door there.
  */
 
 # include <stdio.h>
@@ -36,6 +53,10 @@
     if (stand) standend ();			\
     refresh (); }
 
+/* static declarations */
+
+static void markchokepts (void);
+
 /*
  * markcycles: evokes fond memories of an earlier time, when Andrew
  * was a hacker who just patched things together until they worked,
@@ -48,7 +69,8 @@
 
 int
 markcycles (int print)
-{ short mark[1920];
+{
+  short mark[1920];
   struct {short where,door,dirs;} st[1000];
   int sp,newsquare; int *Scr; int whichdir; int D;
 
@@ -58,63 +80,67 @@ markcycles (int print)
 
   markchokepts ();
 
-  { int count=1920; register short *m=mark; while(count--) *m++=0;}
+  { int count=1920; short *m=mark; while(count--) *m++=0;}
   sp=1; st[1].where=atrow*80+atcol; st[1].dirs=1; st[1].door=0;
 
-  for (D = 0; D < 8; D += 2)
-  { if ((Scr[newsquare = (st[1].where+deltrc[D^4])]) & CANGO)
-    { if (mark[newsquare])
-      { int stop, i;
+  for (D = 0; D < 8; D += 2) {
+    if ((Scr[newsquare = (st[1].where+deltrc[D^4])]) & CANGO) {
+      if (mark[newsquare]) {
+        int stop, i;
+
         if (mark[newsquare] < sp)
           for (stop = st[mark[newsquare]].door,
-                 i = (Scr[st[sp].where] & CHOKE) ? sp : st[sp].door;
+               i = (Scr[st[sp].where] & CHOKE) ? sp : st[sp].door;
                i !=  stop;
-               i =st[i].door)
-          { Scr[st[i].where] |= RUNOK;
+               i =st[i].door) {
+            Scr[st[i].where] |= RUNOK;
             highlight (st[i].where, SO)
           }
-       }
-       else
-       { sp++; mark[newsquare] = sp;
-         highlight (newsquare, SO)
-         st[sp].where=newsquare;
-         st[sp].dirs=1; st[1].dirs= -1;
-         st[sp].door = (Scr[st[sp-1].where]&CHOKE) ? sp-1 : st[sp-1].door;
-       }
-     }
+      }
+      else {
+        sp++; mark[newsquare] = sp;
+        highlight (newsquare, SO)
+        st[sp].where=newsquare;
+        st[sp].dirs=1; st[1].dirs= -1;
+        st[sp].door = (Scr[st[sp-1].where]&CHOKE) ? sp-1 : st[sp-1].door;
+      }
+    }
 
-     while (sp > 1)
-     { if ((whichdir=(st[sp].dirs++)<<1)<8)
-       { /* whichdir is 6,2, or 4. */
-         if ((Scr[newsquare= (st[sp].where+deltrc[(whichdir+D)&7])])&CANGO)
-         { if (mark[newsquare])
-           { int stop,i;
-             if (mark[newsquare]<sp)
-             { for (stop=st[mark[newsquare]].door,
-		    i=(Scr[st[sp].where]&CHOKE)?sp:st[sp].door;
-		    i!=stop;
-		    i=st[i].door)
-               { Scr[st[i].where] |= RUNOK;
-                 highlight (st[i].where, SO)
-               }
-	     }
-           }
-           else
-           { sp++; mark[newsquare]=sp;
-             highlight (newsquare, SO)
-             st[sp].where=newsquare;
-             st[sp].dirs=1; D += whichdir+4;
-             st[sp].door = (Scr[st[sp-1].where]&CHOKE) ? sp-1 : st[sp-1].door;
-           }
-         }
-       }
-       else
-       { if (! (Scr[st[sp].where] & RUNOK)) highlight (st[sp].where, SE)
-         sp--;
-         D -= 4+((st[sp].dirs-1)<<1);
-       }
-     }
+    while (sp > 1) {
+      if ((whichdir=(st[sp].dirs++)<<1)<8) {
+        /* whichdir is 6,2, or 4. */
+        if ((Scr[newsquare= (st[sp].where+deltrc[(whichdir+D)&7])])&CANGO) {
+          if (mark[newsquare]) {
+            int stop,i;
+
+            if (mark[newsquare]<sp) {
+              for (stop=st[mark[newsquare]].door,
+                   i=(Scr[st[sp].where]&CHOKE)?sp:st[sp].door;
+                   i!=stop;
+                   i=st[i].door) {
+                Scr[st[i].where] |= RUNOK;
+                highlight (st[i].where, SO)
+              }
+            }
+          }
+          else {
+            sp++; mark[newsquare]=sp;
+            highlight (newsquare, SO)
+            st[sp].where=newsquare;
+            st[sp].dirs=1; D += whichdir+4;
+            st[sp].door = (Scr[st[sp-1].where]&CHOKE) ? sp-1 : st[sp-1].door;
+          }
+        }
+      }
+      else {
+        if (! (Scr[st[sp].where] & RUNOK)) highlight (st[sp].where, SE)
+          sp--;
+
+        D -= 4+((st[sp].dirs-1)<<1);
+      }
+    }
   }
+
   highlight (st[1].where, SE)
 
   new_mark = 0;
@@ -128,30 +154,32 @@ markcycles (int print)
  * Added: 3/7/87 by mlm
  */
 
-void
+static void
 markchokepts (void)
-{ int *Scr, *ScrEnd;
+{
+  int *Scr, *ScrEnd, loc;
 
-  for (Scr = scrmap[0], ScrEnd = &Scr[1920]; Scr<ScrEnd; Scr++)
-  { if (*Scr & DOOR) *Scr |= CHOKE;
-    else if (*Scr & HALL)
-    { int nbrs = 0, k;
+  for (Scr = scrmap[0], ScrEnd = &Scr[1920]; Scr<ScrEnd; Scr++) {
+    if (*Scr & DOOR) *Scr |= CHOKE;
+    else if (*Scr & HALL) {
+      int nbrs = 0, k;
 
       for (k=0; k<8; k++)
-      { if (Scr[deltrc[k]] & CANGO) nbrs++; }
+        { if (Scr[deltrc[k]] & CANGO) nbrs++; }
 
       if (nbrs < 4 ||
-	  ! (Scr[  1] & Scr[-79] & Scr[-80] & CANGO ||
-	     Scr[-80] & Scr[-81] & Scr[ -1] & CANGO ||
-	     Scr[ -1] & Scr[ 79] & Scr[ 80] & CANGO ||
-	     Scr[ 80] & Scr[ 81] & Scr[  1] & CANGO))
-      { *Scr |= CHOKE;
-	if (debug (D_SCREEN))
-	{ int rowcol = Scr - scrmap[0];
-	  standout ();
-	  mvprintw (rowcol/80, rowcol%80, "C");
-	  standend ();
-	}
+          ! (Scr[  1] & Scr[-79] & Scr[-80] & CANGO ||
+             Scr[-80] & Scr[-81] & Scr[ -1] & CANGO ||
+             Scr[ -1] & Scr[ 79] & Scr[ 80] & CANGO ||
+             Scr[ 80] & Scr[ 81] & Scr[  1] & CANGO)) {
+        *Scr |= CHOKE;
+
+        if (debug (D_SCREEN)) {
+          int rowcol = Scr - scrmap[0];
+          standout ();
+          mvprintw (rowcol/80, rowcol%80, "C");
+          standend ();
+        }
       }
     }
   }
@@ -164,8 +192,8 @@ markchokepts (void)
 int
 runaway (void)
 {
-  if (on (SCAREM))
-  { dwait (D_BATTLE, "Not running, on scare monster scroll!");
+  if (on (SCAREM)) {
+    dwait (D_BATTLE, "Not running, on scare monster scroll!");
     return (0);
   }
 
@@ -186,7 +214,8 @@ runaway (void)
 
 int
 canrun (void)
-{ int result, oldcomp = compression;
+{
+  int result, oldcomp = compression;
 
   if (on (STAIRS)) return (1);		/* Can run down stairs */
 
@@ -209,18 +238,17 @@ canrun (void)
 
 int
 unpin (void)
-{ int result, oldcomp = compression;
-  static int unpinned = 0;
+{
+  int result, oldcomp = compression;
 
-  if (on (SCAREM))
-  { dwait (D_BATTLE, "Not unpinning, on scare monster scroll!");
+  if (on (SCAREM)) {
+    dwait (D_BATTLE, "Not unpinning, on scare monster scroll!");
     return (0);
   }
 
-  if (++unpinned > 100) { unpinned = 0; return 0; };
+  if (on (STAIRS) && !floating) {
+    if (!goupstairs (RUNNING)) godownstairs (RUNNING);
 
-  if (on (STAIRS) && !floating)
-  { if (!goupstairs (RUNNING)) godownstairs (RUNNING);
     return (1);
   }
 
@@ -243,7 +271,8 @@ unpin (void)
 
 int
 backtodoor (int dist)
-{ static int lastcall= -10, stillcount=0, notmoving=0, closest=99;
+{
+  static int lastcall= -10, stillcount=0, notmoving=0, closest=99;
 
   /*
    * Keep track of the opponents distance.  If they stop advancing on us,
@@ -251,11 +280,11 @@ backtodoor (int dist)
    */
 
   if (turns-lastcall > 20)
-  { notmoving=0; closest=99; stillcount=0; }
+    { notmoving=0; closest=99; stillcount=0; }
   else if (dist < closest)
-  { closest=dist; stillcount=0; }
+    { closest=dist; stillcount=0; }
   else if (++stillcount > 5)
-  { notmoving++; }
+    { notmoving++; }
 
   lastcall = turns;
 
@@ -273,7 +302,7 @@ backtodoor (int dist)
     dwait (D_BATTLE, "backtodoor: next to door, have time");
 
   else if (makemove (RUNTODOOR, rundoorinit, rundoorvalue, REEVAL))
-  { dwait (D_BATTLE, "Back to the door..."); return (1); }
+    { dwait (D_BATTLE, "Back to the door..."); return (1); }
 
   return (0);
 }

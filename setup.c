@@ -1,46 +1,55 @@
 /*
- * setup.c: Rog-O-Matic XIV (CMU) Wed Jan 30 17:38:07 1985 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * setup.c:
  *
  * This is the program which forks and execs the Rogue & the Player
  */
 
 # include <stdio.h>
-# include <signal.h>
 # include <stdlib.h>
-# include <fcntl.h>
-# include <sys/ioctl.h>
+# include <signal.h>
 # include <unistd.h>
 # include <string.h>
+# include <sys/errno.h>
 
 # include "types.h"
-# include "globals.h"
 # include "install.h"
 
 # define READ    0
 # define WRITE   1
 
-/* Define the Rog-O-Matic pseudo-terminal (Concept Based) */
+/* static declarations */
 
-/*
- * ROGUETERMINFO was produced by the ./rterm.2.b64.sh script
- */
-#define ROGUETERMINFO \
-    "TERMINFO=b64:GgElAA0AAwCHAD0Acmd8cnRlcm18Um9nLU8tTWF0aWMgUHNldWRvIFRlcm1" \
-    "pbmFsAAABAAABAAAAAAAAAAFQAAgAGAD__wAAAgD_____BAAGAP_______wkAIgD_____JQD" \
-    "__________ycA________________________________________KgD________________" \
-    "__y0A_____________________________zAA_____________zIA___________________" \
-    "__________________________zQA___________________________________________" \
-    "__________________zYA___________________________________________________" \
-    "_______________85AP__________OwAHAA0ADAAbEwAbYSVwMSUnICclKyVjJXAyJScgJyU" \
-    "rJWMAGzwACAAbOwAbRAAbZAAIAAoACAANCgAKAAkA"
+static int   frogue, trogue;
 
-int   rfrogue, rtrogue;
-extern char *getname(void);
+static void replaylog (char *fname, char *options);
 
 int
 main (int argc, char *argv[])
-{ int   ptc[2], ctp[2];
+{
+  int   ptc[2], ctp[2];
   int   child, score = 0, oldgame = 0;
   int   cheat = 0, noterm = 1, echo = 0, nohalf = 0, replay = 0;
   int   emacs = 0, rf = 0, terse = 0, user = 0, quitat = 2147483647;
@@ -48,16 +57,17 @@ main (int argc, char *argv[])
   char	options[MU_BUF + 1]; /* rogomatic options, +1 for paranoia */
   char  ropts[SM_BUF + 1]; /* rogue options, +1 for paranoia */
   char  roguename[MU_BUF + 1]; /* rogue player name, +1 for paranoia */
+  char  *pfile = "";
 
   /* zeroize arrays */
   memset (options, 0, sizeof(options)); /* paranoia */
   memset (ropts, 0, sizeof(ropts)); /* paranoia */
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
 
-  while (--argc > 0 && (*++argv)[0] == '-')
-  { while (*++(*argv))
-    { switch (**argv)
-      { case 'c': cheat++;        break; /* Will use trap arrows! */
+  while (--argc > 0 && (*++argv)[0] == '-') {
+    while (*++(*argv)) {
+      switch (**argv) {
+        case 'c': cheat++;        break; /* Will use trap arrows! */
         case 'e': echo++;         break; /* Echo file to roguelog */
         case 'f': rf++;           break; /* Next arg is the rogue file */
         case 'h': nohalf++;       break; /* No halftime show */
@@ -69,109 +79,132 @@ main (int argc, char *argv[])
         case 'w': noterm = 0;     break; /* Watched mode */
         case 'E': emacs++;        break; /* Emacs mode */
         default:  printf
-                  ("Usage: rogomatic [-cefhprstuwE] or rogomatic [file]\n");
-                  exit (1);
+          ("Usage: rogomatic [-cefhprstuwE] or rogomatic [file]\n");
+          exit (1);
       }
     }
 
-    if (rf)
-    { if (--argc) rfilearg = *++argv;
+    if (rf) {
+      if (--argc) rfilearg = *++argv;
+
       rf = 0;
     }
   }
 
-  if (argc > 1)
-  { printf ("Usage: rogomatic [-cefhprstuwE] or rogomatic <file>\n");
+  if (argc > 1) {
+    printf ("Usage: rogomatic [-cefhprstuwE] or rogomatic <file>\n");
     exit (1);
   }
 
-  /* Find which rogue to use */
-  if (*rfilearg)
-  { if (access (rfilearg, 1) == 0)	rfile = rfilearg;
-    else				{ perror (rfilearg); exit (1); }
+  /*
+   * Find which rogue executable to use
+   */
+  if (*rfilearg) {
+    if (access (rfilearg, R_OK|X_OK) == 0) {
+	rfile = rfilearg;
+    }
+    else {
+	fprintf (stderr, "ERROR: rogue arg not executable: %s - %s\n", rfilearg, strerror(errno));
+	exit (1);
+    }
   }
-  else if (access ("rogue", 1) == 0)	rfile = "rogue";
+  else if (access ("./rogue", R_OK|X_OK) == 0) {
+      rfile = "./rogue";
+  }
 # ifdef NEWROGUE
-  else if (access (NEWROGUE, 1) == 0)	rfile = NEWROGUE;
+  else if (access (NEWROGUE, R_OK|X_OK) == 0) {
+      rfile = NEWROGUE;
+  }
 # endif
 # ifdef ROGUE
-  else if (access (ROGUE, 1) == 0)	rfile = ROGUE;
+  else if (access (ROGUE, R_OK|X_OK) == 0) {
+      rfile = ROGUE;
+  }
 # endif
-  else
-  { perror ("rogue");
+  else {
+    fprintf (stderr, "ERROR: rogue not found\n");
+    exit (1);
+  }
+
+  /*
+   * Find which player executable to use
+   */
+  if (access ("./player", R_OK|X_OK) == 0) {
+      pfile = "./player";
+  }
+# ifdef PLAYER
+  else if (access (PLAYER, R_OK|X_OK) == 0) {
+      pfile = PLAYER;
+  }
+# endif
+  else {
+    fprintf (stderr, "ERROR: player not found\n");
     exit (1);
   }
 
   if (!replay && !score) quitat = findscore (rfile, "Rog-O-Matic");
 
   snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
-            cheat, noterm, echo, nohalf, emacs, terse, user,quitat);
-  snprintf (roguename, MU_BUF, "Rog-O-Matic %s for rogo-%s", RGMVER, getname ());
-  snprintf (ropts, SM_BUF, "ROGUEOPTS=name=rogo-%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
-            getname (), "fruit=apricot", "terse", "noflush", "noask",
-            "jump", "step", "nopassgo", "inven=slow", "seefloor",
-	    "tombstone", "file=/tmp/rogue.sav", "score=/tmp/rogue.scr",
-	    "lock=/tmp/rogue.lck");
+           cheat, noterm, echo, nohalf, emacs, terse, user, quitat);
+  snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
+  snprintf (ropts, SM_BUF, "name=%s,fruit=%s,%s,%s,%s,%s,%s,%s,inven=%s,%s,%s,file=%s/%s,score=%s/%s,lock=%s/%s",
+            getname (), "apricot", "terse", "noflush", "noask",
+            "jump", "step", "nopassgo", "slow", "seefloor", "tombstone",
+	    RGMDIR, "rogue.sav", RGMDIR, "rogue.scr", RGMDIR, "rogue.lck");
 
   if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
+
   if (replay) { replaylog (argc==1 ? argv[0] : ROGUELOG, options); exit (0); }
 
-  if ((pipe (ptc) < 0) || (pipe (ctp) < 0))
-  { fprintf (stderr, "Cannot get pipes!\n");
+  if ((pipe (ptc) < 0) || (pipe (ctp) < 0)) {
+    fprintf (stderr, "Cannot get pipes!\n");
     exit (1);
   }
 
-  rtrogue = ptc[WRITE];
-  rfrogue = ctp[READ];
+  trogue = ptc[WRITE];
+  frogue = ctp[READ];
 
-  if ((child = fork ()) == 0)
-  { close (0);
+  if ((child = fork ()) == 0) {
+    close (0);
     dup (ptc[READ]);
     close (1);
     dup (ctp[WRITE]);
-    close (ptc[WRITE]); /* Close parent's (player's) unused end of the pipes */
-    close (ctp[READ]);
 
-    if (putenv (ROGUETERMINFO) != 0) {
-	fprintf (stderr, "failed to putenv for $TERMINFO\n");
-	exit(1);
+    if (setenv ("TERM", "vt100", 1) != 0) {
+      fprintf (stderr, "ERROR: can't setenv (\"TERM\", \"vt100\", 1)\n");
+      exit (1);
     }
-    if (putenv ("TERM=rg") != 0) {
-	fprintf (stderr, "failed to putenv for $TERM\n");
-	exit(1);
+
+    if (setenv ("ROGUEOPTS", ropts, 1) != 0) {
+      fprintf (stderr, "ERROR: can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n",ropts);
+      exit (1);
     }
-    if (putenv (ropts) != 0) {
-	fprintf (stderr, "failed to putenv for $ROGUEOPTS\n");
-	exit(1);
-    }
-    if (oldgame)  execl (rfile, rfile, "-r", NULL);
-    if (argc)     execl (rfile, rfile, argv[0], NULL);
-    execl (rfile, rfile, NULL);
+
+    if (oldgame)  execl (rfile, rfile, "-r", 0);
+
+    if (argc)     execl (rfile, rfile, argv[0], 0);
+
+    execl (rfile, rfile, 0);
     _exit (1);
   }
 
-  else
-  { /* Encode the open files into a two character string */
-
-    char ft[3] = "aa"; ft[0] += rfrogue; ft[1] += rtrogue;
+  else {
+    /* Encode the open files into a two character string */
+    char ft[3];
     char rp[MU_BUF + 1]; /* rogue pid, +1 for paranoia */
 
     /* zeroize arrays */
     memset (rp, 0, sizeof(rp)); /* paranoia */
 
-    close (ptc[READ]); /* Close child's (rogue's) unused end of the pipes */
-    close (ctp[WRITE]);
+    ft[0] = 'a' + frogue;
+    ft[1] = 'a' + trogue;
+    ft[2] = '\0';
 
     /* Pass the process ID of the Rogue process as an ASCII string */
     snprintf (rp, MU_BUF, "%d", child);
 
-    if (!author ()) nice (4);
-
-    execl ("./player", "player", ft, rp, options, roguename, NULL); /* XXX - ./ for debugging - XXX */
-# ifdef PLAYER
-    execl (PLAYER, "player", ft, rp, options, roguename, NULL);
-# endif
-    printf ("Rogomatic not available, 'player' binary missing.\n");
+    execl (pfile, pfile, ft, rp, options, roguename, 0);
+    fprintf (stderr, "ERROR: Rogomatic not available, player binary missing: %s\n", pfile);
     kill (child, SIGKILL);
   }
 }
@@ -179,35 +212,17 @@ main (int argc, char *argv[])
 /*
  * replaylog: Given a log file name and an options string, exec the player
  * process to replay the game.  No Rogue process is needed (since we are
- * replaying an old game), so the rfrogue and rtrogue file descriptors are
+ * replaying an old game), so the frogue and trogue file descrptiors are
  * given the fake value 'Z'.
  */
 
-int
+static void
 replaylog (char *fname, char *options)
-{ execl ("./player", "player", "ZZ", "0", options, fname, NULL); /* XXX - ./ for debugging - XXX */
+{
+  execl ("player", "player", "ZZ", "0", options, fname, 0);
 # ifdef PLAYER
-  execl (PLAYER, "player", "ZZ", "0", options, fname, NULL);
+  execl (PLAYER, "player", "ZZ", "0", options, fname, 0);
 # endif
   printf ("Replay not available, 'player' binary missing.\n");
   exit (1);
-}
-
-/*
- * author:
- *	See if a user is an author of the program
- */
-
-int
-author (void)
-{
-  switch (getuid())
-  { case 1337:	/* Fuzzy */
-    case 1313:	/* Guy */
-    case 1241:	/* Andrew */
-    case 345:	/* Leonard */
-    case 342:	/* Gordon */
-		return 1;
-    default:	return 0;
-  }
 }

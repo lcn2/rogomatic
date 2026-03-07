@@ -70,6 +70,7 @@ PREFIX= /usr/local
 BINDIR= ${PREFIX}/bin
 SHAREDIR= ${PREFIX}/share
 DESTDOC= ${SHAREDIR}/rogomatic
+ORIG_DESTDOC= ${DESTDOC}/ORIG_DOC
 MANDIR= ${PREFIX}/man
 MAN6DIR= ${MANDIR}/man6
 
@@ -80,7 +81,7 @@ MAN6DIR= ${MANDIR}/man6
 # It must be writable by everyone, since score files must be
 # created and destroyed by anyone running the program.
 #
-TMPDIR= /usr/local/tmp
+TMPDIR= /tmp
 RGMDIR= ${TMPDIR}/rogomatic
 
 # ROGUE - default location of the rogue game
@@ -161,17 +162,17 @@ TARGETS= rogomatic player rgmplot datesub histplot gene
 # source and destination files #
 ################################
 
-H_SRC= types.h globals.h install.h termtokens.h
+H_SRC= types.h globals.h install.h termtokens.h getroguetoken.h
 
-OBJS= arms.o command.o database.o debug.o explore.o io.o learn.o \
-	ltm.o main.o mess.o monsters.o pack.o rand.o replay.o rooms.o \
-	scorefile.o search.o stats.o strategy.o survival.o tactics.o \
-	things.o titlepage.o utility.o worth.o
+OBJS= arms.o command.o config.o database.o debug.o debuglog.o explore.o \
+	getroguetoken.o io.o learn.o ltm.o main.o mess.o monsters.o pack.o \
+	rand.o replay.o rooms.o scorefile.o search.o stats.o strategy.o \
+	survival.o tactics.o things.o titlepage.o utility.o worth.o
 
-CFILES= arms.c command.c database.c debug.c explore.c io.c learn.c \
-	ltm.c main.c mess.c monsters.c pack.c rand.c replay.c rooms.c \
-	scorefile.c search.c stats.c strategy.c survival.c tactics.c \
-	things.c titlepage.c utility.c worth.c
+CFILES= arms.c command.c config.c database.c debug.c debuglog.c explore.c \
+	getroguetoken.c io.c learn.c ltm.c main.c mess.c monsters.c pack.c \
+	rand.c replay.c rooms.c scorefile.c search.c stats.c strategy.c \
+	survival.c tactics.c things.c titlepage.c utility.c worth.c
 
 MISC_C= setup.c findscore.c histplot.c rgmplot.c gene.c tf.c
 
@@ -186,10 +187,17 @@ OTHERS= datesub.l rplot rgmhist rgmscatter
 
 DOC_SRC= rogomatic.6.in rogomatic.cat.in
 
-MISC_DOC= knowledge LICENSE ORIG_CHANGES ORIG_CHANGES ORIG_COPYRGHT ORIG_MANPAGE \
-	ORIG_README README.md rnotes rogo.mss \
-	rogtitle.mss rterm.tic strike.mss title.ani titlepage.ani title.start \
-	CODE_OF_CONDUCT.md CONTRIBUTING.md SECURITY.md
+# These original documentation files install under the ${ORIG_DESTDOC} directory.
+#
+ORIG_DOC= ORIG_DOC/amulet.photo ORIG_DOC/Bugreport ORIG_DOC/copyright \
+	  ORIG_DOC/knowledge ORIG_DOC/README.0 ORIG_DOC/rnotes ORIG_DOC/rogo.mss \
+	  ORIG_DOC/rogomatic.man ORIG_DOC/rogtitle.mss ORIG_DOC/rogue.commands \
+	  ORIG_DOC/strike.mss ORIG_DOC/terminfo.vt100 ORIG_DOC/title.ani \
+	  ORIG_DOC/title.start ORIG_DOC/titlepage.ani
+
+# These documentation files install under the ${DESTDOC} directory.
+#
+MISC_DOC= CODE_OF_CONDUCT.md CONTRIBUTING.md COPYING LICENSE README.md SECURITY.md
 
 MAKE_FILE= Makefile
 
@@ -304,7 +312,7 @@ FSANITIZE+= -fsanitize=vptr
 # all - default rule - must be first #
 ######################################
 
-all: rogomatic.6 ${TARGETS}
+all: ${TARGETS} rogomatic.6
 
 
 ##################
@@ -321,19 +329,19 @@ datesub: datesub.o
 	${CC} ${LDFLAGS} datesub.o -o $@
 
 gene: gene.o rand.o learn.o stats.o utility.o
-	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o -lm -o $@
+	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o -lm ${LIBS} -o $@
 
 histplot: histplot.o utility.o
-	${CC} ${LDFLAGS} histplot.o utility.o -o $@
+	${CC} ${LDFLAGS} histplot.o utility.o ${LIBS} -o $@
 
 player: ${OBJS}
 	${CC} ${LDFLAGS} ${OBJS} -lm ${LIBS} -o $@
 
 rgmplot: rgmplot.o utility.o
-	${CC} ${LDFLAGS} rgmplot.o utility.o -o $@
+	${CC} ${LDFLAGS} rgmplot.o utility.o ${LIBS} -o $@
 
 rogomatic: setup.o findscore.o scorefile.o utility.o
-	${CC} ${LDFLAGS} setup.o findscore.o scorefile.o utility.o -o $@
+	${CC} ${LDFLAGS} setup.o findscore.o scorefile.o utility.o ${LIBS} -o $@
 
 
 #################################################################
@@ -424,7 +432,7 @@ clobber: clean
 	${RM} -f ${OTHER_TARGES}
 	${RM} -f ${TARGETS}
 
-install: all
+install: all ${MISC_DOC} ${ORIG_DOC} stddocs
 	${INSTALL} -d -m 0755 ${BINDIR}
 	${INSTALL} -m 0755 ${TARGETS} ${BINDIR}
 	${INSTALL} -d -m 1777 ${TMPDIR}
@@ -432,9 +440,43 @@ install: all
 	${INSTALL} -d -m 0755 ${SHAREDIR}
 	${INSTALL} -d -m 0755 ${DESTDOC}
 	${INSTALL} -m 0444 ${MISC_DOC} ${DESTDOC}
+	${INSTALL} -d -m 0755 ${ORIG_DESTDOC}
+	${INSTALL} -m 0444 ${ORIG_DOC} ${ORIG_DESTDOC}
 	${INSTALL} -d -m 0755 ${MANDIR}
 	${INSTALL} -d -m 0755 ${MAN6DIR}
 	${INSTALL} -m 0444 rogomatic.6 ${MAN6DIR}
+
+uninstall:
+	-@for i in ${TARGETS}; do \
+	    echo "${RM} -f -v ${BINDIR}/$$i"; \
+	    ${RM} -f -v ${BINDIR}/$$i; \
+	done
+	-@for i in ${MISC_DOC} ${ORIG_DOC}; do \
+	    echo "${RM} -f -v ${DESTDOC}/$$i"; \
+	    ${RM} -f -v ${DESTDOC}/$$i; \
+	done
+	-${RM} -f -v ${MAN6DIR}/rogomatic.6
+	-@if [[ -d "${RGMDIR}" ]]; then \
+	    echo "${RMDIR} ${RGMDIR} 2>/dev/null"; \
+	    ${RMDIR} ${RGMDIR} 2>/dev/null; \
+	fi
+	-@if [[ -d "${RGMDIR}" ]]; then \
+	    echo "You may wish to: rm -rf ${RGMDIR}"; \
+	fi
+	-@if [[ -d "${ORIG_DESTDOC}" ]]; then \
+	    echo "${RMDIR} ${ORIG_DESTDOC} 2>/dev/null"; \
+	    ${RMDIR} ${ORIG_DESTDOC} 2>/dev/null; \
+	fi
+	-@if [[ -d "${ORIG_DESTDOC}" ]]; then \
+	    echo "You may wish to: rm -rf ${ORIG_DESTDOC}"; \
+	fi
+	-@if [[ -d "${DESTDOC}" ]]; then \
+	    echo "${RMDIR} ${DESTDOC} 2>/dev/null"; \
+	    ${RMDIR} ${DESTDOC} 2>/dev/null; \
+	fi
+	-@if [[ -d "${DESTDOC}" ]]; then \
+	    echo "You may wish to: rm -rf ${DESTDOC}"; \
+	fi
 
 index: ${CFILES}
 	${RM} -f index
@@ -511,7 +553,7 @@ depend: ${SRC}
 	    ${SED} -n '/^#[	 ]*include[	 ]*"/p' "$$i" > "skel/$$i"; \
 	done
 	${Q} ${MKDIR} -p skel/custom
-	-${Q} for i in ${H_SRC} modern_curses.h /dev/null; do \
+	-${Q} for i in ${H_SRC} /dev/null; do \
 	    if [ X"$$i" != X"/dev/null" ]; then \
 		tag="`echo $$i | ${SED} 's/[\.+,:]/_/g'`"; \
 		echo "#if !defined($$tag)" > "skel/$$i"; \
@@ -528,7 +570,7 @@ depend: ${SRC}
 	${Q} cd skel; ${MAKEDEPEND} \
 	    -w 1 -f makedep.out -- \
 	    ${CFLAGS} -- \
-	    ${SRC} modern_curses.h 2>/dev/null
+	    ${SRC} 2>/dev/null
 	-${Q} for i in ${C_SRC} /dev/null; do \
 	    if [ X"$$i" != X"/dev/null" ]; then \
 	      echo "$$i" | ${SED} 's/^\(.*\)\.c/\1.o: \1.c/'; \
@@ -568,6 +610,8 @@ arms.o: types.h
 command.o: command.c
 command.o: globals.h
 command.o: types.h
+config.o: config.c
+config.o: install.h
 database.o: database.c
 database.o: globals.h
 database.o: types.h
@@ -575,6 +619,7 @@ debug.o: debug.c
 debug.o: globals.h
 debug.o: install.h
 debug.o: types.h
+debuglog.o: debuglog.c
 explore.o: explore.c
 explore.o: globals.h
 explore.o: types.h
@@ -583,23 +628,26 @@ findscore.o: globals.h
 findscore.o: install.h
 findscore.o: types.h
 gene.o: gene.c
-gene.o: globals.h
 gene.o: install.h
 gene.o: types.h
+getroguetoken.o: getroguetoken.c
+getroguetoken.o: globals.h
+getroguetoken.o: termtokens.h
+getroguetoken.o: types.h
 histplot.o: histplot.c
+histplot.o: types.h
+io.o: getroguetoken.h
 io.o: globals.h
 io.o: install.h
 io.o: io.c
 io.o: termtokens.h
 io.o: types.h
-learn.o: globals.h
 learn.o: learn.c
 learn.o: types.h
 ltm.o: globals.h
 ltm.o: install.h
 ltm.o: ltm.c
 ltm.o: types.h
-main.o: globals.h
 main.o: install.h
 main.o: main.c
 main.o: termtokens.h
@@ -618,6 +666,7 @@ replay.o: globals.h
 replay.o: replay.c
 replay.o: types.h
 rgmplot.o: rgmplot.c
+rgmplot.o: types.h
 rooms.o: globals.h
 rooms.o: rooms.c
 rooms.o: types.h
@@ -628,7 +677,6 @@ scorefile.o: types.h
 search.o: globals.h
 search.o: search.c
 search.o: types.h
-setup.o: globals.h
 setup.o: install.h
 setup.o: setup.c
 setup.o: types.h
@@ -655,6 +703,7 @@ titlepage.o: globals.h
 titlepage.o: titlepage.c
 titlepage.o: types.h
 utility.o: install.h
+utility.o: types.h
 utility.o: utility.c
 worth.o: globals.h
 worth.o: types.h

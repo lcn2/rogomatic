@@ -1,18 +1,38 @@
 /*
- * histplot.c: Rog-O-Matic XIV (CMU) Tue Feb  5 13:55:16 1985 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * histplot.c:
  *
  * This program takes a Rog-O-Matic log file and produces a histogram
  * of the scores.
- *
- * HISTORY
- * 05-Feb-85  Michael Mauldin (mlm) at Carnegie-Mellon University
- *	Added bugs fixes found by AEB (play@turing).
  */
 
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
+
+# include "types.h"
 
 # define SKIPARG	while (*++(*argv)); --(*argv)
 
@@ -21,16 +41,16 @@
 # define BUCKET(n) (((n)+BWIDTH/2)/BWIDTH)
 # define isdigit(c) ((c) >= '0' && (c) <= '9')
 # define NOMON 29
-# define MU_BUF 256  /* we might as well use a similar value to that used in global.h */
 
 int cheat = 0;
 
-extern int getscore (int *, char *, int *);
-extern int stlmatch (char *, char *);
+/* static declarations */
+static int getscore (int *score, char *killer, int *level);
 
 int
 main (int argc, char *argv[])
-{ int score = 0, maxfreq = 0, lowscore = 0, min = 200, killnum = 0;
+{
+  int score = 0, maxfreq = 0, lowscore = 0, minscore = 200, killnum = 0;
   int bucket[NUMBUK], killed[NUMBUK][NOMON], level = 0, dolev = 0;
   int total[NOMON];
   int i, j, h, f;
@@ -45,13 +65,13 @@ main (int argc, char *argv[])
 
   /* Get the options */
   while (--argc > 0 && (*++argv)[0] == '-')
-    while (*++(*argv))
-    { switch (**argv)
-      { case 'c': cheat++; break; /* List cheat games */
+    while (*++(*argv)) {
+      switch (**argv) {
+        case 'c': cheat++; break; /* List cheat games */
         case 'l': dolev++; break; /* Plot level instead of score */
-	case 'a': min = atoi (*argv+1); SKIPARG; break;
+        case 'a': minscore = atoi (*argv+1); SKIPARG; break;
         default:  printf ("Usage: histplot [-cl] [-aNNNN]\n");
-                  exit (1);
+          exit (1);
       }
     }
 
@@ -59,15 +79,15 @@ main (int argc, char *argv[])
   printf ("         %s  Histogram of Rog-O-Matic %s\n\n",
           dolev ? "" : "            ", dolev ? "Levels" : "Scores");
   printf ("\n");
+
   if (dolev)
     printf ("Games     1   5   10   15   20   25   30\n");
   else
     printf ("Games    0      2000      4000      6000      8000     10000\n");
 
   /* While more scores do action for each score */
-  while (getscore (&score, killer, &level) != EOF)
-  {
-    if (score < min) { lowscore++; continue; }
+  while (getscore (&score, killer, &level) != EOF) {
+    if (score < minscore) { lowscore++; continue; }
 
     if (dolev) { h = level; }
     else       { if ((h = BUCKET(score)) >= NUMBUK) h = NUMBUK-1; }
@@ -95,18 +115,17 @@ main (int argc, char *argv[])
     if (bucket[h] > maxfreq) maxfreq = bucket[h];
   }
 
-  for (f = ((maxfreq+9)/10)*10; f; f--)
-  { memset(plot, 0, sizeof(plot)); /* paranoia */
-    if (dolev)
-    { if (f%10 == 0)
+  for (f = ((maxfreq+9)/10)*10; f; f--) {
+    if (dolev) {
+      if (f%10 == 0)
         strncpy (plot, "|----+----|----+----|----+----|", MU_BUF);
       else if (f%5 == 0)
         strncpy (plot, "|    +    |    +    |    +    |", MU_BUF);
       else
         strncpy (plot, "|         |         |         |", MU_BUF);
     }
-    else
-    { if (f%10 == 0)
+    else {
+      if (f%10 == 0)
         strncpy (plot, "|----+----|----+----|----+----|----+----|----+----|", MU_BUF);
       else if (f%5 == 0)
         strncpy (plot, "|    +    |    +    |    +    |    +    |    +    |", MU_BUF);
@@ -115,16 +134,17 @@ main (int argc, char *argv[])
     }
 
     for (i = 0; i < NUMBUK; i++)
-      if (bucket[i] >= f)
-      { plot[i] = '#';
-        for (j = NOMON; j--;)
-        { if (killed[i][j] > 0)
-	  { killed[i][j]--;
-	    plot[i] = "$@ABCDEFGHIJKLMNOPQRSTUVWXYZ#"[j];
-	    total[j]++;
-	    break;
-	  }
-	}
+      if (bucket[i] >= f) {
+        plot[i] = '#';
+
+        for (j = NOMON; j--;) {
+          if (killed[i][j] > 0) {
+            killed[i][j]--;
+            plot[i] = "$@ABCDEFGHIJKLMNOPQRSTUVWXYZ#"[j];
+            total[j]++;
+            break;
+          }
+        }
       }
 
     if (f%5 == 0)
@@ -133,46 +153,54 @@ main (int argc, char *argv[])
       printf ("         %s\n", plot);
   }
 
-  if (dolev)
-  {
+  if (dolev) {
     printf ("         |----+----|----+----|----+----|\n");
     printf ("          1   5   10   15   20   25   30\n");
   }
-  else
-  {
+  else {
     printf ("         |----+----|----+----|----+----|----+----|----+----|\n");
     printf ("         0      2000      4000      6000      8000     10000\n");
   }
 
 
   printf ("\n\n");
+
   if (total[28])
     printf ("             # Quit\n");
+
   printf ("           A-Z Monster which killed Rog-O-Matic\n");
+
   if (total[1])
     printf ("             @ Killed by an arrow, bolt, or dart\n");
+
   if (total[0])
     printf ("             $ Killed by user or error\n");
+
   if (lowscore)
-    printf ("      %8d scores below %d not printed.\n", lowscore, min);
+    printf ("      %8d scores below %d not printed.\n", lowscore, minscore);
 }
 
 # define LEVELPOS 47
 
-int
+static int
 getscore (int *score, char *killer, int *level)
-{ int dd, yy;
+{
+  int dd, yy;
   char line[128], mmstr[8], player[16], cheated=' ';
-  while (fgets (line, 128, stdin))
-  { dd = yy = *score = 0;
+
+  while (fgets (line, 128, stdin)) {
+    dd = yy = *score = 0;
     sscanf (line, "%s %d, %d %10s%d%c%17s",
             mmstr, &dd, &yy, player, score, &cheated, killer);
+
     if (strlen (line) > LEVELPOS) *level = atoi (line+LEVELPOS);
+
     if (yy > 0 &&
         (cheated != '*' || cheat) &&
         !stlmatch ("saved", killer) &&
         (*score > 2000 || !stlmatch ("user", killer)))
       return (1);
   }
+
   return (EOF);
 }

@@ -1,6 +1,28 @@
 /*
- * stats.c: Rog-O-Matic XIV (CMU) Fri Dec 28 23:28:59 1984 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * stats.c:
  *
  * A package for maintaining probabilities and statistics.
  *
@@ -35,7 +57,8 @@
 
 void
 clearprob (probability *p)
-{ p->fail = p->win = 0;
+{
+  p->fail = p->win = 0;
 }
 
 /*
@@ -55,7 +78,8 @@ addprob (probability *p, int success)
 
 double
 prob (probability *p)
-{ int trials = p->fail + p->win;
+{
+  int trials = p->fail + p->win;
 
   if (trials < 1)	return (0.0);
   else			return ((double) p->win / trials);
@@ -67,7 +91,8 @@ prob (probability *p)
 
 void
 parseprob (char *buf, probability *p)
-{ p->win = p->fail = 0;
+{
+  p->win = p->fail = 0;
   sscanf (buf, "%d %d", &p->fail, &p->win);
 }
 
@@ -77,7 +102,8 @@ parseprob (char *buf, probability *p)
 
 void
 writeprob (FILE *f, probability *p)
-{ fprintf (f, "%d %d", p->fail, p->win);
+{
+  fprintf (f, "%d %d", p->fail, p->win);
 }
 
 /*
@@ -86,7 +112,8 @@ writeprob (FILE *f, probability *p)
 
 void
 clearstat (statistic *s)
-{ s->count = 0;
+{
+  s->count = 0;
   s->sum = s->sumsq = s->low = s->high = 0.0;
 }
 
@@ -96,7 +123,8 @@ clearstat (statistic *s)
 
 void
 addstat (statistic *s, int datum)
-{ double d = (double) datum;
+{
+  double d = (double) datum;
 
   s->count++;
   s->sum += d;
@@ -124,7 +152,8 @@ mean (statistic *s)
 
 double
 stdev (statistic *s)
-{ int n = s->count;
+{
+  int n = s->count;
 
   if (n < 2)	return (0.0);
   else		return (sqrt ((n * s->sumsq - s->sum * s->sum) / (n * (n-1))));
@@ -136,10 +165,11 @@ stdev (statistic *s)
 
 void
 parsestat (char *buf, statistic *s)
-{ s->count = 0;
+{
+  s->count = 0;
   s->sum = s->sumsq = s->low = s->high = 0.0;
   sscanf (buf, "%d %lf %lf %lf %lf",
-      &s->count, &s->sum, &s->sumsq, &s->low, &s->high);
+          &s->count, &s->sum, &s->sumsq, &s->low, &s->high);
 }
 
 /*
@@ -148,6 +178,7 @@ parsestat (char *buf, statistic *s)
 
 void
 writestat (FILE *f, statistic *s)
-{ fprintf (f, "%d %lg %lg %lg %lg",
+{
+  fprintf (f, "%d %lg %lg %lg %lg",
            s->count, s->sum, s->sumsq, s->low, s->high);
 }

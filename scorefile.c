@@ -1,6 +1,28 @@
 /*
- * scorefile.c: Rog-O-Matic XIV (CMU) Tue Mar 19 21:46:11 1985 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * scorefile.c:
  *
  * This file contains the functions which update the rogomatic scorefile,
  * which lives in <RGMDIR>/rgmscore<versionstr>. LOCKFILE is used to
@@ -14,6 +36,7 @@
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <unistd.h>
+# include <signal.h>
 # include <string.h>
 
 # include "types.h"
@@ -23,7 +46,11 @@
 # define LINESIZE	2048
 # define SCORE(s,p)     (atoi (s+p))
 
+/* static declarations */
+
 static char lokfil[MU_BUF + 1];
+
+static void intrupscore (int sig __attribute__ ((__unused__)));
 
 /*
  * add_score: Write a new score line out to the correct rogomatic score
@@ -44,7 +71,7 @@ add_score (char *new_line, char *vers, int ntrm)
   memset (lokfil, 0, sizeof(lokfil)); /* paranoia */
   memset (newfil, 0, sizeof(newfil)); /* paranoia */
 
-  snprintf (lokfil, MU_BUF, "%s %s", LOCKFILE, vers);
+  snprintf (lokfil, MU_BUF, "%s.%s", LOCKFILE, vers);
   snprintf (newfil, MU_BUF, "%s/rgmdelta%s", RGMDIR, vers);
 
   /* Defer interrupts while mucking with the score file */
@@ -57,20 +84,22 @@ add_score (char *new_line, char *vers, int ntrm)
    */
 
   while (lock_file (lokfil, MAXLOCK) == 0)
-    if (--wantscore < 1 && !ntrm)
-    { printf ("The score file is busy, do you wish to wait? [y/n] ");
+    if (--wantscore < 1 && !ntrm) {
+      printf ("The score file is busy, do you wish to wait? [y/n] ");
+
       while ((ch = getchar ()) != 'y' && ch != 'n');
+
       if (ch == 'y')
         wantscore = 5;
       else
-      { uncritical (); return; }
+        { uncritical (); return; }
     }
 
   /* Now create a temporary to copy into */
   if ((newlog = wopen (newfil, "a")) == NULL)
-  { printf ("\nUnable to write %s\n", newfil); }
-  else
-  { fprintf (newlog, "%s\n", new_line);
+    { printf ("\nUnable to write %s\n", newfil); }
+  else {
+    fprintf (newlog, "%s\n", new_line);
     fclose (newlog);
   }
 
@@ -85,7 +114,7 @@ add_score (char *new_line, char *vers, int ntrm)
  * dumpscore: Print out the scoreboard.
  */
 
-int
+void
 dumpscore (char *vers)
 {
   char  ch;
@@ -114,8 +143,8 @@ dumpscore (char *vers)
   /* On interrupts we must relinquish control of the score file */
   int_exit (intrupscore);
 
-  if (lock_file (lokfil, MAXLOCK) == 0)
-  { printf ("Score file busy.\n");
+  if (lock_file (lokfil, MAXLOCK) == 0) {
+    printf ("Score file busy.\n");
     exit (1);
   }
 
@@ -123,8 +152,8 @@ dumpscore (char *vers)
   scoref = fopen (scrfil, "r");
 
   /* If there are new scores, sort and merge them into the score file */
-  if (deltaf != NULL)
-  { fclose (deltaf);
+  if (deltaf != NULL) {
+    fclose (deltaf);
 
     /* Defer interrupts while mucking with the score file */
     critical ();
@@ -133,27 +162,30 @@ dumpscore (char *vers)
     oldmask = umask (0);
 
     /* If we have an old file and a delta file, merge them */
-    if (scoref != NULL)
-    { fclose (scoref);
+    if (scoref != NULL) {
+      fclose (scoref);
       snprintf (cmd, BIGBUF, "sort +4nr -o %s %s; sort -m +4nr -o %s %s %s",
                newfil, delfil, allfil, newfil, scrfil);
       system (cmd);
-      if (filelength (allfil) != filelength (delfil) + filelength (scrfil))
-      { fprintf (stderr, "Error, new file is wrong length!\n");
+
+      if (filelength (allfil) != filelength (delfil) + filelength (scrfil)) {
+        fprintf (stderr, "Error, new file is wrong length!\n");
         unlink (newfil); unlink (allfil);
         unlock_file (lokfil);
         exit (1);
       }
-      else
-      { /* New file is okay, unlink old files and pointer swap score file */
+      else {
+        /* New file is okay, unlink old files and pointer swap score file */
         unlink (delfil); unlink (newfil);
-	unlink (scrfil); link (allfil, scrfil); unlink (allfil);
+        unlink (scrfil); link (allfil, scrfil); unlink (allfil);
       }
+
       scoref = fopen (scrfil, "r");
     }
     else
-    /* Only have delta file, sort into scorefile and unlink delta */
-    { snprintf (cmd, BIGBUF, "sort +4nr -o %s %s", scrfil, delfil);
+      /* Only have delta file, sort into scorefile and unlink delta */
+    {
+      snprintf (cmd, BIGBUF, "sort +4nr -o %s %s", scrfil, delfil);
       system (cmd);
       unlink (delfil);
       scoref = fopen (scrfil, "r");
@@ -167,8 +199,8 @@ dumpscore (char *vers)
   }
 
   /* Now any new scores have been put into scrfil, read it */
-  if (scoref == NULL)
-  { printf ("Can't find %s\nBest score was %d.\n", scrfil, BEST);
+  if (scoref == NULL) {
+    printf ("Can't find %s\nBest score was %d.\n", scrfil, BEST);
     unlock_file (lokfil);
     exit (1);
   }
@@ -190,10 +222,9 @@ dumpscore (char *vers)
  * intrupscore: We have an interrupt, clean up and unlock the score file.
  */
 
-/* ARGSUSED */
-void
-intrupscore (int dummy)
-{ unlock_file (lokfil);
+static void
+intrupscore (int sig __attribute__ ((__unused__)))
+{
+  unlock_file (lokfil);
   exit (1);
 }
-

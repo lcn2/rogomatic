@@ -1,6 +1,28 @@
 /*
- * tactics.c: Rog-O-Matic XIV (CMU) Tue Mar 19 21:52:37 1985 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * tactics.c:
  *
  * This file contains all of the 'medium level intelligence' of Rog-O-Matic.
  */
@@ -12,6 +34,30 @@
 # include "types.h"
 # include "globals.h"
 # include "install.h"
+
+/* static declarations */
+
+/*
+ * waitaround: Hang around here waiting for monsters.
+ */
+
+static struct {
+  int vertstart,
+      vertend,
+      vertdelt,
+      horstart,
+      horend,
+      hordelt;
+} cb [4] = {
+  {  3, 21,  1,  1, 78,  1},	/* Top left corner */
+  {  3, 21,  1, 78,  1, -1},	/* Top right corner */
+  { 21,  3, -1, 78,  1, -1},	/* Bottom right corner */
+  { 21,  3, -1,  1, 78,  1}
+};  /* Bottom left corner */
+
+static int gc = 0; /* Goal corner from 0..3 */
+
+static int waitaround (void);
 
 /*
  * handlearmor: This routine is called to determine whether we should
@@ -28,7 +74,8 @@
 
 int
 handlearmor (void)
-{ int obj;
+{
+  int obj;
 
   /* Only check when armor status is different */
   if (!newarmor || cursedarmor) return (0);
@@ -43,36 +90,37 @@ handlearmor (void)
 
   obj = havearmor (1, NOPRINT, ANY);		/* Get best armor */
 
-  if (obj == NONE) return (0);
-
   if (Level > (version < RV52A ? 8 : 7) && Level < 19 &&
       wearing ("maintain armor") == NONE &&
       willrust (obj) &&
-      itemis (obj, KNOWN))
-  { obj = NONE;
+      itemis (obj, KNOWN)) {
+    obj = NONE;
+
     if (Level<13)		obj = havearmor (1, NOPRINT, RUSTPROOF);
+
     if (Level<13 && obj==NONE)	obj = havearmor (3, NOPRINT, ANY);
+
     if (obj==NONE)		obj = havearmor (2, NOPRINT, ANY);
   }
 
   /* If  the new armor is really bad, then don't bother wearing any */
   if (obj != NONE && armorclass (obj) > 9 && itemis (obj, KNOWN))
-  { obj = NONE; }
+    { obj = NONE; }
 
-  /* If we are wearing the right armor, then dont bother */
+  /* If we are wearing the right armor, then don't bother */
   if (obj == currentarmor)
-  { newarmor = 0; return (0); }
+    { newarmor = 0; return (0); }
 
   /* Debugging */
   dwait (D_PACK, "handlearmor: obj %d, currentarmor %d", obj, currentarmor);
 
   /* Take off the wrong armor */
   if (currentarmor != NONE && takeoff ())
-  { return (1); }
+    { return (1); }
 
   /* Put on the right armor, avoid wearing cursed armor */
   if (obj != NONE)
-  { return (wear (obj)); }
+    { return (wear (obj)); }
 
   /* If we have no armor, then forget it */
   newarmor = 0;
@@ -87,7 +135,8 @@ handlearmor (void)
 
 int
 handleweapon (void)
-{ int obj;
+{
+  int obj;
 
   if ((!newweapon || cursedweapon) && !wielding (thrower)) return (0);
 
@@ -113,7 +162,8 @@ handleweapon (void)
 
 int
 quaffpotion (void)
-{ int obj = NONE, obj2 = NONE;
+{
+  int obj = NONE, obj2 = NONE;
 
   /* Take advantage of double haste bug -- assures permanent haste */
   if (!doublehasted && version < RV52A &&
@@ -158,8 +208,8 @@ quaffpotion (void)
     return (1);
 
   if (cosmic && Str != Strmax &&
-      (obj = havenamed (potion, "poison")) != NONE)
-  { if ((wearing ("sustain strength") != NONE && quaff (obj)) ||
+      (obj = havenamed (potion, "poison")) != NONE) {
+    if (wearing ("sustain strength") != NONE && quaff (obj) ||
         findring ("sustain strength"))
       return (1);
   }
@@ -172,9 +222,9 @@ quaffpotion (void)
   if (Hp == Hpmax &&
       ((obj = havemult (potion, "healing", 2)) != NONE ||
        (obj = havemult (potion, "extra healing", 2)) != NONE ||
-       (know (potion, "blindness") && (obj = havenamed (potion, "healing")) != NONE) ||
-       (know (potion, "blindness") && (know (potion, "hallucination") || version < RV53A) &&
-        Level < 15 && (obj = havenamed (potion, "extra healing")) != NONE)) &&
+       know ("blindness") && (obj = havenamed (potion, "healing")) != NONE ||
+       know ("blindness") && (know ("hallucination") || version < RV53A)  &&
+       Level < 15 && (obj = havenamed (potion, "extra healing")) != NONE) &&
       quaff (obj))
     return (1);
 
@@ -189,8 +239,8 @@ quaffpotion (void)
 
   /* Quaff an unknown potion? */
   if ((Level >= (k_exper/10) || objcount >= maxobj || Str<1000 || blinded) &&
-      (obj = unknown (potion)) != NONE)
-  { if ((obj2 = wearing ("add strength")) != NONE && removering (obj2))
+      (obj = unknown (potion)) != NONE) {
+    if ((obj2 = wearing ("add strength")) != NONE && removering (obj2))
       return (1);
     else if (wearing ("sustain strength") == NONE &&
              (obj2 = havenamed (ring, "sustain strength")) != NONE &&
@@ -219,81 +269,83 @@ quaffpotion (void)
 
 int
 readscroll (void)
-{ int obj, obj2;
+{
+  int obj, obj2;
 
   /* Check the item specific identify scrolls first */
-  if (((obj = havenamed (rscroll, "identify armor")) != NONE &&
+  if (((obj = havenamed (Scroll, "identify scroll")) != NONE &&
+       (obj2 = unknown (Scroll)) != NONE) ||
+      ((obj = havenamed (Scroll, "identify armor")) != NONE &&
        (obj2 = unknown (armor)) != NONE) ||
-      ((obj = havenamed (rscroll, "identify weapon")) != NONE &&
+      ((obj = havenamed (Scroll, "identify weapon")) != NONE &&
        (obj2 = unknown (hitter)) != NONE) ||
-      ((obj = havenamed (rscroll, "identify potion")) != NONE &&
+      ((obj = havenamed (Scroll, "identify potion")) != NONE &&
        (obj2 = unknown (potion)) != NONE) ||
-      ((obj = havenamed (rscroll, "identify scroll")) != NONE &&
-       (obj2 = unknown (rscroll)) != NONE) ||
-      ((obj = havenamed (rscroll, "identify ring, wand or staff")) != NONE &&
-       ((obj2 = unknown (ring)) != NONE || (obj2 = unknown (wand)) != NONE)))
-  { prepareident (obj2, obj);
-    return (reads (obj)); }
+      ((obj = havenamed (Scroll, "identify ring, wand or staff")) != NONE &&
+       ((obj2 = unknown (ring)) != NONE || (obj2 = unknown (wand)) != NONE))) {
+    prepareident (obj2, obj);
+    return (reads (obj));
+  }
 
   /* In older version, have multiple uses for generic identify scrolls */
-  if ((obj = havenamed (rscroll, "identify")) != NONE &&
+  if ((obj = havenamed (Scroll, "identify")) != NONE &&
       (currentweapon != NONE) &&
       (!itemis (currentweapon, KNOWN) &&
-        (!usingarrow || goodarrow > 20)))
-  { prepareident (currentweapon, obj);
-    return (reads (obj)); }
+       (!usingarrow || goodarrow > 20))) {
+    prepareident (currentweapon, obj);
+    return (reads (obj));
+  }
 
-  if ((obj = havenamed (rscroll, "identify")) != NONE &&
+  if ((obj = havenamed (Scroll, "identify")) != NONE &&
       ((obj2 = unknown (ring)) != NONE ||
        (obj2 = unidentified (wand)) != NONE ||
-       (obj2 = unidentified (rscroll)) != NONE ||
-       (Level > 10 && (obj2 = unknown (wand)) != NONE) ||
+       (obj2 = unidentified (Scroll)) != NONE ||
+       Level > 10 && (obj2 = unknown (wand)) != NONE ||
        ((cheat || version == RV36A) &&
         ((obj2 = unknown (potion)) != NONE ||
-         (obj2 = haveother (rscroll, obj)) != NONE))))
-  { prepareident (obj2, obj);
-    return (reads (obj)); }
+         (obj2 = haveother (Scroll, obj)) != NONE)))) {
+    prepareident (obj2, obj);
+    return (reads (obj));
+  }
 
   if ((cursedarmor || cursedweapon) &&
-      (obj = havenamed (rscroll, "remove curse")) != NONE)
+      (obj = havenamed (Scroll, "remove curse")) != NONE)
     return (reads (obj));
 
-  if ((obj = havenamed (rscroll, "genocide")) != NONE)
+  if ((obj = havenamed (Scroll, "genocide")) != NONE)
     return (reads (obj));
 
   if (currentweapon != NONE &&
       (goodweapon || usingarrow || MaxLevel > 12) &&
-      (obj = havenamed (rscroll, "enchant weapon")) != NONE)
+      (obj = havenamed (Scroll, "enchant weapon")) != NONE)
     return (reads (obj));
 
   if (Level != didreadmap && Level > 12 &&
-       (obj = havenamed (rscroll, "magic mapping")) != NONE)
+      (obj = havenamed (Scroll, "magic mapping")) != NONE)
     return (reads (obj));
 
   /* About to read an unknown scroll. We will assure that we have */
   /* a weapon in hand, and put on our best armor for the occasion */
   /* We must also prepare to identify something, just in case.    */
 
-  if ((obj = havenamed (rscroll, "enchant armor")) != NONE ||
-      (obj = havenamed (rscroll, "protect armor")) != NONE ||
+  if ((obj = havenamed (Scroll, "enchant armor")) != NONE ||
+      (obj = havenamed (Scroll, "protect armor")) != NONE ||
       ((currentweapon != NONE) &&
        (Level >= (k_exper/10) || objcount >= maxobj ||
         cursedarmor || cursedweapon) &&
-       (exploredlevel || Level > 18 || know (rscroll, "aggravate monsters")) &&
-       (obj = unknown (rscroll)) != NONE))
-  { prepareident (pickident (obj), obj);
+       (exploredlevel || Level > 18 || know ("aggravate monsters")) &&
+       (obj = unknown (Scroll)) != NONE)) {
+    prepareident (pickident (), obj);
 
     /* Go to a corner to read the scroll */
-    if (version <= RV36B && !know (rscroll, "create monster") && gotocorner ())
+    if (version <= RV36B && !know ("create monster") && gotocorner ())
       return (1);
 
     /* Must put on our good armor first */
     if (!cursedarmor &&
-        (!know(rscroll, "enchant armor") ||
-	 stlmatch(inven[obj].str, "enchant armor") ||
-         !know(rscroll, "protect armor") ||
-	 stlmatch(inven[obj].str, "protect armor")))
-    { int obj2 = havearmor (1, NOPRINT, ANY); /* Pick our best armor */
+        (!know("enchant armor") || stlmatch(inven[obj].str, "enchant armor") ||
+         !know("protect armor") || stlmatch(inven[obj].str, "protect armor"))) {
+      int obj2 = havearmor (1, NOPRINT, ANY); /* Pick our best armor */
 
       if (obj2 == currentarmor);
 
@@ -322,7 +374,8 @@ readscroll (void)
 
 int
 handlering (void)
-{ int ring1, ring2;
+{
+  int ring1, ring2;
 
   if (!newring && !beingstalked) return (0);
 
@@ -330,29 +383,29 @@ handlering (void)
   ring2 = havering (2, NOPRINT);
 
   dwait (D_PACK, "Handlering: ring1 %d, ring2 %d, left %d, right %d",
-	 ring1, ring2, leftring, rightring);
+         ring1, ring2, leftring, rightring);
 
   if ((leftring == ring1 && rightring == ring2) ||
-      (rightring == ring1 && leftring == ring2))
-  { newring = 0; return (0);
+      (rightring == ring1 && leftring == ring2)) {
+    newring = 0; return (0);
   }
 
   if (leftring != NONE && leftring != ring1 && leftring != ring2 &&
-      removering (leftring))
-  { return (1);
+      removering (leftring)) {
+    return (1);
   }
 
   if (rightring != NONE && rightring != ring1 && rightring != ring2 &&
-      removering (rightring))
-  { return (1);
+      removering (rightring)) {
+    return (1);
   }
 
-  if (ring1 != leftring && ring1 != rightring && puton (ring1))
-  { return (1);
+  if (ring1 != leftring && ring1 != rightring && puton (ring1)) {
+    return (1);
   }
 
-  if (ring2 != leftring && ring2 != rightring && puton (ring2))
-  { return (1);
+  if (ring2 != leftring && ring2 != rightring && puton (ring2)) {
+    return (1);
   }
 
   return (0);
@@ -369,14 +422,15 @@ handlering (void)
 
 int
 findring (char *name)
-{ int obj;
+{
+  int obj;
 
   if ((obj = havenamed (ring, name)) == NONE ||
       wearing (name) != NONE)
     return (0);
 
-  if (leftring != NONE && rightring != NONE)
-  { if (stlmatch (inven[leftring].str, "maintain armor"))
+  if (leftring != NONE && rightring != NONE) {
+    if (stlmatch (inven[leftring].str, "maintain armor"))
       return (removering (rightring));
     else
       return (removering (leftring));
@@ -397,10 +451,11 @@ findring (char *name)
 
 int
 grope (int turns)
-{ int k, moves;
+{
+  int k, moves;
 
-  if (atrow < 2 || atcol < 1)
-  { command (T_GROPING, "%ds", (turns > 0) ? turns : 1);
+  if (atrow < 2 || atcol < 1) {
+    command (T_GROPING, "%ds", (turns > 0) ? turns : 1);
     return (1);
   }
 
@@ -417,9 +472,9 @@ grope (int turns)
       break;
 
   if (turns) command (T_GROPING, "%c%c%ds", keydir[blindir],
-                      keydir[(blindir+4)&7], turns);
+                        keydir[(blindir+4)&7], turns);
   else       command (T_GROPING, "%c%c", keydir[blindir],
-                      keydir[(blindir+4)&7]);
+                        keydir[(blindir+4)&7]);
 
   blindir = (blindir+2) % 8;
   return (1);
@@ -439,7 +494,7 @@ findarrow (void)
 
   else if (!usingarrow && foundarrowtrap && !on (ARROW) &&
            gotowards (trapr, trapc, 0))
-  { display ("Trying for arrow..."); return (1); }
+    { display ("Trying for arrow..."); return (1); }
 
   return (0);
 }
@@ -456,7 +511,8 @@ findarrow (void)
 
 int
 checkcango (int dir, int turns)
-{ int r, c, dr, dc;
+{
+  int r, c, dr, dc;
 
   for (dr = deltr[dir], dc = deltc[dir], r=atrow+dr, c=atcol+dc;
        turns > 0 && onrc (CANGO | DOOR, r, c) == CANGO;
@@ -470,20 +526,21 @@ checkcango (int dir, int turns)
  * godownstairs: issues a down command and check for the halftimeshow.
  */
 
-/* running - True ==> dont do anything fancy */
+/* running - True ==> don't do anything fancy */
 int
 godownstairs (int running)
-{ int p;
+{
+  int p;
 
-  /* We dont want to go down if we have just gotten an arrow, since */
+  /* We don't want to go down if we have just gotten an arrow, since */
   /* It is probably bad, and we will want to go back to the trap;   */
-  /* Dont go down until we have killed five monsters in one blow.   */
+  /* Don't go down until we have killed five monsters in one blow.   */
   /* While waiting, run back and forth to look for monsters.        */
 
   if (cheat && version <= RV36B && !running &&
       foundarrowtrap && usingarrow &&
-      have (food) != NONE && goodarrow < 5 && waitaround ())
-  { saynow ("Checking out arrow...");
+      have (food) != NONE && goodarrow < 5 && waitaround ()) {
+    saynow ("Checking out arrow...");
     return (1);
   }
 
@@ -494,26 +551,27 @@ godownstairs (int running)
   p = between ((Explev+larder)*10, 60, 100);
 
   if (atrow == stairrow && atcol == staircol &&
-      !running && larder > 0 && Hp < max (10, percent (Hpmax, p)))
-  { command (T_RESTING, "s");
+      !running && larder > 0 && Hp < max (10, percent (Hpmax, p))) {
+    command (T_RESTING, "s");
     display ("Resting on stairs before next level");
     return (1);
   }
 
   /* Allow other rules a chance to notice that we are done with the level */
   if (on (STAIRS) && !exploredlevel)
-  { exploredlevel = 1; return (1); }
+    { exploredlevel = 1; return (1); }
 
   /* If we are floating, we cant go down, either rest or fail */
   if (floating && running)
-  { saynow ("Cannot escape, floating in mid-air!"); return (0); }
-  else if (floating)
-  { saynow ("Floating above stairs...");
-    command (T_RESTING, "s"); return (1); }
+    { saynow ("Cannot escape, floating in mid-air!"); return (0); }
+  else if (floating) {
+    saynow ("Floating above stairs...");
+    command (T_RESTING, "s"); return (1);
+  }
 
   /* If we are on the stairs, go down */
-  if (on (STAIRS))
-  { halftimeshow (Level);
+  if (on (STAIRS)) {
+    halftimeshow (Level);
 
     /* Start logging at Level GOODGAME, if we arent already */
     if (Level > (GOODGAME-2) && !replaying && !logging) toggleecho ();
@@ -524,18 +582,18 @@ godownstairs (int running)
   }
 
   /* If we are running and can run to the next level, do that */
-  if (running && makemove (RUNDOWN, genericinit, downvalue, REEVAL))
-  { return (1);
-  }
-
-  /* If we see the stairs or a trap door, go there */
-  if (!running && makemove (DOWNMOVE, genericinit, downvalue, REUSE))
-  { goalr = targetrow; goalc = targetcol;   /* Set a goal (CPU time hack) */
+  if (running && makemove (RUNDOWN, genericinit, downvalue, REEVAL)) {
     return (1);
   }
 
- new_stairs = 0;
- return (0);
+  /* If we see the stairs or a trap door, go there */
+  if (!running && makemove (DOWNMOVE, genericinit, downvalue, REUSE)) {
+    goalr = targetrow; goalc = targetcol;   /* Set a goal (CPU time hack) */
+    return (1);
+  }
+
+  new_stairs = 0;
+  return (0);
 }
 
 /*
@@ -557,23 +615,27 @@ plunge (void)
 
   if (have (amulet) != NONE) return (0);
 
-  if (teleported > (larder+1)*5 && godownstairs (NOTRUNNING))
-  { if (!on (STAIRS)) saynow ("Giving up on level, too much teleporting");
+  if (teleported > (larder+1)*5 && godownstairs (NOTRUNNING)) {
+    if (!on (STAIRS)) saynow ("Giving up on level, too much teleporting");
+
     return (1);
   }
 
-  if (Level > 17 && Level < 26 && godownstairs (NOTRUNNING))
-  { if (!on (STAIRS)) saynow ("Plunge mode!!!");
+  if (Level > 17 && Level < 26 && godownstairs (NOTRUNNING)) {
+    if (!on (STAIRS)) saynow ("Plunge mode!!!");
+
     return (1);
   }
 
-  if (aggravated && godownstairs (NOTRUNNING))
-  { if (!on (STAIRS)) saynow ("Running from aggravated monsters");
+  if (aggravated && godownstairs (NOTRUNNING)) {
+    if (!on (STAIRS)) saynow ("Running from aggravated monsters");
+
     return (1);
   }
 
-  if (haveexplored (9) && godownstairs (NOTRUNNING))
-  { if (!on (STAIRS)) saynow ("Level explored");
+  if (haveexplored (9) && godownstairs (NOTRUNNING)) {
+    if (!on (STAIRS)) saynow ("Level explored");
+
     return (1);
   }
 
@@ -581,30 +643,14 @@ plunge (void)
 }
 
 /*
- * waitaround: Hang around here waiting for monsters.
- */
-
-static struct { int vertstart,
-		    vertend,
-		    vertdelt,
-		    horstart,
-		    horend,
-		    hordelt; } cb [4] =
-	{ {  3, 21,  1,  1, 78,  1},	/* Top left corner */
-	  {  3, 21,  1, 78,  1, -1},	/* Top right corner */
-	  { 21,  3, -1, 78,  1, -1},	/* Bottom right corner */
-	  { 21,  3, -1,  1, 78,  1} };  /* Bottom left corner */
-
-static int gc = 0; /* Goal corner from 0..3 */
-
-/*
  * waitaround: For some reason we want to stay on this level for a while.
  * Try running to each corner of the level.
  */
 
-int
+static int
 waitaround (void)
-{ int i, j;
+{
+  int i, j;
 
   if (gotowardsgoal ()) return (1);
 
@@ -615,7 +661,7 @@ waitaround (void)
     for (j = cb[gc].horstart; j != cb[gc].horend; j += cb[gc].hordelt)
       if (onrc (BEEN | CANGO | ROOM, i, j) &&
           !onrc (TRAP, i, j) && gotowards (i, j, 0))
-      { goalr = i; goalc = j; return (1); }
+        { goalr = i; goalc = j; return (1); }
 
   return (0);
 }
@@ -630,7 +676,8 @@ waitaround (void)
 
 int
 goupstairs (int running)
-{ int obj;
+{
+  int obj;
 
   /* Check for applicability of this rule */
   if (stairrow == NONE || have(amulet) == NONE ||
@@ -638,22 +685,20 @@ goupstairs (int running)
     return (0);
 
   /* If we are on the stairs, then check for win, else go up */
-  if (atrow == stairrow && atcol == staircol)
-  {
+  if (atrow == stairrow && atcol == staircol) {
     /* If we are about to win, dump any magic arrows or minus things */
     if (Level == 1 &&
         ((obj = havearrow ()) != NONE || (obj = haveminus ()) != NONE) &&
-	throw (obj, 0))
-    { return (1); }
+        throw (obj, 0))
+      { return (1); }
 
     /* No magic arrows, time to leave */
-    else if (Level == 1)
-    {
+    else if (Level == 1) {
       /* Send an up command and a space to clear the 'You Made It' */
       sendnow ("< ");
 
       /* Now read chars until we have the end of the inventory. */
-      /* Note misspelling in Rogue 'Peices', so dont assume anything */
+      /* Note misspelling in Rogue 'Peices', so don't assume anything */
       waitfor ("Gold P");
 
       /* Note that quitrogue sends a '\n' to get the score */
@@ -663,7 +708,7 @@ goupstairs (int running)
 
     /* Not at the top yet, keep on trucking */
     else
-    { command (T_MOVING, "<"); return (1); }
+      { command (T_MOVING, "<"); return (1); }
   }
 
   /* If we know where the stairs are, go there */
@@ -686,29 +731,31 @@ goupstairs (int running)
  * teleport traps).
  *
  * Then rest by searching 's'.  If one blow would not kill us, and we
- * dont plan to shoot arrows, then rest up so as to heal one hit point.
+ * don't plan to shoot arrows, then rest up so as to heal one hit point.
  * If we are critically low, rest up one turn at a time.
  *
- * Other considerations:	Dont move if confused or cosmic.
+ * Other considerations:	Don't move if confused or cosmic.
  *				Drink healing potions if really low.
- *				Dont rest when hungry (and no food)
+ *				Don't rest when hungry (and no food)
  */
 
 int
 restup (void)
-{ int obj, turns;
+{
+  int obj, turns;
 
-  /* If we are confused, sit still so we dont bump into anything bad */
+  /* If we are confused, sit still so we don't bump into anything bad */
   if (confused) { command (T_RESTING, "s"); return (1); }
 
   /* If cosmic and plenty of hit points and food, rest for long periods */
-  if (cosmic && (Hp >= percent (Hpmax, 80)) && larder > 2)
-  { display ("Oh wow man, I'm contemplating my navel!");
-    command (T_RESTING, "100s"); return (1); }
+  if (cosmic && (Hp >= percent (Hpmax, 80)) && larder > 2) {
+    display ("Oh wow man, I'm contemplating my navel!");
+    command (T_RESTING, "100s"); return (1);
+  }
 
   /* If we are well, return */
   if (Hp >= max (8, percent (Hpmax, between (Explev*10+k_rest-50, 40, 80))))
-  { unrest ();  return (0); }
+    { unrest ();  return (0); }
 
   /*
    * If we are really ill then try a healing potion (save a healing
@@ -718,14 +765,14 @@ restup (void)
   if (Hp < Level+10 && Hp < Hpmax/3 &&
       ((obj = havemult (potion, "extra healing", 2)) != NONE ||
        (obj = havemult (potion, "healing", 2)) != NONE ||
-       (know (potion, "hallucination") &&
+       (know ("hallucination") &&
         (obj = havenamed (potion, "extra healing")) != NONE) ||
-       (know (potion, "blindness") &&
+       (know ("blindness") &&
         (obj = havenamed (potion, "healing")) != NONE)) &&
       quaff (obj))
-  { return (1); }
+    { return (1); }
 
-  /* Dont rest when we havent enough to eat */
+  /* Don't rest when we havent enough to eat */
   if (hungry ()) return (0);
 
   display ("Resting up...");
@@ -739,11 +786,12 @@ restup (void)
   /*
    * If we are very ill, or we are very deep, or we are in a lit room
    * and can shoot at things as they come ate us, rest only one turn so
-   * monsters dont get the first shot. Otherwise rest enough turns
+   * monsters don't get the first shot. Otherwise rest enough turns
    * to heal one step.
    */
 
   turns = (Level < 8) ? (20-Explev*2) : 3;
+
   if ((!darkroom () && ammo) || Hp < Level*2+8 || Level > 15) turns = 1;
 
   command (T_RESTING, "%ds", turns);
@@ -757,8 +805,9 @@ restup (void)
 
 int
 gotowardsgoal (void)
-{ if (goalr > 0 && goalc > 0)   /* Keep on trucking */
-  { if (goalr == atrow && goalc == atcol) { goalr = NONE; goalc = NONE; }
+{
+  if (goalr > 0 && goalc > 0) { /* Keep on trucking */
+    if (goalr == atrow && goalc == atcol) { goalr = NONE; goalc = NONE; }
     else if (gotowards (goalr, goalc, 0)) { return (1); }
     else                                  { goalr = NONE; goalc = NONE; }
   }
@@ -774,11 +823,16 @@ gotowardsgoal (void)
 
 int
 gotocorner (void)
-{ int r, c;
+{
+  int r, c;
+
   if (!downright (&r, &c)) return (0);
+
   if (debug (D_SCREEN))
-  { saynow ("Gotocorner called:"); mvaddch (r, c, 'T'); at (row, col); }
+    { saynow ("Gotocorner called:"); mvaddch (r, c, 'T'); at (row, col); }
+
   if (gotowards (r, c, 0)) { goalr=r; goalc=c; return (1); }
+
   return (0);
 }
 
@@ -788,7 +842,9 @@ gotocorner (void)
 
 int
 light (void)
-{ if (Level < 17) return (0);
+{
+  if (Level < 17) return (0);
+
   return (lightroom ());
 }
 
@@ -798,7 +854,8 @@ light (void)
 
 int
 shootindark (void)
-{ int obj, bow;
+{
+  int obj, bow;
 
   /* If no longer arching in the dark, fail */
   if (darkturns < 1 || darkdir == NONE || !darkroom ()) return (0);
@@ -807,7 +864,7 @@ shootindark (void)
 
   /* If he is one turn away, switch back to our sword */
   if (!cursedweapon && wielding (thrower) && darkturns==0 && handleweapon ())
-  { dwait (D_BATTLE, "Switching to sword [4]"); return (1); }
+    { dwait (D_BATTLE, "Switching to sword [4]"); return (1); }
 
   /* If we have room, switch to our bow */
   if (!cursedweapon && !wielding (thrower) && darkturns > 3 &&
@@ -830,7 +887,7 @@ dinnertime (void)
 {
   if ((havefood (5) && objcount == maxobj && ! droppedscare) ||
       (larder > 0 && hungry ()))
-  { return (eat ()); }
+    { return (eat ()); }
 
   return (0);
 }
@@ -842,19 +899,22 @@ dinnertime (void)
 
 int
 trywand (void)
-{ int obj, dir, r, c, count;
+{
+  int obj, dir, r, c, count;
 
-  /* If we arent in a room, if there are monsters around,  */
-  /* or we are in the dark, then we cant try this strategy */
+  /* If we aren't in a room, if there are monsters around,  */
+  /* or we are in the dark, then we can't try this strategy */
   if (!on (ROOM) || mlistlen || darkroom ()) return (0);
 
   /* Have we a wand to identify? */
-  if ((obj = unknown (wand)) == NONE)
+  if (((obj = unknown (wand)) == NONE) || (itemis (obj, WORTHLESS)))
+    return (0);
+  else if (used (inven[obj].str))
     return (0);
 
   /* Look for a wall either 3 or 4 away */
-  for (dir = 0; dir < 8; dir += 2)
-  { for (count = 0, r=atrow, c=atcol;
+  for (dir = 0; dir < 8; dir += 2) {
+    for (count = 0, r=atrow, c=atcol;
          onrc (CANGO | DOOR, r, c) == CANGO;
          r += deltr[dir], c += deltc[dir])
       count++;
@@ -865,8 +925,7 @@ trywand (void)
   /* If we couldnt find room, then fail */
   if (dir > 7) return (0);
 
-  /* Set to do a reset inventory (usesynch) and point the wand */
-  usesynch = 0;
+  /* point the wand */
   return (point (obj, dir));
 }
 
@@ -876,10 +935,11 @@ trywand (void)
 
 int
 eat (void)
-{ int obj;
+{
+  int obj;
 
-  if ((obj = have (food)) != NONE)
-  { command (T_HANDLING, "e%c", LETTER (obj));
+  if ((obj = have (food)) != NONE) {
+    command (T_HANDLING, "e%c", LETTER (obj));
     return (1);
   }
 

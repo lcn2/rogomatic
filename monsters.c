@@ -1,14 +1,36 @@
 /*
- * monsters.c: Rog-O-Matic XIV (CMU) Tue Mar 19 21:39:44 1985 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * monsters.c:
  *
  * This file contains all of the monster specific functions.
  */
 
 # include <stdio.h>
-# include <string.h>
 # include <ctype.h>
 # include <curses.h>
+# include <string.h>
 
 # include "types.h"
 # include "globals.h"
@@ -22,7 +44,8 @@
 
 char *
 monname (char m)
-{ return (monhist[monindex[m-'A'+1]].m_name);
+{
+  return (monhist[monindex[m-'A'+1]].m_name);
 }
 
 /*
@@ -31,17 +54,21 @@ monname (char m)
  */
 
 void
-addmonster (int ch, int r, int c, int quiescence)
-{ char *monster = monname (ch);
+addmonster (char ch, int r, int c, int quiescence)
+{
+  char *monster = monname (ch);
 
-  if (r > 1 || c > 3)
-  { if (isholder (monster)) quiescence = AWAKE;
+  if (r > 1 || c > 3) {
+    if (isholder (monster)) quiescence = AWAKE;
+
     deletemonster (r, c);
     mlist[mlistlen].chr = ch;
     mlist[mlistlen].mrow = r;
     mlist[mlistlen].mcol = c;
     mlist[mlistlen].q = quiescence;
+
     if (++mlistlen >= MAXMONST) dwait (D_FATAL, "Too many monsters");
+
     setrc (MONSTER, r, c);
     lyinginwait = 0;
     new_arch = 1;
@@ -58,14 +85,15 @@ addmonster (int ch, int r, int c, int quiescence)
 
 void
 deletemonster (int r, int c)
-{ int   i;
+{
+  int   i;
 
   new_arch = 1;
   unsetrc (MONSTER, r, c);
 
   for (i = 0; i < mlistlen; ++i)
     if (mlist[i].mcol == c && mlist[i].mrow == r)
-    { mlist[i] = mlist[--mlistlen]; i--; }
+      { mlist[i] = mlist[--mlistlen]; i--; }
 }
 
 /*
@@ -74,15 +102,18 @@ deletemonster (int r, int c)
 
 void
 dumpmonster (void)
-{ int   i;
+{
+  int   i;
   at (1, 0);
+
   for (i = 0; i < mlistlen; ++i)
     printw ("%s at %d,%d(%c) \n",
             mlist[i].q == AWAKE ? "alert" :
-              mlist[i].q == ASLEEP ? "sleeping" :
-              mlist[i].q == HELD ? "held" : "unknown",
+            mlist[i].q == ASLEEP ? "sleeping" :
+            mlist[i].q == HELD ? "held" : "unknown",
             mlist[i].mrow, mlist[i].mcol,
             mlist[i].chr);
+
   printw ("You are at %d,%d.", atrow, atcol);
   at (row, col);
 }
@@ -96,11 +127,12 @@ dumpmonster (void)
 
 void
 sleepmonster (void)
-{  int m;
+{
+  int m;
 
-  for (m = 0; m < mlistlen; ++m)
-  { if (mlist[m].q == 0 && ! ADJACENT (m))
-    { dwait (D_MONSTER, "Found a sleeping %s at %d,%d",
+  for (m = 0; m < mlistlen; ++m) {
+    if (mlist[m].q == 0 && ! ADJACENT (m)) {
+      dwait (D_MONSTER, "Found a sleeping %s at %d,%d",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
       mlist[m].q = ASLEEP;
@@ -114,13 +146,14 @@ sleepmonster (void)
 
 void
 holdmonsters (void)
-{ int m;
+{
+  int m;
 
-  for (m = 0; m < mlistlen; ++m)
-  { if (mlist[m].q == 0 &&
+  for (m = 0; m < mlistlen; ++m) {
+    if (mlist[m].q == 0 &&
         (max (abs (mlist[m].mrow - atrow),
-              abs (mlist[m].mcol - atcol)) < 3))
-    { dwait (D_MONSTER, "Holding %s at %d,%d",
+              abs (mlist[m].mcol - atcol)) < 3)) {
+      dwait (D_MONSTER, "Holding %s at %d,%d",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
       mlist[m].q = HELD;
@@ -139,15 +172,16 @@ holdmonsters (void)
 
 void
 wakemonster (int dir)
-{ int m;
+{
+  int m;
 
-  for (m = 0; m < mlistlen; ++m)
-  { if (mlist[m].q != AWAKE &&
+  for (m = 0; m < mlistlen; ++m) {
+    if (mlist[m].q != AWAKE &&
         (dir == ALL ||
-	 (dir < 0 && ADJACENT(m) && mlist[m].chr == -dir + 'A' - 1) ||
+         (dir < 0 && ADJACENT(m) && mlist[m].chr == -dir + 'A' - 1) ||
          (dir >= 0 && dir < 8 &&
-          mlist[m].mrow == atdrow(dir) && mlist[m].mcol == atdcol(dir))))
-    { dwait (D_MONSTER, "Waking up %s at %d,%d",
+          mlist[m].mrow == atdrow(dir) && mlist[m].mcol == atdcol(dir)))) {
+      dwait (D_MONSTER, "Waking up %s at %d,%d",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
       mlist[m].q = AWAKE;
@@ -162,7 +196,8 @@ wakemonster (int dir)
 
 int
 seemonster (char *monster)
-{ int m;
+{
+  int m;
 
   for (m = 0; m < mlistlen; ++m)
     if (streq (monname (mlist[m].chr), monster))
@@ -178,11 +213,12 @@ seemonster (char *monster)
 
 int
 seeawakemonster (char *monster)
-{ int m;
+{
+  int m;
 
   for (m = 0; m < mlistlen; ++m)
-   if (streq (monname (mlist[m].chr), monster) && mlist[m].q == AWAKE)
-     return (1);
+    if (streq (monname (mlist[m].chr), monster) && mlist[m].q == AWAKE)
+      return (1);
 
   return (0);
 }
@@ -195,7 +231,8 @@ seeawakemonster (char *monster)
 
 int
 monsternum (char *monster)
-{ int m, mh;
+{
+  int m, mh;
 
   if ((mh = findmonster (monster)) != NONE)
     for (m=0; m<=26; m++)
@@ -211,11 +248,12 @@ monsternum (char *monster)
 
 void
 newmonsterlevel (void)
-{ int m;
+{
+  int m;
   char *monster;
 
-  for (m=0; m<mlistlen; m++)
-  { monster = monname (mlist[m].chr);
+  for (m=0; m<mlistlen; m++) {
+    monster = monname (mlist[m].chr);
 
     if (streq (monster, "floating eye")   ||
         streq (monster, "leprechaun")     ||

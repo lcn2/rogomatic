@@ -1,6 +1,28 @@
 /*
- * utility.c: Rog-O-Matic XIV (CMU) Tue Mar 26 15:27:03 1985 - mlm
- * Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
+ * Rog-O-Matic
+ * Automatically exploring the dungeons of doom.
+ *
+ * Copyright (C) 2008 by Anthony Molinaro
+ * Copyright (C) 1985 by Appel, Jacobson, Hamey, and Mauldin.
+ *
+ * This file is part of Rog-O-Matic.
+ *
+ * Rog-O-Matic is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rog-O-Matic is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * utility.c:
  *
  * This file contains all of the miscellaneous system functions which
  * determine the baud rate, time of day, etc.
@@ -9,18 +31,18 @@
  * defined here (otherwise the functions from -lcmu are used).
  */
 
-# include <sgtty.h>
+# include <curses.h>
+# include <pwd.h>
 # include <stdio.h>
 # include <stdlib.h>
-# include <stdarg.h>
-# include <string.h>
 # include <signal.h>
-# include <pwd.h>
-# include <unistd.h>
-# include <fcntl.h>
+# include <string.h>
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <time.h>
+# include <fcntl.h>
+# include <unistd.h>
+# include <signal.h>
 
 # include "types.h"
 # include "install.h"
@@ -29,12 +51,23 @@
 # define FALSE 0
 
 /*
+ * rogo_baudrate: Determine the baud rate of the terminal
+ */
+
+int
+rogo_baudrate (void)
+{
+  return (baudrate());
+}
+
+/*
  * getname: get userid of player.
  */
 
 char *
 getname (void)
-{ static char name[MU_BUF + 1]; /* +1 for paranoia */
+{
+  static char name[MU_BUF + 1]; /* +1 for paranoia */
   struct passwd *pw;
 
   /*
@@ -64,7 +97,8 @@ getname (void)
 
 FILE *
 wopen(char *fname, char *mode)
-{ int oldmask;
+{
+  int oldmask;
   FILE *newlog;
 
   oldmask = umask (0111);
@@ -80,7 +114,8 @@ wopen(char *fname, char *mode)
 
 int
 fexists (char *fn)
-{ struct stat pbuf;
+{
+  struct stat pbuf;
 
   return (stat (fn, &pbuf) == 0);
 }
@@ -91,7 +126,8 @@ fexists (char *fn)
 
 int
 filelength (char *f)
-{ struct stat sbuf;
+{
+  struct stat sbuf;
 
   if (stat (f, &sbuf) == 0)
     return (sbuf.st_size);
@@ -108,10 +144,11 @@ static void   (*hstat)(int), (*istat)(int), (*qstat)(int), (*pstat)(int);
 void
 critical (void)
 {
-  hstat = signal (SIGHUP, SIG_IGN);
-  istat = signal (SIGINT, SIG_IGN);
-  pstat = signal (SIGPIPE, SIG_IGN);
-  qstat = signal (SIGQUIT, SIG_IGN);
+// FIXME: when uncommented, get bus errors :(
+//  hstat = signal (SIGHUP, SIG_IGN);
+//  istat = signal (SIGINT, SIG_IGN);
+//  pstat = signal (SIGPIPE, SIG_IGN);
+//  qstat = signal (SIGQUIT, SIG_IGN);
 }
 
 /*
@@ -121,10 +158,11 @@ critical (void)
 void
 uncritical (void)
 {
-  signal (SIGHUP, hstat);
-  signal (SIGINT, istat);
-  signal (SIGPIPE, pstat);
-  signal (SIGQUIT, qstat);
+// FIXME: when uncommented, get bus errors :(
+//  signal (SIGHUP, hstat);
+//  signal (SIGINT, istat);
+//  signal (SIGPIPE, pstat);
+//  signal (SIGQUIT, qstat);
 }
 
 /*
@@ -148,8 +186,11 @@ void
 int_exit (void (*exitproc)(int))
 {
   if (signal (SIGHUP, SIG_IGN) != SIG_IGN)  signal (SIGHUP, exitproc);
+
   if (signal (SIGINT, SIG_IGN) != SIG_IGN)  signal (SIGINT, exitproc);
+
   if (signal (SIGPIPE, SIG_IGN) != SIG_IGN) signal (SIGPIPE, exitproc);
+
   if (signal (SIGQUIT, SIG_IGN) != SIG_IGN) signal (SIGQUIT, exitproc);
 }
 
@@ -161,28 +202,34 @@ int_exit (void (*exitproc)(int))
 # define NOWRITE 0
 
 int
-lock_file (char *lokfil, int maxtime)
-{ int try;
+lock_file (const char *lokfil, int maxtime)
+{
+
+  int try;
+
   struct stat statbuf;
 
-  start:
+start:
+
   if (creat (lokfil, NOWRITE) > 0)
     return TRUE;
 
-  for (try = 0; try < 60; try++)
-  { sleep (1);
-    if (creat (lokfil, NOWRITE) > 0)
-      return TRUE;
-  }
+  for (try = 0; try < 60; try++) {
+          sleep (1);
 
-  if (stat (lokfil, &statbuf) < 0)
-  { creat (lokfil, NOWRITE);
+          if (creat (lokfil, NOWRITE) > 0)
+            return TRUE;
+        }
+
+  if (stat (lokfil, &statbuf) < 0) {
+    creat (lokfil, NOWRITE);
     return TRUE;
   }
 
-  if (time (0) - statbuf.st_mtime > maxtime)
-  { if (unlink (lokfil) < 0)
+  if (time (NULL) - statbuf.st_mtime > maxtime) {
+    if (unlink (lokfil) < 0)
       return FALSE;
+
     goto start;
   }
   else
@@ -194,8 +241,9 @@ lock_file (char *lokfil, int maxtime)
  */
 
 void
-unlock_file (char *lokfil)
-{ unlink (lokfil);
+unlock_file (const char *lokfil)
+{
+  unlink (lokfil);
 }
 
 # ifndef CMU
@@ -203,11 +251,14 @@ unlock_file (char *lokfil)
  * quit: Defined for compatibility with Berkeley 4.2 system
  */
 
-/* VARARGS2 */
-int
+void
 quit (int code, char *fmt, ...)
-{ va_list ap;
+{
+  va_list ap;
+
+  /* setup stdarg */
   va_start (ap, fmt);
+
   vfprintf (stderr, fmt, ap);
   va_end (ap);
   exit (code);
@@ -234,14 +285,17 @@ quit (int code, char *fmt, ...)
 
 int
 stlmatch (char *big, char *small)
-{ char *s, *b;
+{
+  char *s, *b;
   s = small;
   b = big;
-  do
-  { if (*s == '\0')
+
+  do {
+    if (*s == '\0')
       return (1);
   }
   while (*s++ == *b++);
+
   return (0);
 }
 # endif
