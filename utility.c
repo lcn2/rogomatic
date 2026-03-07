@@ -139,16 +139,22 @@ filelength (char *f)
  * critical: Disable interrupts
  */
 
-static void   (*hstat)(int), (*istat)(int), (*qstat)(int), (*pstat)(int);
+#if 0 /* XXX - fix "bug errors" when signal is called in critical() and uncritical() - XXX */
+static void  (*hstat)(int);
+static void  (*istat)(int);
+static void  (*lstat)(int);
+static void  (*pstat)(int);
+#endif
 
 void
 critical (void)
 {
-// FIXME: when uncommented, get bus errors :(
-//  hstat = signal (SIGHUP, SIG_IGN);
-//  istat = signal (SIGINT, SIG_IGN);
-//  pstat = signal (SIGPIPE, SIG_IGN);
-//  qstat = signal (SIGQUIT, SIG_IGN);
+#if 0 /* XXX - fix "bug errors" when signal is called in critical() and uncritical() - XXX */
+  hstat = signal (SIGHUP, SIG_IGN);
+  istat = signal (SIGINT, SIG_IGN);
+  pstat = signal (SIGPIPE, SIG_IGN);
+  qstat = signal (SIGQUIT, SIG_IGN);
+#endif
 }
 
 /*
@@ -158,11 +164,12 @@ critical (void)
 void
 uncritical (void)
 {
-// FIXME: when uncommented, get bus errors :(
-//  signal (SIGHUP, hstat);
-//  signal (SIGINT, istat);
-//  signal (SIGPIPE, pstat);
-//  signal (SIGQUIT, qstat);
+#if 0 /* XXX - fix "bug errors" when signal is called in critical() and uncritical() - XXX */
+  signal (SIGHUP, hstat);
+  signal (SIGINT, istat);
+  signal (SIGPIPE, pstat);
+  signal (SIGQUIT, qstat);
+#endif
 }
 
 /*

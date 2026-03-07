@@ -44,15 +44,21 @@ static FILE  *fecho=NULL;
 
 static void rogue_log_write_token (char ch);
 static FILE *froguelog;
+#if 0
 static void open_frogue_fd_debuglog (int frogue_fd_dl);
+#endif
 static FILE *frogue;
+#if 0
 static void open_frogue (const char *file);
 static void close_frogue (void);
+#endif
 static int fetchnum (char ch);
 static int match2 (char ch1, char ch2);
 static int match3 (char ch1, char ch2, char ch3);
 static int match4 (char ch1, char ch2, char ch3, char ch4);
+#if 0
 static int match5 (char ch1, char ch2, char ch3, char ch4, char ch5);
+#endif
 static int getlogtoken(void);
 
 int
@@ -150,11 +156,13 @@ open_frogue_debuglog (const char *file)
   froguelog = fopen (file,"w");
 }
 
+#if 0
 static void
 open_frogue_fd_debuglog (int frogue_fd_dl)
 {
   froguelog = fdopen (frogue_fd_dl,"w");
 }
+#endif
 
 #define PUTDEBUGCHAR(c) {if (froguelog != NULL) {fputc(c,froguelog); fflush (froguelog);}}
 
@@ -169,11 +177,13 @@ close_frogue_debuglog (void)
 /* Log from rogue */
 static FILE *frogue = NULL;
 
+#if 0
 static void
 open_frogue (const char *file)
 {
   frogue = fopen (file, "r");
 }
+#endif
 
 void
 open_frogue_fd (int frogue_fd)
@@ -184,11 +194,13 @@ open_frogue_fd (int frogue_fd)
 #define GETROGUECHAR fgetc(frogue);
 #define UNGETROGUECHAR(c) ungetc(c, frogue);
 
+#if 0
 static void
 close_frogue (void)
 {
   fclose (frogue);
 }
+#endif
 
 static int matchnum (char ch)
 {
@@ -213,7 +225,6 @@ static int matchnum (char ch)
 static int
 fetchnum (char ch)
 {
-  char ch2;
   char num[20];
   int ind = 1;
   int done = 0;
@@ -302,6 +313,7 @@ match4 (char ch1, char ch2, char ch3, char ch4)
   }
 }
 
+#if 0
 static int
 match5 (char ch1, char ch2, char ch3, char ch4, char ch5)
 {
@@ -328,6 +340,7 @@ match5 (char ch1, char ch2, char ch3, char ch4, char ch5)
     return 0;
   }
 }
+#endif
 
 
 

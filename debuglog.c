@@ -64,7 +64,6 @@ void
 debuglog (const char *fmt, ...)
 {
   va_list  ap;
-  char buf[MAXLINE];
 
   va_start (ap, fmt);
   err_doit (0, 0, fmt, ap);

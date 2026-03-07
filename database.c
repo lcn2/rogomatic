@@ -56,7 +56,9 @@ int datalen = 0;
 
 /* static declarations */
 static int findfake (char *string, stuff item_type);
+#if 0
 static char *realname (char *codename);
+#endif
 
 /*
  * findfake: find the fakename database entry for 'string'
@@ -96,7 +98,7 @@ findentry (char *string)
 
   for (i = 0; i < datalen; i++)
     if (streq (dbase[i].fakename, string) ||
-        *dbase[i].realname && streq (dbase[i].realname, string))
+        (*dbase[i].realname && streq (dbase[i].realname, string)))
       return (i);
 
   return (NOTFOUND);
@@ -116,7 +118,7 @@ findentry_getfakename (char *string, stuff item_type)
   for (i = 0; i < datalen; i++)
     if ((dbase[i].item_type == item_type) &&
        (streq (dbase[i].fakename, string) ||
-        *dbase[i].realname && streq (dbase[i].realname, string)))
+        (*dbase[i].realname && streq (dbase[i].realname, string))))
       return (dbase[i].fakename);
 
   return ("");
@@ -136,7 +138,7 @@ findentry_getrealname (char *string, stuff item_type)
   for (i = 0; i < datalen; i++)
     if ((dbase[i].item_type == item_type) &&
        (streq (dbase[i].fakename, string) ||
-        *dbase[i].realname && streq (dbase[i].realname, string)))
+        (*dbase[i].realname && streq (dbase[i].realname, string))))
       return (dbase[i].realname);
 
   return ("");
@@ -237,6 +239,7 @@ know (char *name)
   return (FALSE);
 }
 
+#if 0
 /*
  * realname: Returns the real name of an object named 'codename'.
  */
@@ -252,6 +255,7 @@ realname (char *codename)
 
   return ("");
 }
+#endif
 
 /*
  * dumpdatabase: Debugging, dump the database on the screen.

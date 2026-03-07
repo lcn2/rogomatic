@@ -625,13 +625,13 @@ dumpwalls (void)
            (TRAP&S)                    ? '^' :
            (STAIRS&S)                  ? '>' :
            (RUNOK&S)                   ? '%' :
-           ((DOOR+BEEN&S)==DOOR+BEEN)  ? 'D' :
+           (((DOOR+BEEN)&S)==DOOR+BEEN)  ? 'D' :
            (DOOR&S)                    ? 'd' :
-           ((BOUNDARY+BEEN&S)==BOUNDARY+BEEN) ? 'B' :
-           ((ROOM+BEEN&S)==ROOM+BEEN)  ? 'R' :
+           (((BOUNDARY+BEEN)&S)==BOUNDARY+BEEN) ? 'B' :
+           (((ROOM+BEEN)&S)==ROOM+BEEN)  ? 'R' :
            (BEEN&S)                    ? ':' :
            (HALL&S)                    ? '#' :
-           ((BOUNDARY+WALL&S)==BOUNDARY+WALL) ? 'W' :
+           (((BOUNDARY+WALL)&S)==BOUNDARY+WALL) ? 'W' :
            (BOUNDARY&S)                ? 'b' :
            (ROOM&S)                    ? 'r' :
            (CANGO&S)                   ? '.' :

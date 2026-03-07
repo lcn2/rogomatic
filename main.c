@@ -516,8 +516,6 @@ main (int argc, char *argv[])
    * the level drawing.
    */
   {
-    char *m = "More--";				/* FSM to check for '--More--' */
-
     if (!replaying)
       while ((int) (ch = getroguetoken ()) != CL_TOK && (int) ch != EOF) {
         /* FIXME: If you start next to a monster this will get stuck, as

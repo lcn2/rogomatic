@@ -40,7 +40,6 @@ char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
 char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
 
 /* static declarations */
-static int knob[MAXKNOB];		/* Knobs */
 char *knob_name[MAXKNOB] = {
   "trap searching:   ",
   "door searching:   ",

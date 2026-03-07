@@ -324,7 +324,7 @@ inventory (char *msgstart, char *msgend)
   char objname[100];
   char dbname[NAMSIZ];
   char codename[NAMSIZ];
-  int  n, ipos, xknow = 0, newitem = 0, inuse = 0, printed = 0, len = 0;
+  int  n, ipos, xknow = 0, newitem = 0, inuse = 0, printed = 0;
   int  plushit = UNKNOWN, plusdam = UNKNOWN, charges = UNKNOWN;
   stuff what;
   char *xbeg, *xend, *codenamebeg, *codenameend;
@@ -353,7 +353,6 @@ inventory (char *msgstart, char *msgend)
 
 
   if ((ipos < 0) || (ipos > MAXINV)) {
-    len = msgend - msgstart;
     dwait (D_ERROR,
            "inv: ipos out of range, 0 - MAXINV(%d) ipos %d  invcount %d\nmsgs: %s\n  mess: %s\n",
            MAXINV, ipos, invcount, msgstart, mess);

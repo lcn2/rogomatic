@@ -804,7 +804,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
    * The better part of valor...
    */
 
-  if ((die_in (1) && turns == 0 || fainting ()) && quitforhonors ())
+  if (((die_in (1) && turns == 0) || fainting ()) && quitforhonors ())
     return (1);
 
   /*
@@ -857,7 +857,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
   if ((die_in (1) || (turns == 0 && streq (monster, "floating eye")) ||
        (turns == 0 && streq (monster, "ice monster"))) &&
       mdir != NONE && mdist < 6 && !on(DOOR) &&
-      ((obj = havewand ("fire")) != NONE && !streq(monster, "dragon") ||
+      (((obj = havewand ("fire")) != NONE && !streq(monster, "dragon")) ||
        (obj = havewand ("cold")) != NONE ||
        (obj = havewand ("lightning")) != NONE) &&
       ! (itemis (obj, WORTHLESS))
@@ -1026,7 +1026,7 @@ tostuff (void)
   stuff what;
 
   /* If we don't see anything (or don't care), return failure */
-  if (slistlen == 0 || Level == 1 && have (amulet) != NONE) return (0);
+  if (slistlen == 0 || (Level == 1 && have (amulet) != NONE)) return (0);
 
   /*
    * Now find the closest thing to pick up.  Don't consider things we have
@@ -1217,10 +1217,8 @@ archery (void)
          streq (monster, "rattlesnake")	  ||
          streq (monster, "centaur")	  ||
          streq (monster, "ice monster"))  &&
-        ammo >= (mtk = monatt[mlist[m].chr-'A'].mtokill - gplushit) &&
-        larder > 0 ||
-        ((streq (monster, "leprechaun") && !hungry ()) ||
-         streq (monster, "nymph"))) {
+        (ammo >= (mtk = monatt[mlist[m].chr-'A'].mtokill - gplushit)) &&
+        (larder > 0 || ((streq (monster, "leprechaun") && !hungry ()) || streq (monster, "nymph")))) {
       dwait (D_BATTLE, "Arching at %c at (%d,%d)",
              mlist[m].chr, mlist[m].mrow, mlist[m].mcol);
 

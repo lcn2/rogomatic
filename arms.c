@@ -562,8 +562,8 @@ havemissile (void)
           (inven[i].type == missile ||
            stlmatch(inven[i].str,"spear") ||
            stlmatch(inven[i].str,"dagger") ||
-           stlmatch(inven[i].str,"mace") && inven[i].phit <= 0 ||
-           stlmatch(inven[i].str,"long sword") && inven[i].phit < 0))
+           (stlmatch(inven[i].str,"mace") && inven[i].phit <= 0) ||
+           (stlmatch(inven[i].str,"long sword") && inven[i].phit < 0)))
         { obj = i; fewest = inven[i].count; }
   }
 

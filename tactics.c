@@ -209,7 +209,7 @@ quaffpotion (void)
 
   if (cosmic && Str != Strmax &&
       (obj = havenamed (potion, "poison")) != NONE) {
-    if (wearing ("sustain strength") != NONE && quaff (obj) ||
+    if ((wearing ("sustain strength") != NONE && quaff (obj)) ||
         findring ("sustain strength"))
       return (1);
   }
@@ -219,12 +219,12 @@ quaffpotion (void)
    * Wait for cosmic known to quaff extra healing. DR,TG  UTexas
    */
 
-  if (Hp == Hpmax &&
+  if ((Hp == Hpmax) &&
       ((obj = havemult (potion, "healing", 2)) != NONE ||
        (obj = havemult (potion, "extra healing", 2)) != NONE ||
-       know ("blindness") && (obj = havenamed (potion, "healing")) != NONE ||
-       know ("blindness") && (know ("hallucination") || version < RV53A)  &&
-       Level < 15 && (obj = havenamed (potion, "extra healing")) != NONE) &&
+       (know ("blindness") && ((obj = havenamed (potion, "healing")) != NONE)) ||
+       (know ("blindness") && (know ("hallucination") || version < RV53A)  &&
+       Level < 15 && ((obj = havenamed (potion, "extra healing")) != NONE))) &&
       quaff (obj))
     return (1);
 
@@ -273,14 +273,10 @@ readscroll (void)
   int obj, obj2;
 
   /* Check the item specific identify scrolls first */
-  if (((obj = havenamed (Scroll, "identify scroll")) != NONE &&
-       (obj2 = unknown (Scroll)) != NONE) ||
-      ((obj = havenamed (Scroll, "identify armor")) != NONE &&
-       (obj2 = unknown (armor)) != NONE) ||
-      ((obj = havenamed (Scroll, "identify weapon")) != NONE &&
-       (obj2 = unknown (hitter)) != NONE) ||
-      ((obj = havenamed (Scroll, "identify potion")) != NONE &&
-       (obj2 = unknown (potion)) != NONE) ||
+  if ((((obj = havenamed (Scroll, "identify scroll")) != NONE) && (obj2 = unknown (Scroll)) != NONE) ||
+      (((obj = havenamed (Scroll, "identify armor")) != NONE) && (obj2 = unknown (armor)) != NONE) ||
+      (((obj = havenamed (Scroll, "identify weapon")) != NONE) && (obj2 = unknown (hitter)) != NONE) ||
+      (((obj = havenamed (Scroll, "identify potion")) != NONE) && (obj2 = unknown (potion)) != NONE) ||
       ((obj = havenamed (Scroll, "identify ring, wand or staff")) != NONE &&
        ((obj2 = unknown (ring)) != NONE || (obj2 = unknown (wand)) != NONE))) {
     prepareident (obj2, obj);
@@ -300,7 +296,7 @@ readscroll (void)
       ((obj2 = unknown (ring)) != NONE ||
        (obj2 = unidentified (wand)) != NONE ||
        (obj2 = unidentified (Scroll)) != NONE ||
-       Level > 10 && (obj2 = unknown (wand)) != NONE ||
+       (Level > 10 && (obj2 = unknown (wand)) != NONE) ||
        ((cheat || version == RV36A) &&
         ((obj2 = unknown (potion)) != NONE ||
          (obj2 = haveother (Scroll, obj)) != NONE)))) {

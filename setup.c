@@ -44,7 +44,7 @@
 
 static int   frogue, trogue;
 
-static void replaylog (char *fname, char *options);
+static void replaylog (char *pname, char *fname, char *options);
 
 int
 main (int argc, char *argv[])
@@ -154,7 +154,7 @@ main (int argc, char *argv[])
 
   if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
 
-  if (replay) { replaylog (argc==1 ? argv[0] : ROGUELOG, options); exit (0); }
+  if (replay) { replaylog (pfile, argc==1 ? argv[0] : ROGUELOG, options); exit (0); }
 
   if ((pipe (ptc) < 0) || (pipe (ctp) < 0)) {
     fprintf (stderr, "Cannot get pipes!\n");
@@ -180,11 +180,11 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-    if (oldgame)  execl (rfile, rfile, "-r", 0);
+    if (oldgame)  execl (rfile, rfile, "-r", NULL);
 
-    if (argc)     execl (rfile, rfile, argv[0], 0);
+    if (argc)     execl (rfile, rfile, argv[0], NULL);
 
-    execl (rfile, rfile, 0);
+    execl (rfile, rfile, NULL);
     _exit (1);
   }
 
@@ -203,7 +203,7 @@ main (int argc, char *argv[])
     /* Pass the process ID of the Rogue process as an ASCII string */
     snprintf (rp, MU_BUF, "%d", child);
 
-    execl (pfile, pfile, ft, rp, options, roguename, 0);
+    execl (pfile, pfile, ft, rp, options, roguename, NULL);
     fprintf (stderr, "ERROR: Rogomatic not available, player binary missing: %s\n", pfile);
     kill (child, SIGKILL);
   }
@@ -217,12 +217,9 @@ main (int argc, char *argv[])
  */
 
 static void
-replaylog (char *fname, char *options)
+replaylog (char *pfile, char *fname, char *options)
 {
-  execl ("player", "player", "ZZ", "0", options, fname, 0);
-# ifdef PLAYER
-  execl (PLAYER, "player", "ZZ", "0", options, fname, 0);
-# endif
-  printf ("Replay not available, 'player' binary missing.\n");
+  execl (pfile, pfile, "ZZ", "0", options, fname, NULL);
+  fprintf (stderr, "ERROR: Replay not available, player binary missing: %s\n", pfile);
   exit (1);
 }

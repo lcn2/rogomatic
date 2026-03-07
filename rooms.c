@@ -407,13 +407,13 @@ currentrectangle (void)
 
     /* Fill in the corners of the room without seeing them */
     /* Prevents looking at corners to find missing doors */
-    if ((flags & fT+fR) == 0)  setrc (SEEN + WALL, curt-1, curr+1);
+    if ((flags & (fT+fR)) == 0)  setrc (SEEN + WALL, curt-1, curr+1);
 
-    if ((flags & fT+fL) == 0)  setrc (SEEN + WALL, curt-1, curl-1);
+    if ((flags & (fT+fL)) == 0)  setrc (SEEN + WALL, curt-1, curl-1);
 
-    if ((flags & fB+fR) == 0)  setrc (SEEN + WALL, curb+1, curr+1);
+    if ((flags & (fB+fR)) == 0)  setrc (SEEN + WALL, curb+1, curr+1);
 
-    if ((flags & fB+fL) == 0)  setrc (SEEN + WALL, curb+1, curl-1);
+    if ((flags & (fB+fL)) == 0)  setrc (SEEN + WALL, curb+1, curl-1);
   }
 }
 
@@ -462,7 +462,7 @@ updateat (void)
    * Check for teleport, else if we moved multiple squares, mark them as BEEN
    */
 
-  if (direc (dr, dc) != movedir || dr && dc && abs(dr) != abs(dc))
+  if ((direc (dr, dc) != movedir) || (dr && dc && (abs(dr) != abs(dc))))
     teleport ();
   else {
     dist = (abs(dr)>abs(dc)) ? abs(dr) : abs(dc);
@@ -494,8 +494,8 @@ updateat (void)
         rooms++;
     }
 
-    if (seerc ('|', atrow-1, atcol) && seerc ('|', atrow+1, atcol) ||
-        seerc ('-', atrow, atcol-1) && seerc ('-', atrow, atcol+1)) {
+    if ((seerc ('|', atrow-1, atcol) && seerc ('|', atrow+1, atcol)) ||
+        (seerc ('-', atrow, atcol-1) && seerc ('-', atrow, atcol+1))) {
       set (DOOR | SAFE); unset (HALL | ROOM); terrain = "door";
 
       if ((rm = whichroom (atrow, atcol)) != NONE) levelmap[rm] |= HASROOM;
@@ -594,7 +594,7 @@ updatepos (char ch, int row, int col)
       /* in the same room, then a floor '.' means no stuff there     */
       if ((version < RV52A ||
            oldch == '@' ||
-           oldch == ')' && functionchar (lastcmd) == 't' ||
+           (oldch == ')' && functionchar (lastcmd) == 't') ||
            (on (ROOM) && whichroom (row, col) == whichroom (atrow, atcol))) &&
           onrc (STUFF, row, col))
         { deletestuff (row, col); }
