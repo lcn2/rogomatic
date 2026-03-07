@@ -82,10 +82,9 @@ drop (int obj)
     return (0);
 
   /* read unknown scrolls or good scrolls rather than dropping them */
-  if (inven[obj].type == rscroll &&
-      (((!itemis (obj, KNOWN) ||
-         stlmatch (inven[obj].str, "identify")) &&
-	   prepareident (pickident (obj), obj)) ||
+  if ((inven[obj].type == rscroll) &&
+      (!itemis (obj, KNOWN) ||
+       (stlmatch (inven[obj].str, "identify") && prepareident (pickident (obj), obj)) ||
        stlmatch (inven[obj].str, "enchant") ||
        stlmatch (inven[obj].str, "genocide") ||
        stlmatch (inven[obj].str, "gold detection") ||
@@ -98,7 +97,7 @@ drop (int obj)
   { return (1); }
 
   /* quaff unknown potions or good potions rather than dropping them */
-  if (inven[obj].type == potion &&
+  if ((inven[obj].type == potion) &&
       (!itemis (obj, KNOWN) ||
        stlmatch (inven[obj].str, "extra healing") ||
        stlmatch (inven[obj].str, "gain strength") ||

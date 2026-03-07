@@ -222,14 +222,10 @@ readscroll (void)
 { int obj, obj2;
 
   /* Check the item specific identify scrolls first */
-  if (((obj = havenamed (rscroll, "identify armor")) != NONE &&
-       (obj2 = unknown (armor)) != NONE) ||
-      ((obj = havenamed (rscroll, "identify weapon")) != NONE &&
-       (obj2 = unknown (hitter)) != NONE) ||
-      ((obj = havenamed (rscroll, "identify potion")) != NONE &&
-       (obj2 = unknown (potion)) != NONE) ||
-      ((obj = havenamed (rscroll, "identify scroll")) != NONE &&
-       (obj2 = unknown (rscroll)) != NONE) ||
+  if (((obj = havenamed (rscroll, "identify armor")) != NONE && (obj2 = unknown (armor)) != NONE) ||
+      ((obj = havenamed (rscroll, "identify weapon")) != NONE && (obj2 = unknown (hitter)) != NONE) ||
+      ((obj = havenamed (rscroll, "identify potion")) != NONE && (obj2 = unknown (potion)) != NONE) ||
+      ((obj = havenamed (rscroll, "identify scroll")) != NONE && (obj2 = unknown (rscroll)) != NONE) ||
       ((obj = havenamed (rscroll, "identify ring, wand or staff")) != NONE &&
        ((obj2 = unknown (ring)) != NONE || (obj2 = unknown (wand)) != NONE)))
   { prepareident (obj2, obj);
