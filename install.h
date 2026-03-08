@@ -28,7 +28,7 @@
  * appear on the Rogue scoreboard.
  */
 
-# define BOGUS		(99999)
+# define BOGUS		(999999)
 
 /*
  * This variable defines the version of Rogue we are assumed to be playing

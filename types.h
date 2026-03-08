@@ -435,7 +435,7 @@ extern void timehistory (FILE *f, char sep);
 extern void toggledebug (void);
 
 /* debuglog.c */
-extern void debuglog_open (const char *log);
+extern void debuglog_open (const char *dir, const char *log);
 extern void debuglog_close (void);
 extern void debuglog (const char *fmt, ...);
 
@@ -472,7 +472,7 @@ extern int findscore (char *rogue, char *roguename);
 extern int rogue_log_open (const char *filename);
 extern void rogue_log_close (void);
 extern void rogue_log_write_command (char c);
-extern void open_frogue_debuglog (const char *file);
+extern void open_frogue_debuglog (const char *dir, const char *file);
 extern void close_frogue_debuglog (void);
 extern void open_frogue_fd (int frogue_fd);
 extern char getroguetoken (void);

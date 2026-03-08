@@ -33,6 +33,7 @@
 # include <unistd.h>
 # include <string.h>
 # include <sys/errno.h>
+# include <sys/stat.h>
 
 # include "types.h"
 # include "install.h"
@@ -58,6 +59,8 @@ main (int argc, char *argv[])
   char  ropts[SM_BUF + 1]; /* rogue options, +1 for paranoia */
   char  roguename[MU_BUF + 1]; /* rogue player name, +1 for paranoia */
   char  *pfile = "";
+  struct stat rgmdir_buf; /* stat of RGMDIR */
+  int ret;
 
   /* zeroize arrays */
   memset (options, 0, sizeof(options)); /* paranoia */
@@ -142,6 +145,34 @@ main (int argc, char *argv[])
     exit (1);
   }
 
+  /*
+   * create RGMDIR if it does not already exist
+   */
+  memset (&rgmdir_buf, 0, sizeof(rgmdir_buf));
+  ret = stat(RGMDIR, &rgmdir_buf);
+  if (ret < 0) {
+      /* no RGMDIR, attempt to mkdir(RGMDIR) */
+      ret = mkdir(RGMDIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 RGMDIR */
+      if (ret < 0) {
+	fprintf (stderr, "ERROR: mkdir %s failed: %s\n", RGMDIR, strerror(errno));
+	exit (1);
+      }
+  }
+
+  /*
+   * verify that RGMDIR is a read-write searchable directory
+   */
+  ret = stat(RGMDIR, &rgmdir_buf);
+  if (ret < 0 || ((rgmdir_buf.st_mode & S_IFDIR) == 0)) {
+    fprintf (stderr, "ERROR: not a directory: %s: %s\n", RGMDIR, strerror(errno));
+    exit (1);
+  }
+  ret = access(RGMDIR, R_OK|W_OK|X_OK);
+  if (ret < 0) {
+    fprintf (stderr, "ERROR: directory is not read-write and searchable: %s\n", RGMDIR);
+    exit (1);
+  }
+
   if (!replay && !score) quitat = findscore (rfile, "Rog-O-Matic");
 
   snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
@@ -149,7 +180,7 @@ main (int argc, char *argv[])
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
   snprintf (ropts, SM_BUF, "name=%s,fruit=%s,%s,%s,%s,%s,%s,%s,inven=%s,%s,%s,file=%s/%s,score=%s/%s,lock=%s/%s",
             getname (), "apricot", "terse", "noflush", "noask",
-            "jump", "step", "nopassgo", "slow", "seefloor", "tombstone",
+            "jump", "step", "nopassgo", "slow", "seefloor", "notombstone",
 	    RGMDIR, "rogue.sav", RGMDIR, "rogue.scr", RGMDIR, "rogue.lck");
 
   if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
@@ -157,34 +188,52 @@ main (int argc, char *argv[])
   if (replay) { replaylog (pfile, argc==1 ? argv[0] : ROGUELOG, options); exit (0); }
 
   if ((pipe (ptc) < 0) || (pipe (ctp) < 0)) {
-    fprintf (stderr, "Cannot get pipes!\n");
+    fprintf (stderr, "ERROR: Cannot get pipes!\n");
     exit (1);
   }
 
   trogue = ptc[WRITE];
   frogue = ctp[READ];
 
-  if ((child = fork ()) == 0) {
-    close (0);
-    dup (ptc[READ]);
-    close (1);
-    dup (ctp[WRITE]);
+  child = fork ();
+  if (child == 0) {
 
+    /*
+     * child process that will become rogue
+     */
+
+    /* dup child pipe side into stdin and stdout */
+    dup2 (ptc[READ], STDIN_FILENO);
+    dup2 (ctp[WRITE], STDOUT_FILENO);
+
+    /*
+     * set critical rogue environment variables
+     */
     if (setenv ("TERM", "vt100", 1) != 0) {
       fprintf (stderr, "ERROR: can't setenv (\"TERM\", \"vt100\", 1)\n");
       exit (1);
     }
-
     if (setenv ("ROGUEOPTS", ropts, 1) != 0) {
       fprintf (stderr, "ERROR: can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n",ropts);
       exit (1);
     }
 
-    if (oldgame)  execl (rfile, rfile, "-r", NULL);
+    /* close down pipe sides used by parent process */
+    close (ptc[WRITE]);
+    close (ctp[READ]);
 
-    if (argc)     execl (rfile, rfile, argv[0], NULL);
+    if (oldgame) {
+      execl (rfile, "rogue", "-r", NULL);
+      fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r: %s\n", rfile, strerror(errno));
 
-    execl (rfile, rfile, NULL);
+    } else if (argc) {
+      execl (rfile, "rogue", argv[0], NULL);
+      fprintf (stderr, "ERROR: rogue restore exec failed: %s %s: %s\n", rfile, argv[0], strerror(errno));
+
+    } else {
+      execl (rfile, "rogue", NULL);
+      fprintf (stderr, "ERROR: rogue exec failed: %s: %s\n", rfile, strerror(errno));
+    }
     _exit (1);
   }
 
@@ -192,6 +241,10 @@ main (int argc, char *argv[])
     /* Encode the open files into a two character string */
     char ft[3];
     char rp[MU_BUF + 1]; /* rogue pid, +1 for paranoia */
+
+    /*
+     * parent process that will become player
+     */
 
     /* zeroize arrays */
     memset (rp, 0, sizeof(rp)); /* paranoia */
@@ -203,7 +256,11 @@ main (int argc, char *argv[])
     /* Pass the process ID of the Rogue process as an ASCII string */
     snprintf (rp, MU_BUF, "%d", child);
 
-    execl (pfile, pfile, ft, rp, options, roguename, NULL);
+    /* close down pipe sides used by child rogue process */
+    close (ptc[READ]);
+    close (ctp[WRITE]);
+
+    execl (pfile, "player", ft, rp, options, roguename, NULL);
     fprintf (stderr, "ERROR: Rogomatic not available, player binary missing: %s\n", pfile);
     kill (child, SIGKILL);
   }
@@ -219,7 +276,8 @@ main (int argc, char *argv[])
 static void
 replaylog (char *pfile, char *fname, char *options)
 {
-  execl (pfile, pfile, "ZZ", "0", options, fname, NULL);
+  /* ZZ is the an indicator that player does NOT have a pipe pair to use */
+  execl (pfile, "player", "ZZ", "0", options, fname, NULL);
   fprintf (stderr, "ERROR: Replay not available, player binary missing: %s\n", pfile);
   exit (1);
 }

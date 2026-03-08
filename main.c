@@ -93,6 +93,7 @@
  *	on a UTexas computer.
  *****************************************************************/
 
+# include <stdio.h>
 # include <curses.h>
 # include <ctype.h>
 # include <fcntl.h>
@@ -102,6 +103,7 @@
 # include <stdlib.h>
 # include <sys/types.h>
 # include <unistd.h>
+# include <sys/errno.h>
 
 # include "types.h"
 # include "install.h"
@@ -135,7 +137,9 @@ char  sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia
 char  sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
 char  ourkiller[MU_BUF + 1];	/* How we died, +1 for paranoia */
 char  versionstr[MU_BUF + 1] = DEFVER;	/* Version of Rogue being used, +1 for paranoia */
-char  *parmstr;			/* Pointer to process arguments */
+#if 0 /* process arguments unused */
+char  parmstr[TY_BUF + 1] = '\0';	/* Pointer to process arguments, +1 for paranoia */
+#endif
 char  pending_call_letter = ' ';	/* If non-blank we have a call it to do */
 char  pending_call_name[NAMSIZ];	/*   and this is the name to use */
 
@@ -143,7 +147,9 @@ char  pending_call_name[NAMSIZ];	/*   and this is the name to use */
 int   aggravated = 0;		/* True if we have aggravated this level */
 int   agoalc = NONE;		/* Goal square to arch from (col) */
 int   agoalr = NONE;		/* Goal square to arch from (row) */
+#if 0 /* process arguments unused */
 int   arglen = 0;		/* Length in bytes of argument space */
+#endif
 int   ammo = 0;                 /* How many missiles? */
 int   arrowshot = 0;		/* True if an arrow shot us last turn */
 int   atrow, atcol;		/* Current position of the Rogue (@) */
@@ -222,7 +228,7 @@ int   redhands = 0;		/* True if we have red hands */
 int   replaying = 0;		/* True if replaying old game */
 int   revvideo = 0;		/* True if in rev. video mode */
 int   rightring = NONE;		/* Index of our right ring */
-int   rogpid = 0;		/* Pid of rogue process */
+int   rogpid = -1;		/* Pid of rogue process */
 int   room[9];			/* Flags for each room */
 int   row, col;			/* Current cursor position */
 int   scrmap[24][80];		/* Flags bits for level map */
@@ -356,7 +362,7 @@ main (int argc, char *argv[])
   int startingup = 1;
   int  i;
 
-  debuglog_open ("debuglog.player");
+  debuglog_open (RGMDIR, "debuglog.player");
 
   /*
    * Initialize some storage
@@ -402,9 +408,9 @@ main (int argc, char *argv[])
   if (getenv("GETROGOMATICPID") != NULL) {
     pid = getpid ();
     memset (pidfilename, 0, sizeof(pidfilename));
-    snprintf (pidfilename, NAMSIZ, "rogomaticpid.%d", pid);
+    snprintf (pidfilename, NAMSIZ, "%s/rogomaticpid.%d", RGMDIR, pid);
     if ((pidfp = fopen (pidfilename, "w")) == NULL) {
-      fprintf (stderr, "Can't open '%s'.\n", pidfilename);
+      fprintf (stderr, "ERROR: Can't open '%s'.\n", pidfilename);
       exit(1);
     }
   }
@@ -428,41 +434,70 @@ main (int argc, char *argv[])
     int frogue_fd = argv[1][0] - 'a';
     int trogue_fd = argv[1][1] - 'a';
     open_frogue_fd (frogue_fd);
-    open_frogue_debuglog ("debuglog.frogue");
+    open_frogue_debuglog (RGMDIR, "debuglog.frogue");
     trogue = fdopen (trogue_fd, "w");
     setbuf (trogue, NULL);
   }
 
   /* The second argument to player is the process id of Rogue */
-  if (argc > 2) rogpid = atoi (argv[2]);
-
-  /* The third argument is an option list */
-  if (argc > 3) sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d",
-                          &cheat, &noterm, &startecho, &nohalf,
-                          &emacs, &terse, &transparent, &quitat);
-
-  /* The fourth argument is the Rogue name */
-  if (argc > 4)	strncpy (roguename, argv[4], MU_BUF);
-  else		snprintf (roguename, MU_BUF, "Rog-O-Matic %s", RGMVER);
-  roguename[MU_BUF] = '\0'; /* paranoia */
-
-  /* Now count argument space and assign a global pointer to it */
-  arglen = 0;
-
-  for (i=0; i<argc; i++) {
-    int len = strlen (argv[i]);
-    arglen += len + 1;
-
-    while (len >= 0) argv[i][len--] = ' ';
+  errno = 0;
+  if (argc > 2) {
+      rogpid = atoi (argv[2]);
+      if (errno != 0) {
+	  fprintf (stderr, "ERROR: argv[2]: %s cannot be converted into an int: %s\n", argv[2], strerror(errno));
+	  exit(1);
+      }
+      if (rogpid < 0) {
+	  fprintf (stderr, "ERROR: argv[2]: %s pid arg < 0: %d\n", argv[2], rogpid);
+	  exit(1);
+      }
   }
 
-  parmstr = argv[0];	arglen--;
-  parmstr[arglen] = '\0';/* I don't like this business with muck with ps, but
-                            I think the lack of a null is a problem - NYM */
+  /* The third argument is an option list */
+  if (argc > 3) {
+      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d",
+                            &cheat, &noterm, &startecho, &nohalf,
+                            &emacs, &terse, &transparent, &quitat);
+      if (i != 8) {
+	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 8 ints, returned: %d\n", argv[3], i);
+	  exit(1);
+      }
+  }
+
+  /* The fourth argument is the Rogue name */
+  if (argc > 4)	{
+      strncpy (roguename, argv[4], MU_BUF);
+  } else {
+      snprintf (roguename, MU_BUF, "Rog-O-Matic %s", RGMVER);
+  }
+  roguename[MU_BUF] = '\0'; /* paranoia */
+
+#if 0 /* process arguments unused */
+  /*
+   * form a single string of argument parameters separated by spaces
+   */
+  /* count arg string length */
+  for (i=0, arglen=0; i<argc && argv[i] != NULL; i++) {
+    int len = strlen (argv[i]);
+    arglen += len + 1;
+  }
+  memset(parmstr, 0, sizeof(parmstr));
+  for (i=0, arglen=0; i<argc && argv[i] != NULL; i++) {
+    int len = strlen (argv[i]);
+
+    if (arglen+len+1 < sizeof(parmstr)) {
+	strncpy (parmstr+arglen, argv[i], len);
+	arglen += len;
+	parmstr[arglen] = ' ';
+	++arglen;
+      }
+  }
+  parmstr[arglen] = '\0';
+#endif
 
   /* If we are in one-line mode, then squirrel away stdout */
   if (emacs || terse) {
-    realstdout = fdopen (dup (fileno (stdout)), "w");
+    realstdout = fdopen (dup (STDOUT_FILENO), "w");
     freopen ("/dev/null", "w", stdout);
   }
 
@@ -812,6 +847,16 @@ main (int argc, char *argv[])
   close_frogue_debuglog ();
   debuglog_close ();
 
+#if 0 /* process arguments unused */
+  /*
+   * free storage
+   */
+  if (parmstr != NULL) {
+      free(parmstr);
+      parmstr = NULL;
+
+  }
+#endif
   exit (0);
 }
 

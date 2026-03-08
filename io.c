@@ -572,8 +572,11 @@ terpbot (void)
     /* Stuff the new values into the argument space (for ps command) */
     snprintf (modeline, SM_BUF, "Rgm %d: Id%d L%d %d %d(%d) s%d a%d e%d    ",
               rogpid, geneid, Level, Gold, Hp, Hpmax, Str / 100, 10-Ac, Explev);
-    modeline[arglen-1] = '\0';
-    strcpy (parmstr, modeline);
+#if 0 /* process arguments unused */
+    if (strlen(modeline)+1 < TY_BUF) {
+	strcpy (parmstr, modeline);
+    }
+#endif
 
     /* Handle Emacs and Terse mode */
     if (emacs || terse) {
@@ -1076,17 +1079,31 @@ getrogver (void)
     sendnow ("v");
     waitfor ("ersion ");
 
-    while ((ch = getroguetoken ()) != ' ') *(vstr++) = ch;
-
-    *--vstr = '\0';
+    while ((ch = getroguetoken ()) != ' ') {
+      *vstr = ch;
+      vstr++;
+    }
   }
 
   if (stlmatch (versionstr, "3.6"))		version = RV36B;
   else if (stlmatch (versionstr, "5.2"))	version = RV52A;
   else if (stlmatch (versionstr, "5.3"))	version = RV53A;
+  else if (stlmatch (versionstr, "5.4.4"))	version = RV54A;
   else if (stlmatch (versionstr, "5.4.5"))	version = RV54B;
-  else if (stlmatch (versionstr, "5.4"))	version = RV54A;
-  else saynow ("What a strange version of Rogue! ");
+  else {
+
+    /*
+     * unable too parse the rogue version
+     */
+    saynow ("What a strange version of Rogue! ");
+
+    /* use the default rogue version number */
+    version = DEFRV;
+
+    /* use the default rogue version string */
+    memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
+    snprintf (versionstr, MU_BUF, DEFVER);
+  }
 }
 
 /*

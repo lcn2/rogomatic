@@ -56,7 +56,7 @@ int datalen = 0;
 
 /* static declarations */
 static int findfake (char *string, stuff item_type);
-#if 0
+#if 0 /* unused code */
 static char *realname (char *codename);
 #endif
 
@@ -239,7 +239,7 @@ know (char *name)
   return (FALSE);
 }
 
-#if 0
+#if 0 /* unused code */
 /*
  * realname: Returns the real name of an object named 'codename'.
  */
