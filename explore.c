@@ -1124,7 +1124,7 @@ archeryinit (void)
 { int dir, r, c, dr, dc, dist;
 
    /* Clear the archery value array */
-  for (r = 24*80; r--; ) archval[0][r] = 0;
+   memset(archval, 0, sizeof(archval));
 
   /* Scan around monster to see how far away we can shoot from */
   for (dir = 0; dir < 8; dir++)
