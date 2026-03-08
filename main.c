@@ -254,19 +254,21 @@ int   zonemap[9][9];		/* Map of zones connections */
 void (*istat)(int);
 
 /* Stuff list, list of objects on this level */
-stuffrec slist[MAXSTUFF];	int slistlen=0;
+stuffrec slist[MAXSTUFF + 1];	/* +1 for paranoia */
+int slistlen=0;			/* count of objects in slist[] */
 
 /* Monster list, list of monsters on this level */
-monrec mlist[MAXMONST];		int mlistlen=0;
+monrec mlist[MAXMONST + 1];	/* +1 for paranoia */
+int mlistlen=0;			/* count of monsters in mlist[] */
 
 char targetmonster = '@';	/* Monster we are arching at */
 
 /* Monster attribute and Long term memory arrays */
 attrec monatt[26];		/* Monster attributes */
 lrnrec ltm;			/* Long term memory -- general */
-ltmrec monhist[MAXMON];		/* Long term memory -- creatures */
+ltmrec monhist[MAXMON + 1];	/* Long term memory -- creatures, +1 for paranoia */
 int nextmon = 0;		/* Length of LTM */
-int monindex[27];		/* Index into monhist array */
+int monindex[MAXMONST + 1];	/* Index into monhist array, +1 for paranoia */
 
 /* Genetic learning parameters (and defaults) */
 int geneid = 0;		/* Id of genotype */
@@ -366,6 +368,8 @@ main (int argc, char *argv[])
 
   /*
    * Initialize some storage
+   *
+   * zeroize arrays and other initializations
    */
 
   /* zeroize arrays */
@@ -387,6 +391,10 @@ main (int argc, char *argv[])
   memset (genelock, 0, sizeof(genelock)); /* paranoia */
   memset (genelog, 0, sizeof(genelog)); /* paranoia */
   memset (genepool, 0, sizeof(genepool)); /* paranoia */
+  memset (slist, 0, sizeof(slist)); /* paranoia */
+  memset (mlist, 0, sizeof(mlist)); /* paranoia */
+  memset (monhist, 0, sizeof(monhist)); /* paranoia */
+  memset (monindex, 0, sizeof(monindex)); /* paranoia */
 
   /*
    * Get the process id of this player program if the

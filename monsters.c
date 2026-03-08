@@ -45,7 +45,18 @@
 char *
 monname (char m)
 {
-  return (monhist[monindex[m-'A'+1]].m_name);
+  int indx;
+  char *ret;
+
+  indx = m-'A'+1;
+  if (indx >= 0 && indx < MAXMONST) {
+      ret = monhist[monindex[indx]].m_name;
+  } else {
+      dwait (D_FATAL, "invalid monster char: %c index: %d MAXMONST: %d", m, indx, MAXMONST);
+      /* the above dwait call won't return, so we fake an monster name */
+      ret = "bat";
+  }
+  return ret;
 }
 
 /*
