@@ -178,9 +178,8 @@ main (int argc, char *argv[])
   snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
            cheat, noterm, echo, nohalf, emacs, terse, user, quitat);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
-  snprintf (ropts, SM_BUF, "name=%s,fruit=%s,%s,%s,%s,%s,%s,%s,inven=%s,%s,%s,file=%s/%s,score=%s/%s,lock=%s/%s",
-            getname (), "apricot", "terse", "noflush", "noask",
-            "jump", "step", "nopassgo", "slow", "seefloor", "notombstone",
+  snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
+	    "terse", "noflush", "jump", "seefloor", "nopassgo", "tombstone", "slow", getname (), "apricot",
 	    RGMDIR, "rogue.sav", RGMDIR, "rogue.scr", RGMDIR, "rogue.lck");
 
   if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
