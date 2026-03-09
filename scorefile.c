@@ -38,6 +38,7 @@
 # include <unistd.h>
 # include <signal.h>
 # include <string.h>
+# include <errno.h>
 
 # include "types.h"
 # include "globals.h"
@@ -66,47 +67,34 @@ add_score (char *new_line, char *vers, int ntrm)
   char  ch;
   char  newfil[MU_BUF + 1]; /* new filename, +1 for paranoia */
   FILE *newlog;
+  int lock_fd;
 
   /* zeroize arrays */
   memset (lokfil, 0, sizeof(lokfil)); /* paranoia */
   memset (newfil, 0, sizeof(newfil)); /* paranoia */
 
   snprintf (lokfil, MU_BUF, "%s.%s", LOCKFILE, vers);
-  snprintf (newfil, MU_BUF, "%s/rgmdelta%s", RGMDIR, vers);
+  snprintf (newfil, MU_BUF, "%s/rgmdelta%s", getRgmDir (), vers);
 
   /* Defer interrupts while mucking with the score file */
   critical ();
 
-  /*
-   * Lock the score file. If lock_file fails, asks the user whether he
-   * wishes to wait. If so, then try lock_file five times and then ask
-   * again.
-   */
-
-  while (lock_file (lokfil, MAXLOCK) == 0)
-    if (--wantscore < 1 && !ntrm) {
-      printf ("The score file is busy, do you wish to wait? [y/n] ");
-
-      while ((ch = getchar ()) != 'y' && ch != 'n');
-
-      if (ch == 'y')
-        wantscore = 5;
-      else
-        { uncritical (); return; }
-    }
+  /* lock */
+  lock_fd = lock_file (__func__, NULL, lokfil);
 
   /* Now create a temporary to copy into */
-  if ((newlog = wopen (newfil, "a")) == NULL)
-    { printf ("\nUnable to write %s\n", newfil); }
-  else {
+  if ((newlog = wopen (newfil, "a")) == NULL) {
+    quit (1, "ERROR: %s: Unable to write: %s: %s\n", __func__, newfil, strerror (errno));
+    not_reached ();
+  } else {
     fprintf (newlog, "%s\n", new_line);
+    fflush (newlog);
     fclose (newlog);
   }
 
-  /* Write the score to the end of the delta file */
+  /* unlock */
+  unlock_file (__func__, lock_fd);
 
-  /* Now close the file, relinquish control of scorefile, and exit */
-  unlock_file (lokfil);
   uncritical ();
 }
 
@@ -125,6 +113,7 @@ dumpscore (char *vers)
   char  cmd[BIGBUF + 1]; /* shell command buffer, +1 for paranoia */
   FILE *scoref, *deltaf;
   int   oldmask;
+  int   lock_fd;
 
   /* zeroize arrays */
   memset (lokfil, 0, sizeof(lokfil)); /* paranoia */
@@ -135,18 +124,16 @@ dumpscore (char *vers)
   memset (cmd, 0, sizeof(cmd)); /* paranoia */
 
   snprintf (lokfil, MU_BUF, "%s.%s", LOCKFILE, vers);
-  snprintf (scrfil, MU_BUF, "%s/rgmscore%s", RGMDIR, vers);
-  snprintf (delfil, MU_BUF, "%s/rgmdelta%s", RGMDIR, vers);
-  snprintf (newfil, MU_BUF, "%s/NewScore%s", RGMDIR, vers);
-  snprintf (allfil, MU_BUF, "%s/AllScore%s", RGMDIR, vers);
+  snprintf (scrfil, MU_BUF, "%s/rgmscore%s", getRgmDir (), vers);
+  snprintf (delfil, MU_BUF, "%s/rgmdelta%s", getRgmDir (), vers);
+  snprintf (newfil, MU_BUF, "%s/NewScore%s", getRgmDir (), vers);
+  snprintf (allfil, MU_BUF, "%s/AllScore%s", getRgmDir (), vers);
 
   /* On interrupts we must relinquish control of the score file */
   int_exit (intrupscore);
 
-  if (lock_file (lokfil, MAXLOCK) == 0) {
-    printf ("Score file busy.\n");
-    exit (1);
-  }
+  /* lock */
+  lock_fd = lock_file (__func__, NULL, lokfil);
 
   deltaf = fopen (delfil, "r");
   scoref = fopen (scrfil, "r");
@@ -169,10 +156,14 @@ dumpscore (char *vers)
       system (cmd);
 
       if (filelength (allfil) != filelength (delfil) + filelength (scrfil)) {
-        fprintf (stderr, "Error, new file is wrong length!\n");
-        unlink (newfil); unlink (allfil);
-        unlock_file (lokfil);
-        exit (1);
+	/* unlink */
+	unlink (newfil);
+	unlink (allfil);
+
+	/* unlock */
+	unlock_file (__func__, lock_fd);
+	quit (1, "ERROR: %s: new file is wrong length!\n", __func__);
+	not_reached ();
       }
       else {
         /* New file is okay, unlink old files and pointer swap score file */
@@ -200,9 +191,11 @@ dumpscore (char *vers)
 
   /* Now any new scores have been put into scrfil, read it */
   if (scoref == NULL) {
-    printf ("Can't find %s\nBest score was %d.\n", scrfil, BEST);
-    unlock_file (lokfil);
-    exit (1);
+
+    /* unlock */
+    unlock_file (__func__, lock_fd);
+    quit (1, "ERROR: %s: Can't find: %s\nBest score was: %d\n", __func__, scrfil, BEST);
+    not_reached ();
   }
 
   printf ("Rog-O-Matic Scores against version %s:\n\n", vers);
@@ -213,7 +206,9 @@ dumpscore (char *vers)
     putchar (ch);
 
   fclose (scoref);
-  unlock_file (lokfil);
+
+  /* unlock */
+  unlock_file (__func__, lock_fd);
 
   exit (0);
 }
@@ -225,6 +220,5 @@ dumpscore (char *vers)
 static void
 intrupscore (int sig __attribute__ ((__unused__)))
 {
-  unlock_file (lokfil);
   exit (1);
 }

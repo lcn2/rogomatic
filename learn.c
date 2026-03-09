@@ -31,6 +31,8 @@
 # include <stdlib.h>
 # include <time.h>
 # include <math.h>
+# include <string.h>
+# include <errno.h>
 
 # include "types.h"
 
@@ -298,8 +300,10 @@ readgenes (char *genepool)
   FILE *gfil;
 
   if ((gfil = fopen (genepool, "r")) == NULL) {
-    if (fexists (genepool))
-      quit (1, "Cannot open file '%s'\n", genepool);
+    if (fexists (genepool)) {
+      quit (1, "ERROR: %s: Cannot open file: %s: %s\n", __func__, genepool, strerror (errno));
+      not_reached ();
+    }
     else
       return (0);
   }
@@ -372,8 +376,10 @@ writegenes (char *genepool)
   int g;
 
   /* Open the gene file */
-  if ((gfil = wopen (genepool, "w")) == NULL)
-    quit (1, "Cannot open file '%s'\n", genepool);
+  if ((gfil = wopen (genepool, "w")) == NULL) {
+    quit (1, "ERROR: %s: Cannot open file: %s\n", __func__, genepool);
+    not_reached ();
+  }
 
   /* Write the header line */
   fprintf (gfil, "%ld %d %d %d %d %d",

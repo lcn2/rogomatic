@@ -328,8 +328,8 @@ datesub.o: datesub.c
 datesub: datesub.o
 	${CC} ${LDFLAGS} datesub.o -o $@
 
-gene: gene.o rand.o learn.o stats.o utility.o
-	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o -lm ${LIBS} -o $@
+gene: gene.o rand.o learn.o stats.o utility.o config.o
+	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o config.o -lm ${LIBS} -o $@
 
 histplot: histplot.o utility.o
 	${CC} ${LDFLAGS} histplot.o utility.o ${LIBS} -o $@
@@ -340,8 +340,8 @@ player: ${OBJS}
 rgmplot: rgmplot.o utility.o
 	${CC} ${LDFLAGS} rgmplot.o utility.o ${LIBS} -o $@
 
-rogomatic: setup.o findscore.o scorefile.o utility.o
-	${CC} ${LDFLAGS} setup.o findscore.o scorefile.o utility.o ${LIBS} -o $@
+rogomatic: setup.o findscore.o scorefile.o utility.o config.c
+	${CC} ${LDFLAGS} setup.o findscore.o scorefile.o utility.o config.c ${LIBS} -o $@
 
 
 #################################################################
@@ -620,6 +620,7 @@ debug.o: globals.h
 debug.o: install.h
 debug.o: types.h
 debuglog.o: debuglog.c
+debuglog.o: types.h
 explore.o: explore.c
 explore.o: globals.h
 explore.o: types.h

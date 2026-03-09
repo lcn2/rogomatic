@@ -103,7 +103,7 @@
 # include <stdlib.h>
 # include <sys/types.h>
 # include <unistd.h>
-# include <sys/errno.h>
+# include <errno.h>
 
 # include "types.h"
 # include "install.h"
@@ -364,7 +364,7 @@ main (int argc, char *argv[])
   int startingup = 1;
   int  i;
 
-  debuglog_open (RGMDIR, "debuglog.player");
+  debuglog_open (getRgmDir (), "debuglog.player");
 
   /*
    * Initialize some storage
@@ -452,7 +452,7 @@ main (int argc, char *argv[])
   if (argc > 2) {
       rogpid = atoi (argv[2]);
       if (errno != 0) {
-	  fprintf (stderr, "ERROR: argv[2]: %s cannot be converted into an int: %s\n", argv[2], strerror(errno));
+	  fprintf (stderr, "ERROR: argv[2]: %s cannot be converted into an int: %s\n", argv[2], strerror (errno));
 	  exit(1);
       }
       if (rogpid < 0) {
@@ -896,6 +896,7 @@ static void
 startlesson (void)
 {
   int tmpseed = 0;
+  int lock_fd;
 
   snprintf (genelog, MU_BUF, "%s/GeneLog%d", RGMDIR, version);
   snprintf (genepool, MU_BUF, "%s/GenePool%d", RGMDIR, version);
@@ -916,21 +917,22 @@ startlesson (void)
 
   critical ();				/* Disable interrupts */
 
+  /* lock */
+  lock_fd = lock_file (__func__, NULL, genelock);
+
   /* Serialize access to the gene pool */
-  if (lock_file (genelock, MAXLOCK)) {	/* Lock the gene pool */
-    if (rogo_openlog (genelog) == NULL)	/* Open the gene log file */
-      saynow ("Could not open file %s", genelog);
+  if (rogo_openlog (genelog) == NULL)	/* Open the gene log file */
+    saynow ("Could not open file %s", genelog);
 
-    if (! readgenes (genepool))		/* Read the gene pool */
-      initpool (MAXKNOB, 20);		/* Random starting point */
+  if (! readgenes (genepool))		/* Read the gene pool */
+    initpool (MAXKNOB, 20);		/* Random starting point */
 
-    setknobs (&geneid, knob, &genebest, &geneavg); /* Select a genotype */
-    writegenes (genepool);		/* Write out the gene pool */
-    rogo_closelog ();			/* Close the gene log file */
-    unlock_file (genelock);		/* Unlock the gene pool */
-  }
-  else
-    fprintf (stderr, "Cannot lock gene pool to read '%s'\n", genepool);
+  setknobs (&geneid, knob, &genebest, &geneavg); /* Select a genotype */
+  writegenes (genepool);		/* Write out the gene pool */
+  rogo_closelog ();			/* Close the gene log file */
+
+  /* unlock */
+  unlock_file (__func__, lock_fd);
 
   uncritical ();			/* Reenable interrupts */
 
@@ -949,25 +951,29 @@ startlesson (void)
 static void
 endlesson (void)
 {
+  int lock_fd;
+
   if (geneid > 0 &&
       (stlmatch (termination, "perditus") ||
        stlmatch (termination, "victorius") ||
        stlmatch (termination, "callidus"))) {
+
     critical ();			/* Disable interrupts */
 
-    if (lock_file (genelock, MAXLOCK)) {	/* Lock the score file */
-      rogo_openlog (genelog);		/* Open the gene log file */
+    /* lock */
+    lock_fd = lock_file (__func__, NULL, genelock);
 
-      if (readgenes (genepool)) {	/* Read the gene pool */
-        evalknobs (geneid,Gold,Level);	/* Add the trial to the pool */
-        writegenes (genepool);
-      }	/* Write out the gene pool */
+    rogo_openlog (genelog);		/* Open the gene log file */
 
-      rogo_closelog ();
-      unlock_file (genelock);		/* Disable interrupts */
-    }
-    else
-      fprintf (stderr, "Cannot lock gene pool to evaluate '%s'\n", genepool);
+    if (readgenes (genepool)) {	/* Read the gene pool */
+      evalknobs (geneid,Gold,Level);	/* Add the trial to the pool */
+      writegenes (genepool);
+    }	/* Write out the gene pool */
+
+    rogo_closelog ();
+
+    /* unlock */
+    unlock_file (__func__, lock_fd);
 
     uncritical ();			/* Re-enable interrupts */
   }

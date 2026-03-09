@@ -32,8 +32,8 @@
 # include <unistd.h>
 # include <string.h>
 
-# include "install.h"
 # include "types.h"
+# include "install.h"
 # include "globals.h"
 
 # define TEMPFL "/tmp/RscoreXXXXXX"

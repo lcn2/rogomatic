@@ -33,6 +33,43 @@
  */
 
 
+/*
+ * backward compatibility
+ *
+ * Not all compilers support __attribute__ nor do they suuport __has_builtin.
+ * For example, MSVC, TenDRAm and Little C Compiler doesn't support __attribute__.
+ * Early gcc does not support __attribute__.
+ *
+ * Not all compilers have __has_builtin
+ */
+#if !defined(__attribute__) && (defined(__cplusplus) || !defined(__GNUC__) || __GNUC__ == 2 && __GNUC_MINOR__ < 8)
+#  define __attribute__(A)
+#endif
+#if !defined __has_builtin
+#  define __has_builtin(x) 0
+#endif
+
+
+/*
+ * not_reached
+ *
+ * In the old days of lint, one could give lint and friends a hint by
+ * placing the token NOTREACHED immediately between opening and closing
+ * comments.  Modern compilers do not honor such commented tokens
+ * and instead rely on features such as __builtin_unreachable
+ * and __attribute__((noreturn)).
+ *
+ * The not_reached will either yield a __builtin_unreachable() feature call,
+ * or it will call abort from stdlib.
+ */
+#if __has_builtin(__builtin_unreachable)
+#  define not_reached() __builtin_unreachable()
+#else
+#  define not_reached() abort()
+#endif
+
+
+
 /* Critical buffer sizes */
 
 /* BIGBUF - 2K (2048) is a good size */
@@ -689,9 +726,10 @@ extern void critical (void);
 extern void uncritical (void);
 extern void reset_int (void);
 extern void int_exit (void (*exitproc)(int));
-extern int lock_file (const char *lokfil, int maxtime);
-extern void unlock_file (const char *lokfil);
-extern void quit (int code, char *fmt, ...);
+extern char *form_path (const char *dir, const char *file);
+extern int lock_file (const char *caller, const char *dir, const char *lokfil);
+extern void unlock_file (const char *caller, int lock_fd);
+extern void quit (int code, char *fmt, ...) __attribute__((format(printf, 2, 3))) __attribute__((noreturn));
 extern int stlmatch (char *big, char *small);
 
 /* worth.c */

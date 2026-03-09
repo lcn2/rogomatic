@@ -46,23 +46,17 @@
  *rogomatic.cat.in not be used unless RGMDIR is also defined.
  */
 
-# define LOCKFILE	"/tmp/Rgm.Lock"
+# if defined(RGMDIR)
+#   define LOCKFILE	RGMDIR "/Rgm.Lock"
+# else
+#   define LOCKFILE	"/tmp/Rgm.Lock"
+# endif
 
 /*
  * This variable is the level at which we always start logging the game
  */
 
 # define GOODGAME	(18)
-
-/*
- * This variable is the number of seconds after which a LOCKFILE is
- * considered to be invalid.  This is necessary to avoid requiring manual
- * intervention when Rog-O-Matic dies while the score file is open.
- * This variable must be defined, but will not be used unless RGMDIR
- * is also defined.
- */
-
-# define MAXLOCK	(120 /* seconds */)
 
 /*
  * This variable defines the "local" copy of Rogue, which may have only
@@ -99,16 +93,20 @@
  */
 
 # if !defined(ROGUE)
-#   define ROGUE		"/usr/local/bin/rogue"
+#   define ROGUE	"/usr/local/bin/rogue"
 # endif
 
 /*
- * This file is created in the current directory if the logging option is
+ * This file is created in the RGMDIR or current directory if the logging option is
  * enabled.  If the game terminates normally, this file is renamed to
  * <killer>.<level>.<score>.  This variable must be defined.
  */
 
-# define ROGUELOG	"roguelog"
+# if defined(RGMDIR)
+# define ROGUELOG	RGMDIR "/roguelog"
+# else
+# define ROGUELOG	"./roguelog"
+# endif
 
 /*
  * This directory must be defined.  It will contain logs of Rogomatic's
@@ -120,7 +118,7 @@
  */
 
 # if !defined(RGMDIR)
-#   define RGMDIR		"/usr/local/tmp/rogomatic"
+#   define RGMDIR	"/usr/local/tmp/rogomatic"
 # endif
 
 /*
@@ -128,7 +126,7 @@
  * is typed during a Rogue game.  It must be defined.
  */
 
-# define SNAPSHOT	"snapshot.rgm"
+# define SNAPSHOT	"./snapshot.rgm"
 
 
 #endif

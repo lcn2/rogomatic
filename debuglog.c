@@ -24,7 +24,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/errno.h>
+#include <errno.h>
+
+#include "types.h"
 
 #define MAXLINE 4096
 
@@ -54,22 +56,15 @@ void
 debuglog_open (const char *dir, const char *log)
 {
   char *path = NULL; /* path to open */
-  int len; /* length of path */
 
   /* form full path */
-  len = strlen (dir) + 1 + strlen (log);
-  path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
-  if (path == NULL) {
-    fprintf (stderr, "ERROR: failed to calloc path for debuglog.player\n");
-    exit (1);
-  }
-  snprintf(path, len+1, "%s/%s", dir, log); /* +1 for NUL */
+  path = form_path (dir, log);
 
   /* open the log file */
   debug = fopen (path, "w");
   if (debug == NULL) {
-    fprintf (stderr, "ERROR: failed to open for writing: %s: %s\n", path, strerror(errno));
-    exit (1);
+    quit (1, "ERROR: %s: failed to open for writing: %s: %s\n", __func__, path, strerror (errno));
+    not_reached ();
   }
 
   /* free memory */

@@ -118,6 +118,8 @@ saveltm (int score)
 {
   int m;
   FILE *ltmfil;
+  const char *lock_path;
+  int lock_fd;
 
   if (nextmon < 1 || nosave) return;
 
@@ -126,32 +128,35 @@ saveltm (int score)
   /* Disable interrupts and open the file for writing */
   critical ();
 
+  /* lock */
+  lock_path = getLockFile ();
+  lock_fd = lock_file(__func__, NULL, lock_path);
+
   /* Only write out the new results if we can get write access */
-  if (lock_file (getLockFile (), MAXLOCK)) {
-    if ((ltmfil = wopen (ltmnam, "w")) == NULL)
-      { dwait (D_WARNING, "Can't write long term memory file '%s'...", ltmnam); }
-    else {
-      /* Write the ltm file header */
-      fprintf (ltmfil, "Count %d, sum %d, start %d, saved %d\n",
-               ltm.gamecnt+1, ltm.gamesum+score,
-               ltm.inittime, ltm.timeswritten+1);
+  if ((ltmfil = wopen (ltmnam, "w")) == NULL)
+    { dwait (D_WARNING, "Can't write long term memory file '%s'...", ltmnam); }
+  else {
+    /* Write the ltm file header */
+    fprintf (ltmfil, "Count %d, sum %d, start %d, saved %d\n",
+	     ltm.gamecnt+1, ltm.gamesum+score,
+	     ltm.inittime, ltm.timeswritten+1);
 
-      /* Now write a line for each monster */
-      for (m = 0; m < nextmon; m++) {
-        fprintf (ltmfil, "%s|", monhist[m].m_name);
-        writeprob (ltmfil, &monhist[m].wehit);    fprintf (ltmfil, "|");
-        writeprob (ltmfil, &monhist[m].theyhit);  fprintf (ltmfil, "|");
-        writeprob (ltmfil, &monhist[m].arrowhit); fprintf (ltmfil, "|");
-        writestat (ltmfil, &monhist[m].htokill);   fprintf (ltmfil, "|");
-        writestat (ltmfil, &monhist[m].damage);   fprintf (ltmfil, "|");
-        writestat (ltmfil, &monhist[m].atokill);  fprintf (ltmfil, "|\n");
-      }
-
-      /* Close the file and unlock it */
-      fclose (ltmfil);
+    /* Now write a line for each monster */
+    for (m = 0; m < nextmon; m++) {
+      fprintf (ltmfil, "%s|", monhist[m].m_name);
+      writeprob (ltmfil, &monhist[m].wehit);    fprintf (ltmfil, "|");
+      writeprob (ltmfil, &monhist[m].theyhit);  fprintf (ltmfil, "|");
+      writeprob (ltmfil, &monhist[m].arrowhit); fprintf (ltmfil, "|");
+      writestat (ltmfil, &monhist[m].htokill);   fprintf (ltmfil, "|");
+      writestat (ltmfil, &monhist[m].damage);   fprintf (ltmfil, "|");
+      writestat (ltmfil, &monhist[m].atokill);  fprintf (ltmfil, "|\n");
     }
 
-    unlock_file (getLockFile ());
+    /* Close the file and unlock it */
+    fclose (ltmfil);
+
+    /* unlock */
+    unlock_file (__func__, lock_fd);
   }
 
   /* Re-enable interrupts */
@@ -165,8 +170,11 @@ saveltm (int score)
 void
 restoreltm (void)
 {
+  const char *lock_path;
+  int lock_fd;
+
   memset (ltmnam, 0, sizeof(ltmnam));
-  snprintf (ltmnam, MU_BUF, "%s/ltm%d", RGMDIR, version);
+  snprintf (ltmnam, MU_BUF, "%s/ltm%d", getRgmDir (), version);
   dwait (D_CONTROL, "Restoreltm called, reading file '%s'", ltmnam);
 
   clearltm (monhist);			/* Clear the original sums */
@@ -176,23 +184,22 @@ restoreltm (void)
   /* Disable interrupts and open the file for reading */
   critical ();
 
-  /* Only read the long term memory if we can get access */
-  if (lock_file (getLockFile (), MAXLOCK)) {
-    if (fexists (ltmnam))
-      readltm ();
-    else {
-      dwait (D_CONTROL | D_SAY,
-             "Starting long term memory file '%s'...", ltmnam);
-      ltm.gamecnt = ltm.gamesum = ltm.timeswritten = 0;
-      ltm.inittime = time (0);
-    }
+  /* lock */
+  lock_path = getLockFile ();
+  lock_fd = lock_file (__func__, NULL, lock_path);
 
-    unlock_file (getLockFile ());
-  }
+  /* Only read the long term memory if we can get access */
+  if (fexists (ltmnam))
+    readltm ();
   else {
-    saynow ("Warning: could not lock long term memory file!");
-    nosave = 1;
+    dwait (D_CONTROL | D_SAY,
+	   "Starting long term memory file '%s'...", ltmnam);
+    ltm.gamecnt = ltm.gamesum = ltm.timeswritten = 0;
+    ltm.inittime = time (0);
   }
+
+  /* unlock */
+  unlock_file (__func__, lock_fd);
 
   uncritical ();
 }

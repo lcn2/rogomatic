@@ -23,7 +23,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
-# include <sys/errno.h>
+# include <errno.h>
 
 # include "types.h"
 # include "globals.h"
@@ -156,21 +156,14 @@ void
 open_frogue_debuglog (const char *dir, const char *file)
 {
   char *path = NULL; /* path to open */
-  int len; /* length of path */
 
   /* form full path */
-  len = strlen (dir) + 1 + strlen (file);
-  path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
-  if (path == NULL) {
-    fprintf (stderr, "ERROR: failed to calloc path for debuglog.frogue\n");
-    exit (1);
-  }
-  snprintf(path, len+1, "%s/%s", dir, file); /* +1 for NUL */
+  path = form_path (dir, file);
 
   /* open the log file */
   froguelog = fopen (path, "w");
   if (froguelog == NULL) {
-    fprintf (stderr, "ERROR: failed to open for writing: %s: %s\n", path, strerror(errno));
+    fprintf (stderr, "ERROR: failed to open for writing: %s: %s\n", path, strerror (errno));
     exit (1);
   }
 

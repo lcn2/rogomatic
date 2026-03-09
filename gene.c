@@ -55,6 +55,7 @@ int
 main (int argc, char *argv[])
 {
   int m=10, init=0, seed=0, version=RV53A, full=0;
+  int lock_fd;
 
   /* zeroize arrays */
   memset (genelock, 0, sizeof(genelock)); /* paranoia */
@@ -77,7 +78,9 @@ main (int argc, char *argv[])
         case 'v':	version = atoi(*argv+1); SKIPARG;
           printf ("Rogue version %d.\n", version);
           break;
-        default:	quit (1,"Usage: gene [-if] [-msv<value>] [genepool]\n");
+        default:
+	  quit (1, "Usage: gene [-if] [-m<<value>>] [-s<<value>>] [-v<<value>>] [genepool]\n");
+	  not_reached ();
       }
     }
   }
@@ -85,34 +88,34 @@ main (int argc, char *argv[])
   if (argc > 0) {
     if (readgenes (argv[0]))		/* Read the gene pool */
       analyzepool (full);		/* Print a summary */
-    else
-      fprintf (stderr, "Cannot read file '%s'\n", argv[0]);
+    else {
+      quit (0, "ERROR: %s: Cannot read file: %s\n", __func__, argv[0]);
+      not_reached ();
+    }
 
     exit (0);
   }
 
   /* No file argument, assign the gene log and pool file names */
-  snprintf (genelock, MU_BUF, "%s/GeneLock%d", RGMDIR, version);
-  snprintf (genelog, MU_BUF, "%s/GeneLog%d", RGMDIR, version);
-  snprintf (genepool, MU_BUF, "%s/GenePool%d", RGMDIR, version);
+  snprintf (genelock, MU_BUF, "%s/GeneLock%d", getRgmDir (), version);
+  snprintf (genelog, MU_BUF, "%s/GeneLog%d", getRgmDir (), version);
+  snprintf (genepool, MU_BUF, "%s/GenePool%d", getRgmDir (), version);
 
   critical ();				/* Disable interrupts */
 
-  if (lock_file (genelock, MAXLOCK)) {
-    if (init) {
-      rogo_srand (seed);			/* Set the random number generator */
-      rogo_openlog (genelog);		/* Open the gene log file */
-      initpool (MAXKNOB, m);		/* Random starting point */
-      writegenes (genepool);		/* Write out the gene pool */
-      rogo_closelog ();			/* Close the log file */
-    }
-    else if (! readgenes (genepool))	/* Read the gene pool */
-      quit (1, "Cannot read file '%s'\n", genepool);
-
-    unlock_file (genelock);
+  lock_fd = lock_file (__func__, NULL, genelock);
+  if (init) {
+    rogo_srand (seed);			/* Set the random number generator */
+    rogo_openlog (genelog);		/* Open the gene log file */
+    initpool (MAXKNOB, m);		/* Random starting point */
+    writegenes (genepool);		/* Write out the gene pool */
+    rogo_closelog ();			/* Close the log file */
   }
-  else
-    quit (1, "Cannot access file '%s'\n", genepool);
+  else if (! readgenes (genepool)) {	/* Read the gene pool */
+    quit (1, "ERROR: %s: Cannot read file '%s'\n", __func__, genepool);
+    not_reached ();
+  }
+  unlock_file (__func__, lock_fd);
 
   uncritical ();			/* Re-enable interrupts */
   analyzepool (full);			/* Print a summary */

@@ -32,7 +32,7 @@
 # include <signal.h>
 # include <unistd.h>
 # include <string.h>
-# include <sys/errno.h>
+# include <errno.h>
 # include <sys/stat.h>
 
 # include "types.h"
@@ -59,7 +59,8 @@ main (int argc, char *argv[])
   char  ropts[SM_BUF + 1]; /* rogue options, +1 for paranoia */
   char  roguename[MU_BUF + 1]; /* rogue player name, +1 for paranoia */
   char  *pfile = "";
-  struct stat rgmdir_buf; /* stat of RGMDIR */
+  const char *rgmdir = NULL;
+  struct stat rgmdir_buf; /* stat of rgmdir */
   int ret;
 
   /* zeroize arrays */
@@ -107,7 +108,7 @@ main (int argc, char *argv[])
 	rfile = rfilearg;
     }
     else {
-	fprintf (stderr, "ERROR: rogue arg not executable: %s - %s\n", rfilearg, strerror(errno));
+	fprintf (stderr, "ERROR: rogue arg not executable: %s - %s\n", rfilearg, strerror (errno));
 	exit (1);
     }
   }
@@ -148,28 +149,29 @@ main (int argc, char *argv[])
   /*
    * create RGMDIR if it does not already exist
    */
+  rgmdir = getRgmDir ();
   memset (&rgmdir_buf, 0, sizeof(rgmdir_buf));
-  ret = stat(RGMDIR, &rgmdir_buf);
+  ret = stat(rgmdir, &rgmdir_buf);
   if (ret < 0) {
-      /* no RGMDIR, attempt to mkdir(RGMDIR) */
-      ret = mkdir(RGMDIR, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 RGMDIR */
+      /* no rgmdir, attempt to mkdir(rgmdir) */
+      ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
       if (ret < 0) {
-	fprintf (stderr, "ERROR: mkdir %s failed: %s\n", RGMDIR, strerror(errno));
+	fprintf (stderr, "ERROR: mkdir %s failed: %s\n", rgmdir, strerror (errno));
 	exit (1);
       }
   }
 
   /*
-   * verify that RGMDIR is a read-write searchable directory
+   * verify that rgmdir is a read-write searchable directory
    */
-  ret = stat(RGMDIR, &rgmdir_buf);
+  ret = stat(rgmdir, &rgmdir_buf);
   if (ret < 0 || ((rgmdir_buf.st_mode & S_IFDIR) == 0)) {
-    fprintf (stderr, "ERROR: not a directory: %s: %s\n", RGMDIR, strerror(errno));
+    fprintf (stderr, "ERROR: not a directory: %s: %s\n", rgmdir, strerror (errno));
     exit (1);
   }
-  ret = access(RGMDIR, R_OK|W_OK|X_OK);
+  ret = access(rgmdir, R_OK|W_OK|X_OK);
   if (ret < 0) {
-    fprintf (stderr, "ERROR: directory is not read-write and searchable: %s\n", RGMDIR);
+    fprintf (stderr, "ERROR: directory is not read-write and searchable: %s\n", rgmdir);
     exit (1);
   }
 
@@ -180,7 +182,7 @@ main (int argc, char *argv[])
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
 	    "terse", "noflush", "jump", "seefloor", "nopassgo", "tombstone", "slow", getname (), "apricot",
-	    RGMDIR, "rogue.sav", RGMDIR, "rogue.scr", RGMDIR, "rogue.lck");
+	    rgmdir, "rogue.sav", rgmdir, "rogue.scr", rgmdir, "rogue.lck");
 
   if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
 
@@ -223,15 +225,15 @@ main (int argc, char *argv[])
 
     if (oldgame) {
       execl (rfile, "rogue", "-r", NULL);
-      fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r: %s\n", rfile, strerror(errno));
+      fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r: %s\n", rfile, strerror (errno));
 
     } else if (argc) {
       execl (rfile, "rogue", argv[0], NULL);
-      fprintf (stderr, "ERROR: rogue restore exec failed: %s %s: %s\n", rfile, argv[0], strerror(errno));
+      fprintf (stderr, "ERROR: rogue restore exec failed: %s %s: %s\n", rfile, argv[0], strerror (errno));
 
     } else {
       execl (rfile, "rogue", NULL);
-      fprintf (stderr, "ERROR: rogue exec failed: %s: %s\n", rfile, strerror(errno));
+      fprintf (stderr, "ERROR: rogue exec failed: %s: %s\n", rfile, strerror (errno));
     }
     _exit (1);
   }

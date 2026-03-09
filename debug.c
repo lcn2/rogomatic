@@ -73,7 +73,7 @@ dwait(int msgtype, char *f, ...)
     /* zeroize arrays */
     memset (errfn, 0, sizeof(errfn)); /* paranoia */
 
-    snprintf (errfn, TY_BUF, "%s/error%s", RGMDIR, versionstr);
+    snprintf (errfn, TY_BUF, "%s/error%s", getRgmDir (), versionstr);
 
     if ((errfil = wopen (errfn, "a")) != NULL) {
       fprintf (errfil, "User %s, error type %d:  %s\n\n",
