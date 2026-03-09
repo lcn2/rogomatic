@@ -44,6 +44,7 @@
 # include <unistd.h>
 # include <signal.h>
 # include <errno.h>
+# include <sys/file.h>
 
 # include "types.h"
 # include "install.h"
