@@ -63,8 +63,6 @@ static void intrupscore (int sig __attribute__ ((__unused__)));
 void
 add_score (char *new_line, char *vers, int ntrm)
 {
-  int   wantscore = 1;
-  char  ch;
   char  newfil[MU_BUF + 1]; /* new filename, +1 for paranoia */
   FILE *newlog;
   int lock_fd;
