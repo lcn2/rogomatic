@@ -94,8 +94,8 @@ newlevel (void)
    * Clear the lowlevel map
    */
 
-  for (i = 1; i < 23; i++)
-    for (j = 0; j < 80; j++) {  /* Forall screen positions */
+  for (i = 1; i < R-1; i++)
+    for (j = 0; j < C; j++) {  /* Forall screen positions */
       scrmap[i][j] = SCRMINIT;
       timessearched[i][j] = 0;
       updatepos (screen[i][j], i, j);
@@ -117,7 +117,7 @@ newlevel (void)
 static struct {int top,bot,left,right;} bounds[9]=
 
   /* top bot left right */
-/*0*/	{{ 1,  6,   0,  25},
+  /*0*/	{{ 1,  6,   0,  25},
   /*1*/	 { 1,  6,  27,  51},
   /*2*/	 { 1,  6,  53,  79},
   /*3*/	 { 8, 14,   0,  25},
@@ -236,8 +236,8 @@ findstairs (int notr, int notc)
 
   stairrow = staircol = NONE;
 
-  for (r = 2; r < 22; r++)
-    for (c = 1; c < 79; c++)
+  for (r = 2; r < R-2; r++)
+    for (c = 1; c < C-1; c++)
       if ((seerc ('%', r, c) || onrc (STAIRS, r, c)) &&
           r != notr && c != notc)
         { setrc (STAIRS, r, c); stairrow = r; staircol = c; }
@@ -252,7 +252,7 @@ downright (int *drow, int *dcol)
 {
   int i=atrow, j=atcol;
 
-  while (i < 23 && j < 79) {
+  while (i < R-1 && j < C-1) {
     if (onrc (CANGO, i, j+1)) j++;
     else if (onrc (CANGO, i+1, j)) i++;
     else { *drow = i; *dcol = j; return (1); }
@@ -737,7 +737,7 @@ teleport (void)
   if (movedir >= 0 && movedir < 8 && !confused) {
     teleported++;
 
-    while (r > 1 && r < 23 && c > 0 && c < 79) {
+    while (r > 1 && r < R-1 && c > 0 && c < C-1) {
       if (onrc (WALL | DOOR | HALL, r, c)) break;
 
       if (onrc (TRAP, r, c)) {
@@ -768,10 +768,10 @@ mapinfer(void)
 
   dwait (D_CONTROL, "Map read: inferring rooms.");
 
-  for (r=1; r<23; r++) {
+  for (r=1; r < R-1; r++) {
     inroom = 0;
 
-    for (c=0; c<80; c++) {
+    for (c=0; c < C; c++) {
       if (seerc ('|', r, c) || (seerc ('+', r, c) && !seerc('-', r, c-1)))
         { inroom = !inroom; }
       else if (inroom)
@@ -1114,8 +1114,8 @@ dumpmazedoor (void)
 {
   int r, c;
 
-  for (r=2; r<22; r++) {
-    for (c=1; c<79; c++) {
+  for (r=2; r < R-2; r++) {
+    for (c=1; c < C-1; c++) {
       if (((scrmap[r][c] & (BEEN|DOOR|HALL|ROOM|WALL|STAIRS)) == 0) &&
           mazedoor (r, c))
         mvaddch (r, c, 'M');

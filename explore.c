@@ -44,7 +44,7 @@
 /* static declarations */
 
 static int expDor, expavoidval;
-static int avdmonsters[24][80];
+static int avdmonsters[R][C + 1]; /* +1 for paranoia */
 
 static int rogo_connect[9][4] = {
   /* Room  top    bot   left  right*/
@@ -256,7 +256,7 @@ setpsd (int print)
   markmissingrooms ();
 
   /* Changed loop boundaries to ignore border around screen -- mlm 5/18/82 */
-  for (i=2; i<22; i++) for (j=1; j<79; j++) {
+  for (i=2; i < R-2; i++) for (j=1; j < C-1; j++) {
       unsetrc (PSD|DEADEND,i,j);
 
       /* If attempt > 3, allow ANYTHING to be a secret door! */
@@ -324,7 +324,7 @@ setpsd (int print)
     }
 
   /* Now remove PSD bits from walls which already have doors */
-  for (i=2; i<22; i++) for (j=1; j<79; j++) {
+  for (i=2; i < R-2; i++) for (j=1; j < C-1; j++) {
       if (onrc (DOOR, i, j)) {
         for (k = i-1; onrc (WALL, k, j); k--)
           { if (onrc (PSD, k, j)) numberpsd--; unsetrc (PSD, k, j);}
@@ -341,7 +341,7 @@ setpsd (int print)
     }
 
   if (print || debug (D_SCREEN))
-    for (i=0; i<24; i++) for (j=0; j<80; j++)
+    for (i=0; i < R; i++) for (j=0; j < C; j++)
         if (onrc (PSD,i,j)) { at (i,j); addch ('P'); }
 
   reusepsd = numberpsd+1;
@@ -635,7 +635,7 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
       nc = c + deltc[k];
 
       /* For each unseen neighbour: add 10 to value. */
-      if (nr >= 1 && nr <= 22 && nc >= 0 && nc <= 80 &&
+      if (nr >= 1 && nr <= R-2 && nc >= 0 && nc <= C &&
           !onrc (SEEN, nr, nc)) {
         v += 10;
 
@@ -741,7 +741,7 @@ zigzagvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
       nc = c + deltc[k];
 
       /* For each unseen neighbour: add 10 to value. */
-      if (nr >= 1 && nr <= 22 && nc >= 0 && nc <= 80 &&
+      if (nr >= 1 && nr <= R-2 && nc >= 0 && nc <= C &&
           !onrc (SEEN, nr, nc)) {
         v += 10;
 
@@ -811,8 +811,8 @@ secretvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
     int nr = r + deltr[k];
     int nc = c + deltc[k];
 
-    if (nr >= 1 && nr <= 22 &&
-        nc >= 0 && nc <= 80 &&
+    if (nr >= 1 && nr <= R-2 &&
+        nc >= 0 && nc <= C &&
         onrc (PSD, nr, nc) && timessearched[nr][nc] < SEARCHES(nr,nc)) {
       /* If adjacent square is on the screen */
       /* and if it has PSD set but has not been searched completely */
@@ -857,7 +857,7 @@ avoidmonsters (void)
   int i, r, c, wearingstealth;
 
   /* Clear old avoid monster values */
-  for (i = 24*80; i--; ) avdmonsters[0][i] = 0;
+  memset(avdmonsters, 0, sizeof(avdmonsters));
 
   /* Set stealth status */
   wearingstealth = (wearing ("stealth") != NONE);
@@ -938,7 +938,7 @@ pinavoid (void)
   int i;
 
   /* Clear old avoid monster values */
-  for (i = 24*80; i--; ) avdmonsters[0][i] = 0;
+  memset(avdmonsters, 0, sizeof(avdmonsters));
 
   /* Avoid each monster in turn */
   for (i=0; i<mlistlen; i++) {
@@ -991,7 +991,7 @@ secret (void)
 
   /* If Level 1 or edge of screen: dead end cannot be room, mark and return */
   if ((Level == 1 && attempt == 0) ||
-      (version < RV53A && (atrow<=1 || atrow>=22 || atcol<=0 || atcol>=79)))
+      (version < RV53A && (atrow<=1 || atrow >= R-2 || atcol <= 0 || atcol >= C-1)))
     { markexplored (atrow, atcol); return (0); }
 
   /* Have we mapped this level? */
@@ -1145,7 +1145,8 @@ avoid (void)
  * battlestations will handle firing at him.
  */
 
-static int archrow = NONE, archcol = NONE, archturns = NONE, archval[24][80];
+static int archrow = NONE, archcol = NONE, archturns = NONE;
+static int archval[R][C + 1]; /* +1 for paranoia */
 
 /* m - Monster to attack */
 /* trns - Minimum number of arrows to make it worthwhile */

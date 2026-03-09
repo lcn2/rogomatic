@@ -29,6 +29,7 @@
 
 # include <stdio.h>
 # include <curses.h>
+# include <string.h>
 
 # include "types.h"
 # include "globals.h"
@@ -43,18 +44,20 @@
 
 /* static declarations */
 
-static int moveavd[24][80], moveval[24][80], movecont[24][80],
-       movedepth[24][80];
-static char mvdir[24][80];
+static int moveavd[R][C + 1]; /* +1 for paranoia */
+static int moveval[R][C + 1]; /* +1 for paranoia */
+static int movecont[R][C + 1]; /* +1 for paranoia */
+static int movedepth[R][C + 1]; /* +1 for paranoia */
+static char mvdir[R][C + 1]; /* +1 for paranoia */
 static int mvtype=0;
 static int didinit=0;
 
 static int validatemap (int movetype, int (*evalinit)(void),
 		       int (*evaluate)(int, int, int, int*, int*, int*));
 static int searchfrom (int row, int col,
-		       int (*evaluate)(int, int, int, int*, int*, int*), char dir[24][80], int *trow, int *tcol);
+		       int (*evaluate)(int, int, int, int*, int*, int*), char dir[R][C+1], int *trow, int *tcol);
 static int searchto (int row, int col,
-		     int (*evaluate)(int, int, int, int*, int*, int*), char dir[24][80], int *trow, int *tcol);
+		     int (*evaluate)(int, int, int, int*, int*, int*), char dir[R][C+1], int *trow, int *tcol);
 
 /*
  * makemove: repeat move from here towards some sort of target.
@@ -306,7 +309,7 @@ setnewgoal (void)
  */
 
 static int
-searchfrom (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), char dir[24][80], int *trow, int *tcol)
+searchfrom (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), char dir[R][C+1], int *trow, int *tcol)
 {
   int r, c, sdir, tempdir;
 
@@ -358,13 +361,14 @@ searchfrom (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), 
  */
 
 static int
-searchto (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), char dir[24][80], int *trow, int *tcol)
+searchto (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), char dir[R][C+1], int *trow, int *tcol)
 {
   int searchcontinue = 10000000, type, havetarget=0, depth=0;
   int r, c, nr, nc;
   int k;
   char begin[QSIZE], *end, *head, *tail;
-  int saveavd[24][80], val, avd, cont;
+  int saveavd[R][C + 1]; /* +1 for paranoia */
+  int val, avd, cont;
   int any;
   static int sdirect[8] = {4, 6, 0, 2, 5, 7, 1, 3},
              sdeltr[8]  = {0,-1, 0, 1,-1,-1, 1, 1},
@@ -373,9 +377,17 @@ searchto (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), ch
   head = tail = begin;
   end = begin + QSIZE;
 
-  for (c = 23*80; c--; ) dir[0][c] = NOTTRIED;		/* MLM */
-
-  for (c = 80; c--; ) dir[0][c] = 0;			/* MLM */
+  /* initialize dir */
+  for (c=0; c < C; ++c) {
+      dir[0][c] = '\0';
+  }
+  dir[0][C] = '\0'; /* paranoia */
+  for (r=1; r < R; ++r) {
+    for (c=0; c < C; ++c) {
+      dir[r][c] = NOTTRIED;
+    }
+    dir[r][C] = '\0'; /* paranoia */
+  }
 
   *(tail++) = row;  *(tail++) = col;
   *(tail++) = QUEUEBREAK;  *(tail++) = QUEUEBREAK;

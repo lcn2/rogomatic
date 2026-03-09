@@ -84,6 +84,15 @@
 /* MU_BUF MUST be smaller than TY_BUF - 1/2 SM_BUF (256) is a good size */
 #define MU_BUF (TY_BUF/2)
 
+/* R is the number of characters rows in a 24x80 character rogue screen */
+#define R (24)
+
+/* C is the character length of row in a 24x80 character rogue screen */
+#define C (80)
+
+/* Z is the number of monsters "A to Z" in a rogue game */
+#define Z (26)
+
 
 /* Global Preprocessor constants */
 

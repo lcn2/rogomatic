@@ -49,10 +49,10 @@ static struct {
       horend,
       hordelt;
 } cb [4] = {
-  {  3, 21,  1,  1, 78,  1},	/* Top left corner */
-  {  3, 21,  1, 78,  1, -1},	/* Top right corner */
-  { 21,  3, -1, 78,  1, -1},	/* Bottom right corner */
-  { 21,  3, -1,  1, 78,  1}
+  {   3, R-3,  1,   1, C-2,  1},	/* Top left corner */
+  {   3, R-3,  1, C-2,   1, -1},	/* Top right corner */
+  { R-3,   3, -1, C-2,   1, -1},	/* Bottom right corner */
+  { R-3,   3, -1,   1, C-2,  1}
 };  /* Bottom left corner */
 
 static int gc = 0; /* Goal corner from 0..3 */
@@ -287,7 +287,7 @@ readscroll (void)
   if ((obj = havenamed (Scroll, "identify")) != NONE &&
       (currentweapon != NONE) &&
       (!itemis (currentweapon, KNOWN) &&
-       (!usingarrow || goodarrow > 20))) {
+       (!usingarrow || goodarrow > R-4))) {
     prepareident (currentweapon, obj);
     return (reads (obj));
   }

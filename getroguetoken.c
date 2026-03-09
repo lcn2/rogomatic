@@ -243,16 +243,23 @@ static int matchnum (char ch)
 static int
 fetchnum (char ch)
 {
-  char num[20];
+  char num[MU_BUF + 1]; /* +1 for paranoia */
   int ind = 1;
   int done = 0;
 
+  /* zeroize arrays */
+  memset(num, 0, sizeof(num));
   num[0] = ch;
 
   while (! done) {
     int ch2 = GETROGUECHAR;
 
     if (matchnum (ch2)) {
+      /* firewall */
+      if (ind >= MU_BUF) {
+	quit (1, "ERROR: %s: ind: %d > MU_BUF: %d\n", __func__, ind, MU_BUF);
+	not_reached ();
+      }
       num[ind] = ch2;
       ++ind;
       PUTDEBUGCHAR (ch2);

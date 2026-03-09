@@ -99,7 +99,7 @@ terpmes (void)
 
   /* Set 't' to the tail of the message,
       skip backward until you find a letter, digit, or punctuation */
-  t=topline+79;
+  t=topline+C-1;
 
   while ((isspace(*t) || *t == '.' || *t == '-') && (t > topline)) {
     if (*t == '-' || *t == '.' || *t == '\0')
@@ -135,13 +135,13 @@ terpmes (void)
 
     /* :ANT: for debugging screen now has to be at least 31x80 */
     if debug(D_MESSAGE) {
-      at (24,0);
-      printw (">%-79.79s",screen);
-      at (25,0);
-      printw (">%-79.79s",topline);
-      at (26,0);
+      at (R,0);
+      printw (">%-*.*s", C-1, C-1, screen);
+      at (R+1,0);
+      printw (">%-*.*s", C-1, C-1, topline);
+      at (R+2,0);
       clrtoeol ();
-      printw (">%-79.79s",mess);
+      printw (">%-*.*s", C-1, C-1, mess);
       refresh ();
     }
 
@@ -151,13 +151,13 @@ terpmes (void)
 
     /* :ANT: for debugging */
     if debug(D_MESSAGE) {
-      at (24,0);
-      printw ("<%-79.79s",screen);
-      at (25,0);
-      printw ("<%-79.79s",topline);
-      at (26,0);
+      at (R,0);
+      printw ("<%-*.*", C-1, C-1, screen);
+      at (R+1,0);
+      printw ("<%-*.*", C-1, C-1, topline);
+      at (R+2,0);
       clrtoeol ();
-      printw ("<%-79.79s",mess);
+      printw ("<%-*.*", C-1, C-1, mess);
       refresh ();
     }
 
@@ -778,7 +778,7 @@ readident (char *name)
 
   at (0,0);
   clrtoeol ();
-  memset (screen,' ', 80);
+  memset (screen, ' ', C);
   at (row, col);
   refresh ();
 
@@ -988,7 +988,7 @@ killed (char *monster)
 
   /* If cheating against Rogue 3.6, check out our arrow */
   if (version < RV52A && cheat) {
-    if (usingarrow && hitstokill > 1 && !beingstalked && goodarrow < 20) {
+    if (usingarrow && hitstokill > 1 && !beingstalked && goodarrow < R-4) {
       saynow ("Oops, bad arrow...");
       newweapon = badarrow = 1; remember (currentweapon, WORTHLESS);
     }
@@ -1113,7 +1113,7 @@ didmiss (void)
   misses++;
   addprob (&monhist[monindex[m]].wehit, FAILURE);
 
-  if (usingarrow && goodarrow < 20)
+  if (usingarrow && goodarrow < R-4)
     { newweapon = badarrow = 1; remember (currentweapon, WORTHLESS); }
 }
 

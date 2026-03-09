@@ -47,7 +47,7 @@
 
 # define highlight(rowcol,stand)		\
   if (print || debug (D_SCREEN))		\
-  { at((rowcol)/80,(rowcol)%80);		\
+  { at((rowcol)/C,(rowcol)%C);		\
     if (stand) standout ();			\
     printw("%c",screen[0][rowcol]);		\
     if (stand) standend ();			\
@@ -81,7 +81,7 @@ markcycles (int print)
   markchokepts ();
 
   { int count=1920; short *m=mark; while(count--) *m++=0;}
-  sp=1; st[1].where=atrow*80+atcol; st[1].dirs=1; st[1].door=0;
+  sp=1; st[1].where=atrow*C+atcol; st[1].dirs=1; st[1].door=0;
 
   for (D = 0; D < 8; D += 2) {
     if ((Scr[newsquare = (st[1].where+deltrc[D^4])]) & CANGO) {
@@ -168,16 +168,16 @@ markchokepts (void)
         { if (Scr[deltrc[k]] & CANGO) nbrs++; }
 
       if (nbrs < 4 ||
-          ! (Scr[  1] & Scr[-79] & Scr[-80] & CANGO ||
-             Scr[-80] & Scr[-81] & Scr[ -1] & CANGO ||
-             Scr[ -1] & Scr[ 79] & Scr[ 80] & CANGO ||
-             Scr[ 80] & Scr[ 81] & Scr[  1] & CANGO)) {
+          ! (Scr[ 1] & Scr[-(C-1)] & Scr[-C] & CANGO ||
+             Scr[-C] & Scr[-(C+1)] & Scr[-1] & CANGO ||
+             Scr[-1] & Scr[  C-1 ] & Scr[ C] & CANGO ||
+             Scr[ C] & Scr[  C+1 ] & Scr[ 1] & CANGO)) {
         *Scr |= CHOKE;
 
         if (debug (D_SCREEN)) {
           int rowcol = Scr - scrmap[0];
           standout ();
-          mvprintw (rowcol/80, rowcol%80, "C");
+          mvprintw (rowcol/C, rowcol%C, "C");
           standend ();
         }
       }

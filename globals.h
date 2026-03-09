@@ -50,7 +50,7 @@ extern char *parmstr;		/* Pointer to argument space */
 extern char pending_call_letter;	/* Pack object we know a name for */
 extern char pending_call_name[];	/* Pack object name for letter */
 extern char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
-extern char screen[24][80 + 1];		/* characters drawn by Rogue, +1 for paranoia */
+extern char screen[R][C + 1];		/* characters drawn by Rogue, +1 for paranoia */
 extern char sumline[BIGBUF + 1];	/* Summation line, +1 for paranoia */
 extern char sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
 extern char *termination;	/* Latin verb for how we died */
@@ -140,7 +140,7 @@ extern int rightring;		/* Index of our right ring */
 extern int rogpid;		/* Process id of Rogue process */
 extern int room[];		/* Flags for each room */
 extern int row,col;		/* where is the cursor? */
-extern int scrmap[24][80];	/* attribute flags for squares */
+extern int scrmap[R][C + 1];	/* attribute flags for squares, +1 for paranoia */
 extern int slowed;		/* True if we recently slowed a monster */
 extern int stairrow, staircol;	/* Where is the staircase */
 extern int teleported;		/* times teleported on this level */
@@ -185,7 +185,8 @@ extern char	killedmonster, targetmonster;
 
 /* Door search variables */
 extern int	new_mark, new_findroom, new_search, new_stairs, new_arch;
-extern char	timessearched[24][80], timestosearch;
+extern char	timessearched[R][C + 1]; /* +1 for paranoia */
+extern char	timestosearch;
 extern int	searchstartr, searchstartc;
 extern int	reusepsd;
 

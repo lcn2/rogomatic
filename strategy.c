@@ -1099,7 +1099,7 @@ tostuff (void)
 static int
 fightinvisible (void)
 {
-  char cmd[20]; int dir, liberties = 0, lastdir, obj;
+  int dir, liberties = 0, lastdir, obj;
 
   /* Count down the time since we were last hit by a stalker */
   if (--beingstalked < 0)
@@ -1139,7 +1139,6 @@ fightinvisible (void)
 
   /* Must fight him 'mano a mano', tell the user (who cant see him either) */
   display ("Fighting invisible stalker...");
-  *cmd = '\0';
 
   /* Record the monster type (for didhit and didmiss, see mess.c) */
   if (version < RV53A)
@@ -1149,7 +1148,7 @@ fightinvisible (void)
 
   /* Count how many orthogonal moves we can make */
   for (dir=0; dir<8; dir++)
-    if (atdrow(dir) > 0 && atdrow(dir) < 23 &&
+    if (atdrow(dir) > 0 && atdrow(dir) < R-1 &&
         onrc(CANGO, atdrow(dir), atdcol(dir)) &&
         onrc(CANGO, atdrow(dir), atcol) &&
         onrc(CANGO, atrow, atdcol(dir)))

@@ -93,13 +93,13 @@ scrollup (void)
   newdoors = doorlist;
 
   for (r = s_row1; r < s_row2; r++) {
-    for (c = 0; c < 80; c++) {
+    for (c = 0; c < C; c++) {
       screen[r][c] = screen[r+1][c];
       updatepos (screen[r][c], r, c);
     }
   }
 
-  for (c = 0; c < 80; c++) {
+  for (c = 0; c < C; c++) {
     screen[s_row2][c] = ' ';
     updatepos (screen[s_row2][c], s_row2, c);
   }
@@ -112,13 +112,13 @@ scrolldown (void)
   int c;
 
   for (r = s_row2; r > s_row1; r--) {
-    for (c = 0; c < 80; c++) {
+    for (c = 0; c < C; c++) {
       screen[r][c] = screen[r-1][c];
       updatepos (screen[r][c], r, c);
     }
   }
 
-  for (c = 0; c < 80; c++) {
+  for (c = 0; c < C; c++) {
     screen[s_row1][c] = ' ';
     updatepos (screen[s_row1][c], s_row1, c);
   }
@@ -132,7 +132,7 @@ printscreen (void)
   debuglog ("             1111111111222222222233333333334444444444555555555566666666667777777777\n");
   debuglog ("   01234567890123456789012345678901234567890123456789012345678901234567890123456789\n");
 
-  for (i=0; i < 24; ++i) {
+  for (i=0; i < R; ++i) {
     debuglog ("%02d", i);
 
     if (i >= s_row1 && i <= s_row2) {
@@ -142,7 +142,7 @@ printscreen (void)
       debuglog (" ");
     }
 
-    for (j = 0; j < 80; ++j) {
+    for (j = 0; j < C; ++j) {
       if (i == row && j == col)
         debuglog ("_");
       else
@@ -281,13 +281,13 @@ getrogue (char *waitstr, int onat)
 
       case CE_TOK:
 
-        if (row && row < 23)
-          for (i = col; i < 80; i++) {
+        if (row && row < R-1)
+          for (i = col; i < C; i++) {
             updatepos (' ', row, i);
             screen[row][i] = ' ';
           }
         else
-          for (i = col; i < 80; i++)
+          for (i = col; i < C; i++)
             screen[row][i] = ' ';
 
         if (row) { at (row, col); clrtoeol (); }
@@ -425,7 +425,7 @@ getrogue (char *waitstr, int onat)
 
           if (!emacs && !terse) addch (ch);
 
-          if (row == 23) botprinted = 1;
+          if (row == R-1) botprinted = 1;
           else           updatepos (ch, row, col);
         }
         else if (col == 0)
@@ -516,11 +516,11 @@ terpbot (void)
   memset (modeline, 0, sizeof(modeline)); /* paranoia */
 
   /* Since we use scanf to read this field, it must not be left blank */
-  if (screen[23][78] == ' ') screen[23][78] = 'X';
+  if (screen[R-1][C-2] == ' ') screen[R-1][C-2] = 'X';
 
   /* Read the bottom line, there are three versions of the status line */
   if (version < RV52A) {	/* Rogue 3.6, Rogue 4.7? */
-    sscanf (screen[23],
+    sscanf (screen[R-1],
             " Level: %d Gold: %d Hp: %d(%d) Str: %s Ac: %d Exp: %d/%d %s",
             &Level, &Gold, &Hp, &Hpmax, sstr, &Ac, &Explev, &Exp, Ms);
     sscanf (sstr, "%d/%d", &Str, &Str18);
@@ -529,14 +529,14 @@ terpbot (void)
     if (Str > Strmax) Strmax = Str;
   }
   else if (version < RV53A) {	/* Rogue 5.2 (versions A and B) */
-    sscanf (screen[23],
+    sscanf (screen[R-1],
             " Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Ac: %d Exp: %d/%d %s",
             &Level, &Gold, &Hp, &Hpmax, &Str, &Strmax, &Ac, &Explev, &Exp, Ms);
 
     Str = Str * 100; Strmax = Strmax * 100;
   }
   else {			/* Rogue 5.3 (and beyond???) */
-    sscanf (screen[23],
+    sscanf (screen[R-1],
             " Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Arm: %d Exp: %d/%d %s",
             &Level, &Gold, &Hp, &Hpmax, &Str, &Strmax, &Ac, &Explev, &Exp, Ms);
 
@@ -544,7 +544,7 @@ terpbot (void)
   }
 
   /* Monitor changes in some variables */
-  if (screen[23][78] == 'X') screen[23][78] = ' ';	/* Restore blank */
+  if (screen[R-1][C-2] == 'X') screen[R-1][C-2] = ' ';	/* Restore blank */
 
   if (oldlev != Level)       newlevel ();
 
@@ -581,22 +581,22 @@ terpbot (void)
     /* Handle Emacs and Terse mode */
     if (emacs || terse) {
       /* Skip backward over blanks and nulls */
-      for (i = 79; (i >= 0) && (screen[23][i] == ' ' || screen[23][i] == '\0'); i--);
-      if (i < 79) {
-	  screen[23][i+1] = '\0';
+      for (i = C-1; (i >= 0) && (screen[R-1][i] == ' ' || screen[R-1][i] == '\0'); i--);
+      if (i < C-1) {
+	  screen[R-1][i+1] = '\0';
       }
-      screen[23][80] = '\0'; /* paranoia */
+      screen[R-1][C] = '\0'; /* paranoia */
 
       if (emacs) {
-        snprintf (modeline, SM_BUF, " %s (%%b)", screen[23]);
+        snprintf (modeline, SM_BUF, " %s (%%b)", screen[R-1]);
 
-        if (strlen (modeline) > 72) snprintf (modeline, SM_BUF, " %s", screen[23]);
+        if (strlen (modeline) > C-8) snprintf (modeline, SM_BUF, " %s", screen[R-1]);
 
         fprintf (realstdout, "%s", modeline);
         fflush (realstdout);
       }
       else if (terse && oldlev != Level) {
-        fprintf (realstdout, "%s\n", screen[23]);
+        fprintf (realstdout, "%s\n", screen[R-1]);
         fflush (realstdout);
       }
     }
@@ -615,8 +615,8 @@ dumpwalls (void)
 
   printexplored ();
 
-  for (r = 1; r < 23; r++) {
-    for (c = 0; c < 80; c++) {
+  for (r = 1; r < R-1; r++) {
+    for (c = 0; c < C; c++) {
       S=scrmap[r][c];
       ch = (ARROW&S)                   ? 'a' :
            (TELTRAP&S)                 ? 't' :
@@ -863,9 +863,9 @@ quitrogue (char *reason, int gld, int terminationtype)
             SM_BUF, sumline2, Ac, Explev, Exp, ltm.gamecnt);
 
   /* Now write the summary line to the log file */
-  at (23, 0); clrtoeol (); refresh ();
+  at (R-1, 0); clrtoeol (); refresh ();
 
-  /* 22 is index of score in sumline */
+  /* R-2 is index of score in sumline */
   if (!replaying)
     add_score (sumline, versionstr, (terse || emacs || noterm));
 
@@ -1030,7 +1030,7 @@ givehelp (void)
 void
 pauserogue (void)
 {
-  at (23, 0);
+  at (R-1, 0);
   addstr ("--press space to continue--");
   clrtoeol ();
   refresh ();
@@ -1141,7 +1141,7 @@ redrawscreen (void)
 
   clear ();
 
-  for (i = 1; i < 24; i++) for (j = 0; j < 80; j++)
+  for (i = 1; i < R; i++) for (j = 0; j < C; j++)
       if ((ch = screen[i][j]) > ' ') mvaddch(i, j, ch);
 
   at (row, col);
@@ -1237,18 +1237,18 @@ printsnap (FILE *f)
            ts -> tm_hour, ts -> tm_min, ts -> tm_sec);
 
   /* Print the current map */
-  putn ('-', f, 79);
+  putn ('-', f, C-1);
   fprintf (f, "\n");
 
-  for (i = 0; i < 24; i++) {
-    for (length = 79; length >= 0 && charonscreen(i,length) == ' '; length--);
+  for (i = 0; i < R; i++) {
+    for (length = C-1; length >= 0 && charonscreen(i,length) == ' '; length--);
 
     for (j=0; j <= length; j++) fprintf (f, "%c", charonscreen(i,j));
 
     fprintf (f, "\n");
   }
 
-  putn ('-', f, 79);
+  putn ('-', f, C-1);
 
   /* Print status variables */
   fprintf (f, "\n\n%s\n\n", statusline ());
@@ -1257,7 +1257,7 @@ printsnap (FILE *f)
 
   dumpinv (f);
   fprintf (f, "\n");
-  putn ('-', f, 79);
+  putn ('-', f, C-1);
   fprintf (f, "\n");
 }
 
@@ -1292,8 +1292,8 @@ clearscreen (void)
   clear ();
   screen00 = ' ';
 
-  for (i = 0; i < 24; i++)
-    for (j = 0; j < 80; j++) {
+  for (i = 0; i < R; i++)
+    for (j = 0; j < C; j++) {
       screen[i][j] = ' ';
       scrmap[i][j] = SCRMINIT;
     }

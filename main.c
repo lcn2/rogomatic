@@ -132,7 +132,7 @@ char  genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
 char  lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
 char  lastname[NAMSIZ];		/* Name of last potion/scroll/wand */
 char  nextid = '\0';            /* Next object to identify */
-char  screen[24][80 + 1];	/* Map of current Rogue screen, +1 for paranoia */
+char  screen[R][C + 1];		/* Map of current Rogue screen, +1 for paranoia */
 char  sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
 char  sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
 char  ourkiller[MU_BUF + 1];	/* How we died, +1 for paranoia */
@@ -231,7 +231,7 @@ int   rightring = NONE;		/* Index of our right ring */
 int   rogpid = -1;		/* Pid of rogue process */
 int   room[9];			/* Flags for each room */
 int   row, col;			/* Current cursor position */
-int   scrmap[24][80];		/* Flags bits for level map */
+int   scrmap[R][C + 1];		/* Flags bits for level map, +1 for paranoia */
 int   singlestep = 0;		/* True ==> go one turn */
 int   slowed = 0;		/* True ==> recently zapped w/slow monster */
 int   stairrow, staircol;	/* Position of stairs on this level */
@@ -264,7 +264,7 @@ int mlistlen=0;			/* count of monsters in mlist[] */
 char targetmonster = '@';	/* Monster we are arching at */
 
 /* Monster attribute and Long term memory arrays */
-attrec monatt[26];		/* Monster attributes */
+attrec monatt[Z + 1];		/* Monster attributes, +1 for paranoia */
 lrnrec ltm;			/* Long term memory -- general */
 ltmrec monhist[MAXMON + 1];	/* Long term memory -- creatures, +1 for paranoia */
 int nextmon = 0;		/* Length of LTM */
@@ -294,7 +294,8 @@ char *knob_name[MAXKNOB] = {
   "hoarding food:    "
 };
 /* Door search map */
-char timessearched[24][80], timestosearch;
+char timessearched[R][C + 1]; /* +1 for paranoia */
+char timestosearch;
 int  searchstartr = NONE, searchstartc = NONE, reusepsd=0;
 int  new_mark=1, new_findroom=1, new_search=1, new_stairs=1, new_arch=1;
 
@@ -307,7 +308,7 @@ int   Str = 16, Strmax = 16, Ac = 6, Exp = 0, Explev = 1, turns = 0;
 char  Ms[30];	/* The message about his state of hunger */
 
 /* Miscellaneous movement tables */
-int   deltrc[8] = { 1,-79,-80,-81,-1,79,80,81 };
+int   deltrc[8] = { 1, -(C-1), -C, -(C+1), -1, C-1, C, C+1 };
 int   deltc[8]  = { 1, 1, 0, -1, -1, -1, 0, 1 };
 int   deltr[8]  = { 0, -1, -1, -1, 0, 1, 1, 1 };
 char  keydir[8] = { 'l', 'u', 'k', 'y', 'h', 'b', 'j', 'n' };
@@ -382,10 +383,11 @@ main (int argc, char *argv[])
   memset (sumline, 0, sizeof(sumline)); /* paranoia */
   memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
   memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
-  for (i=0; i < 24; ++i) {
-      memset(&(screen[i][0]), ' ', 80); /* screen lines initialize with ASCII space */
-      screen[i][80] = '\0'; /* paranoia */
+  for (i=0; i < R; ++i) {
+      memset(&(screen[i][0]), ' ', C); /* screen lines initialize with ASCII space */
+      screen[i][C] = '\0'; /* paranoia */
   }
+  memset (scrmap, 0, sizeof(scrmap)); /* paranoia */
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
   memset (msg, 0, sizeof(msg)); /* paranoia */
   memset (genelock, 0, sizeof(genelock)); /* paranoia */
@@ -395,6 +397,8 @@ main (int argc, char *argv[])
   memset (mlist, 0, sizeof(mlist)); /* paranoia */
   memset (monhist, 0, sizeof(monhist)); /* paranoia */
   memset (monindex, 0, sizeof(monindex)); /* paranoia */
+  memset (timessearched, 0, sizeof(timessearched)); /* paranoia */
+  memset (monatt, 0, sizeof(monatt)); /* paranoia */
 
   /*
    * Get the process id of this player program if the
@@ -807,7 +811,7 @@ main (int argc, char *argv[])
   }
 
   /* Print termination messages */
-  at (23, 0);
+  at (R-1, 0);
   clrtoeol ();
 //  clear ();
   refresh ();

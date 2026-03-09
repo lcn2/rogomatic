@@ -295,7 +295,10 @@ void
 doresetinv (void)
 {
   int i;
-  static char space[MAXINV][80];
+  static char space[MAXINV][C + 1]; /* +1 for paranoia */
+
+  /* zeroize arrays */
+  memset(space, 0, sizeof(space));
 
   usesynch = 1;
   checkrange = 0;
@@ -335,7 +338,7 @@ inventory (char *msgstart, char *msgend)
   if (debug(D_MESSAGE)) {
     at (30,0);
     clrtoeol ();
-    printw(">%-79.79s",mess);
+    printw(">%-*.*s", C-1, C-1, mess);
     at (row, col);
     refresh ();
   }
@@ -631,10 +634,10 @@ inventory (char *msgstart, char *msgend)
   if (debug(D_MESSAGE)) {
     at (30,0);
     clrtoeol ();
-    printw("<%-79.79s",mess);
+    printw("<%-*.*", C-1, C-1, mess);
     at (31,0);
     clrtoeol ();
-    printw("<%-79.79s",objname);
+    printw("<%-*.*", C-1, C-1, objname);
     at (row, col);
     refresh ();
   }

@@ -369,6 +369,9 @@ quit (int code, char *fmt, ...)
 {
   va_list ap;
 
+  /* pre-output newline to be on the edge of the screen before printing error message */
+  fputc('\n', stderr);
+
   /* setup stdarg */
   va_start (ap, fmt);
 
