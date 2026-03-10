@@ -42,15 +42,23 @@
 # include <time.h>
 # include <fcntl.h>
 # include <unistd.h>
-# include <signal.h>
 # include <errno.h>
 # include <sys/file.h>
+# include <termios.h>
 
 # include "types.h"
 # include "install.h"
 
 # define TRUE 1
 # define FALSE 0
+
+static int final_newline = 0;	/* number calls to endwin_and_ncurses_cleanup() */
+
+static void  (*hstat)(int) = NULL;
+static void  (*istat)(int) = NULL;
+static void  (*pstat)(int) = NULL;
+static void  (*qstat)(int) = NULL;
+static void  (*tstat)(int) = NULL;
 
 /*
  * rogo_baudrate: Determine the baud rate of the terminal
@@ -138,25 +146,92 @@ filelength (char *f)
 }
 
 /*
+ * ncurses_delete - free up ncurses state space
+ */
+static void
+ncurses_delete(void)
+{
+    delwin (stdscr);
+    delwin (curscr);
+}
+
+/*
+ * endwin_and_ncurses_cleanup - flush output, shutdown ncurses if setup, and restore both echo + canonical mode
+ */
+void
+endwin_and_ncurses_cleanup (void)
+{
+    struct termios current;	/* current terminal settings */
+
+    /*
+     * flush all output
+     */
+    fflush (stdout);
+    fflush (stderr);
+
+    /*
+     * ncurses cleanup unless endwin() was already called
+     */
+    if (stdscr != NULL && !isendwin ()) {
+
+	/*
+	 * move to corner of window
+	 */
+        mvcur (0, C-1, R-1, 0);
+
+	/*
+	 * turn on echo and turn off raw
+	 */
+	(void) echo ();
+	(void) noraw ();
+
+	/*
+	 * clean up and delete curses
+	 */
+	(void) endwin ();
+	ncurses_delete ();
+    }
+
+    /*
+     * turn off raw mode
+     *
+     * NOTE: We need to explicitly enable canonical mode, and echo
+     *	     in case isendwin() was false while in raw mode.
+     */
+    tcgetattr (STDIN_FILENO, &current);
+    current.c_lflag |= ICANON;	    /* enable canonical mode */
+    current.c_lflag |= ECHO;	    /* enable echo */
+    tcsetattr (STDIN_FILENO, TCSANOW, &current);
+
+    /*
+     * output newline only once, even if this function is called several times
+     *
+     * NOTE: This function might be called via the atexit(3) facility, or as
+     *	     a result of a signal handler, or both.  As a result we have
+     *	     to guard against multiple calls to this function.
+     */
+    if (final_newline == 0) {
+	putchar ('\n');
+    }
+    ++final_newline;
+    if (final_newline <= 0) {
+	final_newline = 1; /* paranoia */
+    }
+    fflush (stdout);
+}
+
+/*
  * critical: Disable interrupts
  */
-
-#if 0 /* XXX - fix "bug errors" when signal is called in critical() and uncritical() - XXX */
-static void  (*hstat)(int);
-static void  (*istat)(int);
-static void  (*lstat)(int);
-static void  (*pstat)(int);
-#endif
 
 void
 critical (void)
 {
-#if 0 /* XXX - fix "bug errors" when signal is called in critical() and uncritical() - XXX */
   hstat = signal (SIGHUP, SIG_IGN);
   istat = signal (SIGINT, SIG_IGN);
   pstat = signal (SIGPIPE, SIG_IGN);
   qstat = signal (SIGQUIT, SIG_IGN);
-#endif
+  tstat = signal (SIGTERM, SIG_IGN);
 }
 
 /*
@@ -166,12 +241,31 @@ critical (void)
 void
 uncritical (void)
 {
-#if 0 /* XXX - fix "bug errors" when signal is called in critical() and uncritical() - XXX */
-  signal (SIGHUP, hstat);
-  signal (SIGINT, istat);
-  signal (SIGPIPE, pstat);
-  signal (SIGQUIT, qstat);
-#endif
+  if (hstat != NULL) {
+    signal (SIGHUP, hstat);
+  } else {
+    signal (SIGHUP, SIG_DFL);
+  }
+  if (istat != NULL) {
+    signal (SIGINT, istat);
+  } else {
+    signal (SIGINT, SIG_DFL);
+  }
+  if (pstat != NULL) {
+    signal (SIGPIPE, pstat);
+  } else {
+    signal (SIGPIPE, SIG_DFL);
+  }
+  if (qstat != NULL) {
+    signal (SIGQUIT, qstat);
+  } else {
+    signal (SIGQUIT, SIG_DFL);
+  }
+  if (tstat != NULL) {
+    signal (SIGTERM, tstat);
+  } else {
+    signal (SIGTERM, SIG_DFL);
+  }
 }
 
 /*
@@ -185,6 +279,7 @@ reset_int (void)
   signal (SIGINT, SIG_DFL);
   signal (SIGPIPE, SIG_DFL);
   signal (SIGQUIT, SIG_DFL);
+  signal (SIGTERM, SIG_DFL);
 }
 
 /*
@@ -201,6 +296,8 @@ int_exit (void (*exitproc)(int))
   if (signal (SIGPIPE, SIG_IGN) != SIG_IGN) signal (SIGPIPE, exitproc);
 
   if (signal (SIGQUIT, SIG_IGN) != SIG_IGN) signal (SIGQUIT, exitproc);
+
+  if (signal (SIGTERM, SIG_IGN) != SIG_IGN) signal (SIGTERM, exitproc);
 }
 
 /*

@@ -235,7 +235,7 @@ main (int argc, char *argv[])
       execl (rfile, "rogue", NULL);
       fprintf (stderr, "ERROR: rogue exec failed: %s: %s\n", rfile, strerror (errno));
     }
-    _exit (1);
+    exit (1);
   }
 
   else {
@@ -250,6 +250,7 @@ main (int argc, char *argv[])
     /* zeroize arrays */
     memset (rp, 0, sizeof(rp)); /* paranoia */
 
+    /* let player know the file descriptors that contain the pipes to the rogue program */
     ft[0] = 'a' + frogue;
     ft[1] = 'a' + trogue;
     ft[2] = '\0';
@@ -270,7 +271,7 @@ main (int argc, char *argv[])
 /*
  * replaylog: Given a log file name and an options string, exec the player
  * process to replay the game.  No Rogue process is needed (since we are
- * replaying an old game), so the frogue and trogue file descrptiors are
+ * replaying an old game), so the frogue and trogue file descriptors are
  * given the fake value 'Z'.
  */
 

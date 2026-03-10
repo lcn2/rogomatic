@@ -731,6 +731,7 @@ extern char *getname (void);
 extern FILE *wopen(char *fname, char *mode);
 extern int fexists (char *fn);
 extern int filelength (char *f);
+extern void endwin_and_ncurses_cleanup (void);
 extern void critical (void);
 extern void uncritical (void);
 extern void reset_int (void);

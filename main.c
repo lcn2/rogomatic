@@ -365,6 +365,11 @@ main (int argc, char *argv[])
   int startingup = 1;
   int  i;
 
+  /*
+   * on exit: cleanup I/O, and shutdown ncurses (if needed)
+   */
+  (void) atexit(endwin_and_ncurses_cleanup);
+
   debuglog_open (getRgmDir (), "debuglog.player");
 
   /*

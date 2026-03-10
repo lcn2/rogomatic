@@ -35,12 +35,16 @@
 # include <time.h>
 # include <unistd.h>
 # include <sys/wait.h>
+# include <errno.h>
+# include <signal.h>
 
 # include "types.h"
 # include "globals.h"
 # include "install.h"
 # include "termtokens.h"
 # include "getroguetoken.h"
+
+# define ROGUE_SECONDS (3)  /* seconds to wait for rogue to exit */
 
 # define READ	0
 
@@ -831,6 +835,10 @@ quitrogue (char *reason, int gld, int terminationtype)
   struct tm *ts;
   long clock;
   char  *k, *r;
+  int stat_loc = -1;	/* waitpid() information on rogpid */
+  int options;		/* waitpid() options */
+  int seconds;		/* seconds spent waiting */
+  int ret;		/* waitpid() return */
 
   /* Save the killer and score */
   for (k=ourkiller, r=reason; *r && *r != ' '; ++k, ++r) *k = *r;
@@ -838,7 +846,7 @@ quitrogue (char *reason, int gld, int terminationtype)
   *k = '\0';
   ourscore = gld;
 
-  /* Dont need to make up any more commands */
+  /* Don't need to make up any more commands */
   if (!replaying || !logdigested)
     playing = 0;
 
@@ -895,8 +903,94 @@ quitrogue (char *reason, int gld, int terminationtype)
   else
     sendnow ("Syy"); /* Must send two yesses,  R5.2 MLM */
 
-  /* Wait for Rogue to die */
-  wait ((int *) NULL);
+  /*
+   * we need to be sure that the rogue process quit
+   */
+
+  /*
+   * look for a rogue process, either running, or stopped, or a killed zombie process
+   */
+  if (rogpid < 0) {
+      quit (1, "ERROR: %s: no rogue pid to wait for: %d\n", __func__, rogpid);
+      not_reached ();
+  }
+  options = (WNOHANG | WUNTRACED);
+  seconds = 0;
+  do {
+
+      /* look for a rogue process status */
+      errno = 0;
+      ret = waitpid (rogpid, &stat_loc, options);
+
+      /* if there is not yet rogue status, wait for a second */
+      if (ret == 0) {
+	++seconds;
+	if (seconds > ROGUE_SECONDS) {
+	  break;
+	}
+	fprintf(stderr, "\nwaiting for rogue pid %d to exit...\n", rogpid);
+	sleep(1);
+      }
+  } while ((ret == 0 && seconds <= ROGUE_SECONDS) || (ret < 0 && errno == EINTR));
+  if (ret < 0) {
+    switch (errno) {
+    case EINVAL:
+      quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) invalid options: %s\n",
+	       __func__, rogpid, options, strerror(errno));
+      not_reached ();
+      break;
+
+    case ECHILD:
+      quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) cannot obtain process status: %s\n",
+	       __func__, rogpid, options, strerror(errno));
+      not_reached ();
+      break;
+
+    default:
+      quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) returned: %d: %s\n",
+	       __func__, rogpid, options, ret, strerror(errno));
+      not_reached ();
+      break;
+    }
+  }
+
+  /*
+   * analyze the status of the rogue process as returned by waitpid()
+   */
+  if (stat_loc == -1) {
+      quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) stat_loc remains -1\n",
+	       __func__, rogpid, options);
+      not_reached ();
+  }
+  if (ret == 0 || WIFSTOPPED(stat_loc) || WIFCONTINUED(stat_loc)) {
+
+    /* we waited ROGUE_SECONDS seconds for rogue status to become available, assume rogue is stuck and SIGHUP it */
+    fprintf(stderr, "\nattempting to kill rogue pid %d with SIGHUP...\n", rogpid);
+    errno = 0;
+    ret = kill (rogpid, SIGHUP);
+    if (ret < 0 && errno == ESRCH) {
+      fprintf(stderr, "\nrogue pid %d exited before the SIGHUP attempt\n", rogpid);
+      return;
+    }
+
+    /* look for a rogue process status */
+    errno = 0;
+    ret = waitpid (rogpid, &stat_loc, options);
+
+    /* if there is not yet rogue status, kill SIGTERM it */
+    if (ret == 0) {
+
+      fprintf(stderr, "\nattempting to kill rogue pid %d with SIGTERM...\n", rogpid);
+      errno = 0;
+      ret = kill (rogpid, SIGTERM);
+      if (ret < 0 && errno == ESRCH) {
+	fprintf(stderr, "\nrogue pid %d exited after the SIGHUP kill attempt\n", rogpid);
+	return;
+      }
+    }
+    fprintf(stderr, "\nrogue pid %d appears to have finally exited\n", rogpid);
+  }
+  return;
 }
 
 /*
