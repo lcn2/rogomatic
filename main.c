@@ -130,7 +130,7 @@ char  genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
 char  *genocide;		/* List of monsters to be genocided */
 char  genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
 char  lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
-char  lastname[NAMSIZ];		/* Name of last potion/scroll/wand */
+char  lastname[NAMSIZ + 1];	/* Name of last potion/scroll/wand, +1 for paranoia */
 char  nextid = '\0';            /* Next object to identify */
 char  screen[R][C + 1];		/* Map of current Rogue screen, +1 for paranoia */
 char  sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
@@ -141,7 +141,7 @@ char  versionstr[MU_BUF + 1] = DEFVER;	/* Version of Rogue being used, +1 for pa
 char  parmstr[TY_BUF + 1] = '\0';	/* Pointer to process arguments, +1 for paranoia */
 #endif
 char  pending_call_letter = ' ';	/* If non-blank we have a call it to do */
-char  pending_call_name[NAMSIZ];	/*   and this is the name to use */
+char  pending_call_name[NAMSIZ + 1];	/*   and this is the name to use, +1 for paranoia */
 
 /* Integers */
 int   aggravated = 0;		/* True if we have aggravated this level */
@@ -899,7 +899,7 @@ onintr (int sig)
 static void
 startlesson (void)
 {
-  int tmpseed = 0;
+  unsigned int tmpseed = 0;
   int lock_fd;
 
   snprintf (genelog, MU_BUF, "%s/GeneLog%d", RGMDIR, version);

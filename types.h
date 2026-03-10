@@ -599,9 +599,9 @@ extern void doresetinv (void);
 extern int inventory (char *msgstart, char *msgend);
 
 /* rand.c */
-extern void rogo_srand (int seed);
+extern void rogo_srand (unsigned int seed);
 extern int rogo_rand (void);
-extern int rogo_randint (int max);
+extern int rogo_randint (int beyond);
 
 /* replay.c */
 extern void positionreplay (void);

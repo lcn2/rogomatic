@@ -43,12 +43,12 @@ extern char afterid;		/* Index of object after identify */
 extern char *genocide;		/* List of monsters to genocide */
 extern char genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
 extern char lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
-extern char lastname[];		/* Name of last potion/scroll/wand */
-extern char nextid;		/* Next object to identify */
+extern char lastname[NAMSIZ + 1];	/* Name of last potion/scroll/wand, +1 for paranoia */
+extern char nextid;			/* Next object to identify */
 extern char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone, +1 for paranoia */
-extern char *parmstr;		/* Pointer to argument space */
+extern char *parmstr;			/* Pointer to argument space */
 extern char pending_call_letter;	/* Pack object we know a name for */
-extern char pending_call_name[];	/* Pack object name for letter */
+extern char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
 extern char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 extern char screen[R][C + 1];		/* characters drawn by Rogue, +1 for paranoia */
 extern char sumline[BIGBUF + 1];	/* Summation line, +1 for paranoia */
@@ -163,23 +163,25 @@ extern char Ms[];		/* Msg 'X', 'Hungry', 'Weak', 'Fainting' */
 extern int turns;		/* Est time in Rogue turns since start */
 
 /* Geometry data */
-extern int deltc[], deltr[];	/* Displacements for directions */
-extern int deltrc[];		/* ditto */
-extern char keydir[];		/* Directions for motion keys */
+extern int deltc[8], deltr[8];	/* Displacements for directions */
+extern int deltrc[8];		/* ditto */
+extern char keydir[8];		/* Directions for motion keys */
 extern int movedir;		/* Which direction did we last move */
-extern stuff translate[];	/* what Rogue characters represent */
+extern stuff translate[128];	/* what Rogue characters represent */
 
 /* Time history */
-extern timerec timespent[];
+extern timerec timespent[50];
 
 /* Objects in pack */
-extern invrec inven[];	extern int invcount;
+extern invrec inven[MAXINV]; extern int invcount;
 
 /* Stuff on this level */
-extern stuffrec slist[]; extern int slistlen;
+extern stuffrec slist[MAXSTUFF + 1];
+extern int slistlen;
 
 /* Monster on this level */
-extern monrec mlist[];	extern int mlistlen;
+extern monrec mlist[MAXMONST + 1];
+extern int mlistlen;
 
 extern char	killedmonster, targetmonster;
 
@@ -194,12 +196,11 @@ extern int	reusepsd;
 extern int	ontarget, targetrow, targetcol;
 
 /* Monster attribute and Long term memory arrays */
-extern attrec monatt[];		/* Monster attributes */
-extern lrnrec ltm;		/* Long term memory -- general */
-extern ltmrec monhist[];	/* Long term memory -- creatures */
-extern ltmrec delhist[];	/* Long term memory -- changes this game */
-extern int nextmon;		/* Length of LTM */
-extern int monindex[];		/* Index into monhist array */
+extern attrec monatt[Z + 1];		/* Monster attributes */
+extern lrnrec ltm;			/* Long term memory -- general */
+extern ltmrec monhist[MAXMON + 1];	/* Long term memory -- creatures */
+extern int nextmon;			/* Length of LTM */
+extern int monindex[MAXMONST + 1];	/* Index into monhist array */
 
 /* Genetic learning arrays */
 extern int k_srch;		/* Propensity for searching squares */

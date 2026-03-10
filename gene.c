@@ -54,7 +54,8 @@ char *knob_name[MAXKNOB] = {
 int
 main (int argc, char *argv[])
 {
-  int m=10, init=0, seed=0, version=RV53A, full=0;
+  int m=10, init=0, version=RV53A, full=0;
+  unsigned int seed = 0;
   int lock_fd;
 
   /* zeroize arrays */
@@ -72,7 +73,7 @@ main (int argc, char *argv[])
         case 'm':	m = atoi(*argv+1); SKIPARG;
           printf ("Gene pool size %d.\n", m);
           break;
-        case 's':	seed = atoi(*argv+1); SKIPARG;
+        case 's':	seed = (unsigned int) atoi(*argv+1); SKIPARG;
           printf ("Random seed %d.\n", m);
           break;
         case 'v':	version = atoi(*argv+1); SKIPARG;
