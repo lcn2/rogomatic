@@ -30,6 +30,7 @@
  * (because Rogue uses a different dungeon each time).
  */
 
+# include <stdlib.h>
 # include <curses.h>
 # include <setjmp.h>
 # include <string.h>
@@ -42,42 +43,111 @@
 /* static declarations */
 static void dumpflags (int r, int c);
 static int getscrpos (char *msg, int *r, int *c);
+static const char *msgtype_str (int msgtype);
+
+/*
+ * msgtype_str: message type as a string
+ */
+static const char *
+msgtype_str(int msgtype)
+{
+    switch (msgtype & D_ALL) {
+    case D_FATAL:
+	return "FATAL";
+	break;
+    case D_ERROR:
+	return "ERROR";
+	break;
+    case (D_WARNING | D_SAY):
+	return "Warn-say";
+	break;
+    case D_WARNING:
+	return "Warning";
+	break;
+    case D_INFORM:
+	return "info";
+	break;
+    case (D_CONTROL | D_SAY):
+	return "ctrl-say";
+	break;
+    case (D_CONTROL | D_SEARCH):
+	return "ctrl-srch";
+	break;
+    case D_SEARCH:
+	return "search";
+	break;
+    case (D_BATTLE | D_MONSTER):
+	return "bat-monst";
+	break;
+    case (D_BATTLE | D_SEARCH):
+	return "bat-srch";
+	break;
+    case D_BATTLE:
+	return "battle";
+	break;
+    case D_MESSAGE:
+	return "msg";
+	break;
+    case D_PACK:
+	return "pack";
+	break;
+    case D_CONTROL:
+	return "ctrl";
+	break;
+    case D_SCREEN:
+	return "screen";
+	break;
+    case D_MONSTER:
+	return "monster";
+	break;
+    case D_SAY:
+	return "say";
+	break;
+    default:
+	break;
+    }
+    return "other";
+}
 
 /*
  * Debugging wait loop: Handle the usual Rogomatic command chars, and also
  * allows dumping the flags '^' command. Exits when a non-command char is
- * typed. To use, just put a "dwait (type, "message");" wherever you need
+ * typed. To use, just put a "dwait (type, __func__, "message");" wherever you need
  * debugging messages, and hit a space or a cr to continue
  */
 
 int
-dwait(int msgtype, char *f, ...)
+dwait(int msgtype, const char *from, char *f, ...)
 {
   char msg[MU_BUF + 1];	/* message buffer, +1 for paranoia */
+  int from_len;		/* length of function name by colon (:) space */
   int r, c;
   va_list ap;
 
   /* zeroize arrays */
   memset (msg, 0, sizeof(msg)); /* paranoia */
 
+  /* pre-load calling function name followed by colon (:) space */
+  from_len = strlen(from) + 1 + 1;
+  snprintf(msg, from_len+1, "%s: ", from);
+
   /* Build the actual message */
   va_start (ap, f);
-  vsnprintf (msg, MU_BUF, f, ap);
+  vsnprintf (msg+from_len, MU_BUF-from_len, f, ap);
   va_end(ap);
 
   /* Log the message if the error is severe enough */
   if (!replaying && (msgtype & (D_FATAL | D_ERROR | D_WARNING))) {
-    char errfn[TY_BUF + 1];	/* error filename, +1 for paranoia */
+    char *path;	    /* error filename */
     FILE *errfil;
 
-    /* zeroize arrays */
-    memset (errfn, 0, sizeof(errfn)); /* paranoia */
+    /* form error filename */
+    path = form_prefix_path (getRgmDir (), "error",  versionstr);
 
-    snprintf (errfn, TY_BUF, "%s/error%s", getRgmDir (), versionstr);
-
-    if ((errfil = wopen (errfn, "a")) != NULL) {
-      fprintf (errfil, "User %s, error type %d:  %s\n\n",
-               getname(), msgtype, msg);
+    /* append an error message to the error filename */
+    if ((errfil = wopen (path, "a")) != NULL) {
+      fprintf (errfil, "User %s: error type %d (%s): %s\n\n",
+               getname(), msgtype, msgtype_str(msgtype), msg);
 
       if (msgtype & (D_FATAL | D_ERROR)) {
         printsnap (errfil);
@@ -85,8 +155,13 @@ dwait(int msgtype, char *f, ...)
         fprintf (errfil, "\f\n");
       }
 
-      va_end (ap);
       fclose (errfil);
+    }
+
+    /* free error filename */
+    if (path != NULL) {
+	free(path);
+	path = NULL;
     }
   }
 
@@ -94,7 +169,7 @@ dwait(int msgtype, char *f, ...)
     extern jmp_buf commandtop;			/* From play */
     saynow (msg);
     playing = 0;
-    quitrogue ("fatal error trap", Gold, SAVED);
+    quitrogue (msg, Gold, SAVED);
     longjmp (commandtop, 0);
   }
 
@@ -102,7 +177,6 @@ dwait(int msgtype, char *f, ...)
     if (msgtype & D_SAY)			  /* Echo? */
       { saynow (msg); va_end (ap); return (1); }  /* Yes => win */
 
-    va_end (ap);
     return (0);					  /* No => lose */
   }
 

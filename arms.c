@@ -568,9 +568,9 @@ havemissile (void)
   }
 
   if (obj != NONE)
-    dwait (D_BATTLE, "Havemissile returns (%s", itemstr (obj));
+    dwait (D_BATTLE, __func__, "returns (%s", itemstr (obj));
   else
-    dwait (D_BATTLE, "Havemissile fails");
+    dwait (D_BATTLE, __func__, "fails");
 
   return (obj);
 }

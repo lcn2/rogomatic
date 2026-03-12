@@ -112,7 +112,7 @@ handlearmor (void)
     { newarmor = 0; return (0); }
 
   /* Debugging */
-  dwait (D_PACK, "handlearmor: obj %d, currentarmor %d", obj, currentarmor);
+  dwait (D_PACK, __func__, "obj: %d currentarmor: %d", obj, currentarmor);
 
   /* Take off the wrong armor */
   if (currentarmor != NONE && takeoff ())
@@ -378,7 +378,7 @@ handlering (void)
   ring1 = havering (1, NOPRINT);
   ring2 = havering (2, NOPRINT);
 
-  dwait (D_PACK, "Handlering: ring1 %d, ring2 %d, left %d, right %d",
+  dwait (D_PACK, __func__, "ring1: %d ring2: %d left: %d right: %d",
          ring1, ring2, leftring, rightring);
 
   if ((leftring == ring1 && rightring == ring2) ||
@@ -860,7 +860,7 @@ shootindark (void)
 
   /* If he is one turn away, switch back to our sword */
   if (!cursedweapon && wielding (thrower) && darkturns==0 && handleweapon ())
-    { dwait (D_BATTLE, "Switching to sword [4]"); return (1); }
+    { dwait (D_BATTLE, __func__, "Switching to 4th sword"); return (1); }
 
   /* If we have room, switch to our bow */
   if (!cursedweapon && !wielding (thrower) && darkturns > 3 &&

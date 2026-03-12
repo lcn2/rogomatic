@@ -333,7 +333,7 @@ inventory (char *msgstart, char *msgend)
   char *xbeg, *xend, *codenamebeg, *codenameend;
 
   xbeg = xend = codenamebeg = codenameend = "";
-  dwait (D_PACK, "inv: message %s", mess);
+  dwait (D_PACK, __func__, "%s", mess);
 
   if (debug(D_MESSAGE)) {
     at (30,0);
@@ -356,9 +356,9 @@ inventory (char *msgstart, char *msgend)
 
 
   if ((ipos < 0) || (ipos > MAXINV)) {
-    dwait (D_ERROR,
-           "inv: ipos out of range, 0 - MAXINV(%d) ipos %d  invcount %d\nmsgs: %s\n  mess: %s\n",
-           MAXINV, ipos, invcount, msgstart, mess);
+    dwait (D_ERROR, __func__, "ipos: %d must be: >= 0 and <= %d\n", ipos, MAXINV);
+    dwait (D_ERROR, __func__, "msgs: %s\n", msgstart);
+    dwait (D_ERROR, __func__, "mess: %s\n", mess);
     return(printed);
   }
   else {
@@ -501,9 +501,9 @@ inventory (char *msgstart, char *msgend)
   if (version >= RV53A && what == ring && charges != UNKNOWN)
     { plushit = charges; charges = UNKNOWN; }
 
-  dwait (D_PACK, "inv %s '%s'",
+  dwait (D_PACK, __func__, "%s: %s",
          stuffmess[(int) what], objname);
-  dwait (D_PACK, "inv    ht %d dm %d ch %d kn %d",
+  dwait (D_PACK, __func__, "ht %d dm %d ch %d kn %d",
          plushit, plusdam, charges, xknow);
 
   /* make sure all unknown potion, Scroll, wand, rings
@@ -622,7 +622,7 @@ inventory (char *msgstart, char *msgend)
       strcpy (inven[ipos].str, objname);
   }
   else if (!replaying) {
-    dwait (D_ERROR, "inv: null inven[%d].str, invcount %d.",
+    dwait (D_ERROR, __func__, "null inven[%d].str, invcount %d.",
            ipos, invcount);
   }
 

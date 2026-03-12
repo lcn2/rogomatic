@@ -353,6 +353,62 @@ form_path (const char *dir, const char *file)
 }
 
 /*
+ * form_prefix_path: calloc a path of a file under a directory
+ *
+ * If dir is NULL, then file is taken to be the full path.
+ *
+ * The caller must free the calloc-ed return value.
+ *
+ * This function will never return NULL.
+ *
+ * This function does NOT return on error.
+ */
+char *
+form_prefix_path (const char *dir, const char *prefix, const char *file)
+{
+  char *path;	/* path to open */
+  int len;	/* length of path */
+
+  /* firewall */
+  /* dir can be NULL */
+  if (prefix == NULL) {
+    quit (1, "ERROR: %s: prefix is NULL\n", __func__);
+    not_reached ();
+  }
+  if (file == NULL) {
+    quit (1, "ERROR: %s: file is NULL\n", __func__);
+    not_reached ();
+  }
+
+  /* form path */
+  if (dir != NULL) {
+
+    /* form full path */
+    len = strlen (dir) + 1 + strlen(prefix) + strlen (file);
+    path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
+    if (path == NULL) {
+      quit (1, "ERROR: %s: failed to calloc full path for %s/%s\n", __func__, dir, file);
+      not_reached ();
+    }
+    snprintf(path, len+1, "%s/%s%s", dir, prefix, file); /* +1 for NUL */
+
+  /* form file as a path */
+  } else {
+
+    /* form path */
+    len = strlen(prefix) + strlen (file);
+    path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
+    if (path == NULL) {
+      quit (1, "ERROR: %s: failed to calloc path for %s\n", __func__, file);
+      not_reached ();
+    }
+    snprintf(path, len+1, "%s%s", prefix, file); /* +1 for NUL */
+  }
+
+  return path;
+}
+
+/*
  * lock_file: lock a file for a maximum number of seconds.
  *            Based on the method used in Rogue 5.2.
  */

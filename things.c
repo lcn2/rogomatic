@@ -46,7 +46,7 @@ int
 wear (int obj)
 {
   if (currentarmor != NONE) {
-    dwait (D_FATAL, "Trying to put on a second coat of armor");
+    dwait (D_FATAL, __func__, "Trying wear 2nd armor");
     return (0);
   }
 
@@ -65,7 +65,7 @@ int
 takeoff (void)
 {
   if (currentarmor == NONE) {
-    dwait (D_ERROR, "Trying to take off armor we don't have on!");
+    dwait (D_ERROR, __func__, "No armor to remove");
     return (0);
   }
 
@@ -201,7 +201,7 @@ int
 quaff (int obj)
 {
   if (inven[obj].type != potion) {
-    dwait (D_ERROR, "Trying to quaff %c", LETTER (obj));
+    dwait (D_ERROR, __func__, "Trying to quaff: %c", LETTER (obj));
     usesynch = 0;
     return (0);
   }
@@ -218,7 +218,7 @@ int
 reads (int obj)
 {
   if (inven[obj].type != Scroll) {
-    dwait (D_ERROR, "Trying to read %c", LETTER (obj));
+    dwait (D_ERROR, __func__, "Trying to read: %c", LETTER (obj));
     usesynch = 0;
     return (0);
   }
@@ -235,7 +235,7 @@ int
 point (int obj, int dir)
 {
   if (inven[obj].type != wand) {
-    dwait (D_ERROR, "Trying to point %c", LETTER (obj));
+    dwait (D_ERROR, __func__, "Trying to point: %c", LETTER (obj));
     return (0);
   }
 
@@ -257,7 +257,7 @@ int
 throw (int obj, int dir)
 {
   if (obj < 0 || obj >= invcount) {
-    dwait (D_ERROR, "Trying to throw %c", LETTER (obj));
+    dwait (D_ERROR, __func__, "Trying to throw: %c", LETTER (obj));
     return (0);
   }
 
@@ -325,7 +325,7 @@ addstuff (char ch, int row, int col)
   slist[slistlen].srow = row;
   slist[slistlen].scol = col;
 
-  if (++slistlen >= MAXSTUFF) dwait (D_FATAL, "Too much stuff");
+  if (++slistlen >= MAXSTUFF) dwait (D_FATAL, __func__, "Too much stuff");
 
   setrc (STUFF, row, col);
 }

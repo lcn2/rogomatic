@@ -404,7 +404,7 @@ clearcommand (void)
 static void
 usemsg (char *str, int obj)
 {
-  if (! dwait (D_INFORM, "%s (%s", str, itemstr (obj)))
+  if (! dwait (D_INFORM, __func__, "%s (%s", str, itemstr (obj)))
     saynow ("%s (%s", str, itemstr (obj));
 }
 

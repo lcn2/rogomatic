@@ -238,7 +238,7 @@ getrogue (char *waitstr, int onat)
         /* More than 50 messages since last command ==> start logging */
         if (++morecount > 50 && !logging) {
           toggleecho ();
-          dwait (D_WARNING, "Started logging --More-- loop.");
+          dwait (D_WARNING, __func__, "Started logging --More-- loop");
         }
 
         /* Send a space (and possibly a semicolon) to clear the message */
@@ -468,7 +468,7 @@ getrogue (char *waitstr, int onat)
 
   /* If mapping status has changed */
   if (wasmapped != didreadmap) {
-    dwait (D_CONTROL | D_SEARCH, "wasmapped: %d   didreadmap: %d",
+    dwait (D_CONTROL | D_SEARCH, __func__, "wasmapped: %d != didreadmap: %d",
            wasmapped, didreadmap);
 
     mapinfer ();
@@ -479,7 +479,7 @@ getrogue (char *waitstr, int onat)
 
     while (doors != newdoors) {
       r = *doors++; c = *doors++;
-      dwait (D_INFORM, "new door at %d, %d", r, c);
+      dwait (D_INFORM, __func__, "new door at (%d,%d)", r, c);
       inferhall (r, c);
     }
   }

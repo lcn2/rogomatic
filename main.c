@@ -781,9 +781,9 @@ main (int argc, char *argv[])
           saynow (cosmic ? "cosmic" : "boring");
           break;
 
-        case 'E': dwait (D_ERROR, "Testing the ERROR trap..."); break;
+        case 'E': dwait (D_ERROR, __func__, "Testing the ERROR trap"); break;
 
-        case 'F': dwait (D_FATAL, "Testing the FATAL trap..."); break;
+        case 'F': dwait (D_FATAL, __func__, "Testing the FATAL trap"); break;
 
         case 'R': if (replaying) {
             positionreplay (); getrogue (ill, 2);
@@ -801,7 +801,7 @@ main (int argc, char *argv[])
         case 'Q': quitrogue ("user typing quit", Gold, FINISHED);
           playing = 0; break;
 
-        case ROGQUIT: dwait (D_ERROR, "Strategize failed, gave up.");
+        case ROGQUIT: dwait (D_ERROR, __func__, "Strategize failed: gave up");
           quitrogue ("gave up", Gold, SAVED); break;
       }
     }

@@ -417,7 +417,7 @@ parsemsg (char *mess, char *mend)
           echoit=0;
 
           if (*res1-'a'+1 != invcount) {
-            dwait (D_INFORM, "Range check failed...");
+            dwait (D_INFORM, __func__, "Range check failed");
             usesynch = 0;
           }
         }
@@ -673,7 +673,7 @@ parsemsg (char *mess, char *mend)
 
         /* :ANT: logic error indicator */
         else if (MATCH("you are already wearing some*"))
-          dwait (D_ERROR, "Logic error, we should know this already. '%s'", mess);
+          dwait (D_ERROR, __func__, "Logic error: %s", mess);
 
         /* :ANT: */
 
@@ -702,16 +702,16 @@ parsemsg (char *mess, char *mend)
 
   /* Log unknown or troublesome messages */
   if ((morecount > 150) && (morecount < 200)) {
-    dwait(D_WARNING, "More Loop ->%s<-.", mess);
+    dwait(D_WARNING, __func__, "More Loop ->%s<-.", mess);
   }
   else if (morecount >= 200) {
-    dwait(D_FATAL, "More Loop Exit ->%s<-.", mess);
+    dwait(D_FATAL, __func__, "More Loop Exit ->%s<-.", mess);
   }
   else if (unknown)
-    dwait (D_WARNING, "Unknown message '%s'", mess);
+    dwait (D_WARNING, __func__, "Unknown message: %s", mess);
 
   /* Send it to dwait; if dwait doesnt print it (and echo is on) echo it */
-  if (echoit & !dwait (D_MESSAGE, mess))
+  if (echoit & !dwait (D_MESSAGE, __func__, "%s", mess))
     saynow (mess);
 }
 
@@ -770,7 +770,7 @@ readident (char *name)
 
   if (!replaying && version < RV53A &&
       (nextid < LETTER (0) || nextid > LETTER (invcount))) {
-    dwait (D_FATAL, "Readident: nextid %d, afterid %d, invcount %d.",
+    dwait (D_FATAL, __func__, "nextid: %d afterid: %d invcount: %d",
            nextid, afterid, invcount);
   }
 
@@ -899,12 +899,12 @@ rampage (void)
       genocided[len+1] = '\0'; /* paranoia */
       genocide++;
     } else {
-      dwait (D_ERROR, "genocide table is full!");
+      dwait (D_ERROR, __func__, "genocide table is full");
       sendnow (" %c;", ESC);	/* Cancel the command */
     }
   }
   else {
-    dwait (D_ERROR, "Out of monsters to genocide!");
+    dwait (D_ERROR, __func__, "Out of monsters to genocide");
     sendnow (" %c;", ESC);	/* Cancel the command */
   }
 }
@@ -984,7 +984,7 @@ killed (char *monster)
     { monster = monhist[mh].m_name; m = monsternum (monster); }
 
   /* Tell the user what we killed */
-  dwait (D_BATTLE | D_MONSTER, "Killed '%s'", monster);
+  dwait (D_BATTLE | D_MONSTER, __func__, "Killed: %s", monster);
 
   /* If cheating against Rogue 3.6, check out our arrow */
   if (version < RV52A && cheat) {
@@ -997,7 +997,7 @@ killed (char *monster)
 
   /* Echo the number arrows we pumped into him */
   if (mh >=0 && mhit+mmiss > 0 && mtarget == mh)
-    dwait (D_BATTLE | D_MONSTER, "%d out of %d missiles hit the %s",
+    dwait (D_BATTLE | D_MONSTER, __func__, "%d out of %d missiles hit: %s",
            mhit, mhit+mmiss, monster);
 
   /* If we killed it by hacking, add the result to long term memory */
@@ -1037,7 +1037,7 @@ washit (char *monster)
   if ((mh = getmonhist (monster, 1)) != NONE)
     { monster = monhist[mh].m_name; m = monsternum (monster); }
 
-  dwait (D_MONSTER, "Was hit by a '%s'", monster);
+  dwait (D_MONSTER, __func__, "Was hit by: %s", monster);
 
   timeshit++;			/* Bump global count */
 
@@ -1066,7 +1066,7 @@ wasmissed (char *monster)
   if ((mh = getmonhist (monster, 1)) != NONE)
     { monster = monhist[mh].m_name; m = monsternum (monster); }
 
-  dwait (D_MONSTER, "Was missed by a '%s'", monster);
+  dwait (D_MONSTER, __func__, "Was missed by: %s", monster);
 
   timesmissed++;		/* Bump global count */
 

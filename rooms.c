@@ -507,7 +507,7 @@ updateat (void)
     else
       return;
 
-    dwait (D_INFORM, "Inferring %s at %d,%d.", terrain, atrow, atcol);
+    dwait (D_INFORM, __func__, "Inferring %s at (%d,%d)", terrain, atrow, atcol);
   }
   else if (on (DOOR | ROOM) && !isexplored (atrow, atcol) && !darkroom ()) {
     markexplored (atrow, atcol);
@@ -766,7 +766,7 @@ mapinfer(void)
 {
   int r, c, inroom;
 
-  dwait (D_CONTROL, "Map read: inferring rooms.");
+  dwait (D_CONTROL, __func__, "Map read: inferring rooms");
 
   for (r=1; r < R-1; r++) {
     inroom = 0;
@@ -891,7 +891,7 @@ inferhall (int r, int c)
       dir = k;
   }
 
-  dwait (D_SEARCH, "Room direction %d", dir);
+  dwait (D_SEARCH, __func__, "Room direction: %d", dir);
 
   if (dir < 0) return;
 
@@ -975,7 +975,7 @@ inferhall (int r, int c)
    * corridor.
    */
 
-  dwait (D_SEARCH | D_CONTROL, "Hall search done.");
+  dwait (D_CONTROL | D_SEARCH, __func__, "Hall search done");
 }
 
 static void
@@ -984,7 +984,7 @@ connectdoors (int r1, int c1, int r2, int c2)
   int r, c;
   int endr = max (r1, r2), endc = max (c1, c2);
 
-  dwait (D_INFORM, "Inferring hall (%d,%d) to (%d,%d)", r1, c1, r2, c2);
+  dwait (D_INFORM, __func__, "Inferring hall (%d,%d) to (%d,%d)", r1, c1, r2, c2);
 
   for (r = min (r1, r2); r <= endr; r++)
     for (c = min (c1, c2); c <= endc; c++)

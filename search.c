@@ -96,14 +96,14 @@ findmove (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, in
   /* Must rebuild the movement map */
   mvtype = 0;	/* Will become 'if (mvtype==movetype) movetype=0;' */
 
-  dwait (D_SEARCH, "Findmove: computing new search path.");
+  dwait (D_SEARCH, __func__, "computing new search path");
 
   /* currentrectangle(); */     /* always done after each move of the rogue */
 
   searchstartr = atrow; searchstartc = atcol;
 
   if (!(*evalinit)())    /* Compute evalinit from current location */
-    { dwait (D_SEARCH, "Findmove: evalinit failed."); return (0); }
+    { dwait (D_SEARCH, __func__, "evalinit failed"); return (0); }
 
   if (!searchfrom (atrow, atcol, evaluate, mvdir, &targetrow, &targetcol))
     { return (0); }	/* move failed */
@@ -136,14 +136,14 @@ followmap (int movetype)
 
   if (dir > 7 || dir < 0) {
     if (dir < 0) {
-      dwait (D_ERROR, "Followmap: direction invalid!  < 0  dir %d,  atr %d atc %d",
+      dwait (D_ERROR, __func__, "invalid direction < 0: %d atr: %d atc: %d",
                    dir, atrow, atcol);
       return (0);			      /* Something Broke */
     }
     else if (dir >= TARGET) {
       dir = dir - TARGET;
       if (dir > 7) {
-        dwait (D_ERROR, "Followmap: adjusted direction still invalid!  dir %d,  atr %d atc %d",
+        dwait (D_ERROR, __func__, "invalid adj direction > 7: %d atr: %d atc: %d",
                    dir, atrow, atcol);
         return (0);			      /* Something Broke still */
       }
@@ -216,17 +216,17 @@ validatemap (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int,
   int thedir, dir, r, c;
   int val, avd, cont;
 
-  dwait (D_CONTROL | D_SEARCH, "Validatemap: type %d", movetype);
+  dwait (D_CONTROL | D_SEARCH, __func__, "type: %d", movetype);
 
   if (mvtype != movetype) {
-    dwait (D_SEARCH, "Validatemap: move type mismatch, map invalid.");
+    dwait (D_SEARCH, __func__, "move type mismatch, map invalid");
     return (0);
   }
 
   thedir = mvdir[atrow][atcol] - FROM;
 
   if (thedir > 7 || thedir < 0) {
-    dwait (D_SEARCH, "Validatemap: direction in map invalid.");
+    dwait (D_SEARCH, __func__, "direction in map invalid");
     return (0);  /* Something Broke */
   }
 
@@ -239,7 +239,7 @@ validatemap (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int,
    */
 
   if (!didinit && !(*evalinit)()) {
-    dwait (D_SEARCH, "Validatemap: evalinit failed.");
+    dwait (D_SEARCH, __func__, "evalinit failed");
     return (2);  /* evalinit failed */
   }
 
@@ -251,23 +251,23 @@ validatemap (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int,
     val = avd = cont = 0;
 
     if (!(*evaluate)(r, c, movedepth[r][c], &val, &avd, &cont)) {
-      dwait (D_SEARCH, "Validatemap: evaluate failed.");
+      dwait (D_SEARCH, __func__, "evaluate failed");
       return (0);
     }
 
     if (!onrc (CANGO, r, c) ||
         avd!=moveavd[r][c] || val!=moveval[r][c] || cont!=movecont[r][c]) {
-      dwait (D_SEARCH, "Validatemap: map invalidated.");
+      dwait (D_SEARCH, __func__, "map invalidated");
       return (0);
     }
 
     if ((dir=mvdir[r][c]-FROM) == TARGET) {
-      dwait (D_SEARCH, "Validatemap: existing map validated.");
+      dwait (D_SEARCH, __func__, "existing map validated");
       break;
     }
 
     if (dir < 0 || dir > 7) {
-      dwait (D_SEARCH, "Validatemap: direction in map invalid.");
+      dwait (D_SEARCH, __func__, "direction in map invalid");
       return (0);
     }
 
@@ -331,7 +331,7 @@ searchfrom (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), 
     r += deltr[tempdir];  c += deltc[tempdir];
   }
 
-  dwait (D_SEARCH, "Searchfrom wins.");
+  dwait (D_SEARCH, __func__, "wins");
   return (1);
 }
 
@@ -403,8 +403,8 @@ searchto (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), ch
     if (r==QUEUEBREAK) {
       /* If we have completed an evaluation loop */
       if (searchcontinue <= 0 || !any) {
-        if (havetarget) dwait (D_SEARCH, "Searchto wins.");
-        else dwait (D_SEARCH, "Searchto fails.");
+        if (havetarget) dwait (D_SEARCH, __func__, "wins");
+        else dwait (D_SEARCH, __func__, "fails");
 
         return (havetarget);  /* have found somewhere to go */
       }
@@ -413,7 +413,7 @@ searchto (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), ch
 
       /* ----------------------------------------------------------------
       if (debug (D_SCREEN))
-        dwait (D_SEARCH, "Searchto: at queue break, cont=%d, havetarget=%d",
+        dwait (D_SEARCH, __func__, "at queue break, cont: %d havetarget: %d",
          searchcontinue, havetarget);
       ---------------------------------------------------------------- */
 
@@ -448,7 +448,7 @@ searchto (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), ch
         }
       }
       else {	/* If evaluate fails, forget it for now. */
-        dwait (D_SEARCH, "Searchto: evaluate failed.");
+        dwait (D_SEARCH, __func__, "evaluate failed");
         continue;
       }
     }
@@ -469,7 +469,7 @@ searchto (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), ch
 
       if (debug (D_SCREEN | D_SEARCH | D_INFORM)) {
         mvprintw (r, c, "=");
-        dwait (D_SEARCH, "Searchto: target value %d.", moveval[r][c]);
+        dwait (D_SEARCH, __func__, "target value: %d", moveval[r][c]);
       }
 
       searchcontinue = movecont[r][c];

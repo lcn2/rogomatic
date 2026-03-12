@@ -379,7 +379,7 @@ downvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
 int
 expruninit (void)
 {
-  dwait (D_CONTROL | D_SEARCH, "expruninit called.");
+  dwait (D_CONTROL | D_SEARCH, __func__, "called");
   expinit();
   expDor = 0;
   avoidmonsters ();
@@ -415,7 +415,7 @@ exprunvalue (int r, int c, int depth, int *val, int *avd, int *cont)
 int
 expunpininit (void)
 {
-  dwait (D_CONTROL | D_SEARCH, "expunpininit called.");
+  dwait (D_CONTROL | D_SEARCH, __func__, "called");
   expinit();
   expDor = 0;
   pinavoid ();
@@ -699,7 +699,7 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
     *cont = 4;				     /* Look for something better */
 
   if (debug (D_SCREEN) && v > 0)
-    { mvaddch (r, c, 'o'); dwait (D_SCREEN, "Value %d", v); }
+    { mvaddch (r, c, 'o'); dwait (D_SCREEN, __func__, "Value: %d", v); }
 
   return (1);
 }
@@ -901,7 +901,7 @@ avoidmonsters (void)
 
   /* Don't avoid current position */
   avdmonsters[searchstartr][searchstartc] = 0;
-  dwait (D_SEARCH, "Avoidmonsters: avoiding the $s");
+  dwait (D_SEARCH, __func__, "avoiding the $s");
 }
 
 /*
@@ -963,7 +963,7 @@ pinavoid (void)
 
   /* Don't avoid current position */
   avdmonsters[searchstartr][searchstartc] = 0;
-  dwait (D_SEARCH, "Pinavoid: avoiding the &s");
+  dwait (D_SEARCH, __func__, "avoiding the &s");
 }
 
 /*
@@ -1032,7 +1032,7 @@ findroom (void)
   }
 
   new_findroom = 0;
-  dwait (D_SEARCH, "findroom failed.");
+  dwait (D_SEARCH, __func__, "failed");
   return (0);
 }
 
@@ -1049,7 +1049,7 @@ exploreroom (void)
 
   markexplored (atrow, atcol);
 
-  dwait (D_SEARCH, "exploreroom failed.");
+  dwait (D_SEARCH, __func__, "failed");
   return (0);
 }
 
@@ -1155,33 +1155,33 @@ archmonster (int m, int trns)
 {
   int mr, mc;
 
-  dwait (D_CONTROL | D_BATTLE, "archmonster: m=%d, turns=%d", m, trns);
+  dwait (D_CONTROL | D_BATTLE, __func__, "m: %d turns: %d", m, trns);
 
   if (! new_arch) return (0);
 
   /* Useless without arrows */
   if (havemult (missile, "", trns) < 0) {
-    dwait (D_BATTLE, "archmonster, fewer than %d missiles", trns);
+    dwait (D_BATTLE, __func__, "fewer than %d missiles", trns);
     return (0);
   }
 
   /* For now, only work for sleeping monsters */
   if (mlist[m].q != ASLEEP)
-    { dwait (D_BATTLE, "archmonster, monster not asleep"); return (0); }
+    { dwait (D_BATTLE, __func__, "monster not asleep"); return (0); }
 
   /* Save globals */
   archrow = mlist[m].mrow; archcol = mlist[m].mcol; archturns = trns;
 
   /* Can we get to a suitable square */
   if (makemove (ARCHERYMOVE, archeryinit, archeryvalue, REUSE))
-    { dwait (D_BATTLE, "archmonster, made a move"); return (1); }
+    { dwait (D_BATTLE, __func__, "made a move"); return (1); }
 
   /* If no move made and not on target, no path to monster */
   if (!ontarget) { new_arch = 0; return (0); }
 
   /* On target: wake him up and set darkdir/turns if necessary */
   mr = mlist[m].mrow; mc = mlist[m].mcol; targetmonster = mlist[m].chr;
-  mlist[m].q = AWAKE; dwait (D_BATTLE, "archmonster, waking him up");
+  mlist[m].q = AWAKE; dwait (D_BATTLE, __func__, "waking him up");
 
   /* Set dark room archery variables, add goal of standing on square */
   if (darkroom ()) {
@@ -1282,17 +1282,17 @@ movetorest (void)
 
   /* If we are where we want to rest, do so */
   if (restr >= 0 && atrow == restr && atcol == restc)
-    { dwait (D_SEARCH, "movetorest: already on square"); return (0); }
+    { dwait (D_SEARCH, __func__, "already on square"); return (0); }
 
   /* Try to move to a better square (remember position) */
   if (makemove (RESTMOVE, restinit, restvalue, REUSE)) {
-    dwait (D_SEARCH, "movetorest wins.");
+    dwait (D_SEARCH, __func__, "wins");
     restr = targetrow; restc = targetcol;
     return (1);
   }
 
   /* Cant move anywhere better, stay here */
-  dwait (D_SEARCH, "movetorest fails.");
+  dwait (D_SEARCH, __func__, "fails");
   restr = atrow; restc = atcol;
 
   return (0);

@@ -193,11 +193,11 @@ int
 runaway (void)
 {
   if (on (SCAREM)) {
-    dwait (D_BATTLE, "Not running, on scare monster scroll!");
+    dwait (D_BATTLE, __func__, "Not running, on scare monster scroll");
     return (0);
   }
 
-  dwait (D_BATTLE | D_SEARCH, "Run away!!!!");
+  dwait (D_BATTLE | D_SEARCH, __func__, "Run away!!!!");
 
   if (on (STAIRS) && !floating)		/* Go up or down */
     return (goupstairs (RUNNING) || godownstairs (RUNNING));
@@ -242,7 +242,7 @@ unpin (void)
   int result, oldcomp = compression;
 
   if (on (SCAREM)) {
-    dwait (D_BATTLE, "Not unpinning, on scare monster scroll!");
+    dwait (D_BATTLE, __func__, "Not unpinning, on scare monster scroll");
     return (0);
   }
 
@@ -252,7 +252,7 @@ unpin (void)
     return (1);
   }
 
-  dwait (D_BATTLE, "Pinned!!!!");
+  dwait (D_BATTLE, __func__, "Pinned");
 
   /* currentrectangle ();   // always done after each move of the rogue // */
 
@@ -293,16 +293,16 @@ backtodoor (int dist)
    */
 
   if (notmoving)
-    dwait (D_BATTLE, "backtodoor: monsters not moving");
+    dwait (D_BATTLE, __func__, "monsters not moving");
 
   else if (on (SCAREM))
-    dwait (D_BATTLE, "Not backing up, on scare monster scroll!");
+    dwait (D_BATTLE, __func__, "Not backing up, on scare monster scroll");
 
   else if (dist > 0 && (on (DOOR) || nextto (DOOR, atrow, atcol)))
-    dwait (D_BATTLE, "backtodoor: next to door, have time");
+    dwait (D_BATTLE, __func__, "next to door, have time");
 
   else if (makemove (RUNTODOOR, rundoorinit, rundoorvalue, REEVAL))
-    { dwait (D_BATTLE, "Back to the door..."); return (1); }
+    { dwait (D_BATTLE, __func__, "Back to the door"); return (1); }
 
   return (0);
 }

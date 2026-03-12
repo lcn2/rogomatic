@@ -49,8 +49,6 @@
 
 /* static declarations */
 
-static char lokfil[MU_BUF + 1];
-
 static void intrupscore (int sig __attribute__ ((__unused__)));
 
 /*
@@ -63,22 +61,20 @@ static void intrupscore (int sig __attribute__ ((__unused__)));
 void
 add_score (char *new_line, char *vers, int ntrm)
 {
-  char  newfil[MU_BUF + 1]; /* new filename, +1 for paranoia */
+  char *newfil = NULL;	    /* rogomatic delta filename */
+  const char *lock_path;    /* path of the lock file */
   FILE *newlog;
   int lock_fd;
 
-  /* zeroize arrays */
-  memset (lokfil, 0, sizeof(lokfil)); /* paranoia */
-  memset (newfil, 0, sizeof(newfil)); /* paranoia */
-
-  snprintf (lokfil, MU_BUF, "%s.%s", LOCKFILE, vers);
-  snprintf (newfil, MU_BUF, "%s/rgmdelta%s", getRgmDir (), vers);
+  /* form paths */
+  lock_path = getLockFile ();
+  newfil = form_prefix_path ( getRgmDir (), "rgmdelta", vers);
 
   /* Defer interrupts while mucking with the score file */
   critical ();
 
   /* lock */
-  lock_fd = lock_file (__func__, NULL, lokfil);
+  lock_fd = lock_file (__func__, NULL, lock_path);
 
   /* Now create a temporary to copy into */
   if ((newlog = wopen (newfil, "a")) == NULL) {
@@ -92,6 +88,10 @@ add_score (char *new_line, char *vers, int ntrm)
 
   /* unlock */
   unlock_file (__func__, lock_fd);
+  if (newfil != NULL) {
+      free (newfil);
+      newfil = NULL;
+  }
 
   uncritical ();
 }
@@ -104,34 +104,31 @@ void
 dumpscore (char *vers)
 {
   char  ch;
-  char  scrfil[MU_BUF + 1]; /* rogomatic score file path, +1 for paranoia */
-  char  delfil[MU_BUF + 1]; /* rogomatic delta file path, +1 for paranoia */
-  char  newfil[MU_BUF + 1]; /* rogomatic new file path, +1 for paranoia */
-  char  allfil[MU_BUF + 1]; /* rogomatic all scores file path, +1 for paranoia */
-  char  cmd[BIGBUF + 1]; /* shell command buffer, +1 for paranoia */
+  const char *lock_path;    /* path of the lock file */
+  char  *scrfil = NULL;	    /* rogomatic score file path */
+  char  *delfil = NULL;	    /* rogomatic delta file path */
+  char  *newfil = NULL;	    /* rogomatic new file path */
+  char  *allfil = NULL;	    /* rogomatic all scores file path */
+  char  cmd[BIGBUF + 1];    /* shell command buffer, +1 for paranoia */
   FILE *scoref, *deltaf;
   int   oldmask;
   int   lock_fd;
 
   /* zeroize arrays */
-  memset (lokfil, 0, sizeof(lokfil)); /* paranoia */
-  memset (scrfil, 0, sizeof(scrfil)); /* paranoia */
-  memset (delfil, 0, sizeof(delfil)); /* paranoia */
-  memset (newfil, 0, sizeof(newfil)); /* paranoia */
-  memset (allfil, 0, sizeof(allfil)); /* paranoia */
   memset (cmd, 0, sizeof(cmd)); /* paranoia */
 
-  snprintf (lokfil, MU_BUF, "%s.%s", LOCKFILE, vers);
-  snprintf (scrfil, MU_BUF, "%s/rgmscore%s", getRgmDir (), vers);
-  snprintf (delfil, MU_BUF, "%s/rgmdelta%s", getRgmDir (), vers);
-  snprintf (newfil, MU_BUF, "%s/NewScore%s", getRgmDir (), vers);
-  snprintf (allfil, MU_BUF, "%s/AllScore%s", getRgmDir (), vers);
+  /* form paths */
+  lock_path = getLockFile ();
+  scrfil = form_prefix_path (getRgmDir (), "rgmscore", vers);
+  delfil = form_prefix_path (getRgmDir (), "rgmdelta", vers);
+  newfil = form_prefix_path (getRgmDir (), "NewScore", vers);
+  allfil = form_prefix_path (getRgmDir (), "AllScore", vers);
 
   /* On interrupts we must relinquish control of the score file */
   int_exit (intrupscore);
 
   /* lock */
-  lock_fd = lock_file (__func__, NULL, lokfil);
+  lock_fd = lock_file (__func__, NULL, lock_path);
 
   deltaf = fopen (delfil, "r");
   scoref = fopen (scrfil, "r");
@@ -207,6 +204,24 @@ dumpscore (char *vers)
 
   /* unlock */
   unlock_file (__func__, lock_fd);
+
+  /* free paths */
+  if (scrfil != NULL) {
+      free (scrfil);
+      scrfil = NULL;
+  }
+  if (delfil != NULL) {
+      free (delfil);
+      scrfil = NULL;
+  }
+  if (newfil != NULL) {
+      free (newfil);
+      scrfil = NULL;
+  }
+  if (allfil != NULL) {
+      free (allfil);
+      scrfil = NULL;
+  }
 
   exit (0);
 }

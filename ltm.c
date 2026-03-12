@@ -52,7 +52,7 @@ static void clearltm (ltmrec *ltmarr);
 void
 mapcharacter (char ch, char *str)
 {
-  dwait (D_CONTROL, "mapcharacter called: '%c' ==> '%s'", ch, str);
+  dwait (D_CONTROL, __func__, "'%c' ==> '%s'", ch, str);
 
   /* Ancient versions of Rogue had no wands or staves */
   if (ch == '/' && stlmatch (str, "unknown"))
@@ -83,7 +83,7 @@ addmonhist (char *monster)
       return (m);
 
   if (nextmon >= MAXMON)			/* Check for overflow */
-    dwait (D_FATAL, "Overflowed monster array");
+    dwait (D_FATAL, __func__, "Overflowed monster array");
 
   strcpy (monhist[nextmon].m_name, monster);	/* Copy in the name */
   return (nextmon++);				/* Return the index */
@@ -118,12 +118,12 @@ saveltm (int score)
 {
   int m;
   FILE *ltmfil;
-  const char *lock_path;
+  const char *lock_path;    /* path of the lock file */
   int lock_fd;
 
   if (nextmon < 1 || nosave) return;
 
-  dwait (D_CONTROL, "Saveltm called, writing file '%s'", ltmnam);
+  dwait (D_CONTROL, __func__, "writing file: %s", ltmnam);
 
   /* Disable interrupts and open the file for writing */
   critical ();
@@ -134,7 +134,7 @@ saveltm (int score)
 
   /* Only write out the new results if we can get write access */
   if ((ltmfil = wopen (ltmnam, "w")) == NULL)
-    { dwait (D_WARNING, "Can't write long term memory file '%s'...", ltmnam); }
+    { dwait (D_WARNING, __func__, "Can't write long term memory file: %s", ltmnam); }
   else {
     /* Write the ltm file header */
     fprintf (ltmfil, "Count %d, sum %d, start %d, saved %d\n",
@@ -175,7 +175,7 @@ restoreltm (void)
 
   memset (ltmnam, 0, sizeof(ltmnam));
   snprintf (ltmnam, MU_BUF, "%s/ltm%d", getRgmDir (), version);
-  dwait (D_CONTROL, "Restoreltm called, reading file '%s'", ltmnam);
+  dwait (D_CONTROL, __func__, "reading file: %s", ltmnam);
 
   clearltm (monhist);			/* Clear the original sums */
   nextmon = 0;				/* Zero the list of monsters */
@@ -193,7 +193,7 @@ restoreltm (void)
     readltm ();
   else {
     dwait (D_CONTROL | D_SAY,
-	   "Starting long term memory file '%s'...", ltmnam);
+	   __func__, "Starting long term memory file: %s", ltmnam);
     ltm.gamecnt = ltm.gamesum = ltm.timeswritten = 0;
     ltm.inittime = time (0);
   }
@@ -218,7 +218,7 @@ readltm (void)
   if ((ltmfil = fopen (ltmnam, "r")) == NULL) {
     nosave = 1;
     dwait (D_WARNING | D_SAY,
-           "Could not read long term memory file '%s'...", ltmnam);
+           __func__, "Could not read long term memory file: %s", ltmnam);
   }
   else {
     /* Read the ltm file header */

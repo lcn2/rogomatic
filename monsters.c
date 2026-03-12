@@ -52,7 +52,7 @@ monname (char m)
   if (indx >= 0 && indx < MAXMONST) {
       ret = monhist[monindex[indx]].m_name;
   } else {
-      dwait (D_FATAL, "invalid monster char: %c index: %d MAXMONST: %d", m, indx, MAXMONST);
+      dwait (D_FATAL, __func__, "<%c>: %d", m, (int) m);
       /* the above dwait call won't return, so we fake an monster name */
       ret = "bat";
   }
@@ -78,7 +78,7 @@ addmonster (char ch, int r, int c, int quiescence)
     mlist[mlistlen].mcol = c;
     mlist[mlistlen].q = quiescence;
 
-    if (++mlistlen >= MAXMONST) dwait (D_FATAL, "Too many monsters");
+    if (++mlistlen >= MAXMONST) dwait (D_FATAL, __func__, "Too many monsters");
 
     setrc (MONSTER, r, c);
     lyinginwait = 0;
@@ -143,7 +143,7 @@ sleepmonster (void)
 
   for (m = 0; m < mlistlen; ++m) {
     if (mlist[m].q == 0 && ! ADJACENT (m)) {
-      dwait (D_MONSTER, "Found a sleeping %s at %d,%d",
+      dwait (D_MONSTER, __func__, "Found a sleeping %s at (%d,%d)",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
       mlist[m].q = ASLEEP;
@@ -164,7 +164,7 @@ holdmonsters (void)
     if (mlist[m].q == 0 &&
         (max (abs (mlist[m].mrow - atrow),
               abs (mlist[m].mcol - atcol)) < 3)) {
-      dwait (D_MONSTER, "Holding %s at %d,%d",
+      dwait (D_MONSTER, __func__, "Holding %s at (%d,%d)",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
       mlist[m].q = HELD;
@@ -192,7 +192,7 @@ wakemonster (int dir)
          (dir < 0 && ADJACENT(m) && mlist[m].chr == -dir + 'A' - 1) ||
          (dir >= 0 && dir < 8 &&
           mlist[m].mrow == atdrow(dir) && mlist[m].mcol == atdcol(dir)))) {
-      dwait (D_MONSTER, "Waking up %s at %d,%d",
+      dwait (D_MONSTER, __func__, "Waking up %s at (%d,%d)",
              monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
       mlist[m].q = AWAKE;

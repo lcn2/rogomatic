@@ -69,7 +69,7 @@ static int quitforhonors (void);
 int
 strategize (void)
 {
-  dwait (D_CONTROL, "Strategizing...");
+  dwait (D_CONTROL, __func__, "Strategizing");
 
   /* If replaying, instead of making an action, return the old one */
   if (replaying) return (replaycommand ());
@@ -97,7 +97,7 @@ strategize (void)
     return (1);
 
   if (handleweapon ())		/* Play with the nice sword */
-    { dwait (D_BATTLE, "Switching to sword [1]"); return (1); }
+    { dwait (D_BATTLE, __func__, "Switching to 1st sword"); return (1); }
 
   if (light ())			/* Fiat lux! Especially if we lost */
     return (1);			/* a monster from view.		   */
@@ -206,7 +206,7 @@ strategize (void)
    */
 
   if (on (STAIRS) && (atrow != stairrow || atcol != staircol))
-    { dwait (D_ERROR, "Stairs moved!"); findstairs (NONE, NONE); return (1); }
+    { dwait (D_ERROR, __func__, "Stairs moved"); findstairs (NONE, NONE); return (1); }
 
   /*
    * If we failed to find the stairs, explore each possible secret door
@@ -313,7 +313,7 @@ fightmonster (void)
         { wanddir = direc (rr-atrow, cc-atcol); }
 
       /* Debugging breakpoint */
-      dwait (D_BATTLE, "%c <%d,%d>, danger %d, worst %c(%d,%d), total %d",
+      dwait (D_BATTLE, __func__, "%c: (%d,%d) danger: %d worst %c: (%d,%d) total: %d",
              screen[rr][cc], rr-atrow, cc-atcol,
              danger, monc, mdir, mbad, adjacent);
     }
@@ -346,7 +346,7 @@ fightmonster (void)
 
   if (!lyinginwait && !adjacent) {
     command (T_FIGHTING, "s");
-    dwait (D_BATTLE, "Lying in wait...");
+    dwait (D_BATTLE, __func__, "Lying in wait");
     lyinginwait = 1;
     foughtmonster = DIDFIGHT;
     return (1);
@@ -354,7 +354,7 @@ fightmonster (void)
 
   /* If we are here but have no direction, there was a bug somewhere */
   if (mdir < 0) {
-    dwait (D_BATTLE, "Adjacent, but no direction known!");
+    dwait (D_BATTLE, __func__, "Adjacent, but no direction known");
     return (0);
   }
 
@@ -362,7 +362,7 @@ fightmonster (void)
   if (danger >= Hp) display ("In trouble...");
 
   /* Well, nothing better than to hit the beast! Tell dwait about it */
-  dwait (D_BATTLE, "Attacking %s(%d) direction %d (total danger %d)...",
+  dwait (D_BATTLE, __func__, "Attacking %s: %d direction: %d total danger: %d",
          monster, mbad, mdir, danger);
 
   /* Record the monster type */
@@ -426,7 +426,7 @@ tomonster (void)
 
       /* Or if he is meaner than another equally close monster, save him */
       else if (dist == closest && avghit(i) > avghit(which)) {
-        dwait (D_BATTLE, "Chasing %c(%d) rather than %c(%d) at distance %d.",
+        dwait (D_BATTLE, __func__, "Chasing %c: %d rather than %c: %d at distance: %d",
                mlist[i].chr, avghit(i), mlist[which].chr,
                avghit(which), dist);
 
@@ -457,7 +457,7 @@ tomonster (void)
   /* If he is an odd number of squares away, lie in wait for him */
   if ((closest&1) == 0 && !lyinginwait) {
     command (T_FIGHTING, "s");
-    dwait (D_BATTLE, "Waiting for monster an odd number of squares away...");
+    dwait (D_BATTLE, __func__, "Waiting for monster an odd number of squares away");
     lyinginwait = 1;
     return (1);
   }
@@ -520,7 +520,7 @@ aftermelee (void)
   if (foughtmonster > 0) {
     lyinginwait = 1;
     command (T_RESTING, "s");
-    dwait (D_BATTLE, "Aftermelee: waiting for %d rounds.", foughtmonster);
+    dwait (D_BATTLE, __func__, "waiting for %d rounds", foughtmonster);
     return (1);
   }
 
@@ -572,7 +572,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
       (Hp < percent (Hpmax, 95))) {
     command (T_RESTING, "s");
     display ("Resting on scare monster");
-    dwait (D_BATTLE, "Battlestations: resting, on scaremonster.");
+    dwait (D_BATTLE, __func__, "resting, on scaremonster");
     return (1);
   }
 
@@ -585,7 +585,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
 
   /* Debugging breakpoint */
   dwait (D_BATTLE,
-         "Battlestations: %s(%d), total danger %d, dir %d, %d turns, %d adj.",
+         __func__, "%s: %d total danger: %d dir: %d, %d turns: %d adj",
          monster, mbad, danger, mdir, turns, adj);
 
   /*
@@ -593,14 +593,14 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
    */
 
   if (live_for (1) && turns < 2 && wielding (thrower) && handleweapon ())
-    { dwait (D_BATTLE, "Switching to sword [2]"); return (1); }
+    { dwait (D_BATTLE, __func__, "Switching to 2nd sword"); return (1); }
 
   /*
    * Don't waste magic when on a scare monster scroll
    */
 
   if (on (SCAREM) && !streq (monster, "dragon")) {
-    dwait (D_BATTLE, "Battlestations: hitting from scaremonster.");
+    dwait (D_BATTLE, __func__, "hitting from scaremonster");
     return (0);
   }
 
@@ -959,7 +959,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
 
   if (!alert && !lyinginwait && turns > 0) {
     command (T_FIGHTING, "s");
-    dwait (D_BATTLE, "Waiting to see if he is awake...");
+    dwait (D_BATTLE, __func__, "Waiting to see if he is awake");
     lyinginwait = 1;
     return (1);
   }
@@ -1004,7 +1004,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
    */
 
   if (!cursedweapon && wielding (thrower) && handleweapon ())
-    { dwait (D_BATTLE, "Switching to sword [3]"); return (1); }
+    { dwait (D_BATTLE, __func__, "Switching to 3rd sword"); return (1); }
 
   /*
    * No bright ideas. Return and let the caller figure out what to do.
@@ -1218,12 +1218,12 @@ archery (void)
          streq (monster, "ice monster"))  &&
         (ammo >= (mtk = monatt[mlist[m].chr-'A'].mtokill - gplushit)) &&
         (larder > 0 || ((streq (monster, "leprechaun") && !hungry ()) || streq (monster, "nymph")))) {
-      dwait (D_BATTLE, "Arching at %c at (%d,%d)",
+      dwait (D_BATTLE, __func__, "Arching at %c at (%d,%d)",
              mlist[m].chr, mlist[m].mrow, mlist[m].mcol);
 
       if (archmonster (m, mtk)) return (1);
 
-      dwait (D_BATTLE, "Archmonster failed in archery.");
+      dwait (D_BATTLE, __func__, "Archmonster failed in archery");
     }
   }
 

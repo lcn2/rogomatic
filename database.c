@@ -199,8 +199,8 @@ infername (char *codename, char *name, stuff item_type)
   }
   else {
     if (*dbase[i].realname && strcmp (dbase[i].realname, name))
-      dwait (D_ERROR, "Inconsistent inference, infername: dbase[i].realname '%s', name '%s'",
-             dbase[i].realname, name);
+      dwait (D_ERROR, __func__, "dbase[%d].realname: %s != name: %s",
+		      i, dbase[i].realname, name);
     else {
       memset (dbase[i].realname, '\0', NAMSIZ);
       strncpy (dbase[i].realname, name, NAMSIZ-1);
