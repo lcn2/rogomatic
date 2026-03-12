@@ -431,6 +431,7 @@ clobber: clean
 	${RM} -f tags index rogomatic.6 rogomatic.cat
 	${RM} -f ${OTHER_TARGES}
 	${RM} -f ${TARGETS}
+	${RM} -rf *.dSYM
 
 install: all ${MISC_DOC} ${ORIG_DOC} stddocs
 	${INSTALL} -d -m 0755 ${BINDIR}

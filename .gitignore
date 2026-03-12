@@ -3,6 +3,7 @@
 anim
 datesub
 datesub.c
+*.dSYM
 gene
 genetest
 gplot
