@@ -41,7 +41,37 @@
 # define READ    0
 # define WRITE   1
 
+# define VERSION "14.1.0 20026-03-12"
+
 /* static declarations */
+
+static const char * const usage =
+  "usage: %s [-h] [-V] [-c] [-e] [-f rogue] [-H] [-p] [-r] [-s] [-S ROGOSEED] [-t] [-u] [-w] [-E]\n"
+  "\n"
+  "    -h            print help message and exit\n"
+  "    -V            print version string and exit\n"
+  "\n"
+  "    -c            use trap arrows\n"
+  "    -e            echo file to roguelog\n"
+  "    -f rogue      set path to rogue\n"
+  "    -H            disable \"halftime\" show\n"
+  "    -p            play back roguelog\n"
+  "    -r            use saved game\n"
+  "    -s            print scores only\n"
+  "    -S ROGOSEED   set $ROGOSEED environment variable for rogue\n"
+  "    -t            give status lines only\n"
+  "    -u            start up in user mode\n"
+  "    -w            set watched mode\n"
+  "    -E            set emacs mode\n"
+  "\n"
+  "Exit codes:\n"
+  "    0         all OK\n"
+  "    1         some error occured\n"
+  "    2         -h and help string printed or -V and version string printed\n"
+  "    3         command line error\n"
+  " >= 10        internal error\n"
+  "\n"
+  "%s version: %s\n";
 
 static int   frogue, trogue;
 
@@ -59,46 +89,118 @@ main (int argc, char *argv[])
   char  ropts[SM_BUF + 1]; /* rogue options, +1 for paranoia */
   char  roguename[MU_BUF + 1]; /* rogue player name, +1 for paranoia */
   char  *pfile = "";
+  char  *program = ""; /* our name */
+  char  *prog = ""; /* basename of our name */
   const char *rgmdir = NULL;
   struct stat rgmdir_buf; /* stat of rgmdir */
+  extern char *optarg;        /* option argument */
+  extern int optind;          /* argv index of the next arg */
   int ret;
+  int i;
+
+  /*
+   * set our program and prog basename
+   */
+  program = argv[0];
+  prog = rindex(program, '/');
+  if (prog == NULL) {
+    prog = program;
+  } else {
+    ++prog;
+  }
+  /*
+   * parse args
+   */
+  while ((i = getopt (argc, argv, "hVcef:HprsS:tuwE:")) != -1) {
+    switch (i) {
+      case 'h':		/* -h ==> print usage message */
+	fprintf (stderr, usage, program, prog, VERSION);
+	exit (2);
+	break;
+
+      case 'V':		/* -V -==> print version string and exit */
+	printf ("%s\n", VERSION);
+	exit (2);
+	break;
+
+      case 'c':		/* -c ==> Will use trap arrows! */
+	cheat = 1;
+	break;
+
+      case 'e':		/* -e ==> Echo file to roguelog */
+	echo = 1;
+	break;
+
+      case 'f':		/* -f rogue ==> set path to rogue */
+	rfilearg = optarg;
+	break;
+
+      case 'H':		/* -H ==> No halftime show */
+	nohalf = 1;
+	break;
+
+      case 'p':		/* -p ==> Play back roguelog */
+	replay = 1;
+	break;
+
+      case 'r':		/* -r ==> Use saved game */
+	oldgame = 1;
+	break;
+
+      case 's':		/* -s ==> Give scores only */
+	score = 1;
+	break;
+
+      case 'S':
+	if (setenv ("ROGOSEED", optarg, 1) != 0) {
+	  fprintf (stderr, "ERROR: can't setenv (\"ROGOSEED\", \"%s\", 1)\n", optarg);
+	  exit (1);
+	}
+	break;
+
+      case 't':		/* -t ==> Give status lines only */
+	terse = 1;
+	break;
+
+      case 'u':		/* -u ==> Start up in user mode */
+	user = 1;
+	break;
+
+      case 'w':		/* -w ==> Watched mode */
+	noterm = 1;
+	break;
+
+      case 'E':		/* -E ==> Emacs mode */
+	emacs = 1;
+	break;
+
+      case ':':
+	fprintf(stderr, "%s: ERROR: requires an argument -- %c\n", program, optopt);
+	fprintf (stderr, usage, program, prog, VERSION);
+	exit (3);
+	break;
+
+      case '?':
+	fprintf(stderr, "%s: ERROR: illegal option -- %c\n", program, optopt);
+	fprintf (stderr, usage, program, prog, VERSION);
+	exit (3);
+	break;
+
+      default:
+	fprintf(stderr, "%s: ERROR: invalid -flag\n", program);
+	fprintf (stderr, usage, program, prog, VERSION);
+	exit (3);
+	break;
+    }
+  }
+  /* skip over command line options */
+  argv += optind;
+  argc -= optind;
 
   /* zeroize arrays */
   memset (options, 0, sizeof(options)); /* paranoia */
   memset (ropts, 0, sizeof(ropts)); /* paranoia */
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
-
-  while (--argc > 0 && (*++argv)[0] == '-') {
-    while (*++(*argv)) {
-      switch (**argv) {
-        case 'c': cheat++;        break; /* Will use trap arrows! */
-        case 'e': echo++;         break; /* Echo file to roguelog */
-        case 'f': rf++;           break; /* Next arg is the rogue file */
-        case 'h': nohalf++;       break; /* No halftime show */
-        case 'p': replay++;       break; /* Play back roguelog */
-        case 'r': oldgame++;      break; /* Use saved game */
-        case 's': score++;        break; /* Give scores only */
-        case 't': terse++;        break; /* Give status lines only */
-        case 'u': user++;         break; /* Start up in user mode */
-        case 'w': noterm = 0;     break; /* Watched mode */
-        case 'E': emacs++;        break; /* Emacs mode */
-        default:  printf
-          ("Usage: rogomatic [-cefhprstuwE] or rogomatic [file]\n");
-          exit (1);
-      }
-    }
-
-    if (rf) {
-      if (--argc) rfilearg = *++argv;
-
-      rf = 0;
-    }
-  }
-
-  if (argc > 1) {
-    printf ("Usage: rogomatic [-cefhprstuwE] or rogomatic <file>\n");
-    exit (1);
-  }
 
   /*
    * Find which rogue executable to use
@@ -227,7 +329,7 @@ main (int argc, char *argv[])
       execl (rfile, "rogue", "-r", NULL);
       fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r: %s\n", rfile, strerror (errno));
 
-    } else if (argc) {
+    } else if (argc > 0) {
       execl (rfile, "rogue", argv[0], NULL);
       fprintf (stderr, "ERROR: rogue restore exec failed: %s %s: %s\n", rfile, argv[0], strerror (errno));
 

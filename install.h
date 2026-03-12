@@ -12,18 +12,6 @@
 
 
 /*
- * BEST - Printed when no score file is available in dumpscore()
- *
- * Set to a low rogue score value of 999 for rogue 5.4.5.
- *
- * Was:
- *
- * Rog-O-Matic's best score against Rogue 5.3  (UTexas, Feb 1984) was 11316.
- */
-
-# define BEST		(4095)
-
-/*
  * Rog-O-Matic will not try to beat scores higher than BOGUS which
  * appear on the Rogue scoreboard.
  */

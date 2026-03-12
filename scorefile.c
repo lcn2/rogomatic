@@ -140,7 +140,7 @@ dumpscore (char *vers)
     /* Defer interrupts while mucking with the score file */
     critical ();
 
-    /* Make certain any new files are world writeable */
+    /* Make certain any new files are world writable */
     oldmask = umask (0);
 
     /* If we have an old file and a delta file, merge them */
@@ -189,7 +189,7 @@ dumpscore (char *vers)
 
     /* unlock */
     unlock_file (__func__, lock_fd);
-    quit (1, "ERROR: %s: Can't find: %s\nBest score was: %d\n", __func__, scrfil, BEST);
+    quit (1, "ERROR: %s: Can't find: %s\n", __func__, scrfil);
     not_reached ();
   }
 

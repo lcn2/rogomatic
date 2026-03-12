@@ -77,8 +77,15 @@ rogo_baudrate (void)
 char *
 getname (void)
 {
-  static char name[MU_BUF + 1]; /* +1 for paranoia */
+  static char name[MU_BUF + 1] = {'\0'}; /* +1 for paranoia */
   struct passwd *pw;
+
+  /*
+   * do not modify name if it was already set
+   */
+  if (name[0] != '\0') {
+      return name;
+  }
 
   /*
    * lookup the password entry relating to the real user ID of the calling process
@@ -86,16 +93,21 @@ getname (void)
   pw = getpwuid(getuid());
 
   /*
+   * pre-load player name with rogo-
+   */
+  memset(name, 0, sizeof(name)); /* paranoia */
+  strncpy(name, "rogo-", strlen("rogo-"));
+
+  /*
    * paranoia check
    *
    * Only use the username of the real user ID of the calling process,
    * if the username is a non-empty string
-   * */
-  memset(name, 0, sizeof(name)); /* paranoia */
+   */
   if (pw != NULL && pw->pw_name != NULL && pw->pw_name[0] != '\0') {
-      strncpy(name, pw->pw_name, MU_BUF);
+      strncat(name, pw->pw_name, MU_BUF);
   } else {
-      strncpy(name, "nobody", MU_BUF);
+      strncat(name, "nobody", MU_BUF);
   }
 
   return (name);
