@@ -62,7 +62,7 @@ void
 add_score (char *new_line, char *vers, int ntrm)
 {
   char *newfil = NULL;	    /* rogomatic delta filename */
-  const char *lock_path;    /* path of the lock file */
+  const char *lock_path = NULL;    /* path of the lock file */
   FILE *newlog;
   int lock_fd;
 
@@ -88,6 +88,16 @@ add_score (char *new_line, char *vers, int ntrm)
 
   /* unlock */
   unlock_file (__func__, lock_fd);
+  if (newfil != NULL) {
+      free (newfil);
+      newfil = NULL;
+  }
+
+  /* free paths */
+  if (lock_path != NULL) {
+      free ((void *) lock_path);
+      lock_path = NULL;
+  }
   if (newfil != NULL) {
       free (newfil);
       newfil = NULL;
@@ -206,6 +216,10 @@ dumpscore (char *vers)
   unlock_file (__func__, lock_fd);
 
   /* free paths */
+  if (lock_path != NULL) {
+      free ((void *) lock_path);
+      scrfil = NULL;
+  }
   if (scrfil != NULL) {
       free (scrfil);
       scrfil = NULL;

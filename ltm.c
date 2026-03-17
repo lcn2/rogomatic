@@ -28,6 +28,7 @@
  * term memory"
  */
 
+# include <stdlib.h>
 # include <curses.h>
 # include <math.h>
 # include <string.h>
@@ -118,7 +119,7 @@ saveltm (int score)
 {
   int m;
   FILE *ltmfil;
-  const char *lock_path;    /* path of the lock file */
+  const char *lock_path = NULL;    /* path of the lock file */
   int lock_fd;
 
   if (nextmon < 1 || nosave) return;
@@ -159,6 +160,12 @@ saveltm (int score)
     unlock_file (__func__, lock_fd);
   }
 
+  /* free path */
+  if (lock_path != NULL) {
+      free ((void *) lock_path);
+      lock_path = NULL;
+  }
+
   /* Re-enable interrupts */
   uncritical ();
 }
@@ -170,7 +177,7 @@ saveltm (int score)
 void
 restoreltm (void)
 {
-  const char *lock_path;
+  const char *lock_path = NULL;
   int lock_fd;
 
   memset (ltmnam, 0, sizeof(ltmnam));
@@ -200,6 +207,12 @@ restoreltm (void)
 
   /* unlock */
   unlock_file (__func__, lock_fd);
+
+  /* free path */
+  if (lock_path != NULL) {
+      free ((void *) lock_path);
+      lock_path = NULL;
+  }
 
   uncritical ();
 }

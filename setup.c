@@ -449,7 +449,7 @@ setuniquergmdir (void)
   if (strftime (path + rgmdirlen, datelen, "%Y%m%d_%H%M%S", utc_now) == 0) {
     fprintf (stderr, "ERROR: %s: failed to convert time to string\n", __func__);
     free (path);
-    path = NULL; /* paranoia */
+    path = NULL;
     return -1;
   }
 
@@ -460,12 +460,12 @@ setuniquergmdir (void)
   if (setenv ("RGMDIR", path, 1) != 0) {
     fprintf (stderr, "ERROR: %s: can't setenv (\"RGMDIR\", \"%s\", 1)\n", __func__, path);
     free (path);
-    path = NULL; /* paranoia */
+    path = NULL;
     return -1;
   }
 
   /* cleanup */
   free (path);
-  path = NULL; /* paranoia */
+  path = NULL;
   return 0;
 }
