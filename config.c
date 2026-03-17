@@ -20,35 +20,134 @@
  * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# include <stdio.h>
 # include <sys/types.h>
 # include <stdlib.h>
 # include <string.h>
+# include <ctype.h>
 
+# include "types.h"
 # include "install.h"
 
 /*
- * If RGMDIR environment variable was set, use it.
- * Otherwise, use RGMDIR and LOCKFILE values according to the definition in install.h
+ * sane_path: test a path is POSIX portable safe
+ *
+ * POSIX portable safe path matches this regex:
+ *
+ *	^[/0-9A-Za-z][/0-9A-Za-z._+-]*$
+ *
+ * Return < 0 if the string is NOT POSIX portable safe.
+ */
+int
+sane_path (char *path)
+{
+    char *p;
+
+    /* firewall */
+    if (path == NULL) {
+	return -1;
+    }
+
+    /*
+     * check each character for POSIX portable safe chars
+     */
+    /* first character can only be slash "/" or alphanumeric */
+    if (path[0] != '/' &&  isalnum(path[0])) {
+	return -1;
+    }
+    /* remaining characters can only be: [/0-9A-Za-z._+-] */
+    for (p=path+1; *p != '\0'; ++p) {
+	/* allowed characters are [/0-9A-Za-z._+-] */
+	if (*p != '/' && !isalnum(*p) && *p != '.' && *p != '_' && *p != '+' && *p != '-') {
+	    return -2;
+	}
+
+    }
+
+    /*
+     * string is POSIX portable safe
+     */
+    return 0;
+}
+
+/*
+ * getRgmDir: Return the rogomatic directory path
+ *
+ * If RGMDIR environment variable was set, try to use it.
+ * However, if RGMDIR environment variable to too long, or is not POSIX portable safe,
+ * use the RGMDIR according to the definition in install.h.
  */
 
 const char *
 getRgmDir (void)
 {
-  char *path = getenv("RGMDIR");
-  return path != NULL ? path : RGMDIR;
+  char *path;	/* rogomatic directory path to return */
+
+  /*
+   * start with for RGMDIR environment variable value
+   */
+  path = getenv ("RGMDIR");
+  if (path == NULL) {
+    /* no such environment variable, use RGMDIR default */
+    return RGMDIR;
+  }
+
+  /*
+   * sanity check the RGMDIR environment variable value
+   */
+  if (strlen (path) >= TY_BUF) {
+    /* RGMDIR environment variable too long, use RGMDIR default */
+    return RGMDIR;
+  }
+  if (sane_path (path) < 0) {
+    /* RGMDIR environment variable contains unsafe characters, use RGMDIR default */
+    return RGMDIR;
+  }
+
+  /* path is sane */
+  return path;
 }
+
+/*
+ * getLockFile: Return the rogomatic lock file path
+ *
+ * If RGMDIR environment variable was set, try to use it.
+ * However, if RGMDIR environment variable to too long, or is not POSIX portable safe,
+ * use the LOCKFILE according to the definition in install.h.
+ */
 
 const char *
 getLockFile (void)
 {
-  char *path = getenv("RGMDIR");
+  char *path;			/* rogomatic directory path */
+  static char buf[SM_BUF + 1];	/* rogomatic lock file path to return, +1 for paranoia */
+
+  /*
+   * start with for RGMDIR environment variable value
+   */
+  path = getenv ("RGMDIR");
   if (path == NULL) {
     return LOCKFILE;
   }
 
-  char* buf = calloc(strlen(path) + 9, sizeof(char));
-  strcpy(buf, path);
-  strcat(buf, "/Rgm.Lock");
+  /*
+   * sanity check the RGMDIR environment variable value
+   */
+  if (strlen (path) >= TY_BUF) {
+    /* RGMDIR environment variable too long, use LOCKFILE default */
+    return LOCKFILE;
+  }
+  if (sane_path (path) < 0) {
+    /* RGMDIR environment variable contains unsafe characters, use LOCKFILE default */
+    return LOCKFILE;
+  }
 
+  /*
+   * form the rogomatic lock file path
+   */
+  memset (buf, 0, sizeof(buf));
+  snprintf (buf, SM_BUF, "%s/Rgm.Lock", path);
+
+  /* return the rogomatic lock file path */
   return buf;
 }

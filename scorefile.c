@@ -93,11 +93,7 @@ add_score (char *new_line, char *vers, int ntrm)
       newfil = NULL;
   }
 
-  /* free paths */
-  if (lock_path != NULL) {
-      free ((void *) lock_path);
-      lock_path = NULL;
-  }
+  /* free path */
   if (newfil != NULL) {
       free (newfil);
       newfil = NULL;
@@ -216,10 +212,6 @@ dumpscore (char *vers)
   unlock_file (__func__, lock_fd);
 
   /* free paths */
-  if (lock_path != NULL) {
-      free ((void *) lock_path);
-      scrfil = NULL;
-  }
   if (scrfil != NULL) {
       free (scrfil);
       scrfil = NULL;

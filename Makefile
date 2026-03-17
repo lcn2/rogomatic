@@ -613,6 +613,7 @@ command.o: globals.h
 command.o: types.h
 config.o: config.c
 config.o: install.h
+config.o: types.h
 database.o: database.c
 database.o: globals.h
 database.o: types.h

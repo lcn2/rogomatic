@@ -160,12 +160,6 @@ saveltm (int score)
     unlock_file (__func__, lock_fd);
   }
 
-  /* free path */
-  if (lock_path != NULL) {
-      free ((void *) lock_path);
-      lock_path = NULL;
-  }
-
   /* Re-enable interrupts */
   uncritical ();
 }
@@ -207,12 +201,6 @@ restoreltm (void)
 
   /* unlock */
   unlock_file (__func__, lock_fd);
-
-  /* free path */
-  if (lock_path != NULL) {
-      free ((void *) lock_path);
-      lock_path = NULL;
-  }
 
   uncritical ();
 }

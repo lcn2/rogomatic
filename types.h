@@ -460,6 +460,7 @@ extern int replaycommand (void);
 extern void showcommand (char *cmd);
 
 /* config.c */
+extern int sane_path (char *path);
 extern const char *getRgmDir (void);
 extern const char *getLockFile (void);
 
