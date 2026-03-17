@@ -26,7 +26,7 @@
 
 # include "install.h"
 
-/* 
+/*
  * If RGMDIR environment variable was set, use it.
  * Otherwise, use RGMDIR and LOCKFILE values according to the definition in install.h
  */
