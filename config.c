@@ -21,46 +21,34 @@
  */
 
 # include <sys/types.h>
-# include <dirent.h>
 # include <stdlib.h>
+# include <string.h>
 
 # include "install.h"
 
-/* install.h has a RGMDIR and a LOCKFILE which are set to the install path
- * which is fine, unless you are testing things out when you might want a
- * local log directory.  So if there is an rlog directory in your current
- * working directory, it will be given preference over the variables
- * RGMDIR and LOCKFILE
+/* 
+ * If RGMDIR environment variable was set, use it.
+ * Otherwise, use RGMDIR and LOCKFILE values according to the definition in install.h
  */
-static const char *rgmpath  = "rlog";
-static const char *lockpath = "rlog/RgmLock";
 
 const char *
 getRgmDir (void)
 {
-  DIR *rgmdir = NULL;
-
-  /* give preference to a directory in the current directory */
-  if ((rgmdir = opendir (rgmpath)) != NULL) {
-    closedir (rgmdir);
-    return rgmpath;
-  }
-  else {
-    return RGMDIR;
-  }
+  char *path = getenv("RGMDIR");
+  return path != NULL ? path : RGMDIR;
 }
 
 const char *
 getLockFile (void)
 {
-  DIR *rgmdir = NULL;
-
-  /* give preference to a directory in the current directory */
-  if ((rgmdir = opendir (rgmpath)) != NULL) {
-    closedir (rgmdir);
-    return lockpath;
-  }
-  else {
+  char *path = getenv("RGMDIR");
+  if (path == NULL) {
     return LOCKFILE;
   }
+
+  char* buf = calloc(strlen(path) + 9, sizeof(char));
+  strcpy(buf, path);
+  strcat(buf, "/Rgm.Lock");
+
+  return buf;
 }

@@ -34,6 +34,7 @@
 # include <string.h>
 # include <errno.h>
 # include <sys/stat.h>
+# include <time.h>
 
 # include "types.h"
 # include "install.h"
@@ -52,6 +53,7 @@ static const char * const usage =
   "    -V            print version string and exit\n"
   "\n"
   "    -c            use trap arrows\n"
+  "    -d            use unique directory name\n"
   "    -e            echo file to roguelog\n"
   "    -f rogue      set path to rogue\n"
   "    -H            disable \"halftime\" show\n"
@@ -76,6 +78,8 @@ static const char * const usage =
 static int   frogue, trogue;
 
 static void replaylog (char *pname, char *fname, char *options);
+
+static int setuniquergmdir();
 
 int
 main (int argc, char *argv[])
@@ -111,7 +115,7 @@ main (int argc, char *argv[])
   /*
    * parse args
    */
-  while ((i = getopt (argc, argv, "hVcef:HprsS:tuwE:")) != -1) {
+  while ((i = getopt (argc, argv, "hVcef:HprsS:tuwE:d")) != -1) {
     switch (i) {
       case 'h':		/* -h ==> print usage message */
 	fprintf (stderr, usage, program, prog, VERSION);
@@ -126,6 +130,13 @@ main (int argc, char *argv[])
       case 'c':		/* -c ==> Will use trap arrows! */
 	cheat = 1;
 	break;
+      
+      case 'd':   /* -d ==> use a unique directory name for the run */
+  if (setuniquergmdir() != 0) {
+    fprintf (stderr, "ERROR: failed to set custom rgmdir\n");
+	  exit (1);
+  }
+  break;
 
       case 'e':		/* -e ==> Echo file to roguelog */
 	echo = 1;
@@ -320,6 +331,10 @@ main (int argc, char *argv[])
       fprintf (stderr, "ERROR: can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n",ropts);
       exit (1);
     }
+    if (setenv ("RGMDIR", getRgmDir(), 1) != 0) {
+      fprintf (stderr, "ERROR: can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n",ropts);
+      exit (1);
+    }
 
     /* close down pipe sides used by parent process */
     close (ptc[WRITE]);
@@ -384,4 +399,38 @@ replaylog (char *pfile, char *fname, char *options)
   execl (pfile, "player", "ZZ", "0", options, fname, NULL);
   fprintf (stderr, "ERROR: Replay not available, player binary missing: %s\n", pfile);
   exit (1);
+}
+
+/*
+ * setuniquergmdir: Sets enviroment variable RGMDIR to have a unique name,
+ * so rogomatic files for the run are stored separately.
+ */
+static int 
+setuniquergmdir() {
+  time_t tm = time(NULL);
+  if (tm == -1) {
+    fprintf (stderr, "ERROR: failed to get current time\n");
+    return -1;
+  }
+
+  char *path;
+  int rgmdirlen = strlen(RGMDIR);
+  path = calloc(rgmdirlen + 16, sizeof(char));
+  strcpy(path, RGMDIR);
+  path[rgmdirlen] = '/';
+  if (strftime(path + rgmdirlen + 1, 16, "%Y%m%d_%H%M%S", gmtime(&tm)) == 0) {
+    fprintf (stderr, "ERROR: failed to convert time to string\n");
+    goto cleanupandfail;
+  }
+  if (setenv ("RGMDIR", path, 1) != 0) {
+    fprintf (stderr, "ERROR: can't setenv (\"RGMDIR\", \"%s\", 1)\n", path);
+    goto cleanupandfail;
+  }
+
+  free(path);
+  return 0;
+
+cleanupandfail:
+  free(path);
+  return -1;
 }

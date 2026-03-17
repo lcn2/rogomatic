@@ -425,7 +425,7 @@ main (int argc, char *argv[])
   if (getenv("GETROGOMATICPID") != NULL) {
     pid = getpid ();
     memset (pidfilename, 0, sizeof(pidfilename));
-    snprintf (pidfilename, NAMSIZ, "%s/rogomaticpid.%d", RGMDIR, pid);
+    snprintf (pidfilename, NAMSIZ, "%s/rogomaticpid.%d", getRgmDir (), pid);
     if ((pidfp = fopen (pidfilename, "w")) == NULL) {
       fprintf (stderr, "ERROR: Can't open '%s'.\n", pidfilename);
       exit(1);
@@ -451,7 +451,7 @@ main (int argc, char *argv[])
     int frogue_fd = argv[1][0] - 'a';
     int trogue_fd = argv[1][1] - 'a';
     open_frogue_fd (frogue_fd);
-    open_frogue_debuglog (RGMDIR, "debuglog.frogue");
+    open_frogue_debuglog (getRgmDir (), "debuglog.frogue");
     trogue = fdopen (trogue_fd, "w");
     setbuf (trogue, NULL);
   }
@@ -907,9 +907,9 @@ startlesson (void)
   unsigned int tmpseed = 0;
   int lock_fd;
 
-  snprintf (genelog, MU_BUF, "%s/GeneLog%d", RGMDIR, version);
-  snprintf (genepool, MU_BUF, "%s/GenePool%d", RGMDIR, version);
-  snprintf (genelock, MU_BUF, "%s/GeneLock%d", RGMDIR, version);
+  snprintf (genelog, MU_BUF, "%s/GeneLog%d", getRgmDir (), version);
+  snprintf (genepool, MU_BUF, "%s/GenePool%d", getRgmDir (), version);
+  snprintf (genelock, MU_BUF, "%s/GeneLock%d", getRgmDir (), version);
 
   /* set up random number generation */
   if (getenv("SEED") != NULL) {
