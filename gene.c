@@ -35,12 +35,6 @@
 # include "types.h"
 # include "install.h"
 
-/*
- * externals
- */
-extern char rgmdir[SM_BUF + 1];      /* rogomatic directory, +1 for paranoia */
-extern int time_subpath;	     /* 0 ==> do not append UTC date/time to rgmdir, != 0 ==> append */
-
 char genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
 char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
 char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
