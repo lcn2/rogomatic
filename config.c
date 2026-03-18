@@ -25,129 +25,94 @@
 # include <stdlib.h>
 # include <string.h>
 # include <ctype.h>
+# include <sys/stat.h>
+# include <time.h>
 
 # include "types.h"
 # include "install.h"
 
 /*
- * sane_path: test a path is POSIX portable safe
- *
- * POSIX portable safe path matches this regex:
- *
- *	^[/0-9A-Za-z][/0-9A-Za-z._+-]*$
- *
- * Return < 0 if the string is NOT POSIX portable safe.
+ * globals
  */
-int
-sane_path (char *path)
-{
-    char *p;
+char rgmdir[SM_BUF + 1] = { '\0' };	/* rogomatic directory, +1 for paranoia */
+char lock_path[SM_BUF + 1] = { '\0' };	/* rogomatic lock file path, +1 for paranoia */
+int time_subpath = 0;			/* 0 ==> do not append UTC date/time to rgmdir, != 0 ==> append */
 
-    /* firewall */
-    if (path == NULL) {
-	return -1;
+/*
+ * set_rgmdir: setup the rogomatic directory path band the path of the lock file
+ *
+ * Given:
+ *
+ *	time_subpath == 0 ==> use the RGMDIR default
+ *	else ==> append a date and time subpath
+ */
+void
+set_rgmdir (void)
+{
+  time_t tm;			/* now */
+  struct tm *utc_now;		/* tm in UTC */
+  int rgmdirlen;		/* length of the default rogomatic directory path plus trailing slash "/" */
+  int datelen;			/* length of the UTC date string */
+
+  /*
+   * if needed, load the RGMDIR default
+   *
+   * NOTE: It is possible for some non-default path to be loaded in already
+   */
+  if (rgmdir[0] == '\0') {
+    memset (rgmdir, 0, sizeof(rgmdir));
+    strncpy (rgmdir, RGMDIR, SM_BUF);
+  }
+
+  /*
+   * if needed, form the rogomatic lock file path
+   *
+   * NOTE: The state of time_subpath does NOT impact the crogomatic lock file path.
+   */
+  if (lock_path[0] == '\0') {
+    memset (lock_path, 0, sizeof(lock_path));
+    snprintf (lock_path, SM_BUF, "%s/Rgm.Lock", rgmdir);
+  }
+
+  /*
+   * if we are to add a time_subpath, attempt to append the UTC date and time
+   */
+  if (time_subpath) {
+
+    /*
+     * determine now in UTC
+     */
+    tm = time (NULL);
+    if (tm == -1) {
+      fprintf (stderr, "ERROR: %s: failed to get current time\n", __func__);
+      return;
+    }
+    utc_now = gmtime (&tm);
+    if (utc_now == NULL) {
+      fprintf (stderr, "ERROR: %s: failed convert now into UTC now\n", __func__);
+      return;
     }
 
     /*
-     * check each character for POSIX portable safe chars
+     * attempt to append a UTC date and time sub-directory
      */
-    /* first character can only be slash "/" or alphanumeric */
-    if (path[0] != '/' &&  isalnum(path[0])) {
-	return -1;
+    rgmdirlen = strlen (rgmdir); /* +1 for trailing slash "/" */
+    if (rgmdirlen >= SM_BUF) {
+      fprintf (stderr, "ERROR: %s: RGMDIR default is already too long to append UTC date and time sub-dir\n",
+		       __func__);
+      return;
     }
-    /* remaining characters can only be: [/0-9A-Za-z._+-] */
-    for (p=path+1; *p != '\0'; ++p) {
-	/* allowed characters are [/0-9A-Za-z._+-] */
-	if (*p != '/' && !isalnum(*p) && *p != '.' && *p != '_' && *p != '+' && *p != '-') {
-	    return -2;
-	}
-
+    rgmdir[rgmdirlen] = '/';
+    ++rgmdirlen;
+    datelen = sizeof ("YYYYMMDD_HHMMSS");
+    if (rgmdirlen+datelen >= SM_BUF) {
+      fprintf (stderr, "ERROR: %s: RGMDIR default is too long to append UTC date and time sub-dir\n",
+		       __func__);
+      return;
     }
-
-    /*
-     * string is POSIX portable safe
-     */
-    return 0;
-}
-
-/*
- * getRgmDir: Return the rogomatic directory path
- *
- * If RGMDIR environment variable was set, try to use it.
- * However, if RGMDIR environment variable to too long, or is not POSIX portable safe,
- * use the RGMDIR according to the definition in install.h.
- */
-
-const char *
-getRgmDir (void)
-{
-  char *path;	/* rogomatic directory path to return */
-
-  /*
-   * start with for RGMDIR environment variable value
-   */
-  path = getenv ("RGMDIR");
-  if (path == NULL) {
-    /* no such environment variable, use RGMDIR default */
-    return RGMDIR;
+    if (strftime (rgmdir + rgmdirlen, datelen, "%Y%m%d_%H%M%S", utc_now) == 0) {
+      fprintf (stderr, "ERROR: %s: failed to convert time to string\n", __func__);
+    }
   }
-
-  /*
-   * sanity check the RGMDIR environment variable value
-   */
-  if (strlen (path) >= TY_BUF) {
-    /* RGMDIR environment variable too long, use RGMDIR default */
-    return RGMDIR;
-  }
-  if (sane_path (path) < 0) {
-    /* RGMDIR environment variable contains unsafe characters, use RGMDIR default */
-    return RGMDIR;
-  }
-
-  /* path is sane */
-  return path;
-}
-
-/*
- * getLockFile: Return the rogomatic lock file path
- *
- * If RGMDIR environment variable was set, try to use it.
- * However, if RGMDIR environment variable to too long, or is not POSIX portable safe,
- * use the LOCKFILE according to the definition in install.h.
- */
-
-const char *
-getLockFile (void)
-{
-  char *path;			/* rogomatic directory path */
-  static char buf[SM_BUF + 1];	/* rogomatic lock file path to return, +1 for paranoia */
-
-  /*
-   * start with for RGMDIR environment variable value
-   */
-  path = getenv ("RGMDIR");
-  if (path == NULL) {
-    return LOCKFILE;
-  }
-
-  /*
-   * sanity check the RGMDIR environment variable value
-   */
-  if (strlen (path) >= TY_BUF) {
-    /* RGMDIR environment variable too long, use LOCKFILE default */
-    return LOCKFILE;
-  }
-  if (sane_path (path) < 0) {
-    /* RGMDIR environment variable contains unsafe characters, use LOCKFILE default */
-    return LOCKFILE;
-  }
-
-  /*
-   * form the rogomatic lock file path
-   */
-  memset (buf, 0, sizeof(buf));
-  snprintf (buf, SM_BUF, "%s/Rgm.Lock", path);
-
-  /* return the rogomatic lock file path */
-  return buf;
+  return;
 }

@@ -104,11 +104,11 @@
 # include <sys/types.h>
 # include <unistd.h>
 # include <errno.h>
+# include <sys/stat.h>
 
 # include "types.h"
 # include "install.h"
 # include "termtokens.h"
-
 
 /* FIXME: get rid of this prototype in the correct way */
 FILE *rogo_openlog (char *genelog);
@@ -363,14 +363,12 @@ main (int argc, char *argv[])
   char  ch, *s;
   char msg[SM_BUF + 1];	/* message buffer, +1 for paranoia */
   int startingup = 1;
+  struct stat rgmdir_buf; /* stat of rgmdir */
+  int ret;		  /* stat(2) return */
   int  i;
-
-  /*
-   * on exit: cleanup I/O, and shutdown ncurses (if needed)
-   */
-  (void) atexit(endwin_and_ncurses_cleanup);
-
-  debuglog_open (getRgmDir (), "debuglog.player");
+  pid_t pid;			/* process id */
+  char pidfilename[NAMSIZ + 1]; /* +1 for paranoia */
+  FILE *pidfp = NULL;		/* open pidfilename stream */
 
   /*
    * Initialize some storage
@@ -404,32 +402,83 @@ main (int argc, char *argv[])
   memset (monindex, 0, sizeof(monindex)); /* paranoia */
   memset (timessearched, 0, sizeof(timessearched)); /* paranoia */
   memset (monatt, 0, sizeof(monatt)); /* paranoia */
+  memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
 
   /*
-   * Get the process id of this player program if the
-   * environment variable is set which requests this be
-   * done.  Then create the file name with the PID so
-   * that the debugging scripts can find it and use the
-   * PID.
-   *
-   * This code can be removed if you don't need to use
-   * the debugging scripts.
-   *
+   * on exit: cleanup I/O, and shutdown ncurses (if needed)
    */
+  (void) atexit(endwin_and_ncurses_cleanup);
 
-  /* Process ID */
-  pid_t pid;
-  char pidfilename[NAMSIZ + 1]; /* +1 for paranoia */
-  FILE *pidfp;
+  /* The second argument to player is the process id of Rogue */
+  errno = 0;
+  if (argc > 2) {
+      rogpid = atoi (argv[2]);
+      if (errno != 0) {
+	  fprintf (stderr, "ERROR: argv[2]: %s cannot be converted into an int: %s\n", argv[2], strerror (errno));
+	  exit(1);
+      }
+      if (rogpid < 0) {
+	  fprintf (stderr, "ERROR: argv[2]: %s pid arg < 0: %d\n", argv[2], rogpid);
+	  exit(1);
+      }
+  }
 
-  if (getenv("GETROGOMATICPID") != NULL) {
-    pid = getpid ();
-    memset (pidfilename, 0, sizeof(pidfilename));
-    snprintf (pidfilename, NAMSIZ, "%s/rogomaticpid.%d", getRgmDir (), pid);
-    if ((pidfp = fopen (pidfilename, "w")) == NULL) {
-      fprintf (stderr, "ERROR: Can't open '%s'.\n", pidfilename);
-      exit(1);
-    }
+  /* The third argument is an option list */
+  if (argc > 3) {
+      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d,%d",
+                            &cheat, &noterm, &startecho, &nohalf,
+                            &emacs, &terse, &transparent, &quitat, &time_subpath);
+      if (i != 9) {
+	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 9 ints, returned: %d\n", argv[3], i);
+	  exit(1);
+      }
+  }
+
+  /* The fourth argument is the Rogue name */
+  if (argc > 4)	{
+      strncpy (roguename, argv[4], MU_BUF);
+  } else {
+      snprintf (roguename, MU_BUF, "Rog-O-Matic %s", RGMVER);
+  }
+  roguename[MU_BUF] = '\0'; /* paranoia */
+
+  /* The 5th argument is the non-default rogomatic directory path */
+  if (argc > 5) {
+    memset (rgmdir, 0, sizeof(rgmdir));
+    strncpy (rgmdir, argv[5], SM_BUF);
+  }
+
+  /*
+   * determine the rogomatic directory path and rogomatic lock file path
+   */
+  set_rgmdir ();
+
+  /*
+   * create rogomatic directory if it does not already exist
+   */
+  memset (&rgmdir_buf, 0, sizeof(rgmdir_buf));
+  ret = stat(rgmdir, &rgmdir_buf);
+  if (ret < 0) {
+      /* no rgmdir, attempt to mkdir(rgmdir) */
+      ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
+      if (ret < 0) {
+	fprintf (stderr, "ERROR: mkdir %s failed: %s\n", rgmdir, strerror (errno));
+	exit (1);
+      }
+  }
+
+  /*
+   * verify that rgmdir is a read-write searchable directory
+   */
+  ret = stat(rgmdir, &rgmdir_buf);
+  if (ret < 0 || ((rgmdir_buf.st_mode & S_IFDIR) == 0)) {
+    fprintf (stderr, "ERROR: not a directory: %s: %s\n", rgmdir, strerror (errno));
+    exit (1);
+  }
+  ret = access(rgmdir, R_OK|W_OK|X_OK);
+  if (ret < 0) {
+    fprintf (stderr, "ERROR: directory is not read-write and searchable: %s\n", rgmdir);
+    exit (1);
   }
 
   /*
@@ -451,66 +500,35 @@ main (int argc, char *argv[])
     int frogue_fd = argv[1][0] - 'a';
     int trogue_fd = argv[1][1] - 'a';
     open_frogue_fd (frogue_fd);
-    open_frogue_debuglog (getRgmDir (), "debuglog.frogue");
+    open_frogue_debuglog (rgmdir, "debuglog.frogue");
     trogue = fdopen (trogue_fd, "w");
     setbuf (trogue, NULL);
   }
 
-  /* The second argument to player is the process id of Rogue */
-  errno = 0;
-  if (argc > 2) {
-      rogpid = atoi (argv[2]);
-      if (errno != 0) {
-	  fprintf (stderr, "ERROR: argv[2]: %s cannot be converted into an int: %s\n", argv[2], strerror (errno));
-	  exit(1);
-      }
-      if (rogpid < 0) {
-	  fprintf (stderr, "ERROR: argv[2]: %s pid arg < 0: %d\n", argv[2], rogpid);
-	  exit(1);
-      }
-  }
-
-  /* The third argument is an option list */
-  if (argc > 3) {
-      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d",
-                            &cheat, &noterm, &startecho, &nohalf,
-                            &emacs, &terse, &transparent, &quitat);
-      if (i != 8) {
-	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 8 ints, returned: %d\n", argv[3], i);
-	  exit(1);
-      }
-  }
-
-  /* The fourth argument is the Rogue name */
-  if (argc > 4)	{
-      strncpy (roguename, argv[4], MU_BUF);
-  } else {
-      snprintf (roguename, MU_BUF, "Rog-O-Matic %s", RGMVER);
-  }
-  roguename[MU_BUF] = '\0'; /* paranoia */
-
-#if 0 /* process arguments unused */
   /*
-   * form a single string of argument parameters separated by spaces
+   * open debug logging
+   *
+   * Get the process id of this player program if the
+   * environment variable is set which requests this be
+   * done.  Then create the file name with the PID so
+   * that the debugging scripts can find it and use the
+   * PID.
+   *
+   * This code can be removed if you don't need to use
+   * the debugging scripts.
+   *
    */
-  /* count arg string length */
-  for (i=0, arglen=0; i<argc && argv[i] != NULL; i++) {
-    int len = strlen (argv[i]);
-    arglen += len + 1;
-  }
-  memset(parmstr, 0, sizeof(parmstr));
-  for (i=0, arglen=0; i<argc && argv[i] != NULL; i++) {
-    int len = strlen (argv[i]);
 
-    if (arglen+len+1 < sizeof(parmstr)) {
-	strncpy (parmstr+arglen, argv[i], len);
-	arglen += len;
-	parmstr[arglen] = ' ';
-	++arglen;
-      }
+  if (getenv("GETROGOMATICPID") != NULL) {
+    pid = getpid ();
+    memset (pidfilename, 0, sizeof(pidfilename));
+    snprintf (pidfilename, NAMSIZ, "%s/rogomaticpid.%d", rgmdir, pid);
+    if ((pidfp = fopen (pidfilename, "w")) == NULL) {
+      fprintf (stderr, "ERROR: Can't open '%s'.\n", pidfilename);
+      exit(1);
+    }
   }
-  parmstr[arglen] = '\0';
-#endif
+  debuglog_open (rgmdir, "debuglog.player");
 
   /* If we are in one-line mode, then squirrel away stdout */
   if (emacs || terse) {
@@ -907,9 +925,9 @@ startlesson (void)
   unsigned int tmpseed = 0;
   int lock_fd;
 
-  snprintf (genelog, MU_BUF, "%s/GeneLog%d", getRgmDir (), version);
-  snprintf (genepool, MU_BUF, "%s/GenePool%d", getRgmDir (), version);
-  snprintf (genelock, MU_BUF, "%s/GeneLock%d", getRgmDir (), version);
+  snprintf (genelog, MU_BUF, "%s/GeneLog%d", rgmdir, version);
+  snprintf (genepool, MU_BUF, "%s/GenePool%d", rgmdir, version);
+  snprintf (genelock, MU_BUF, "%s/GeneLock%d", rgmdir, version);
 
   /* set up random number generation */
   if (getenv("SEED") != NULL) {

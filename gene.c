@@ -35,6 +35,12 @@
 # include "types.h"
 # include "install.h"
 
+/*
+ * externals
+ */
+extern char rgmdir[SM_BUF + 1];      /* rogomatic directory, +1 for paranoia */
+extern int time_subpath;	     /* 0 ==> do not append UTC date/time to rgmdir, != 0 ==> append */
+
 char genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
 char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
 char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
@@ -98,9 +104,9 @@ main (int argc, char *argv[])
   }
 
   /* No file argument, assign the gene log and pool file names */
-  snprintf (genelock, MU_BUF, "%s/GeneLock%d", getRgmDir (), version);
-  snprintf (genelog, MU_BUF, "%s/GeneLog%d", getRgmDir (), version);
-  snprintf (genepool, MU_BUF, "%s/GenePool%d", getRgmDir (), version);
+  snprintf (genelock, MU_BUF, "%s/GeneLock%d", rgmdir, version);
+  snprintf (genelog, MU_BUF, "%s/GeneLog%d", rgmdir, version);
+  snprintf (genepool, MU_BUF, "%s/GenePool%d", rgmdir, version);
 
   critical ();				/* Disable interrupts */
 

@@ -119,7 +119,6 @@ saveltm (int score)
 {
   int m;
   FILE *ltmfil;
-  const char *lock_path = NULL;    /* path of the lock file */
   int lock_fd;
 
   if (nextmon < 1 || nosave) return;
@@ -130,7 +129,6 @@ saveltm (int score)
   critical ();
 
   /* lock */
-  lock_path = getLockFile ();
   lock_fd = lock_file(__func__, NULL, lock_path);
 
   /* Only write out the new results if we can get write access */
@@ -171,11 +169,10 @@ saveltm (int score)
 void
 restoreltm (void)
 {
-  const char *lock_path = NULL;
   int lock_fd;
 
   memset (ltmnam, 0, sizeof(ltmnam));
-  snprintf (ltmnam, MU_BUF, "%s/ltm%d", getRgmDir (), version);
+  snprintf (ltmnam, MU_BUF, "%s/ltm%d", rgmdir, version);
   dwait (D_CONTROL, __func__, "reading file: %s", ltmnam);
 
   clearltm (monhist);			/* Clear the original sums */
@@ -186,7 +183,6 @@ restoreltm (void)
   critical ();
 
   /* lock */
-  lock_path = getLockFile ();
   lock_fd = lock_file (__func__, NULL, lock_path);
 
   /* Only read the long term memory if we can get access */

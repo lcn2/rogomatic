@@ -142,7 +142,7 @@ dwait(int msgtype, const char *from, char *f, ...)
     FILE *errfil;
 
     /* form error filename */
-    path = form_prefix_path (getRgmDir (), "error",  versionstr);
+    path = form_prefix_path (rgmdir, "error",  versionstr);
 
     /* append an error message to the error filename */
     if ((errfil = wopen (path, "a")) != NULL) {
