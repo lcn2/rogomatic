@@ -62,13 +62,11 @@ void
 add_score (char *new_line, char *vers, int ntrm)
 {
   char *newfil = NULL;	    /* rogomatic delta filename */
-  const char *lock_path;    /* path of the lock file */
   FILE *newlog;
   int lock_fd;
 
   /* form paths */
-  lock_path = getLockFile ();
-  newfil = form_prefix_path ( getRgmDir (), "rgmdelta", vers);
+  newfil = form_prefix_path ( rgmdir, "rgmdelta", vers);
 
   /* Defer interrupts while mucking with the score file */
   critical ();
@@ -93,6 +91,12 @@ add_score (char *new_line, char *vers, int ntrm)
       newfil = NULL;
   }
 
+  /* free path */
+  if (newfil != NULL) {
+      free (newfil);
+      newfil = NULL;
+  }
+
   uncritical ();
 }
 
@@ -104,7 +108,6 @@ void
 dumpscore (char *vers)
 {
   char  ch;
-  const char *lock_path;    /* path of the lock file */
   char  *scrfil = NULL;	    /* rogomatic score file path */
   char  *delfil = NULL;	    /* rogomatic delta file path */
   char  *newfil = NULL;	    /* rogomatic new file path */
@@ -118,11 +121,10 @@ dumpscore (char *vers)
   memset (cmd, 0, sizeof(cmd)); /* paranoia */
 
   /* form paths */
-  lock_path = getLockFile ();
-  scrfil = form_prefix_path (getRgmDir (), "rgmscore", vers);
-  delfil = form_prefix_path (getRgmDir (), "rgmdelta", vers);
-  newfil = form_prefix_path (getRgmDir (), "NewScore", vers);
-  allfil = form_prefix_path (getRgmDir (), "AllScore", vers);
+  scrfil = form_prefix_path (rgmdir, "rgmscore", vers);
+  delfil = form_prefix_path (rgmdir, "rgmdelta", vers);
+  newfil = form_prefix_path (rgmdir, "NewScore", vers);
+  allfil = form_prefix_path (rgmdir, "AllScore", vers);
 
   /* On interrupts we must relinquish control of the score file */
   int_exit (intrupscore);

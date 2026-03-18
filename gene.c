@@ -98,9 +98,9 @@ main (int argc, char *argv[])
   }
 
   /* No file argument, assign the gene log and pool file names */
-  snprintf (genelock, MU_BUF, "%s/GeneLock%d", getRgmDir (), version);
-  snprintf (genelog, MU_BUF, "%s/GeneLog%d", getRgmDir (), version);
-  snprintf (genepool, MU_BUF, "%s/GenePool%d", getRgmDir (), version);
+  snprintf (genelock, MU_BUF, "%s/GeneLock%d", rgmdir, version);
+  snprintf (genelog, MU_BUF, "%s/GeneLog%d", rgmdir, version);
+  snprintf (genepool, MU_BUF, "%s/GenePool%d", rgmdir, version);
 
   critical ();				/* Disable interrupts */
 

@@ -53,8 +53,10 @@ extern char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia
 extern char screen[R][C + 1];		/* characters drawn by Rogue, +1 for paranoia */
 extern char sumline[BIGBUF + 1];	/* Summation line, +1 for paranoia */
 extern char sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
-extern char *termination;	/* Latin verb for how we died */
+extern char *termination;		/* Latin verb for how we died */
 extern char versionstr[MU_BUF + 1];	/* Version of Rogue being used, +1 for paranoia */
+extern char rgmdir[SM_BUF + 1];	        /* rogomatic directory, +1 for paranoia */
+extern int time_subpath;		/* 0 ==> do not append UTC date/time to rmgdir, != 0 ==> append */
 
 /* global integers */
 extern int aggravated;		/* True if we aggravated this level */

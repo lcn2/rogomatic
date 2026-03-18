@@ -20,47 +20,99 @@
  * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+# include <stdio.h>
 # include <sys/types.h>
-# include <dirent.h>
 # include <stdlib.h>
+# include <string.h>
+# include <ctype.h>
+# include <sys/stat.h>
+# include <time.h>
 
+# include "types.h"
 # include "install.h"
 
-/* install.h has a RGMDIR and a LOCKFILE which are set to the install path
- * which is fine, unless you are testing things out when you might want a
- * local log directory.  So if there is an rlog directory in your current
- * working directory, it will be given preference over the variables
- * RGMDIR and LOCKFILE
+/*
+ * globals
  */
-static const char *rgmpath  = "rlog";
-static const char *lockpath = "rlog/RgmLock";
+char rgmdir[SM_BUF + 1] = { '\0' };	/* rogomatic directory, +1 for paranoia */
+char lock_path[SM_BUF + 1] = { '\0' };	/* rogomatic lock file path, +1 for paranoia */
+int time_subpath = 0;			/* 0 ==> do not append UTC date/time to rgmdir, != 0 ==> append */
 
-const char *
-getRgmDir (void)
+/*
+ * set_rgmdir: setup the rogomatic directory path band the path of the lock file
+ *
+ * Given:
+ *
+ *	time_subpath == 0 ==> use the RGMDIR default
+ *	else ==> append a date and time subpath
+ */
+void
+set_rgmdir (void)
 {
-  DIR *rgmdir = NULL;
+  time_t tm;			/* now */
+  struct tm *utc_now;		/* tm in UTC */
+  int rgmdirlen;		/* length of the default rogomatic directory path plus trailing slash "/" */
+  int datelen;			/* length of the UTC date string */
 
-  /* give preference to a directory in the current directory */
-  if ((rgmdir = opendir (rgmpath)) != NULL) {
-    closedir (rgmdir);
-    return rgmpath;
+  /*
+   * if needed, load the RGMDIR default
+   *
+   * NOTE: It is possible for some non-default path to be loaded in already
+   */
+  if (rgmdir[0] == '\0') {
+    memset (rgmdir, 0, sizeof(rgmdir));
+    strncpy (rgmdir, RGMDIR, SM_BUF);
   }
-  else {
-    return RGMDIR;
-  }
-}
 
-const char *
-getLockFile (void)
-{
-  DIR *rgmdir = NULL;
+  /*
+   * if needed, form the rogomatic lock file path
+   *
+   * NOTE: The state of time_subpath does NOT impact the crogomatic lock file path.
+   */
+  if (lock_path[0] == '\0') {
+    memset (lock_path, 0, sizeof(lock_path));
+    snprintf (lock_path, SM_BUF, "%s/Rgm.Lock", rgmdir);
+  }
 
-  /* give preference to a directory in the current directory */
-  if ((rgmdir = opendir (rgmpath)) != NULL) {
-    closedir (rgmdir);
-    return lockpath;
+  /*
+   * if we are to add a time_subpath, attempt to append the UTC date and time
+   */
+  if (time_subpath) {
+
+    /*
+     * determine now in UTC
+     */
+    tm = time (NULL);
+    if (tm == -1) {
+      fprintf (stderr, "ERROR: %s: failed to get current time\n", __func__);
+      return;
+    }
+    utc_now = gmtime (&tm);
+    if (utc_now == NULL) {
+      fprintf (stderr, "ERROR: %s: failed convert now into UTC now\n", __func__);
+      return;
+    }
+
+    /*
+     * attempt to append a UTC date and time sub-directory
+     */
+    rgmdirlen = strlen (rgmdir); /* +1 for trailing slash "/" */
+    if (rgmdirlen >= SM_BUF) {
+      fprintf (stderr, "ERROR: %s: RGMDIR default is already too long to append UTC date and time sub-dir\n",
+		       __func__);
+      return;
+    }
+    rgmdir[rgmdirlen] = '/';
+    ++rgmdirlen;
+    datelen = sizeof ("YYYYMMDD_HHMMSS");
+    if (rgmdirlen+datelen >= SM_BUF) {
+      fprintf (stderr, "ERROR: %s: RGMDIR default is too long to append UTC date and time sub-dir\n",
+		       __func__);
+      return;
+    }
+    if (strftime (rgmdir + rgmdirlen, datelen, "%Y%m%d_%H%M%S", utc_now) == 0) {
+      fprintf (stderr, "ERROR: %s: failed to convert time to string\n", __func__);
+    }
   }
-  else {
-    return LOCKFILE;
-  }
+  return;
 }

@@ -33,7 +33,6 @@
 # include <unistd.h>
 # include <string.h>
 # include <errno.h>
-# include <sys/stat.h>
 
 # include "types.h"
 # include "install.h"
@@ -43,8 +42,9 @@
 
 # define VERSION "14.1.0 20026-03-12"
 
-/* static declarations */
-
+/*
+ * static declarations
+ */
 static const char * const usage =
   "usage: %s [-h] [-V] [-c] [-e] [-f rogue] [-H] [-p] [-r] [-s] [-S ROGOSEED] [-t] [-u] [-w] [-E]\n"
   "\n"
@@ -52,6 +52,7 @@ static const char * const usage =
   "    -V            print version string and exit\n"
   "\n"
   "    -c            use trap arrows\n"
+  "    -d            use unique directory name\n"
   "    -e            echo file to roguelog\n"
   "    -f rogue      set path to rogue\n"
   "    -H            disable \"halftime\" show\n"
@@ -91,8 +92,6 @@ main (int argc, char *argv[])
   char  *pfile = "";
   char  *program = ""; /* our name */
   char  *prog = ""; /* basename of our name */
-  const char *rgmdir = NULL;
-  struct stat rgmdir_buf; /* stat of rgmdir */
   extern char *optarg;        /* option argument */
   extern int optind;          /* argv index of the next arg */
   int ret;
@@ -108,10 +107,20 @@ main (int argc, char *argv[])
   } else {
     ++prog;
   }
+
+  /* zeroize arrays */
+  memset (options, 0, sizeof(options)); /* paranoia */
+  memset (ropts, 0, sizeof(ropts)); /* paranoia */
+  memset (roguename, 0, sizeof(roguename)); /* paranoia */
+  memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
+
+  /* initialize rogomatic directory path to default */
+  strncpy (rgmdir, RGMDIR, SM_BUF);
+
   /*
    * parse args
    */
-  while ((i = getopt (argc, argv, "hVcef:HprsS:tuwE:")) != -1) {
+  while ((i = getopt (argc, argv, "hVcdD:ef:HprsS:tuwE:")) != -1) {
     switch (i) {
       case 'h':		/* -h ==> print usage message */
 	fprintf (stderr, usage, program, prog, VERSION);
@@ -125,6 +134,15 @@ main (int argc, char *argv[])
 
       case 'c':		/* -c ==> Will use trap arrows! */
 	cheat = 1;
+	break;
+
+      case 'd':		/* -d ==> player uses UTC date and time sub-directory under rogomatic directory path */
+	time_subpath = 1;
+	break;
+
+      case 'D':		/* -D path ==> set the rogomatic directory path */
+	memset (rgmdir, 0, sizeof(rgmdir));
+	strncpy (rgmdir, optarg, SM_BUF);
 	break;
 
       case 'e':		/* -e ==> Echo file to roguelog */
@@ -197,11 +215,6 @@ main (int argc, char *argv[])
   argv += optind;
   argc -= optind;
 
-  /* zeroize arrays */
-  memset (options, 0, sizeof(options)); /* paranoia */
-  memset (ropts, 0, sizeof(ropts)); /* paranoia */
-  memset (roguename, 0, sizeof(roguename)); /* paranoia */
-
   /*
    * Find which rogue executable to use
    */
@@ -248,40 +261,12 @@ main (int argc, char *argv[])
     exit (1);
   }
 
-  /*
-   * create RGMDIR if it does not already exist
-   */
-  rgmdir = getRgmDir ();
-  memset (&rgmdir_buf, 0, sizeof(rgmdir_buf));
-  ret = stat(rgmdir, &rgmdir_buf);
-  if (ret < 0) {
-      /* no rgmdir, attempt to mkdir(rgmdir) */
-      ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
-      if (ret < 0) {
-	fprintf (stderr, "ERROR: mkdir %s failed: %s\n", rgmdir, strerror (errno));
-	exit (1);
-      }
-  }
-
-  /*
-   * verify that rgmdir is a read-write searchable directory
-   */
-  ret = stat(rgmdir, &rgmdir_buf);
-  if (ret < 0 || ((rgmdir_buf.st_mode & S_IFDIR) == 0)) {
-    fprintf (stderr, "ERROR: not a directory: %s: %s\n", rgmdir, strerror (errno));
-    exit (1);
-  }
-  ret = access(rgmdir, R_OK|W_OK|X_OK);
-  if (ret < 0) {
-    fprintf (stderr, "ERROR: directory is not read-write and searchable: %s\n", rgmdir);
-    exit (1);
-  }
-
   if (!replay && !score) quitat = findscore (rfile, "Rog-O-Matic");
 
-  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
-           cheat, noterm, echo, nohalf, emacs, terse, user, quitat);
+  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d,%d",
+           cheat, noterm, echo, nohalf, emacs, terse, user, quitat, time_subpath);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
+  /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir */
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
 	    "terse", "noflush", "jump", "seefloor", "nopassgo", "tombstone", "slow", getname (), "apricot",
 	    rgmdir, "rogue.sav", rgmdir, "rogue.scr", rgmdir, "rogue.lck");
@@ -364,7 +349,7 @@ main (int argc, char *argv[])
     close (ptc[READ]);
     close (ctp[WRITE]);
 
-    execl (pfile, "player", ft, rp, options, roguename, NULL);
+    execl (pfile, "player", ft, rp, options, roguename, rgmdir, NULL);
     fprintf (stderr, "ERROR: Rogomatic not available, player binary missing: %s\n", pfile);
     kill (child, SIGKILL);
   }
@@ -381,7 +366,7 @@ static void
 replaylog (char *pfile, char *fname, char *options)
 {
   /* ZZ is the an indicator that player does NOT have a pipe pair to use */
-  execl (pfile, "player", "ZZ", "0", options, fname, NULL);
+  execl (pfile, "player", "ZZ", "0", options, fname, rgmdir, NULL);
   fprintf (stderr, "ERROR: Replay not available, player binary missing: %s\n", pfile);
   exit (1);
 }

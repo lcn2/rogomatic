@@ -460,7 +460,10 @@ extern int replaycommand (void);
 extern void showcommand (char *cmd);
 
 /* config.c */
-extern const char *getRgmDir (void);
+extern char rgmdir[SM_BUF + 1];
+extern char lock_path[SM_BUF + 1];
+extern int time_subpath;
+extern void set_rgmdir (void);
 extern const char *getLockFile (void);
 
 /* database.c */
