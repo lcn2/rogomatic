@@ -54,8 +54,6 @@
  */
 # define charonscreen(Y,X)	(A_CHARTEXT & mvwinch (stdscr, Y, X))
 
-int   head = 0, tail = 0;
-
 /* static declarations */
 static char *month[] = {
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",

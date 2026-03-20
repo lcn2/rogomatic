@@ -40,7 +40,13 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.0 20026-03-12"
+# define VERSION "14.1.1 20026-03-19"
+
+/*
+ * global declarations
+ */
+char rgmdir[SM_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[SM_BUF + 1] = { '\0' };	/* rogomatic lock file path, +1 for paranoia */
 
 /*
  * static declarations
@@ -81,19 +87,30 @@ static void replaylog (char *pname, char *fname, char *options);
 int
 main (int argc, char *argv[])
 {
-  int   ptc[2], ctp[2];
-  int   child, score = 0, oldgame = 0;
-  int   cheat = 0, noterm = 1, echo = 0, nohalf = 0, replay = 0;
-  int   emacs = 0, rf = 0, terse = 0, user = 0, quitat = 2147483647;
-  char  *rfile = "", *rfilearg = "";
-  char	options[MU_BUF + 1]; /* rogomatic options, +1 for paranoia */
-  char  ropts[SM_BUF + 1]; /* rogue options, +1 for paranoia */
-  char  roguename[MU_BUF + 1]; /* rogue player name, +1 for paranoia */
-  char  *pfile = "";
-  char  *program = ""; /* our name */
-  char  *prog = ""; /* basename of our name */
-  extern char *optarg;        /* option argument */
-  extern int optind;          /* argv index of the next arg */
+  int ptc[2], ctp[2];
+  bool cheat = false;		    /* true ==> Will use trap arrows */
+  bool time_subpath = false;	    /* true ==> uses UTC date and time sub-directory */
+  bool echo = false;		    /* true ==> Echo file to roguelog */
+  bool nohalf = false;		    /* true ==> No halftime show */
+  bool replay = false;		    /* true ==> Play back roguelog */
+  bool oldgame = false;		    /* true ==> Use saved game */
+  bool score = false;		    /* true ==> Give scores only */
+  bool terse = false;		    /* true ==> Give status lines only */
+  bool user = false;		    /* true ==> Start up in user mode */
+  bool noterm = false;		    /* true ==> Watched mode */
+  bool emacs = false;		    /* true ==> Emacs mode */
+  int child;
+  int quitat = 2147483647;
+  char *rfile = "", *rfilearg = "";
+  char options[MU_BUF + 1];	    /* rogomatic options, +1 for paranoia */
+  char ropts[SM_BUF + 1];	    /* rogue options, +1 for paranoia */
+  char roguename[MU_BUF + 1];	    /* rogue player name, +1 for paranoia */
+  char *pfile = "";
+  char *program = "";		    /* our name */
+  char *prog = "";		    /* basename of our name */
+  char *rogue_savefile = NULL;	    /* the rogue save file to restore */
+  extern char *optarg;		    /* option argument */
+  extern int optind;		    /* argv index of the next arg */
   int ret;
   int i;
 
@@ -133,11 +150,11 @@ main (int argc, char *argv[])
 	break;
 
       case 'c':		/* -c ==> Will use trap arrows! */
-	cheat = 1;
+	cheat = true;
 	break;
 
       case 'd':		/* -d ==> player uses UTC date and time sub-directory under rogomatic directory path */
-	time_subpath = 1;
+	time_subpath = true;
 	break;
 
       case 'D':		/* -D path ==> set the rogomatic directory path */
@@ -146,7 +163,7 @@ main (int argc, char *argv[])
 	break;
 
       case 'e':		/* -e ==> Echo file to roguelog */
-	echo = 1;
+	echo = true;
 	break;
 
       case 'f':		/* -f rogue ==> set path to rogue */
@@ -154,19 +171,19 @@ main (int argc, char *argv[])
 	break;
 
       case 'H':		/* -H ==> No halftime show */
-	nohalf = 1;
+	nohalf = true;
 	break;
 
       case 'p':		/* -p ==> Play back roguelog */
-	replay = 1;
+	replay = true;
 	break;
 
       case 'r':		/* -r ==> Use saved game */
-	oldgame = 1;
+	oldgame = true;
 	break;
 
       case 's':		/* -s ==> Give scores only */
-	score = 1;
+	score = true;
 	break;
 
       case 'S':
@@ -177,19 +194,19 @@ main (int argc, char *argv[])
 	break;
 
       case 't':		/* -t ==> Give status lines only */
-	terse = 1;
+	terse = true;
 	break;
 
       case 'u':		/* -u ==> Start up in user mode */
-	user = 1;
+	user = true;
 	break;
 
       case 'w':		/* -w ==> Watched mode */
-	noterm = 1;
+	noterm = true;
 	break;
 
       case 'E':		/* -E ==> Emacs mode */
-	emacs = 1;
+	emacs = true;
 	break;
 
       case ':':
@@ -214,6 +231,15 @@ main (int argc, char *argv[])
   /* skip over command line options */
   argv += optind;
   argc -= optind;
+
+  /*
+   * determine the rogomatic directory path and rogomatic lock file path
+   *
+   * However, do not form the UTC date and time sub-directory just yet.
+   * Let the player command do that so that the UTC date and time
+   * is of when the player command starts.
+   */
+  set_rgmdir (0);
 
   /*
    * Find which rogue executable to use
@@ -311,9 +337,10 @@ main (int argc, char *argv[])
     close (ctp[READ]);
 
     if (oldgame) {
-      execl (rfile, "rogue", "-r", NULL);
-      fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r: %s\n", rfile, strerror (errno));
-
+      rogue_savefile = form_path (rgmdir, "rogue.sav");
+      execl (rfile, "rogue", "-r", rogue_savefile, NULL);
+      fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r %s: %s\n",
+		       rfile, rogue_savefile, strerror (errno));
     } else if (argc > 0) {
       execl (rfile, "rogue", argv[0], NULL);
       fprintf (stderr, "ERROR: rogue restore exec failed: %s %s: %s\n", rfile, argv[0], strerror (errno));

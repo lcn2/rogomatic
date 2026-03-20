@@ -33,131 +33,138 @@
  */
 
 /* global files */
-extern FILE *trogue;	/* From Rogue, To Rogue */
 extern FILE *logfile;		/* Rogomatic score file */
 extern FILE *realstdout;	/* Real stdout when in terse or emacs mode */
 extern FILE *snapshot;		/* File for snapshot command */
+extern FILE *trogue;		/* Pipe to Rogue process */
 
 /* global characters and strings */
-extern char afterid;		/* Index of object after identify */
-extern char *genocide;		/* List of monsters to genocide */
+extern char afterid;			/* Letter of obj after identify */
+extern char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
+extern char *genocide;			/* List of monsters to genocide */
 extern char genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
 extern char lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
 extern char lastname[NAMSIZ + 1];	/* Name of last potion/scroll/wand, +1 for paranoia */
 extern char nextid;			/* Next object to identify */
-extern char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone, +1 for paranoia */
-extern char *parmstr;			/* Pointer to argument space */
-extern char pending_call_letter;	/* Pack object we know a name for */
-extern char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
-extern char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
-extern char screen[R][C + 1];		/* characters drawn by Rogue, +1 for paranoia */
-extern char sumline[BIGBUF + 1];	/* Summation line, +1 for paranoia */
+extern char screen[R][C + 1];		/* Map of current rogue screen - characters drawn by rogue, +1 for paranoia */
+extern char sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
 extern char sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
+extern char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone - How we died, +1 for paranoia */
+extern char pending_call_letter;	/* If non-blank we have a call it to do - Pack object we know a name for */
+extern char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
+extern char versionstr[MU_BUF + 1];		/* Version of Rogue being used, +1 for paranoia */
+extern char rgmdir[SM_BUF + 1];			/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+extern char lock_path[SM_BUF + 1];		/* rogomatic lock file path, +1 for paranoia */
+extern char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 extern char *termination;		/* Latin verb for how we died */
-extern char versionstr[MU_BUF + 1];	/* Version of Rogue being used, +1 for paranoia */
-extern char rgmdir[SM_BUF + 1];	        /* rogomatic directory, +1 for paranoia */
-extern int time_subpath;		/* 0 ==> do not append UTC date/time to rmgdir, != 0 ==> append */
 
 /* global integers */
 extern int aggravated;		/* True if we aggravated this level */
-extern int agoalr,agoalc;	/* where we killed a monster */
+extern int agoalr;		/* Goal square to arch from (row) */
+extern int agoalc;		/* Goal square to arch from (col) */
 extern int ammo;		/* Number of missiles in pack */
-extern int arglen;		/* Length of argument space */
-extern int arrowshot;		/* True if trap fired at us this round */
-extern int atrow, atcol;	/* where is the '@'? (us) */
-extern int atrow0, atcol0;	/* where was the '@' last time */
-extern int attempt;		/* # times have we explored this level */
-extern int badarrow;		/* True if we missed with this arrow */
-extern int beingheld;		/* True if being held by a fungus */
-extern int beingstalked;	/* True if an Invisible Stalker is around */
-extern int blinded;		/* True if blinded */
+extern bool arrowshot;		/* True if trap fired at us this round */
+extern int atrow;		/* Current position of the rogue (@) (row) */
+extern int atcol;		/* Current position of the rogue (@) (col) */
+extern int atrow0;		/* Position at start of turn (row) */
+extern int atcol0;		/* Position at start of turn (col) */
+extern int attempt;		/* Number times we searched whole level */
+extern bool badarrow;		/* True if we missed with this arrow */
+extern bool beingheld;		/* True if being held by a fungus */
+extern int beingstalked;	/* Invisible stalker strategies */
+extern bool blinded;		/* True if blinded */
 extern int blindir;		/* Last direction we moved when blind */
 extern int cancelled;		/* Turns till use cancellation again */
-extern int cheat;		/* True ==> cheat to win */
-extern int checkrange;		/* True ==> check range */
-extern int chicken;		/* True ==> test run away code */
-extern int compression;		/* True ==> move multiple squares */
-extern int confused;		/* True if confused */
-extern int cosmic;		/* True if hallucinating */
+extern bool cheat;		/* True ==> cheat to win */
+extern bool checkrange;		/* True ==> check range */
+extern bool chicken;		/* True ==> test run away code */
+extern bool compression;	/* True ==> move multiple squares */
+extern bool confused;		/* True if confused */
+extern bool cosmic;		/* True if hallucinating */
 extern int currentarmor;	/* Index of our armor */
 extern int currentweapon;	/* Index of our weapon */
-extern int cursedarmor;		/* True if armor is cursed */
-extern int cursedweapon;	/* True if weapon if cursed */
+extern bool cursedarmor;	/* True if our armor is cursed */
+extern bool cursedweapon;	/* True if we are wielding cursed weapon */
 extern int darkdir;		/* Direction of arrow in dark room */
-extern int darkturns;		/* # arrows left to fire in dark room */
+extern int darkturns;		/* Number of arrows left to fire in dark room */
 extern int debugging;		/* Debugging options in effect */
 extern int didreadmap;		/* Last magically mapped level */
-extern int doorlist[], *newdoors; /* Holds r,c of new doors found */
-extern int doublehasted;	/* True if double hasted (3.6 only) */
+extern int doorlist[40];	/* Holds row or column of new doors found on this level */
+extern bool doublehasted;	/* True if double hasted (3.6 only) */
 extern int droppedscare;	/* Number of scare mon. on this level */
-extern int diddrop;		/* If we've dropped anything on this spot */
-extern int emacs;		/* True if in emacs mode */
-extern int exploredlevel;	/* We completely explored this level */
-extern int floating;		/* True if we are levitating */
-extern int foughtmonster;	/* True if we recently fought a monster */
-extern int foundarrowtrap;	/* Well, did we? */
-extern int foundtrapdoor;	/* Well, did we? */
-extern int goalr,goalc;		/* where are we trying to go */
+extern bool diddrop;		/* True if we dropped anything on this spot */
+extern bool emacs;		/* True ==> format output for Emacs */
+extern bool exploredlevel;	/* True if we completely explored this level */
+extern bool floating;		/* True if we are levitating */
+extern bool foughtmonster;	/* True if we recently fought a monster */
+extern bool foundarrowtrap;	/* Found arrow trap this level */
+extern bool foundtrapdoor;	/* Found trap door this level */
+extern int goalr;		/* Current goal square (row) */
+extern int goalc;		/* Current goal square (col) */
 extern int goodarrow;		/* Number of times we killed in one blow */
-extern int goodweapon;		/* Used for two-handed sword */
-extern int gplusdam;		/* Global damage bonus */
-extern int gplushit;		/* Global hit bonus */
-extern int hasted;		/* True if hasted */
-extern int head, tail;		/* endpoints of circular queue */
+extern bool goodweapon;		/* Used for two-handed sword */
+extern int gplusdam;		/* Our plus damage bonus from strength */
+extern int gplushit;		/* Our plus to hit bonus from strength */
+extern bool hasted;		/* True if hasted */
+extern int head;		/* starting index of circular queue */
+extern int tail;		/* ending index of circular queue */
 extern int hitstokill;		/* Number of hits to kill last monster */
-extern int interrupted;		/* True if at commandtop from onintr() */
-extern int knowident;		/* Found an identify scroll? */
+extern bool interrupted;	/* True if at commandtop from onintr() */
+extern bool knowident;		/* True if found an identify scroll */
 extern int larder;		/* Number of foods left */
 extern int lastate;		/* Time we last ate */
 extern int lastdamage;		/* Amount of last hit by a monster */
-extern int lastdrop;		/* What did we last try to drop */
-extern int lastfoodlevel;	/* Last food found */
+extern int lastdrop;		/* Last object we tried to drop */
+extern int lastfoodlevel;	/* Last level we found food */
 extern int lastmonster;		/* Last monster we tried to hit */
 extern int lastobj;		/* What did we last try to use */
 extern int lastwand;		/* Index of last wand */
 extern int leftring;		/* Index of our left ring */
-extern int logdigested;		/* True if game log has been read by replay */
-extern int logging;		/* True if logging game */
-extern int lyinginwait;		/* Did we lie in wait last turn? */
+extern bool logdigested;	/* True if log file has been read by replay */
+extern bool logging;		/* True if keeping record of game */
+extern bool lyinginwait;	/* True if we waited for a monster */
 extern int maxobj;		/* How much can we carry */
-extern int missedstairs;	/* True if we missed the stairs */
+extern bool missedstairs;	/* True if we missed the stairs */
 extern int morecount;		/* Number of messages since last command */
-extern int msgonscreen;		/* There is a rogomatic msg on the screen */
-extern int newarmor;		/* True if our armor status has changed */
-extern int newring;		/* True if our ring status has changed */
-extern int newweapon;		/* True if our weapon status has changed */
-extern int nohalf;		/* True if no halftime show */
-extern int noterm;		/* True if no human watching */
+extern bool msgonscreen;	/* True if there is a rogomatic msg on the screen */
+extern bool newarmor;		/* True if our armor status has changed */
+extern int *newdoors;		/* pointer to a row or column of a new door found on this level */
+extern bool newring;		/* True if our ring status has changed */
+extern bool newweapon;		/* True if our weapon status has changed */
+extern bool nohalf;		/* True if no halftime show */
+extern bool noterm;		/* True if no human watching */
 extern int objcount;		/* Number of objects */
 extern int ourscore;		/* Our score when we died/quit */
-extern int playing;		/* True if still playing the game */
-extern int poorarrow;		/* # Times we failed to kill in one blow */
-extern int protected;		/* True if we protected our armor */
-extern int putonseeinv;		/* Time when last put on see invisible ring */
-extern int quitat;		/* Score we are trying to beat */
-extern int redhands;		/* True if our hands are red */
-extern int replaying;		/* True if replaying old game */
-extern int revvideo;		/* True if in rev. video mode */
+extern bool playing;		/* True if still playing the game */
+extern bool poorarrow;		/* True if arrow has missed */
+extern bool protected;		/* True if we protected our armor */
+extern int putonseeinv;		/* Turn when last put on see inv ring */
+extern int quitat;		/* Score to beat, quit if within 10% more */
+extern bool redhands;		/* True if our hands are red */
+extern bool replaying;		/* True if replaying old game */
+extern bool revvideo;		/* True if in rev. video mode */
 extern int rightring;		/* Index of our right ring */
-extern int rogpid;		/* Process id of Rogue process */
-extern int room[];		/* Flags for each room */
-extern int row,col;		/* where is the cursor? */
+extern int rogpid;		/* Process id of rogue process */
+extern int room[9];		/* Flags for each room */
+extern int row;			/* Current cursor position (row) */
+extern int col;			/* Current cursor position (col) */
 extern int scrmap[R][C + 1];	/* attribute flags for squares, +1 for paranoia */
-extern int slowed;		/* True if we recently slowed a monster */
-extern int stairrow, staircol;	/* Where is the staircase */
-extern int teleported;		/* times teleported on this level */
-extern int terse;		/* True if in terse mode */
-extern int transparent;		/* True ==> user mode */
-extern int trapc;		/* Col of last trap */
-extern int trapr;		/* Row of last trap */
+extern bool slowed;		/* True if we recently slowed a monster */
+extern int stairrow;		/* Position of stairs on this level (row) */
+extern int staircol;		/* Position of stairs on this level (col) */
+extern int teleported;		/* Number of times teleported on this level */
+extern bool terse;		/* True if in terse mode */
+extern bool transparent;	/* True if in user command mode */
+extern int trapr;		/* Location of arrow trap, this level (row) */
+extern int trapc;		/* Location of arrow trap, this level (col) */
 extern int urocnt;		/* Un-identified Rogue Object count */
-extern int usesynch;		/* Have we finished using something? */
-extern int usingarrow;		/* True if wielding an arrow from a trap */
-extern int version;		/* From types.h, set by getrougeversion */
-extern int wplusdam;		/* Weapon damage bonus */
-extern int wplushit;		/* Weapon hit bonus */
+extern int usesynch;		/* True when the inventory is correct - finished using something */
+extern bool usingarrow;		/* True if wielding an arrow from a trap */
+extern int version;		/* rogue version is an integer as set by getrougeversion() */
+extern int wplusdam;		/* Our plus damage from weapon bonus */
+extern int wplushit;		/* Our plus hit from weapon bonus */
 extern int zone;		/* Current zone (0 to 8) */
-extern int zonemap[9][9];	/* Connectivity map */
+extern int zonemap[9][9];	/* Connectivity map - Map of zones connections */
 
 /* Status line variables */
 extern int Level, MaxLevel, Gold, Hp, Hpmax, Str, Strmax, Ac, Exp, Explev;

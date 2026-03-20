@@ -1,0 +1,60 @@
+The following text was found in the original rogomatic man page,
+with the man page specific macros removed.
+
+03-Jul-86  Michael Mauldin (mlm) at Carnegie-Mellon University
+Installed in /usr/misc, added documentation for rgmhist and rgmscatter.
+
+01-Feb-85  Michael Mauldin (mlm) at CMU
+Added genetic learning, UTexas mods, new titlepage, new version XIV.
+
+01-Nov-83  Michael Mauldin (mlm) at CMU
+Modified to include long term memory, and to play Rogue 5.3.
+
+31-Aug-83  Michael Mauldin (mlm) at CMU
+Modified the replay command to allow skipping around and replaying
+individual levels over and over.
+
+16-Jun-83  Michael Mauldin (mlm) at CMU
+Added error logging, single-step mode, fixed several small bug fixes,
+modified title animation to display correct version number.
+
+23-Apr-83  Hamey and Mauldin at CMU
+Version XII, replaced replay command with an option which causes input to
+come from a log file, and not from the Rogue process.  This removes the
+necessity of a standalone replay command.  .  16-Apr-83  Leonard Hamey
+(lgh) at CMU Added ability to infer unseen halls and use them in searchto
+without having trodden on them first.  Modified exploration algorithm.
+
+07-Nov-82  Michael Mauldin (mlm) at CMU
+Added archery, homogenous ring handling, removed the keyact kluge.
+
+27-Oct-82  Appel, Hamey, Jacobson, and Mauldin at CMU
+Added support for Rogue 5.2, and various other improvements and fixes.
+
+30-Sep-82  Michael Mauldin (mlm) at CMU
+Added improved Invisible Stalker code, modified strength management,
+Amulet handling, improved cheating. Was a total winner on Level 26 with a
+score of 14,655.
+
+18-May-82  Appel, Jacobson, and Mauldin at CMU
+Added running away, level searching, wand and staff usage.
+
+26-Apr-82  Michael Mauldin (mlm) at CMU
+Added replay ability.
+
+22-Apr-82  Michael Mauldin (mlm) at CMU
+Added cheating mode and enhanced magic handling abilities.
+
+11-Apr-82  Michael Mauldin (mlm) at CMU
+Added searching for secret doors.
+Modified breadth first search to avoid traps and prefer known safe squares.
+Added detection of potions of blindness.
+
+21-Mar-82  Michael Mauldin (mlm) at CMU
+Added termcap support.
+
+12-Jan-82  Andrew Appel (awa) and Guy Jacobson (guy) at CMU
+Added breadth first search.
+
+14-Oct-81  Andrew Appel (awa) and Guy Jacobson (guy) at CMU
+Created.

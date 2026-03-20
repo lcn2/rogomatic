@@ -35,11 +35,18 @@
 # include "types.h"
 # include "install.h"
 
-char genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
-char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
-char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
+/*
+ * external declarations
+ */
+extern void set_rgmdir (bool time_subpath);
 
-/* static declarations */
+/*
+ * global declarations
+ */
+char rgmdir[SM_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[SM_BUF + 1] = { '\0' };  /* rogomatic lock file path, +1 for paranoia */
+char genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
+char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
 char *knob_name[MAXKNOB] = {
   "trap searching:   ",
   "door searching:   ",
@@ -54,6 +61,7 @@ char *knob_name[MAXKNOB] = {
 int
 main (int argc, char *argv[])
 {
+  char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
   int m=10, init=0, version=RV53A, full=0;
   unsigned int seed = 0;
   int lock_fd;

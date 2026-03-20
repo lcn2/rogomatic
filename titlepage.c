@@ -31,6 +31,7 @@
 
 # include <stdio.h>
 # include <curses.h>
+# include <time.h>
 
 # include "types.h"
 # include "globals.h"
@@ -99,10 +100,10 @@ static void
 animate (char *movie[])
 {
   int baud;
-  int r, c, count = 0, delaychars;
+  int r, c, count = 0;
   char *cbf = "";
-
-  if (emacs || terse) return;		/* No screen ==> no movie */
+#if 0
+  int delaychars;
 
   baud = rogo_baudrate ();
 
@@ -111,12 +112,16 @@ animate (char *movie[])
   if (baud > 9600) baud = 9600;
 
   delaychars = baud / 200;
+#else
+  struct timespec rqt = { 0, 1e7 };		/* 0.01 seconds */
+#endif
 
+  if (emacs || terse) return;			/* No screen ==> no movie */
 
-  clear ();				/* Clear the screen */
+  clear ();					/* Clear the screen */
 
-  while (*movie || *cbf) {	/* While more animate commands */
-    r = NEXTCHAR;			/* Get command character */
+  while (*movie || *cbf) {			/* While more animate commands */
+    r = NEXTCHAR;				/* Get command character */
 
     /* Ring the Bell */
     if (r == '}') putchar (ctrl('G'));
@@ -125,8 +130,12 @@ animate (char *movie[])
     else if (r == '~') {
       refresh ();				/* Write out screen */
 
+#if 0
       for (; count < delaychars; count++)	/* Pad with nulls */
         putchar (0);
+#else
+      (void) nanosleep(&rqt, NULL);
+#endif
 
       count = 0;				/* Reset char count */
     }

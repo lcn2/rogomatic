@@ -1,15 +1,18 @@
 # sort via: sort -d
 #
 anim
+[a-z]
 datesub
 datesub.c
 *.dSYM
 gene
 genetest
 gplot
+have_stdbool.h
 histplot
 index
 lex.yy.c
+.lldbinit
 Makefile.bak
 NOTES
 *.o

@@ -34,6 +34,44 @@
 
 
 /*
+ * We need booleans, however the ANSI C committee, in their very finite wisdom,
+ * has decided to deprecate <stdbool.h>.  So for those older compiler environments
+ * that still need <stdbool.h> because the bool type we need <stdbool.h>.
+ *
+ * For future environments where they may have removed <stdbool.h> because ANSI C
+ * deprecated it, we cannot simply expect to include it.
+ *
+ * The ANSI C committee needs to retire and leave the C language alone.
+ *
+ * Because we need the bool type in the external function declarations below we
+ * must include "bool.h" here.
+ */
+#  include "have_stdbool.h"
+#  if defined(HAVE_STDBOOL_H)
+#    include <stdbool.h>
+#  endif
+
+
+/*
+ * standard truth :-) for pre-c23 environments without <stdbool.h>
+ */
+#  if !defined(HAVE_STDBOOL_H) && _STDC_VERSION__ < 202311L
+
+/* Avoid defines that could interfere with our ability to form a bool enum */
+#    if defined(true)
+#      undef true
+#    endif
+#    if defined(false)
+#      undef false
+#    endif
+
+/* make up for the lack of a <stdbool.h> and pre-c23 bool type */
+typedef enum { false=0, true=1 } bool;
+
+#  endif
+
+
+/*
  * backward compatibility
  *
  * Not all compilers support __attribute__ nor do they suuport __has_builtin.
@@ -429,8 +467,6 @@ typedef struct {
 } timerec;
 
 extern char *knob_name[MAXKNOB];
-extern char  genelog[MU_BUF + 1];      /* Genetic learning log file, +1 for paranoia */
-extern char  genepool[MU_BUF + 1];     /* Gene pool, +1 for paranoia */
 
 /*
  * global function declarations
@@ -460,10 +496,7 @@ extern int replaycommand (void);
 extern void showcommand (char *cmd);
 
 /* config.c */
-extern char rgmdir[SM_BUF + 1];
-extern char lock_path[SM_BUF + 1];
-extern int time_subpath;
-extern void set_rgmdir (void);
+extern void set_rgmdir (bool time_subpath);
 extern const char *getLockFile (void);
 
 /* database.c */

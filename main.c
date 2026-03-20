@@ -96,7 +96,6 @@
 # include <stdio.h>
 # include <curses.h>
 # include <ctype.h>
-# include <fcntl.h>
 # include <signal.h>
 # include <setjmp.h>
 # include <string.h>
@@ -116,139 +115,138 @@ FILE *rogo_openlog (char *genelog);
 /* global data - see globals.h for current definitions */
 
 /* Files */
-FILE  *logfile=NULL;		/* File for score log */
-FILE  *realstdout=NULL;		/* Real stdout for Emacs, terse mode */
-FILE  *snapshot=NULL;		/* File for snapshot command */
-FILE  *trogue=NULL;		/* Pipe to Rogue process */
+FILE *logfile=NULL;		/* Rogomatic score file */
+FILE *realstdout=NULL;		/* Real stdout for Emacs, terse mode */
+FILE *snapshot=NULL;		/* File for snapshot command */
+FILE *trogue=NULL;		/* Pipe to Rogue process */
 
 /* Characters */
-char  logfilename[100];		/* Name of log file */
-char  afterid = '\0';           /* Letter of obj after identify */
-static char  genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
-char  genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
-char  genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
-char  *genocide;		/* List of monsters to be genocided */
-char  genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
-char  lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
-char  lastname[NAMSIZ + 1];	/* Name of last potion/scroll/wand, +1 for paranoia */
-char  nextid = '\0';            /* Next object to identify */
-char  screen[R][C + 1];		/* Map of current Rogue screen, +1 for paranoia */
-char  sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
-char  sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
-char  ourkiller[MU_BUF + 1];	/* How we died, +1 for paranoia */
-char  versionstr[MU_BUF + 1] = DEFVER;	/* Version of Rogue being used, +1 for paranoia */
-#if 0 /* process arguments unused */
-char  parmstr[TY_BUF + 1] = '\0';	/* Pointer to process arguments, +1 for paranoia */
-#endif
-char  pending_call_letter = ' ';	/* If non-blank we have a call it to do */
-char  pending_call_name[NAMSIZ + 1];	/*   and this is the name to use, +1 for paranoia */
+char afterid = '\0';		/* Letter of obj after identify */
+char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
+char *genocide;			/* List of monsters to be genocided */
+char genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
+char lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
+char lastname[NAMSIZ + 1];	/* Name of last potion/scroll/wand, +1 for paranoia */
+char nextid = '\0';		/* Next object to identify */
+char screen[R][C + 1];		/* Map of current rogue screen - characters drawn by rogue, +1 for paranoia */
+char sumline[BIGBUF + 1];	/* Termination message for Rogomatic, +1 for paranoia */
+char sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
+char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone - How we died, +1 for paranoia */
+char pending_call_letter = ' ';	/* If non-blank we have a call it to do - Pack object we know a name for */
+char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
+char versionstr[MU_BUF + 1] = DEFVER;	/* Version of Rogue being used, +1 for paranoia */
+char rgmdir[SM_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[SM_BUF + 1] = { '\0' };	/* rogomatic lock file path, +1 for paranoia */
+char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
+char *termination = "perditus";	/* Latin verb for how we died */
 
 /* Integers */
-int   aggravated = 0;		/* True if we have aggravated this level */
-int   agoalc = NONE;		/* Goal square to arch from (col) */
-int   agoalr = NONE;		/* Goal square to arch from (row) */
-#if 0 /* process arguments unused */
-int   arglen = 0;		/* Length in bytes of argument space */
-#endif
-int   ammo = 0;                 /* How many missiles? */
-int   arrowshot = 0;		/* True if an arrow shot us last turn */
-int   atrow, atcol;		/* Current position of the Rogue (@) */
-int   atrow0, atcol0;		/* Position at start of turn */
-int   attempt = 0;		/* Number times we searched whole level */
-int   badarrow = 0;		/* True if cursed/lousy arrow in hand */
-int   beingheld = 0;		/* True if a fungus has ahold of us */
-int   beingstalked = 0;		/* True if recently hit by inv. stalker */
-int   blinded = 0;		/* True if blinded */
-int   blindir = 0;		/* Last direction we moved when blind */
-int   cancelled = 0;		/* True ==> recently zapped w/cancel */
-int   cheat = 0;		/* True ==> cheat, use bugs, etc. */
-int   checkrange = 0;           /* True ==> check range */
-int   chicken = 0;		/* True ==> check run away code */
-int   compression = 1;		/* True ==> move more than one square/turn */
-int   confused = 0;		/* True if we are confused */
-int   cosmic = 0;		/* True if we are hallucinating */
-int   currentarmor = NONE;	/* Index of our armor */
-int   currentweapon = NONE;     /* Index of our weapon */
-int   cursedarmor = 0;		/* True if our armor is cursed */
-int   cursedweapon = 0;		/* True if we are wielding cursed weapon */
-int   darkdir = NONE;		/* Direction of monster being arched */
-int   darkturns = 0;		/* Distance to monster being arched */
-int   debugging = D_NORMAL;	/* Debugging options in effect */
-int   didreadmap = 0;		/* Last level we read a map on */
-int   doorlist[40];		/* List of doors on this level */
-int   doublehasted = 0;		/* True if double hasted (Rogue 3.6) */
-int   droppedscare = 0;		/* True if we dropped 'scare' on this level */
-int   diddrop = 0;		/* True if we dropped anything on this spot */
-int   emacs = 0;		/* True ==> format output for Emacs */
-int   exploredlevel = 0;	/* We completely explored this level */
-int   floating = 0;		/* True if we are levitating */
-int   foughtmonster = 0;	/* True if recently fought a monster */
-int   foundarrowtrap = 0;	/* Found arrow trap this level */
-int   foundtrapdoor = 0;	/* Found trap door this level */
-int   goalc = NONE;		/* Current goal square (col) */
-int   goalr = NONE;		/* Current goal square (row) */
-int   goodarrow = 0;		/* True if good (magic) arrow in hand */
-int   goodweapon = 0;		/* True if weapon in hand worth >= 100 */
-int   gplusdam = 1;		/* Our plus damage from strength */
-int   gplushit = 0;		/* Our plus to hit from strength */
-int   hasted = 0;		/* True if hasted */
-int   hitstokill = 0;		/* # times we hit last monster killed */
-int   interrupted = 0;		/* True if at commandtop from onintr() */
-int   knowident = 0;            /* Found an identify scroll? */
-int   larder = 1;               /* How much food? */
-int   lastate = 0;		/* Time we last ate */
-int   lastdamage = 0;           /* Amount of last hit by a monster */
-int   lastdrop = NONE;		/* Last object we tried to drop */
-int   lastfoodlevel = 1;	/* Last level we found food */
-int   lastmonster = NONE;	/* Last monster we tried to hit */
-int   lastobj = NONE;		/* What did we last use */
-int   lastwand = NONE;		/* Index of last wand */
-int   leftring = NONE;		/* Index of our left ring */
-int   logdigested = 0;		/* True if log file has been read by replay */
-int   logging = 0;		/* True if keeping record of game */
-int   lyinginwait = 0;          /* True if we waited for a monster */
-int   maxobj = 22;              /* How much can we carry */
-int   missedstairs = 0;         /* True if we searched everywhere */
-int   morecount = 0;            /* Number of messages since last command */
-int   msgonscreen = 0;		/* Set implies message at top */
-int   newarmor = 1;             /* Change in armor status? */
-int  *newdoors = NULL;		/* New doors on screen */
-int   newring = 1;              /* Change in ring status? */
-int   newweapon = 1;            /* Change in weapon status? */
-int   nohalf = 0;		/* True ==> no halftime show */
-int   noterm = 0;		/* True ==> no user watching */
-int   objcount = 0;             /* Number of objects */
-int   ourscore = 0;		/* Final score when killed */
-int   playing = 1;		/* True if still playing game */
-int   poorarrow = 0;		/* True if arrow has missed */
-int   protected = 0;		/* True if we protected our armor */
-int   putonseeinv = 0;          /* Turn when last put on see inv ring */
-int   quitat = BOGUS;		/* Score to beat, quit if within 10% more */
-int   redhands = 0;		/* True if we have red hands */
-int   replaying = 0;		/* True if replaying old game */
-int   revvideo = 0;		/* True if in rev. video mode */
-int   rightring = NONE;		/* Index of our right ring */
-int   rogpid = -1;		/* Pid of rogue process */
-int   room[9];			/* Flags for each room */
-int   row, col;			/* Current cursor position */
-int   scrmap[R][C + 1];		/* Flags bits for level map, +1 for paranoia */
-int   singlestep = 0;		/* True ==> go one turn */
-int   slowed = 0;		/* True ==> recently zapped w/slow monster */
-int   stairrow, staircol;	/* Position of stairs on this level */
-int   startecho = 0;		/* True ==> turn on echoing on startup */
-int   teleported = 0;		/* # times teleported this level */
-int   terse = 0;		/* True ==> terse mode */
-int   transparent = 0;		/* True ==> user command mode */
-int   trapc = NONE;		/* Location of arrow trap, this level (col) */
-int   trapr = NONE;		/* Location of arrow trap, this level (row) */
-int   urocnt = 0;               /* Un-identified Rogue Object count */
-int   usesynch = 0;             /* Set when the inventory is correct */
-int   usingarrow = 0;		/* True ==> wielding an arrow froma trap */
-int   version;			/* Rogue version, integer */
-int   wplusdam = 2;		/* Our plus damage from weapon bonus */
-int   wplushit = 1;		/* Our plus hit from weapon bonus */
-int   zone = NONE;		/* Current screen zone, 0..8 */
-int   zonemap[9][9];		/* Map of zones connections */
+bool aggravated = false;	/* True if we have aggravated this level */
+int agoalc = NONE;		/* Goal square to arch from (row) */
+int agoalr = NONE;		/* Goal square to arch from (col) */
+int ammo = 0;			/* Number of missiles in pack */
+bool arrowshot = false;		/* True if an arrow shot us last turn */
+int atrow = 0;			/* Current position of the rogue (@) (row) */
+int atcol = 0;			/* Current position of the rogue (@) (col) */
+int atrow0 = 0;			/* Position at start of turn (row) */
+int atcol0 = 0;			/* Position at start of turn (col) */
+int attempt = 0;		/* Number times we searched whole level */
+bool badarrow = false;		/* True if cursed/lousy arrow in hand */
+bool beingheld = false;		/* True if a fungus has ahold of us */
+int beingstalked = 0;		/* Invisible stalker strategies */
+bool blinded = false;		/* True if blinded */
+int blindir = 0;		/* Last direction we moved when blind */
+int cancelled = 0;		/* Turns till use cancellation again */
+bool cheat = false;		/* True ==> cheat, use bugs, etc. */
+bool checkrange = false;	/* True ==> check range */
+bool chicken = false;		/* True ==> check run away code */
+bool compression = true;	/* True ==> move more than one square/turn */
+bool confused = false;		/* True if we are confused */
+bool cosmic = false;		/* True if we are hallucinating */
+int currentarmor = NONE;	/* Index of our armor */
+int currentweapon = NONE;	/* Index of our weapon */
+bool cursedarmor = false;	/* True if our armor is cursed */
+bool cursedweapon = false;	/* True if we are wielding cursed weapon */
+int darkdir = NONE;		/* Direction of arrow in dark room */
+int darkturns = 0;		/* Number of arrows left to fire in dark room */
+int debugging = D_NORMAL;	/* Debugging options in effect */
+int didreadmap = 0;		/* Last level we read a map on */
+int doorlist[40];		/* Holds row or column of new doors found on this level */
+bool doublehasted = false;	/* True if double hasted (Rogue 3.6) */
+int droppedscare = 0;		/* Number of scare mon. on this level */
+bool diddrop = false;		/* True if we dropped anything on this spot */
+bool emacs = false;		/* True ==> format output for Emacs */
+bool exploredlevel = false;	/* True if we completely explored this level */
+bool floating = false;		/* True if we are levitating */
+bool foughtmonster = false;	/* True if recently fought a monster */
+bool foundarrowtrap = false;	/* Found arrow trap this level */
+bool foundtrapdoor = false;	/* Found trap door this level */
+int goalr = NONE;		/* Current goal square (row) */
+int goalc = NONE;		/* Current goal square (col) */
+int goodarrow = 0;		/* Number of times we killed in one blow */
+bool goodweapon = false;	/* True if weapon in hand worth >= 100 */
+int gplusdam = 1;		/* Our plus damage bonus from strength */
+int gplushit = 0;		/* Our plus to hit bonus from strength */
+bool hasted = false;		/* True if hasted */
+int head = 0;			/* starting index of circular queue */
+int tail = 0;			/* ending index of circular queue */
+int hitstokill = 0;		/* Number of hits to kill last monster */
+bool interrupted = false;	/* True if at commandtop from onintr() */
+bool knowident = false;		/* True if found an identify scroll */
+int larder = 1;			/* Number of foods left */
+int lastate = 0;		/* Time we last ate */
+int lastdamage = 0;		/* Amount of last hit by a monster */
+int lastdrop = NONE;		/* Last object we tried to drop */
+int lastfoodlevel = 1;		/* Last level we found food */
+int lastmonster = NONE;		/* Last monster we tried to hit */
+int lastobj = NONE;		/* What did we last try to use */
+int lastwand = NONE;		/* Index of last wand */
+int leftring = NONE;		/* Index of our left ring */
+bool logdigested = false;	/* True if log file has been read by replay */
+bool logging = false;		/* True if keeping record of game */
+bool lyinginwait = false;	/* True if we waited for a monster */
+int maxobj = 22;		/* How much can we carry */
+bool missedstairs = false;	/* True if we searched everywhere */
+int morecount = 0;		/* Number of messages since last command */
+bool msgonscreen = false;	/* True if there is a rogomatic msg on the screen */
+bool newarmor = true;		/* True if our armor status has changed */
+int *newdoors = NULL;		/* pointer to a row or column of a new door found on this level */
+bool newring = true;		/* True if our ring status has changed */
+bool newweapon = true;		/* True if our armor status has changed */
+bool nohalf = false;		/* True if no halftime show */
+bool noterm = false;		/* True if no human watching */
+int objcount = 0;		/* Number of objects */
+int ourscore = 0;		/* Our score when we died/quit */
+bool playing = true;		/* True if still playing game */
+bool poorarrow = false;		/* True if arrow has missed */
+bool protected = false;		/* True if we protected our armor */
+int putonseeinv = 0;		/* Turn when last put on see inv ring */
+int quitat = BOGUS;		/* Score to beat, quit if within 10% more */
+bool redhands = false;		/* True if we have red hands */
+bool replaying = false;		/* True if replaying old game */
+bool revvideo = false;		/* True if in rev. video mode */
+int rightring = NONE;		/* Index of our right ring */
+int rogpid = -1;		/* Pid of rogue process */
+int room[9];			/* Flags for each room */
+int row = 0;			/* Current cursor position (row) */
+int col = 0;			/* Current cursor position (col) */
+int scrmap[R][C + 1];		/* Flags bits for level map, +1 for paranoia */
+bool slowed = false;		/* True ==> recently zapped w/slow monster */
+int stairrow = 0;		/* Position of stairs on this level (row) */
+int staircol = 0;		/* Position of stairs on this level (col) */
+int teleported = 0;		/* Number of times teleported this level */
+bool terse = false;		/* True if in terse mode */
+bool transparent = false;	/* True if in user command mode */
+int trapr = NONE;		/* Location of arrow trap, this level (row) */
+int trapc = NONE;		/* Location of arrow trap, this level (col) */
+int urocnt = 0;			/* Un-identified Rogue Object count */
+bool usesynch = false;		/* True when the inventory is correct - finished using something */
+bool usingarrow = false;	/* True if wielding an arrow from a trap */
+int version = 0;		/* rogue version is an integer as set by getrougeversion() */
+int wplusdam = 2;		/* Our plus damage from weapon bonus */
+int wplushit = 1;		/* Our plus hit from weapon bonus */
+int zone = NONE;		/* Current screen zone, 0..8 */
+int zonemap[9][9];		/* Connectivity map - Map of zones connections */
 
 /* Functions */
 void (*istat)(int);
@@ -341,14 +339,16 @@ invrec inven[MAXINV]; int invcount = 0;
 timerec timespent[50];
 
 /* End of the game messages */
-char *termination = "perditus";
 char *gamename = "Rog-O-Matic";
-char roguename[MU_BUF + 1];    /* Name we are playing under, +1 for paranoia */
 
 /* Used by onintr() to restart Rgm at top of command loop */
 jmp_buf  commandtop;
 
-/* static declarations */
+/* static storage */
+static char genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
+static char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
+
+/* static function declarations */
 static void onintr (int sig);
 static void startlesson (void);
 static void endlesson (void);
@@ -361,10 +361,12 @@ int
 main (int argc, char *argv[])
 {
   char  ch, *s;
-  char msg[SM_BUF + 1];	/* message buffer, +1 for paranoia */
-  int startingup = 1;
-  struct stat rgmdir_buf; /* stat of rgmdir */
-  int ret;		  /* stat(2) return */
+  char msg[SM_BUF + 1];		/* message buffer, +1 for paranoia */
+  bool singlestep = false;	/* True ==> go one turn */
+  bool startecho = false;	/* True ==> turn on echoing on startup */
+  bool startingup = true;	/* True ==> startup started but not complete */
+  bool time_subpath = false;	/* True ==> use a UTC date and time sub-directory */
+  char logfilename[100];	/* Name of log file */
   int  i;
   pid_t pid;			/* process id */
   char pidfilename[NAMSIZ + 1]; /* +1 for paranoia */
@@ -426,12 +428,22 @@ main (int argc, char *argv[])
   /* The third argument is an option list */
   if (argc > 3) {
       i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d,%d",
-                            &cheat, &noterm, &startecho, &nohalf,
-                            &emacs, &terse, &transparent, &quitat, &time_subpath);
+                            (int *)&cheat, (int *)&noterm, (int *)&startecho, (int *)&nohalf,
+                            (int *)&emacs, (int *)&terse, (int *)&transparent, (int *)&quitat, (int *)&time_subpath);
       if (i != 9) {
-	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 9 ints, returned: %d\n", argv[3], i);
+	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 9 flags, returned: %d\n", argv[3], i);
 	  exit(1);
       }
+      /* normalize ints to booleans */
+      cheat = (cheat == 0) ? false : true;
+      noterm = (noterm == 0) ? false : true;
+      startecho = (startecho == 0) ? false : true;
+      nohalf = (nohalf == 0) ? false : true;
+      emacs = (emacs == 0) ? false : true;
+      terse = (terse == 0) ? false : true;
+      transparent = (transparent == 0) ? false : true;
+      quitat = (quitat == 0) ? false : true;
+      time_subpath = (time_subpath == 0) ? false : true;
   }
 
   /* The fourth argument is the Rogue name */
@@ -451,35 +463,7 @@ main (int argc, char *argv[])
   /*
    * determine the rogomatic directory path and rogomatic lock file path
    */
-  set_rgmdir ();
-
-  /*
-   * create rogomatic directory if it does not already exist
-   */
-  memset (&rgmdir_buf, 0, sizeof(rgmdir_buf));
-  ret = stat(rgmdir, &rgmdir_buf);
-  if (ret < 0) {
-      /* no rgmdir, attempt to mkdir(rgmdir) */
-      ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
-      if (ret < 0) {
-	fprintf (stderr, "ERROR: mkdir %s failed: %s\n", rgmdir, strerror (errno));
-	exit (1);
-      }
-  }
-
-  /*
-   * verify that rgmdir is a read-write searchable directory
-   */
-  ret = stat(rgmdir, &rgmdir_buf);
-  if (ret < 0 || ((rgmdir_buf.st_mode & S_IFDIR) == 0)) {
-    fprintf (stderr, "ERROR: not a directory: %s: %s\n", rgmdir, strerror (errno));
-    exit (1);
-  }
-  ret = access(rgmdir, R_OK|W_OK|X_OK);
-  if (ret < 0) {
-    fprintf (stderr, "ERROR: directory is not read-write and searchable: %s\n", rgmdir);
-    exit (1);
-  }
+  set_rgmdir (time_subpath);
 
   /*
    * The first argument to player is a two character string encoding
@@ -490,7 +474,7 @@ main (int argc, char *argv[])
    */
 
   if (argv[1][0] == 'Z') {
-    replaying = 1;
+    replaying = true;
     gamename = "Iteratum Rog-O-Maticus";
     termination = "finis";
     strcpy (logfilename, argv[4]);
@@ -619,11 +603,11 @@ main (int argc, char *argv[])
 
   if (interrupted) {
     saynow ("Interrupt [enter command]:");
-    interrupted = 0;
-    transparent = 1;
+    interrupted = false;
+    transparent = true;
   }
 
-  if (transparent) noterm = 0;
+  if (transparent) noterm = false;
 
   while (playing) {
     refresh ();
@@ -638,7 +622,7 @@ main (int argc, char *argv[])
 
     if (startingup) {	/* All monsters identified */
       versiondep ();			/* Do version specific things */
-      startingup = 0;			/* Clear starting flag */
+      startingup = false;		/* Clear starting flag */
     }
 
     if (!playing) break;	/* In case we died */
@@ -663,7 +647,7 @@ main (int argc, char *argv[])
         case '\n': if (terse)
             { printsnap (realstdout); fflush (realstdout); }
           else
-            { singlestep = 1; transparent = 1; }
+            { singlestep = true; transparent = true; }
 
           break;
 
@@ -672,7 +656,7 @@ main (int argc, char *argv[])
         case 'Y': case 'U': case 'B': case 'N':
         case 'h': case 'j': case 'k': case 'l':
         case 'y': case 'u': case 'b': case 'n':
-        case 's': command (T_OTHER, "%c", ch); transparent = 1; break;
+        case 's': command (T_OTHER, "%c", ch); transparent = true; break;
 
         case 'f': ch = getch ();
 
@@ -683,7 +667,7 @@ main (int argc, char *argv[])
             }
           }
 
-          transparent = 1; break;
+          transparent = true; break;
 
         case '\f':  redrawscreen (); break;
 
@@ -694,12 +678,12 @@ main (int argc, char *argv[])
         case '>': if (atrow == stairrow && atcol == staircol)
             command (T_OTHER, ">");
 
-          transparent = 1; break;
+          transparent = true; break;
 
         case '<': if (atrow == stairrow && atcol == staircol &&
                         have (amulet) != NONE) command (T_OTHER, "<");
 
-          transparent = 1; break;
+          transparent = true; break;
 
         case 't': transparent = !transparent; break;
 
@@ -806,7 +790,7 @@ main (int argc, char *argv[])
         case 'R': if (replaying) {
             positionreplay (); getrogue (ill, 2);
 
-            if (transparent) singlestep = 1;
+            if (transparent) singlestep = true;
           }
           else
             saynow ("Replay position only works in replay mode.");
@@ -814,17 +798,17 @@ main (int argc, char *argv[])
           break;
 
         case 'S': quitrogue ("saved", Gold, SAVED);
-          playing = 0; break;
+          playing = false; break;
 
         case 'Q': quitrogue ("user typing quit", Gold, FINISHED);
-          playing = 0; break;
+          playing = false; break;
 
         case ROGQUIT: dwait (D_ERROR, __func__, "Strategize failed: gave up");
           quitrogue ("gave up", Gold, SAVED); break;
       }
     }
     else {
-      singlestep = 0;
+      singlestep = false;
     }
   }
 
@@ -881,17 +865,6 @@ main (int argc, char *argv[])
 
   close_frogue_debuglog ();
   debuglog_close ();
-
-#if 0 /* process arguments unused */
-  /*
-   * free storage
-   */
-  if (parmstr != NULL) {
-      free(parmstr);
-      parmstr = NULL;
-
-  }
-#endif
   exit (0);
 }
 
@@ -908,9 +881,9 @@ onintr (int sig)
   refresh ();                   /* Clear terminal output */
   clearsendqueue ();            /* Clear command queue */
   setnewgoal ();                /* Don't believe ex */
-  transparent = 1;              /* Drop into transprent mode */
-  interrupted = 1;              /* Mark as an interrupt */
-  noterm = 0;                   /* Allow commands */
+  transparent = true;           /* Drop into transprent mode */
+  interrupted = true;           /* Mark as an interrupt */
+  noterm = false;               /* Allow commands */
   longjmp (commandtop,0);       /* Back to command Process */
 }
 
