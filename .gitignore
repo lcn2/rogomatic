@@ -1,11 +1,8 @@
 # sort via: sort -d
 #
-anim
 [a-z]
 *.dSYM
 gene
-genetest
-gplot
 have_stdbool.h
 histplot
 index
@@ -24,4 +21,3 @@ skel/
 *.swo
 *.swp
 tags
-testfind

@@ -152,7 +152,7 @@ else
 LIBS= -lncurses
 endif
 
-OTHER_TARGES= anim testfind genetest gplot
+OTHER_TARGES=
 
 TARGETS= rogomatic player rgmplot histplot gene
 
@@ -183,8 +183,7 @@ C_SRC= ${CFILES} ${MISC_C}
 
 SRC= ${C_SRC} ${H_SRC}
 
-MISC_OBJS= gene.o histplot.o rgmplot.o setup.o anim.o \
-	   testfind.o genetest.o gplot.o
+MISC_OBJS= gene.o histplot.o rgmplot.o setup.o
 
 OTHERS= rplot rgmhist rgmscatter
 
@@ -344,18 +343,6 @@ rogomatic: setup.o scorefile.o utility.o config.o
 #################################################################
 # other targets that are not automatically built, not installed #
 #################################################################
-
-anim: anim.o utility.o
-	${CC} anim.o utility.o ${LIBS} -o $@
-
-genetest: genetest.o learn.o rand.o stats.o utility.o
-	${CC} genetest.o learn.o rand.o stats.o utility.o -lm ${LIBS} -o $@
-
-gplot: gplot.o
-	${CC} -g gplot.o -lm ${LIBS} -o $@
-
-testfind: testfind.o utility.o
-	${CC} ${LDFLAGS} testfind.o utility.o ${LIBS} -o $@
 
 # NOTE: This rule is NOT part of the build of rogomatic documentation!
 # 	We use this rule to form the rogomatic.cat.in file from the rogomatic.6.in file.

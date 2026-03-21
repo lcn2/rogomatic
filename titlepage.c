@@ -30,8 +30,10 @@
  */
 
 # include <stdio.h>
+# include <stdlib.h>
 # include <curses.h>
 # include <time.h>
+# include <limits.h>
 
 # include "types.h"
 # include "globals.h"
@@ -92,8 +94,7 @@ static void animate (char *movie[]);
  * command '~', or a triplet <row+32, col+32, char> indicating a character
  * to be placed at a specific place on the screen.
  *
- * Movies run the same speed regardless of baudrate (if the baud rate
- * greater than 2400).
+ * Movies run the same speed regardless of baudrate.
  */
 
 static void
@@ -102,19 +103,7 @@ animate (char *movie[])
   int baud;
   int r, c, count = 0;
   char *cbf = "";
-#if 0
-  int delaychars;
-
-  baud = rogo_baudrate ();
-
-  if (baud == 0) baud = 4800;
-
-  if (baud > 9600) baud = 9600;
-
-  delaychars = baud / 200;
-#else
   struct timespec rqt = { 0, 1e7 };		/* 0.01 seconds */
-#endif
 
   if (emacs || terse) return;			/* No screen ==> no movie */
 
@@ -123,21 +112,20 @@ animate (char *movie[])
   while (*movie || *cbf) {			/* While more animate commands */
     r = NEXTCHAR;				/* Get command character */
 
-    /* Ring the Bell */
-    if (r == '}') putchar (ctrl('G'));
+    /* Do NOT Ring the Bell */
+    if (r == '}') {
+#if 0 /* no beep */
+      beep();
+      flash();
+      refresh ();				/* Write out screen */
+#endif
+    }
 
     /* Update the screen and delay until one timestep is gone */
     else if (r == '~') {
       refresh ();				/* Write out screen */
-
-#if 0
-      for (; count < delaychars; count++)	/* Pad with nulls */
-        putchar (0);
-#else
-      (void) nanosleep(&rqt, NULL);
-#endif
-
       count = 0;				/* Reset char count */
+      (void) nanosleep(&rqt, NULL);
     }
 
     /* Write out a single character and bump the character count */
@@ -161,9 +149,34 @@ halftimeshow (int level)
 {
   static int nextshow = 1;
 
-  if (!nohalf && level >= nextshow) {
-    if (nextshow == 1) {
-      nextshow = 9999; animate (titlepage);
+  /* do nothing is halftime shows are disabled */
+  if (nohalf) {
+    return;
+  }
+
+  /* determine if the level is deep enough */
+  if (level >= nextshow) {
+
+    /* we are deep enough, display the title page */
+    animate (titlepage);
+
+    /* determine the next halftime show level */
+    switch (nextshow) {
+    case 1:
+	nextshow = 12;
+	break;
+    case 12:
+	nextshow = 25;
+	break;
+    case 25:
+	nextshow = 31;
+	break;
+    case 31:
+	nextshow = INT_MAX;
+	break;
+    default:
+	break;
     }
   }
+  return;
 }
