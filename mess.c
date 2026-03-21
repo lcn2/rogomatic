@@ -187,14 +187,14 @@ parsemsg (char *mess, char *mend)
 
   /* nymph stole an item, pack is out of whack */
   else if (MATCH("she stole *")) {
-    usesynch=0;
+    usesynch = false;
   }
 
   /* Message indicates we picked up a new item */
   else if (*(mend-1)==')' && *(mend-3)=='(') {
     inventory (mess, mend);
     identifying = justreadid = 0;
-    usesynch=0;
+    usesynch = false;
   }
   /* Message describes an old item already in our pack */
   else if (mess[1]==')') {
@@ -209,11 +209,11 @@ parsemsg (char *mess, char *mend)
         if (MATCH("a secret door*")) echoit=0;
         else if (MATCH("as you read the scroll, it vanishes*")) echoit=0;
         else if (MATCH("a cloak of darkness falls around you*"))
-          { infer ("blindness", potion); blinded=1; }
+          { infer ("blindness", potion); blinded = true; }
         else if (MATCH("a teleport trap*")) nametrap (TELTRAP,NEAR);
         else if (MATCH("a trapdoor*")) nametrap (TRAPDOR,NEAR);
         else if (MATCH("an arrow shoots *"))
-          { arrowshot=1; nametrap(ARROW,HERE); }
+          { arrowshot = true; nametrap(ARROW,HERE); }
         else if (MATCH("an arrow trap*")) nametrap (ARROW,NEAR);
         else if (MATCH("a beartrap*")) nametrap (BEARTRP,NEAR);
         else if (MATCH("a strange white mist *")) nametrap (GASTRAP,HERE);
@@ -255,7 +255,7 @@ parsemsg (char *mess, char *mend)
         else if (MATCH("bolt hits*")) infer ("lightning", wand);
         else if (MATCH("bolt misses*")) infer ("lightning", wand);
         else if (MATCH("bummer, this food tastes awful*")) ;
-        else if (MATCH("bummer!  you've hit the ground*")) floating=0;
+        else if (MATCH("bummer!  you've hit the ground*")) floating = false;
         else if (MATCH("bite has no effect*")) ;
         else unknown++;
 
@@ -279,11 +279,11 @@ parsemsg (char *mess, char *mend)
           { darkturns = 0; darkdir = NONE; targetmonster = 0; echoit=0; }
         else if (MATCH("dropped a scroll * scare monster")) {
           set (STUFF | SCAREM);
-          diddrop = 1;
+          diddrop = true;
         }
         else if (MATCH("dropped *")) {
           set (STUFF | USELESS);
-          diddrop = 1;
+          diddrop = true;
         }
         else unknown++;
 
@@ -292,7 +292,7 @@ parsemsg (char *mess, char *mend)
       case 'e':
 
         if (MATCH("eat what*")) echoit=0;
-        else if (MATCH("everything looks so boring now*")) cosmic=0;
+        else if (MATCH("everything looks so boring now*")) cosmic = false;
         else unknown++;
 
         break;
@@ -300,7 +300,7 @@ parsemsg (char *mess, char *mend)
       case 'f':
 
         if (MATCH("flame *")) ;
-        else if (MATCH("far out!  everything is all cosmic again*")) blinded=0;
+        else if (MATCH("far out!  everything is all cosmic again*")) blinded = false;
         else unknown++;
 
         break;
@@ -382,15 +382,15 @@ parsemsg (char *mess, char *mend)
       case 'o':
 
         if (MATCH("oh no! an arrow shot *"))
-          { arrowshot=1; nametrap(ARROW,HERE); }
+          { arrowshot = true; nametrap(ARROW,HERE); }
         else if (MATCH("oh, now this scroll has a map *"))
           { infer ("magic mapping", Scroll); didreadmap = Level; }
         else if (MATCH("oh, bummer!  everything is dark!  help!*"))
-          { infer ("blindness", potion); blinded=1; }
+          { infer ("blindness", potion); blinded = true; }
         else if (MATCH("oh, wow!  everything seems so cosmic!*"))
-          { infer ("hallucination", potion); cosmic=1; }
+          { infer ("hallucination", potion); cosmic = true; }
         else if (MATCH("oh, wow!  you're floating in the air!*"))
-          { infer ("levitation", potion); floating=1; }
+          { infer ("levitation", potion); floating = true; }
         else if (MATCH("oh, wow, that tasted good*")) ;
         else unknown++;
 
@@ -418,7 +418,7 @@ parsemsg (char *mess, char *mend)
 
           if (*res1-'a'+1 != invcount) {
             dwait (D_INFORM, __func__, "Range check failed");
-            usesynch = 0;
+            usesynch = false;
           }
         }
         else if (MATCH("read what*")) echoit=0;
@@ -430,7 +430,7 @@ parsemsg (char *mess, char *mend)
       case 's':
 
         if (MATCH("she stole *")) {
-          usesynch=0;
+          usesynch = false;
         }
         else if (MATCH("sting has no effect*")) ;
         else unknown++;
@@ -457,7 +457,7 @@ parsemsg (char *mess, char *mend)
           { if (gushed) { gushed = 0; nametrap (WATERAP, HERE); } }
         else if (MATCH("the room is lit*")) { setnewgoal (); infer ("light", wand); }
         else if (MATCH("the corridor glows*")) { infer ("light", wand); }
-        else if (MATCH("the * has confused you*")) confused = 1;
+        else if (MATCH("the * has confused you*")) confused = true;
         else if (MATCH("this scroll is an identify scroll scroll*"))
           { readident ("identify scroll"); }
         else if (MATCH("this scroll is an * scroll*")) {
@@ -466,7 +466,7 @@ parsemsg (char *mess, char *mend)
           }
         }
         else if (MATCH("that's not a valid item*")) ;
-        else if (MATCH("the veil of darkness lifts*")) blinded=0;
+        else if (MATCH("the veil of darkness lifts*")) blinded = false;
         else if (MATCH("the scroll turns to dust*"))
           { deletestuff (atrow, atcol); unset(SCAREM | STUFF); droppedscare--; }
         else if (MATCH("this potion tastes * dull*")) infer ("thirst quenching", potion);
@@ -479,11 +479,11 @@ parsemsg (char *mess, char *mend)
           { darkturns = 0; darkdir = NONE; targetmonster = 0; echoit=0; }
         else if (MATCH("there is something there already*")) {
           set(STUFF);
-          usesynch=0;
+          usesynch = false;
         }
         else if (MATCH("there is something here*")) {
           set(STUFF);
-          usesynch=0;
+          usesynch = false;
         }
         else if (MATCH("the munchies are interfering*")) ;
         else if (MATCH("the monsters around you freeze*")) holdmonsters ();
@@ -514,14 +514,14 @@ parsemsg (char *mess, char *mend)
         else if (MATCH("wield wha*")) {
           echoit=0;
           remember (lastdrop, UNCURSED);
-          cursedweapon=0;
+          cursedweapon = false;
         }
         else if (MATCH("wielding a*")) ;
         else if (MATCH("wear what*")) echoit=0;
         else if (MATCH("what monster*")) echoit=0;
-        else if (MATCH("wait, what's going*")) {infer("confusion", potion); confused=1;}
+        else if (MATCH("wait, what's going*")) {infer("confusion", potion); confused = true;}
         else if (MATCH("wait*that's a *")) ;
-        else if (MATCH("what a*feeling*")) { infer("confusion", potion); confused=1; }
+        else if (MATCH("what a*feeling*")) { infer("confusion", potion); confused = true; }
         else if (MATCH("what a*piece of paper*")) infer ("blank paper", Scroll);
         else if (MATCH("welcome to level *")) ;
         else if (MATCH("was wearing*")) ;
@@ -561,33 +561,33 @@ parsemsg (char *mess, char *mend)
           { infer("raise level", potion); }
         else if (MATCH("your nose tingles*")) infer ("food detection", Scroll);
         else if (MATCH("you start to float in the air*"))
-          { infer ("levitation", potion); floating=1; }
-        else if (MATCH("you're floating off the ground!*")) floating=1;
-        else if (MATCH("you float gently to the ground*")) floating=0;
+          { infer ("levitation", potion); floating = true; }
+        else if (MATCH("you're floating off the ground!*")) floating = true;
+        else if (MATCH("you float gently to the ground*")) floating = false;
         else if (MATCH("you feel yourself moving much faster*"))
-          { infer ("haste self", potion); hasted = 1; }
+          { infer ("haste self", potion); hasted = true; }
         else if (MATCH("you feel yourself slowing down*"))
-          { hasted = 0; doublehasted = 0; }
+          { hasted = false; doublehasted = false; }
         else if (MATCH("you faint from exhaustion*"))
-          { if (version < RV52A) doublehasted = 1; else hasted = 0; }
-        else if (MATCH("you feel less confused now*")) confused = 0;
-        else if (MATCH("you feel less trip*")) confused = 0;
+          { if (version < RV52A) doublehasted = true; else hasted = false; }
+        else if (MATCH("you feel less confused now*")) confused = false;
+        else if (MATCH("you feel less trip*")) confused = false;
         else if (MATCH("your * vanishes as it hits the ground*"))
           { darkturns = 0; darkdir = NONE; echoit=0; }
         else if (MATCH("your hands begin to glow *"))
-          { infer ("monster confusion", Scroll); redhands = 1; }
-        else if (MATCH("your hands stop glowing *")) redhands = 0;
+          { infer ("monster confusion", Scroll); redhands = true; }
+        else if (MATCH("your hands stop glowing *")) redhands = false;
 
         else if (MATCH("you feel as if somebody is watching over you*") ||
                  MATCH("you feel in touch with the universal onenes*")) {
           infer ("remove curse", Scroll);
           forget (currentarmor, CURSED);
           remember (currentarmor, UNCURSED);
-          cursedarmor=0;
+          cursedarmor = false;
           forget (currentweapon, CURSED);
           remember (currentweapon, UNCURSED);
-          cursedweapon=0;
-          newarmor = newweapon = 1;
+          cursedweapon = false;
+          newarmor = newweapon = true;
         }
 
         else if (MATCH("your armor weakens*")) {
@@ -601,7 +601,7 @@ parsemsg (char *mess, char *mend)
           infer ("protect armor", Scroll);
           forget (currentarmor, CURSED);
           remember (currentarmor, UNCURSED);
-          cursedarmor = 0;
+          cursedarmor = false;
           protected++;
           remember (currentarmor, PROTECTED);
         }
@@ -609,8 +609,8 @@ parsemsg (char *mess, char *mend)
         else if (MATCH("your arms tingle")) infer ("enchant armor", Scroll);
         else if (MATCH("your armor glows * for a moment*")) {
           infer ("enchant armor", Scroll);
-          cursedarmor = 0;
-          newarmor = 1;
+          cursedarmor = false;
+          newarmor = true;
           inven[currentarmor].phit++;
 
           if (itemis(currentarmor, UNCURSED))
@@ -622,8 +622,8 @@ parsemsg (char *mess, char *mend)
         else if (MATCH("your hands tingle")) infer ("enchant weapon", Scroll);
         else if (MATCH("your * glows * for a moment*")) {
           infer ("enchant weapon", Scroll);
-          cursedweapon = 0;
-          newweapon = 1;
+          cursedweapon = false;
+          newweapon = true;
 
           if (itemis (currentweapon, UNCURSED))
             remember (currentweapon, ENCHANTED);
@@ -632,7 +632,7 @@ parsemsg (char *mess, char *mend)
           remember (currentweapon, UNCURSED);
         }
         else if (MATCH("you hear a high pitched humming noise*"))
-          { infer ("aggravate monsters", Scroll); wakemonster (9); aggravated = 1; }
+          { infer ("aggravate monsters", Scroll); wakemonster (9); aggravated = true; }
         else if (MATCH("you hear maniacal laughter*")) infer ("scare monster", Scroll);
         else if (MATCH("you hear a faint cry*")) infer ("create monster", Scroll);
         else if (MATCH("you fall asleep*")) infer ("sleep", Scroll);
@@ -852,10 +852,10 @@ readident (char *name)
     sendnow (" %c;", id);		/* Pick an object to identify */
     if (id == '*')
       memset (lastname, '\0', NAMSIZ);
-    usesynch = 0; justreadid=1;		/* Must reset inventory */
+    usesynch = false; justreadid=1;		/* Must reset inventory */
   }
 
-  newring = newweapon = 1; afterid = nextid = '\0';
+  newring = newweapon = true; afterid = nextid = '\0';
 }
 
 /*
@@ -919,7 +919,7 @@ rampage (void)
 static void
 curseditem (void)
 {
-  usesynch = 0;    /* Force a reset inventory */
+  usesynch = false;    /* Force a reset inventory */
 
   clearsendqueue();
   sendnow ("%c", ESC);
@@ -930,16 +930,16 @@ curseditem (void)
 
     /* Is our armor cursed? */
     if (inven[lastdrop].type == armor)
-      { currentarmor = lastdrop; cursedarmor = 1; return; }
+      { currentarmor = lastdrop; cursedarmor = true; return; }
 
     /* Is it our weapon (may be wielding a hitter or a bogus magic arrow)? */
     else if (inven[lastdrop].type==hitter || inven[lastdrop].type==missile)
-      { currentweapon = lastdrop; cursedweapon = 1; return; }
+      { currentweapon = lastdrop; cursedweapon = true; return; }
   }
 
   /* Don't know what was cursed, so assume the worst */
-  cursedarmor=1;
-  cursedweapon=1;
+  cursedarmor = true;
+  cursedweapon = true;
 
 }
 
@@ -990,7 +990,7 @@ killed (char *monster)
   if (version < RV52A && cheat) {
     if (usingarrow && hitstokill > 1 && !beingstalked && goodarrow < R-4) {
       saynow ("Oops, bad arrow...");
-      newweapon = badarrow = 1; remember (currentweapon, WORTHLESS);
+      newweapon = badarrow = true; remember (currentweapon, WORTHLESS);
     }
     else if (usingarrow) goodarrow++;
   }
@@ -1114,7 +1114,7 @@ didmiss (void)
   addprob (&monhist[monindex[m]].wehit, FAILURE);
 
   if (usingarrow && goodarrow < R-4)
-    { newweapon = badarrow = 1; remember (currentweapon, WORTHLESS); }
+    { newweapon = badarrow = true; remember (currentweapon, WORTHLESS); }
 }
 
 /*

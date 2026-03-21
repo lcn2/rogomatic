@@ -42,7 +42,7 @@
 # define isdigit(c) ((c) >= '0' && (c) <= '9')
 # define NOMON 29
 
-int cheat = 0;
+int cheat = false;
 
 /* static declarations */
 static int getscore (int *score, char *killer, int *level);

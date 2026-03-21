@@ -53,7 +53,7 @@ wear (int obj)
   if (cursedarmor) return (0);
 
   command (T_HANDLING, "W%c", LETTER (obj));
-  usesynch = 0;
+  usesynch = false;
   return (1);
 }
 
@@ -72,7 +72,7 @@ takeoff (void)
   if (cursedarmor) return (0);
 
   command (T_HANDLING, "T");
-  usesynch = 0;
+  usesynch = false;
   return (1);
 }
 
@@ -88,19 +88,19 @@ wield (int obj)
   if (version >= RV54A) {
 
     if (itemis(currentweapon, CURSED)) {
-      cursedweapon=1;
+      cursedweapon = true;
       return (0);
     }
     else if (currentweapon == NONE) {
       command (T_HANDLING, "w%c", LETTER (obj));
     }
     else if (itemis(currentweapon, UNCURSED)) {
-      cursedweapon=0;
+      cursedweapon = false;
       command (T_HANDLING, "w%c", LETTER (obj));
     }
     else if (itemis(currentweapon, ENCHANTED)) {
       remember(currentweapon, UNCURSED);
-      cursedweapon=0;
+      cursedweapon = false;
       command (T_HANDLING, "w%c", LETTER (obj));
     }
     else {
@@ -202,7 +202,7 @@ quaff (int obj)
 {
   if (inven[obj].type != potion) {
     dwait (D_ERROR, __func__, "Trying to quaff: %c", LETTER (obj));
-    usesynch = 0;
+    usesynch = false;
     return (0);
   }
 
@@ -219,7 +219,7 @@ reads (int obj)
 {
   if (inven[obj].type != Scroll) {
     dwait (D_ERROR, __func__, "Trying to read: %c", LETTER (obj));
-    usesynch = 0;
+    usesynch = false;
     return (0);
   }
 
@@ -374,7 +374,7 @@ void
 display (char *s)
 {
   saynow (s);
-  msgonscreen=1;
+  msgonscreen = true;
 }
 
 /*

@@ -58,25 +58,25 @@ newlevel (void)
   int   i, j;
 
   initstufflist ();			/* Delete the list of items */
-  diddrop = 0;				/* Clear dropped item flag */
+  diddrop = false;				/* Clear dropped item flag */
   droppedscare = 0;			/* Old stuff gone */
   maxobj = 22;				/* Reset maximum # of objs */
   newmonsterlevel ();			/* Do new monster stuff */
-  exploredlevel = 0;			/* New level */
-  aggravated = 0;			/* Old monsters gone */
+  exploredlevel = false;			/* New level */
+  aggravated = false;			/* Old monsters gone */
   beingstalked = 0;			/* Old monsters gone */
   darkdir = NONE; darkturns = 0;	/* Not arching old monster */
   stairrow = NONE; staircol = 0;	/* Get rid of old stairs */
-  missedstairs = 0;
+  missedstairs = false;
   newdoors = doorlist;			/* Clear door list */
   goalr = goalc = NONE;			/* Old goal invalid */
   trapr = trapc = NONE;			/* Old traps are gone */
-  foundarrowtrap = foundtrapdoor = 0;   /* Old traps are gone */
+  foundarrowtrap = foundtrapdoor = false;   /* Old traps are gone */
   teleported = 0;			/* Not teleported yet */
   attempt = 0;				/* Haven't search for doors yet */
-  usesynch = 0;				/* Force a new inventory */
+  usesynch = false;				/* Force a new inventory */
   compression = Level < 13;		/* Set move compression */
-  newarmor = newweapon = newring = 1;	/* Reevaluate our items */
+  newarmor = newweapon = newring = true;	/* Reevaluate our items */
   foundnew ();				/* Reactivate all rules */
   clearsendqueue ();	/* Clear old commands */
 
@@ -214,8 +214,8 @@ nametrap (int traptype, int standingonit)
   }
 
   /* Record last arror trap found (for cheating against 3.6) */
-  if (traptype == ARROW) { foundarrowtrap = 1; trapr = r; trapc = c; }
-  else if (traptype == TRAPDOR) { foundtrapdoor = 1; }
+  if (traptype == ARROW) { foundarrowtrap = true; trapr = r; trapc = c; }
+  else if (traptype == TRAPDOR) { foundtrapdoor = true; }
 
   /* If a trapdor, reactivate rules */
   if (traptype == TRAPDOR) foundnew ();
@@ -686,7 +686,7 @@ updatepos (char ch, int row, int col)
         }
 
         if (!revvideo && ch != oldch) { /* R5.2 MLM */
-          blinded = 0;
+          blinded = false;
 
           if (seenbefore)
             addmonster (ch, row, col, AWAKE);

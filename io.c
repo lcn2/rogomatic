@@ -351,13 +351,13 @@ getrogue (char *waitstr, int onat)
 
       case SE_TOK:
         debuglog ("SE_TOK\n");
-        revvideo = 0;
+        revvideo = false;
         standend ();
         break;
 
       case SO_TOK:
         debuglog ("SO_TOK\n");
-        revvideo = 1;
+        revvideo = true;
         standout ();
         break;
 
@@ -370,7 +370,7 @@ getrogue (char *waitstr, int onat)
 
         if (interrupted) return;
 
-        if (!replaying || !logdigested) { playing = 0; return; }
+        if (!replaying || !logdigested) { playing = false; return; }
 
         saynow ("End of game log, type 'Q' to exit.");
         return;
@@ -456,13 +456,13 @@ getrogue (char *waitstr, int onat)
   }
 
   if (!usesynch && !pending ()) {
-    usesynch = 1;
+    usesynch = true;
     lastobj = NONE;
     resetinv();
   }
 
   if (version < RV53A && checkrange && !pending ())
-    { command (T_OTHER, "Iz"); checkrange = 0; }
+    { command (T_OTHER, "Iz"); checkrange = false; }
 
   /* If mapping status has changed */
   if (wasmapped != didreadmap) {
@@ -554,7 +554,7 @@ terpbot (void)
 
   if (oldgold < Gold)        deletestuff (atrow, atcol);
 
-  if (oldhp < Hp)            newring = 1;
+  if (oldhp < Hp)            newring = true;
 
   lastdamage = max (0, oldhp - Hp);
 
@@ -846,7 +846,7 @@ quitrogue (char *reason, int gld, int terminationtype)
 
   /* Don't need to make up any more commands */
   if (!replaying || !logdigested)
-    playing = 0;
+    playing = false;
 
   /* Now get the current time, so we can date the score */
   clock = time(&clock);
@@ -1216,7 +1216,7 @@ charsavail (void)
     n=0;
   }
 
-  if (n > 0) noterm = 0;
+  if (n > 0) noterm = false;
 
   return ((int) n);
 }

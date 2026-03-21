@@ -144,7 +144,7 @@ removeinv (int pos)
   }
 
   countpack ();
-  checkrange = 1;
+  checkrange = true;
 }
 
 /*
@@ -167,7 +167,7 @@ deleteinv (int pos)
   }
 
   countpack ();
-  checkrange = 1;
+  checkrange = true;
 }
 
 /*
@@ -262,7 +262,7 @@ rollpackdown (int pos)
   inven[pos].str = savebuf;
 
   if (++invcount > MAXINV) {
-    usesynch = 0;
+    usesynch = false;
   }
 }
 
@@ -300,8 +300,8 @@ doresetinv (void)
   /* zeroize arrays */
   memset(space, 0, sizeof(space));
 
-  usesynch = 1;
-  checkrange = 0;
+  usesynch = true;
+  checkrange = false;
 
   for(i=0; i<MAXINV; ++i) {
     inven[i].str = space[i];
@@ -565,13 +565,13 @@ inventory (char *msgstart, char *msgend)
 
   /* If new item, record the change */
   if (newitem && what == armor)
-    newarmor = 1;
+    newarmor = true;
   else if (newitem && what == ring)
-    newring = 1;
+    newring = true;
   else if (newitem && what == food)
-    { newring = 1; lastfoodlevel = Level; }
+    { newring = true; lastfoodlevel = Level; }
   else if (newitem && (what == hitter || what == missile || what == wand))
-    newweapon = 1;
+    newweapon = true;
 
   /* If the object is an old object, set its count, else allocate */
   /* a new object and roll the other objects down */
@@ -651,7 +651,7 @@ inventory (char *msgstart, char *msgend)
   if (newitem && on (USELESS))	remember (ipos, WORTHLESS);
   else if (newitem)		forget (ipos, WORTHLESS);
 
-  checkrange = 1;
+  checkrange = true;
 
   return (printed);
 }

@@ -168,7 +168,7 @@ dwait(int msgtype, const char *from, char *f, ...)
   if (msgtype & D_FATAL) {
     extern jmp_buf commandtop;			/* From play */
     saynow (msg);
-    playing = 0;
+    playing = false;
     quitrogue (msg, Gold, SAVED);
     longjmp (commandtop, 0);
   }
@@ -194,7 +194,7 @@ dwait(int msgtype, const char *from, char *f, ...)
         break;
       case 'i': at (1,0); dumpinv ((FILE *) NULL); at (row, col); break;
       case 'd': toggledebug ();		break;
-      case 't': transparent = 1;        break;
+      case 't': transparent = true;        break;
       case '!': dumpstuff ();           break;
       case '@': dumpmonster ();         break;
       case '#': dumpwalls ();           break;

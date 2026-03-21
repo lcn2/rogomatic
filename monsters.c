@@ -81,7 +81,7 @@ addmonster (char ch, int r, int c, int quiescence)
     if (++mlistlen >= MAXMONST) dwait (D_FATAL, __func__, "Too many monsters");
 
     setrc (MONSTER, r, c);
-    lyinginwait = 0;
+    lyinginwait = false;
     new_arch = 1;
 
     /* If we can see it, it is not really invisible */

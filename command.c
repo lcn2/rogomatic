@@ -136,7 +136,7 @@ command (int tmode, char *f, ...)
   if (movedir == NOTAMOVE)
     adjustpack (cmd);
   else
-    diddrop = 0;
+    diddrop = false;
 
   /* If we have a ring of searching, take that into account */
   if (wearing ("searching") != NONE)
@@ -219,7 +219,7 @@ adjustpack (char *cmd)
       break;
 
     case 'e':   removeinv (OBJECT (commandarg (cmd, 1)));
-      Ms[0] = 'X'; newring = 1;
+      Ms[0] = 'X'; newring = true;
       lastate = turns;
       break;
 
@@ -262,7 +262,7 @@ adjustpack (char *cmd)
       goodweapon = (weaponclass (currentweapon) >= 100);
 
       badarrow = goodarrow = poorarrow = hitstokill = 0;
-      newweapon = 1;
+      newweapon = true;
       setbonuses ();
       }
       break;
@@ -302,7 +302,7 @@ adjustpack (char *cmd)
 
       remember (obj, INUSE);
       setbonuses ();
-      newarmor = 1;
+      newarmor = true;
 
       break;
 
@@ -319,7 +319,7 @@ adjustpack (char *cmd)
 
       forget (lastdrop, INUSE);
       setbonuses ();
-      newarmor = 1;
+      newarmor = true;
 
       break;
 
@@ -327,13 +327,13 @@ adjustpack (char *cmd)
       usemsg ("About to take off", currentarmor);
       forget (currentarmor, INUSE);
       currentarmor = NONE;
-      newarmor = 1;
+      newarmor = true;
       break;
 
     case 'W':	currentarmor = OBJECT (commandarg (cmd, 1));
       usemsg ("About to wear", currentarmor);
       remember (currentarmor, INUSE);
-      newarmor = 1;
+      newarmor = true;
       break;
   }
 }

@@ -109,7 +109,7 @@ handlearmor (void)
 
   /* If we are wearing the right armor, then don't bother */
   if (obj == currentarmor)
-    { newarmor = 0; return (0); }
+    { newarmor = false; return (0); }
 
   /* Debugging */
   dwait (D_PACK, __func__, "obj: %d currentarmor: %d", obj, currentarmor);
@@ -123,7 +123,7 @@ handlearmor (void)
     { return (wear (obj)); }
 
   /* If we have no armor, then forget it */
-  newarmor = 0;
+  newarmor = false;
   return (0);
 }
 
@@ -144,9 +144,9 @@ handleweapon (void)
   if ((obj = haveweapon (1, NOPRINT)) == NONE) return (0);
 
   /* If we are not wielding our best weapon, do so */
-  if (obj == currentweapon)	{ newweapon = 0; return (0); }
+  if (obj == currentweapon)	{ newweapon = false; return (0); }
   else if (obj != NONE)		{ return (wield (obj)); }
-  else				{ newweapon = 0; return (0); }
+  else				{ newweapon = false; return (0); }
 }
 
 /*
@@ -383,7 +383,7 @@ handlering (void)
 
   if ((leftring == ring1 && rightring == ring2) ||
       (rightring == ring1 && leftring == ring2)) {
-    newring = 0; return (0);
+    newring = false; return (0);
   }
 
   if (leftring != NONE && leftring != ring1 && leftring != ring2 &&
@@ -555,7 +555,7 @@ godownstairs (int running)
 
   /* Allow other rules a chance to notice that we are done with the level */
   if (on (STAIRS) && !exploredlevel)
-    { exploredlevel = 1; return (1); }
+    { exploredlevel = true; return (1); }
 
   /* If we are floating, we cant go down, either rest or fail */
   if (floating && running)

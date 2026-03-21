@@ -219,7 +219,7 @@ canrun (void)
 
   if (on (STAIRS)) return (1);		/* Can run down stairs */
 
-  compression = 0;			/* Be tense when fleeing */
+  compression = false;			/* Be tense when fleeing */
   result = (findmove (RUNAWAY, runinit, runvalue, REEVAL) ||
             findmove (EXPLORERUN, expruninit, exprunvalue, REEVAL));
 
@@ -256,7 +256,7 @@ unpin (void)
 
   /* currentrectangle ();   // always done after each move of the rogue // */
 
-  compression = 0;	/* Be tense when fleeing */
+  compression = false;	/* Be tense when fleeing */
   result = (makemove (UNPIN, unpininit, runvalue, REEVAL) ||
             makemove (UNPINEXP, expunpininit, expunpinvalue, REEVAL));
 

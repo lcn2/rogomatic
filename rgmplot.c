@@ -39,7 +39,7 @@
 # define SCALE(n) (((n)+100)/200)
 # define isdigit(c) ((c) >= '0' && (c) <= '9')
 
-int cheat = 0;
+int cheat = false;
 
 /* static declarations */
 

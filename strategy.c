@@ -75,7 +75,7 @@ strategize (void)
   if (replaying) return (replaycommand ());
 
   /* Clear any messages we printed last turn */
-  if (msgonscreen) { at (0,0); clrtoeol (); msgonscreen = 0; at (row,col); }
+  if (msgonscreen) { at (0,0); clrtoeol (); msgonscreen = false; at (row,col); }
 
 
   /* ----------------------- Production Rules --------------------------- */
@@ -111,7 +111,7 @@ strategize (void)
    * number of turns.
    */
 
-  lyinginwait = 0;			/* No more monsters to wait for */
+  lyinginwait = false;			/* No more monsters to wait for */
 
   if (foughtmonster) foughtmonster--;	/* Turns since fought monster */
 
@@ -347,7 +347,7 @@ fightmonster (void)
   if (!lyinginwait && !adjacent) {
     command (T_FIGHTING, "s");
     dwait (D_BATTLE, __func__, "Lying in wait");
-    lyinginwait = 1;
+    lyinginwait = true;
     foughtmonster = DIDFIGHT;
     return (1);
   }
@@ -370,7 +370,7 @@ fightmonster (void)
 
   /* Move towards the monster (this causes us to hit him) */
   rmove (1, mdir, T_FIGHTING);
-  lyinginwait = 0;
+  lyinginwait = false;
   foughtmonster = DIDFIGHT;
   return (1);
 }
@@ -458,14 +458,14 @@ tomonster (void)
   if ((closest&1) == 0 && !lyinginwait) {
     command (T_FIGHTING, "s");
     dwait (D_BATTLE, __func__, "Waiting for monster an odd number of squares away");
-    lyinginwait = 1;
+    lyinginwait = true;
     return (1);
   }
 
   /* "We have him! Move toward him!" */
   if (gotowards (mlist[which].mrow, mlist[which].mcol, 0)) {
     goalr = mlist[which].mrow; goalc = mlist[which].mcol;
-    lyinginwait = 0;
+    lyinginwait = false;
     return (1);
   }
 
@@ -518,7 +518,7 @@ static int
 aftermelee (void)
 {
   if (foughtmonster > 0) {
-    lyinginwait = 1;
+    lyinginwait = true;
     command (T_RESTING, "s");
     dwait (D_BATTLE, __func__, "waiting for %d rounds", foughtmonster);
     return (1);
@@ -783,9 +783,9 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
       (obj = havewand ("teleport away")) != NONE &&
       ! (itemis (obj, WORTHLESS)) &&
       point (obj, mdir)) {
-    if (streq (monster, "violet fungi")) beingheld = 0;
+    if (streq (monster, "violet fungi")) beingheld = false;
 
-    if (streq (monster, "venus flytrap")) beingheld = 0;
+    if (streq (monster, "venus flytrap")) beingheld = false;
 
     return (1);
   }
@@ -796,7 +796,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
 
   if (die_in (1) && turns == 0 &&
       (obj = havenamed (Scroll, "teleportation")) != NONE) {
-    beingheld = 0;
+    beingheld = false;
     return (reads (obj));
   }
 
@@ -884,7 +884,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
       ! (itemis (obj, WORTHLESS))
      ) {
     if (streq (monster, "violet fungi") || streq (monster, "venus flytrap"))
-      beingheld = 0;
+      beingheld = false;
 
     return (point (obj, mdir));
   }
@@ -949,7 +949,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
       ! (itemis (obj, WORTHLESS))
      ) {
     point (obj, mdir);
-    usesynch = 0;
+    usesynch = false;
     return (1);
   }
 
@@ -960,7 +960,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
   if (!alert && !lyinginwait && turns > 0) {
     command (T_FIGHTING, "s");
     dwait (D_BATTLE, __func__, "Waiting to see if he is awake");
-    lyinginwait = 1;
+    lyinginwait = true;
     return (1);
   }
 
