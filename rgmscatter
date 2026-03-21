@@ -1,10 +1,34 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
-# rplot: Rog-O-Matic XIV (CMU) Tue Feb  5 13:52:48 1985 - mlm
+# rgmscatter: Rog-O-Matic XIV (CMU) Tue Feb  5 13:52:48 1985 - mlm
 # Copyright (C) 1985 by A. Appel, G. Jacobson, L. Hamey, and M. Mauldin
 #
-/usr/misc/.rogomatic/bin/rogomatic -s | \
-	colrm 48 | \
-	/usr/misc/.rogomatic/bin/datesub | \
-	sort -u +2n +0n +1n +4n +5 | \
-	/usr/misc/.rogomatic/bin/rgmplot $*
+# Bug fixes by: Landon Curt Noll (chongo was here) ^oo^
+#
+
+export ROGOMATIC="rogomatic"
+if [[ -x ./rogomatic ]]; then
+    ROGOMATIC="./rogomatic"
+fi
+if [[ ! -x $ROGOMATIC ]]; then
+    echo "$0: ERROR: rogomatic executable not found" 1>&2
+    exit 1
+fi
+
+export RGMPLOT="rgmplot"
+if [[ -x ./rgmplot ]]; then
+    RGMPLOT="./rgmplot"
+fi
+if [[ ! -x $RGMPLOT ]]; then
+    echo "$0: ERROR: rgmplot executable not found" 1>&2
+    exit 2
+fi
+
+"$ROGOMATIC" -s | \
+    colrm 48 | \
+    sed -e 's/\<Jan\>/1/g' -e 's/\<Feb\>/2/g' -e 's/\<Mar\>/3/g' \
+	-e 's/\<Apr\>/4/g' -e 's/\<May\>/5/g' -e 's/\<Jun\>/6/g' \
+	-e 's/\<Jul\>/7/g' -e 's/\<Aug\>/8/g' -e 's/\<Sep\>/9/g' \
+	-e 's/\<Oct\>/10/g' -e 's/\<Nov\>/11/g' -e 's/\<Dec\>/12/g' |
+    LC_ALL=C sort -u +2n +0n +1n +4n +5 | \
+    "$RGMPLOT" "$@"

@@ -82,7 +82,6 @@
  *
  *      rplot           A shell script, prints a scatter plot of Rog's scores.
  *      rgmplot.c       A program used by rplot.
- *      datesub.l       A program used by rplot.
  *      histplot.c      A program which plots a histogram of Rgm's scores.
  *
  * Acknowledgments

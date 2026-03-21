@@ -2,8 +2,6 @@
 #
 anim
 [a-z]
-datesub
-datesub.c
 *.dSYM
 gene
 genetest

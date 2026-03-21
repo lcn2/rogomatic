@@ -47,7 +47,6 @@ GREP= grep
 GROFF= groff
 ID= id
 INSTALL= install
-LEX= lex
 MAKEDEPEND= makedepend
 MKDIR= mkdir
 MV= mv
@@ -155,7 +154,7 @@ endif
 
 OTHER_TARGES= anim testfind genetest gplot tf
 
-TARGETS= rogomatic player rgmplot datesub histplot gene
+TARGETS= rogomatic player rgmplot histplot gene
 
 
 ################################
@@ -184,10 +183,10 @@ C_SRC= ${CFILES} ${MISC_C}
 
 SRC= ${C_SRC} ${H_SRC}
 
-MISC_OBJS= datesub.o gene.o histplot.o rgmplot.o setup.o findscore.o anim.o \
+MISC_OBJS= gene.o histplot.o rgmplot.o setup.o findscore.o anim.o \
 	   testfind.o genetest.o gplot.o tf.o
 
-OTHERS= datesub.l rplot rgmhist rgmscatter
+OTHERS= rplot rgmhist rgmscatter
 
 DOC_SRC= rogomatic.6.in rogomatic.cat.in
 
@@ -326,12 +325,6 @@ all: ${BUILD_H_SRC} ${TARGETS} rogomatic.6
 .c.o:
 	${CC} ${CFLAGS} -c $*.c
 
-datesub.o: datesub.c
-	${CC} ${CFLAGS} -Wno-unused-function -c $*.c
-
-datesub: datesub.o
-	${CC} ${LDFLAGS} datesub.o -o $@
-
 gene: gene.o rand.o learn.o stats.o utility.o config.o
 	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o config.o -lm ${LIBS} -o $@
 
@@ -378,11 +371,6 @@ form_rogomatic_cat_in: rogomatic.6.in
 #####################
 # constricted files #
 #####################
-
-datesub.c: datesub.l
-	${RM} -f $@
-	${LEX} -o $@ datesub.l
-
 
 # We need booleans, however the ANSI C committee, in their very finite wisdom,
 # has decided to deprecate <stdbool.h>.  So for those older compiler environments
@@ -476,7 +464,6 @@ rogomatic.cat: rogomatic.6 rogomatic.cat.in
 ###################################
 
 clean:
-	${RM} -f datesub.c
 	${RM} -f ${MISC_OBJS}
 	${RM} -f ${OBJS}
 
