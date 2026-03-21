@@ -100,7 +100,7 @@ set_rgmdir (bool time_subpath)
   /*
    * if we are to add a time_subpath, attempt to append the UTC date and time
    */
-  if (!time_subpath && !subpath_formed) {
+  if (time_subpath && !subpath_formed) {
 
     /*
      * determine now in UTC

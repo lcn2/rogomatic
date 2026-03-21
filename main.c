@@ -220,7 +220,6 @@ bool playing = true;		/* True if still playing game */
 bool poorarrow = false;		/* True if arrow has missed */
 bool protected = false;		/* True if we protected our armor */
 int putonseeinv = 0;		/* Turn when last put on see inv ring */
-int quitat = BOGUS;		/* Score to beat, quit if within 10% more */
 bool redhands = false;		/* True if we have red hands */
 bool replaying = false;		/* True if replaying old game */
 bool revvideo = false;		/* True if in rev. video mode */
@@ -468,15 +467,14 @@ main (int argc, char *argv[])
       int emacs_int;		/* integer form of emacs boolean */
       int terse_int;		/* integer form of terse boolean */
       int transparent_int;	/* integer form of transparent boolean */
-      int quitat_int;		/* integer form of quitat boolean */
       int time_subpath_int;	/* integer form of time_subpath boolean */
 
       /* parse options in third argument */
-      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d,%d",
+      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d",
                             &cheat_int, &noterm_int, &startecho_int, &nohalf_int,
-                            &emacs_int, &terse_int, &transparent_int, &quitat_int, &time_subpath_int);
-      if (i != 9) {
-	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 9 flags, returned: %d\n", argv[3], i);
+                            &emacs_int, &terse_int, &transparent_int, &time_subpath_int);
+      if (i != 8) {
+	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 8 flags, returned: %d\n", argv[3], i);
 	  exit(1);
       }
 
@@ -488,7 +486,6 @@ main (int argc, char *argv[])
       emacs = (emacs_int == 0) ? false : true;
       terse = (terse_int == 0) ? false : true;
       transparent = (transparent_int == 0) ? false : true;
-      quitat = (quitat_int == 0) ? false : true;
       time_subpath = (time_subpath_int == 0) ? false : true;
   }
 
@@ -586,8 +583,8 @@ main (int argc, char *argv[])
     snprintf (msg, SM_BUF, " Replaying log file %s, version %s.",
 	     logfilename, versionstr);
   else
-    snprintf (msg, SM_BUF, " %s: version %s, genotype %d, quit at %d.",
-	     roguename, versionstr, geneid, quitat);
+    snprintf (msg, SM_BUF, " %s: version %s, genotype %d.",
+	     roguename, versionstr, geneid);
 
   if (emacs)
     { fprintf (realstdout, "%s  (%%b)", msg); fflush (realstdout); }
@@ -754,8 +751,8 @@ main (int argc, char *argv[])
             saynow ("Replaying log file %s, version %s.",
                     logfilename, versionstr);
           else
-            saynow (" %s: version %s, genotype %d, quit at %d.",
-                    roguename, versionstr, geneid, quitat);
+            saynow (" %s: version %s, genotype %d.",
+                    roguename, versionstr, geneid);
 
           break;
 

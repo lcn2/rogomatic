@@ -139,7 +139,6 @@ extern bool playing;		/* True if still playing the game */
 extern bool poorarrow;		/* True if arrow has missed */
 extern bool protected;		/* True if we protected our armor */
 extern int putonseeinv;		/* Turn when last put on see inv ring */
-extern int quitat;		/* Score to beat, quit if within 10% more */
 extern bool redhands;		/* True if our hands are red */
 extern bool replaying;		/* True if replaying old game */
 extern bool revvideo;		/* True if in rev. video mode */

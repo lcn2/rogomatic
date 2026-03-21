@@ -207,7 +207,7 @@ dwait(int msgtype, const char *from, char *f, ...)
         break;
       case '(': dumpdatabase (); at (row, col); break;
       case ')': new_mark = true; markcycles (DOPRINT); at (row, col); break;
-      case '~': saynow ("Version %d, quit at %d", version, quitat); break;
+      case '~': saynow ("Version %d", version); break;
       case '/': dosnapshot (); break;
       default: at (row, col); va_end (ap); return (1);
     }

@@ -12,13 +12,6 @@
 
 
 /*
- * Rog-O-Matic will not try to beat scores higher than BOGUS which
- * appear on the Rogue scoreboard.
- */
-
-# define BOGUS		(999999)
-
-/*
  * This variable defines the version of Rogue we are assumed to be playing
  * if the getrogueversion() routine can't figure it out.  This must be
  * defined, and can be either "5.2", "3.6", or "5.3". DEFRV is must be

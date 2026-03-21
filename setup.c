@@ -40,7 +40,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.1 20026-03-19"
+# define VERSION "14.1.2 20026-03-21"
 
 /*
  * global declarations
@@ -100,7 +100,6 @@ main (int argc, char *argv[])
   bool noterm = false;		    /* true ==> Watched mode */
   bool emacs = false;		    /* true ==> Emacs mode */
   int child;
-  int quitat = 2147483647;
   char *rfile = "", *rfilearg = "";
   char options[MU_BUF + 1];	    /* rogomatic options, +1 for paranoia */
   char ropts[SM_BUF + 1];	    /* rogue options, +1 for paranoia */
@@ -239,7 +238,7 @@ main (int argc, char *argv[])
    * Let the player command do that so that the UTC date and time
    * is of when the player command starts.
    */
-  set_rgmdir (0);
+  set_rgmdir (false);
 
   /*
    * Find which rogue executable to use
@@ -287,10 +286,8 @@ main (int argc, char *argv[])
     exit (1);
   }
 
-  if (!replay && !score) quitat = findscore (rfile, "Rog-O-Matic");
-
-  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d,%d",
-           cheat, noterm, echo, nohalf, emacs, terse, user, quitat, time_subpath);
+  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
+           cheat, noterm, echo, nohalf, emacs, terse, user, time_subpath);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
   /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir */
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",

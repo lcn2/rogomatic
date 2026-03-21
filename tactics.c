@@ -676,8 +676,7 @@ goupstairs (int running)
   int obj;
 
   /* Check for applicability of this rule */
-  if (stairrow == NONE || have(amulet) == NONE ||
-      (!running && quitat < BOGUS && Gold <= quitat))
+  if (stairrow == NONE || have(amulet) == NONE || !running)
     return (0);
 
   /* If we are on the stairs, then check for win, else go up */

@@ -58,7 +58,6 @@ static int fightinvisible (void);
 static int archery (void);
 static int pickupafter (void);
 static int dropjunk (void);
-static int quitforhonors (void);
 
 /*
  * strategize: Run through each rule until something fires. Return 1 if an
@@ -801,13 +800,6 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
   }
 
   /*
-   * The better part of valor...
-   */
-
-  if (((die_in (1) && turns == 0) || fainting ()) && quitforhonors ())
-    return (1);
-
-  /*
    * If we trust our magic arrow, give it a whirl
    */
 
@@ -1105,10 +1097,6 @@ fightinvisible (void)
   if (--beingstalked < 0)
     { return (beingstalked=0); }
 
-  /* If we are in real trouble, we might want to quit */
-  if (beingstalked > INVPRES && Hp < INVDAM && quitforhonors ())
-    { return (1); }
-
   /* Can we teleport out of here? */
   if (Hp < INVDAM && beingstalked > INVPRES &&
       (obj = havenamed (Scroll, "teleport")) != NONE && reads (obj)) {
@@ -1269,28 +1257,6 @@ dropjunk (void)
 
   if ((obj = haveuseless ()) != NONE && (gotocorner () || throw (obj, 7)))
     return (1);
-
-  return (0);
-}
-
-/*
- * quitforhonors: We are in mortal danger.  Do we want to quit?
- *
- * Strategy:	'quitat' is the score to beat (set in setup);
- *		If we will beat it anyway, don't quit.  If we
- *		wont beat it anyway, don't quit.  If we will just
- *		beat the score by quiting, then do so.
- *
- * Assumes a 10 percent death tax.
- */
-
-static int
-quitforhonors (void)
-{
-  if (Gold > quitat && (Gold-Gold/10) <= quitat) {
-    quitrogue ("quit (scoreboard)", Gold, 0);
-    return (1);
-  }
 
   return (0);
 }

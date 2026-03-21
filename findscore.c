@@ -91,8 +91,7 @@ findscore (char *rogue, char *roguename)
         break;					/* 'best' is now target */
       }
 
-      if (score < BOGUS &&
-          (score < best || best < 0))		/* Save smallest score */
+      if (score < best || best < 0)		/* Save smallest score */
         best = score;				/*  above Rogy's score */
     }
   }

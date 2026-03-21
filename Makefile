@@ -152,7 +152,7 @@ else
 LIBS= -lncurses
 endif
 
-OTHER_TARGES= anim testfind genetest gplot tf
+OTHER_TARGES= anim testfind genetest gplot
 
 TARGETS= rogomatic player rgmplot histplot gene
 
@@ -177,14 +177,14 @@ CFILES= arms.c command.c config.c database.c debug.c debuglog.c explore.c \
 	rand.c replay.c rooms.c scorefile.c search.c stats.c strategy.c \
 	survival.c tactics.c things.c titlepage.c utility.c worth.c
 
-MISC_C= setup.c findscore.c histplot.c rgmplot.c gene.c tf.c
+MISC_C= setup.c histplot.c rgmplot.c gene.c
 
 C_SRC= ${CFILES} ${MISC_C}
 
 SRC= ${C_SRC} ${H_SRC}
 
-MISC_OBJS= gene.o histplot.o rgmplot.o setup.o findscore.o anim.o \
-	   testfind.o genetest.o gplot.o tf.o
+MISC_OBJS= gene.o histplot.o rgmplot.o setup.o anim.o \
+	   testfind.o genetest.o gplot.o
 
 OTHERS= rplot rgmhist rgmscatter
 
@@ -337,8 +337,8 @@ player: ${OBJS}
 rgmplot: rgmplot.o utility.o
 	${CC} ${LDFLAGS} rgmplot.o utility.o ${LIBS} -o $@
 
-rogomatic: setup.o findscore.o scorefile.o utility.o config.o
-	${CC} ${LDFLAGS} setup.o findscore.o scorefile.o utility.o config.o ${LIBS} -o $@
+rogomatic: setup.o scorefile.o utility.o config.o
+	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o ${LIBS} -o $@
 
 
 #################################################################
@@ -354,11 +354,8 @@ genetest: genetest.o learn.o rand.o stats.o utility.o
 gplot: gplot.o
 	${CC} -g gplot.o -lm ${LIBS} -o $@
 
-testfind: testfind.o findscore.o utility.o
-	${CC} ${LDFLAGS} testfind.o findscore.o utility.o ${LIBS} -o $@
-
-tf: tf.o findscore.o
-	${CC} ${LDFLAGS} tf.o findscore.o ${LIBS} -o $@
+testfind: testfind.o utility.o
+	${CC} ${LDFLAGS} testfind.o utility.o ${LIBS} -o $@
 
 # NOTE: This rule is NOT part of the build of rogomatic documentation!
 # 	We use this rule to form the rogomatic.cat.in file from the rogomatic.6.in file.
@@ -463,6 +460,12 @@ rogomatic.cat: rogomatic.6 rogomatic.cat.in
 # standard Makefile utility rules #
 ###################################
 
+legacy_clean:
+	${Q}${RM} -f datesub.o tf.o findscore.o
+
+legacy_clobber:
+	${Q}${RM} -f datesub datesub.l tf
+
 clean: legacy_clean
 	${RM} -f ${MISC_OBJS}
 	${RM} -f ${OBJS}
@@ -525,12 +528,6 @@ index: ${CFILES}
 
 tags: ${SRC}
 	${CTAGS} -w ${SRC}
-
-legacy_clean:
-	${Q}${RM} -f datesub.o
-
-legacy_clobber:
-	${Q}${RM} -f datesub datesub.l
 
 
 ###############################
@@ -680,11 +677,6 @@ explore.o: explore.c
 explore.o: globals.h
 explore.o: have_stdbool.h
 explore.o: types.h
-findscore.o: findscore.c
-findscore.o: globals.h
-findscore.o: have_stdbool.h
-findscore.o: install.h
-findscore.o: types.h
 gene.o: gene.c
 gene.o: have_stdbool.h
 gene.o: install.h
@@ -771,10 +763,6 @@ tactics.o: have_stdbool.h
 tactics.o: install.h
 tactics.o: tactics.c
 tactics.o: types.h
-tf.o: globals.h
-tf.o: have_stdbool.h
-tf.o: tf.c
-tf.o: types.h
 things.o: globals.h
 things.o: have_stdbool.h
 things.o: things.c
