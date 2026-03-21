@@ -344,8 +344,8 @@ player: ${OBJS}
 rgmplot: rgmplot.o utility.o
 	${CC} ${LDFLAGS} rgmplot.o utility.o ${LIBS} -o $@
 
-rogomatic: setup.o findscore.o scorefile.o utility.o config.c
-	${CC} ${LDFLAGS} setup.o findscore.o scorefile.o utility.o config.c ${LIBS} -o $@
+rogomatic: setup.o findscore.o scorefile.o utility.o config.o
+	${CC} ${LDFLAGS} setup.o findscore.o scorefile.o utility.o config.o ${LIBS} -o $@
 
 
 #################################################################
