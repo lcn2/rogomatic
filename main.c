@@ -114,10 +114,10 @@ FILE *rogo_openlog (char *genelog);
 /* global data - see globals.h for current definitions */
 
 /* Files */
-FILE *logfile=NULL;		/* Rogomatic score file */
-FILE *realstdout=NULL;		/* Real stdout for Emacs, terse mode */
-FILE *snapshot=NULL;		/* File for snapshot command */
-FILE *trogue=NULL;		/* Pipe to Rogue process */
+FILE *logfile = NULL;		/* Rogomatic score file */
+FILE *realstdout = NULL;	/* Real stdout for Emacs, terse mode */
+FILE *snapshot = NULL;		/* File for snapshot command */
+FILE *trogue = NULL;		/* Pipe to Rogue process */
 
 /* Characters */
 char afterid = '\0';		/* Letter of obj after identify */
@@ -133,9 +133,9 @@ char sumline2[BIGBUF + 1];	/* alternate sumline buffer, +1 for paranoia */
 char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone - How we died, +1 for paranoia */
 char pending_call_letter = ' ';	/* If non-blank we have a call it to do - Pack object we know a name for */
 char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
-char versionstr[MU_BUF + 1] = DEFVER;	/* Version of Rogue being used, +1 for paranoia */
-char rgmdir[SM_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-char lock_path[SM_BUF + 1] = { '\0' };	/* rogomatic lock file path, +1 for paranoia */
+char versionstr[MU_BUF + 1];		/* Version of Rogue being used, +1 for paranoia */
+char rgmdir[SM_BUF + 1];		/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[SM_BUF + 1];	/* rogomatic lock file path, +1 for paranoia */
 char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 char *termination = "perditus";	/* Latin verb for how we died */
 
@@ -252,11 +252,11 @@ void (*istat)(int);
 
 /* Stuff list, list of objects on this level */
 stuffrec slist[MAXSTUFF + 1];	/* +1 for paranoia */
-int slistlen=0;			/* count of objects in slist[] */
+int slistlen = 0;		/* count of objects in slist[] */
 
 /* Monster list, list of monsters on this level */
 monrec mlist[MAXMONST + 1];	/* +1 for paranoia */
-int mlistlen=0;			/* count of monsters in mlist[] */
+int mlistlen = 0;		/* count of monsters in mlist[] */
 
 char targetmonster = '@';	/* Monster we are arching at */
 
@@ -292,8 +292,10 @@ char *knob_name[MAXKNOB] = {
 };
 /* Door search map */
 char timessearched[R][C + 1]; /* +1 for paranoia */
-char timestosearch;
-int  searchstartr = NONE, searchstartc = NONE, reusepsd=0;
+char timestosearch = '\0';
+int searchstartr = NONE;
+int searchstartc = NONE;
+int reusepsd = 0;
 bool new_mark = true;
 bool new_findroom = true;
 bool new_search = true;
@@ -301,11 +303,22 @@ bool new_stairs = true;
 bool new_arch = true;
 
 /* Results of last call to makemove() */
-int  ontarget= 0, targetrow= NONE, targetcol= NONE;
+int  ontarget = 0;
+int  targetrow = NONE;
+int  targetcol = NONE;
 
 /* Rog-O-Matics model of his stats */
-int   Level = 0, MaxLevel = 0, Gold = 0, Hp = 12, Hpmax = 12;
-int   Str = 16, Strmax = 16, Ac = 6, Exp = 0, Explev = 1, turns = 0;
+int   Level = 0;
+int   MaxLevel = 0;
+int   Gold = 0;
+int   Hp = 12;
+int   Hpmax = 12;
+int   Str = 16;
+int   Strmax = 16;
+int   Ac = 6;
+int   Exp = 0;
+int   Explev = 1;
+int   turns = 0;
 char  Ms[30];	/* The message about his state of hunger */
 
 /* Miscellaneous movement tables */
@@ -313,7 +326,7 @@ int   deltrc[8] = { 1, -(C-1), -C, -(C+1), -1, C-1, C, C+1 };
 int   deltc[8]  = { 1, 1, 0, -1, -1, -1, 0, 1 };
 int   deltr[8]  = { 0, -1, -1, -1, 0, 1, 1, 1 };
 char  keydir[8] = { 'l', 'u', 'k', 'y', 'h', 'b', 'j', 'n' };
-int   movedir;
+int   movedir = 0;
 
 /* Map characters on screen into object types */
 stuff translate[128] = {
@@ -336,7 +349,8 @@ stuff translate[128] = {
 };
 
 /* Inventory, contents of our pack */
-invrec inven[MAXINV]; int invcount = 0;
+invrec inven[MAXINV];
+int invcount = 0;
 
 /* Time history */
 timerec timespent[50];
@@ -370,10 +384,10 @@ main (int argc, char *argv[])
   bool startingup = true;	/* True ==> startup started but not complete */
   bool time_subpath = false;	/* True ==> use a UTC date and time sub-directory */
   char logfilename[100];	/* Name of log file */
-  int  i;
-  pid_t pid;			/* process id */
+  pid_t pid = -1;		/* process id */
   char pidfilename[NAMSIZ + 1]; /* +1 for paranoia */
   FILE *pidfp = NULL;		/* open pidfilename stream */
+  int i;
 
   /*
    * Initialize some storage
@@ -382,32 +396,49 @@ main (int argc, char *argv[])
    */
 
   /* zeroize arrays */
-  memset (msg, 0, sizeof(msg)); /* paranoia */
+  memset (genepool, 0, sizeof(genepool)); /* paranoia */
   memset (genocided, 0, sizeof(genocided)); /* paranoia */
   memset (lastcmd, 0, sizeof(lastcmd)); /* paranoia */
   lastcmd[0] = 'i';
-  memset (ourkiller, 0, sizeof(ourkiller)); /* paranoia */
-  strcpy (ourkiller, "unknown");
-  memset (sumline, 0, sizeof(sumline)); /* paranoia */
-  memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
-  memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
+  memset (lastname, 0, sizeof(lastname)); /* paranoia */
   for (i=0; i < R; ++i) {
       memset(&(screen[i][0]), ' ', C); /* screen lines initialize with ASCII space */
       screen[i][C] = '\0'; /* paranoia */
   }
-  memset (scrmap, 0, sizeof(scrmap)); /* paranoia */
+  memset (sumline, 0, sizeof(sumline)); /* paranoia */
+  memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
+  memset (ourkiller, 0, sizeof(ourkiller)); /* paranoia */
+  strcpy (ourkiller, "unknown");
+  memset (pending_call_name, 0, sizeof(pending_call_name)); /* paranoia */
+  memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
+  strncpy(versionstr, DEFVER, MU_BUF);
+  memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
+  memset (lock_path, 0, sizeof(lock_path)); /* paranoia */
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
-  memset (msg, 0, sizeof(msg)); /* paranoia */
-  memset (genelock, 0, sizeof(genelock)); /* paranoia */
-  memset (genelog, 0, sizeof(genelog)); /* paranoia */
-  memset (genepool, 0, sizeof(genepool)); /* paranoia */
+  /**/
+  memset (room, 0, sizeof(room)); /* paranoia */
+  memset (scrmap, 0, sizeof(scrmap)); /* paranoia */
+  memset (zonemap, 0, sizeof(zonemap)); /* paranoia */
   memset (slist, 0, sizeof(slist)); /* paranoia */
   memset (mlist, 0, sizeof(mlist)); /* paranoia */
+  memset (monatt, 0, sizeof(monatt)); /* paranoia */
+  memset (&ltm, 0, sizeof(ltm)); /* paranoia */
   memset (monhist, 0, sizeof(monhist)); /* paranoia */
   memset (monindex, 0, sizeof(monindex)); /* paranoia */
   memset (timessearched, 0, sizeof(timessearched)); /* paranoia */
-  memset (monatt, 0, sizeof(monatt)); /* paranoia */
-  memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
+  memset (Ms, 0, sizeof(Ms)); /* paranoia */
+  memset (inven, 0, sizeof(inven)); /* paranoia */
+  memset (timespent, 0, sizeof(timespent)); /* paranoia */
+  memset (commandtop, 0, sizeof(commandtop)); /* paranoia */
+
+  /* zeroize static storage */
+  memset (genelock, 0, sizeof(genelock)); /* paranoia */
+  memset (genelog, 0, sizeof(genelog)); /* paranoia */
+
+  /* zeroize local arrays */
+  memset (msg, 0, sizeof(msg)); /* paranoia */
+  memset (logfilename, 0, sizeof(logfilename)); /* paranoia */
+  memset (pidfilename, 0, sizeof(pidfilename)); /* paranoia */
 
   /*
    * on exit: cleanup I/O, and shutdown ncurses (if needed)
