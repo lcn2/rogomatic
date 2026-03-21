@@ -40,7 +40,7 @@
 # define EQUAL 0
 
 /* static declarations */
-static int cmdonscreen = 0;
+static int cmdonscreen = false;
 static int commandcount (char *cmd);
 static int functionesc (char *cmd);
 static char commandarg (char *cmd, int n);
@@ -387,14 +387,14 @@ showcommand (char *cmd)
   }
 
   printw (" "); standend (); clrtoeol (); at (row, col); refresh ();
-  cmdonscreen = 1;
+  cmdonscreen = true;
 }
 
 static void
 clearcommand (void)
 {
   at (23,72); clrtoeol (); at (row, col);
-  cmdonscreen = 0;
+  cmdonscreen = false;
 }
 
 /*

@@ -195,7 +195,11 @@ extern int mlistlen;
 extern char	killedmonster, targetmonster;
 
 /* Door search variables */
-extern int	new_mark, new_findroom, new_search, new_stairs, new_arch;
+extern bool	new_mark;
+extern bool	new_findroom;
+extern bool	new_search;
+extern bool	new_stairs;
+extern bool	new_arch;
 extern char	timessearched[R][C + 1]; /* +1 for paranoia */
 extern char	timestosearch;
 extern int	searchstartr, searchstartc;

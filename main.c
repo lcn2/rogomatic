@@ -294,7 +294,11 @@ char *knob_name[MAXKNOB] = {
 char timessearched[R][C + 1]; /* +1 for paranoia */
 char timestosearch;
 int  searchstartr = NONE, searchstartc = NONE, reusepsd=0;
-int  new_mark=1, new_findroom=1, new_search=1, new_stairs=1, new_arch=1;
+bool new_mark = true;
+bool new_findroom = true;
+bool new_search = true;
+bool new_stairs = true;
+bool new_arch = true;
 
 /* Results of last call to makemove() */
 int  ontarget= 0, targetrow= NONE, targetcol= NONE;
@@ -698,7 +702,7 @@ main (int argc, char *argv[])
 
         case 't': transparent = !transparent; break;
 
-        case ')': new_mark++; markcycles (DOPRINT); at (row, col); break;
+        case ')': new_mark = true; markcycles (DOPRINT); at (row, col); break;
 
         case '+': setpsd (DOPRINT); at (row, col); break;
 

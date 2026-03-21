@@ -588,7 +588,7 @@ godownstairs (int running)
     return (1);
   }
 
-  new_stairs = 0;
+  new_stairs = false;
   return (0);
 }
 

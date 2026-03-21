@@ -52,7 +52,7 @@
 # define TRUE 1
 # define FALSE 0
 
-static int final_newline = 0;	/* number calls to endwin_and_ncurses_cleanup() */
+static bool final_newline = false;	/* True is endwin_and_ncurses_cleanup() has been called */
 
 static void  (*hstat)(int) = NULL;
 static void  (*istat)(int) = NULL;
@@ -222,13 +222,10 @@ endwin_and_ncurses_cleanup (void)
      *	     a result of a signal handler, or both.  As a result we have
      *	     to guard against multiple calls to this function.
      */
-    if (final_newline == 0) {
+    if (!final_newline) {
 	putchar ('\n');
     }
-    ++final_newline;
-    if (final_newline <= 0) {
-	final_newline = 1; /* paranoia */
-    }
+    final_newline = true;
     fflush (stdout);
 }
 

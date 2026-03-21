@@ -39,8 +39,8 @@
 # include "install.h"
 
 /* static declarations */
-static int nosave = 0;		/* True ==> dont write ltm back out */
-static char ltmnam[MU_BUF + 1];	/* Long term memory file name, +1 for paranoia */
+static bool nosave = false;	    /* True ==> dont write ltm back out */
+static char ltmnam[MU_BUF + 1];	    /* Long term memory file name, +1 for paranoia */
 
 static void readltm (void);
 static void parsemonster (char *monster);
@@ -213,7 +213,7 @@ readltm (void)
   FILE *ltmfil;
 
   if ((ltmfil = fopen (ltmnam, "r")) == NULL) {
-    nosave = 1;
+    nosave = true;
     dwait (D_WARNING | D_SAY,
            __func__, "Could not read long term memory file: %s", ltmnam);
   }

@@ -58,7 +58,7 @@ newlevel (void)
   int   i, j;
 
   initstufflist ();			/* Delete the list of items */
-  diddrop = false;				/* Clear dropped item flag */
+  diddrop = false;			/* Clear dropped item flag */
   droppedscare = 0;			/* Old stuff gone */
   maxobj = 22;				/* Reset maximum # of objs */
   newmonsterlevel ();			/* Do new monster stuff */
@@ -444,7 +444,7 @@ updateat (void)
   newzone = whichroom (atrow, atcol);
 
   if (newzone != NONE && zone != NONE && newzone != zone) {
-    new_arch = 1;
+    new_arch = true;
     zonemap[zone][newzone] = zonemap[newzone][zone] = 1;
 
     if ((levelmap[zone] & (EXPLORED | HASROOM)) == 0) {
@@ -1132,7 +1132,10 @@ dumpmazedoor (void)
 void
 foundnew (void)
 {
-  new_mark = new_findroom = new_search = new_stairs = 1;
+  new_mark = true;
+  new_findroom = true;
+  new_search = true;
+  new_stairs = true;
   reusepsd = teleported = 0;
   cancelmove (SECRETDOOR);
   unrest ();

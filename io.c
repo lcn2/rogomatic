@@ -176,11 +176,14 @@ printscreen (void)
 void
 getrogue (char *waitstr, int onat)
 {
-  int   botprinted = 0, wasmapped = didreadmap, r, c;
+  bool botprinted = false;
+  int wasmapped = didreadmap;
+  int r;
+  int c;
   int i, j;
   char  ch, *s, *m, *q, *d, *call;
   int *doors;
-  static int moved = 0;
+  static bool moved = false;
 
   newdoors = doorlist;			/* no new doors found yet */
   atrow0 = atrow; atcol0 = atcol;	/* Save our current posistion */
@@ -191,7 +194,7 @@ getrogue (char *waitstr, int onat)
   d = ")______";			/* FSM to check for tombstone grass */
 
   if (moved)				/* If we moved last time, put any */
-    { sleepmonster (); moved = 0; }	/* Old monsters to sleep */
+    { sleepmonster (); moved = false; }	/* Old monsters to sleep */
 
   /* debugging info */
   if debug(D_MESSAGE) {
@@ -427,8 +430,8 @@ getrogue (char *waitstr, int onat)
 
           if (!emacs && !terse) addch (ch);
 
-          if (row == R-1) botprinted = 1;
-          else           updatepos (ch, row, col);
+          if (row == R-1) botprinted = true;
+          else            updatepos (ch, row, col);
         }
         else if (col == 0)
           { screen00 = screen[0][0]; }
@@ -450,7 +453,7 @@ getrogue (char *waitstr, int onat)
 
   if (atrow != atrow0 || atcol != atcol0) {
     updateat ();	/* Changed position, record the move */
-    moved = 1;		/* Indicate that we moved */
+    moved = true;	/* Indicate that we moved */
     wakemonster (8);	/* Wake up adjacent mean monsters */
     currentrectangle();	/* Keep current rectangle up to date.   LGCH */
   }

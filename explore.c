@@ -77,8 +77,8 @@ static int safevalue (int r, int c, int depth __attribute__ ((__unused__)), int 
 static int avoid (void);
 static int archeryinit (void);
 static int archeryvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *avd, int *cont);
-static int restinlight;			/* True only in lit rooms */
-static int restinroom;			/* True only in a room */
+static bool restinlight;		/* True only in lit rooms */
+static bool restinroom;			/* True only in a room */
 static int restr, restc;		/* Square to rest on */
 static int restinit (void);
 static int restvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *avd, int *cont);
@@ -613,7 +613,8 @@ static int
 expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *avd, int *cont)
 {
   int k, nr, nc, l;
-  int a, v = 0, nunseenb = 0, nseenb = 0, nearb = 0;
+  int a, v = 0, nunseenb = 0, nseenb = 0;
+  bool nearb = false;
 
   a = onrc (SAFE|DOOR|STAIRS|HALL, r, c) ? 0 :
       onrc (ARROW, r, c)   ? 50 :
@@ -656,12 +657,12 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
           l = k / 2 * 2;		     /* horizontal/vertical */
 
           if (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY)
-            nearb = 1;
+            nearb = true;
           else {
             l = ((k+1) / 2 * 2) % 8;
 
             if (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY)
-              nearb = 1;
+              nearb = true;
           }
         }
       }
@@ -1031,7 +1032,7 @@ findroom (void)
     if (makemove (EXPLORE, expinit, expvalue, REUSE))	 return (1);
   }
 
-  new_findroom = 0;
+  new_findroom = false;
   dwait (D_SEARCH, __func__, "failed");
   return (0);
 }
@@ -1070,7 +1071,7 @@ doorexplore(void)
     { searchcount = 0; return (1); }
 
   if (searchcount > 20)
-    { new_search = 0; return (0); }
+    { new_search = false; return (0); }
 
   if (ontarget) { /* Moved to a possible secret door, search it */
     searchcount++;
@@ -1080,7 +1081,8 @@ doorexplore(void)
     return (1);
   }
 
-  new_search = searchcount = 0;
+  new_search = false;
+  searchcount = false;
   return (0);
 }
 
@@ -1177,7 +1179,7 @@ archmonster (int m, int trns)
     { dwait (D_BATTLE, __func__, "made a move"); return (1); }
 
   /* If no move made and not on target, no path to monster */
-  if (!ontarget) { new_arch = 0; return (0); }
+  if (!ontarget) { new_arch = false; return (0); }
 
   /* On target: wake him up and set darkdir/turns if necessary */
   mr = mlist[m].mrow; mc = mlist[m].mcol; targetmonster = mlist[m].chr;
@@ -1262,8 +1264,8 @@ archeryvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, in
  *   M O V E   T O   R E S T :  Find a safe square to rest up on.
  */
 
-static int restinlight = 0;			/* True only in lit rooms */
-static int restinroom = 0;			/* True only in a room */
+static bool restinlight = false;		/* True only in lit rooms */
+static bool restinroom = false;			/* True only in a room */
 static int restr = NONE, restc = NONE;		/* Square to rest on */
 
 /* Set new resting goal */

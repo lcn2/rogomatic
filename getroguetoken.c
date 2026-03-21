@@ -39,7 +39,7 @@ int number2 = 0;
 static int number3 = 0;
 
 /* Last kind of message to echo file */
-static int cecho = 0;
+static bool cecho = false;
 
 /* Game record file 'echo' option */
 static FILE  *fecho=NULL;
@@ -70,7 +70,7 @@ rogue_log_open (const char *filename)
 
   if (fecho != NULL) {
     fprintf (fecho, "Rogomatic Game Log\n\n"); fflush (fecho);
-    cecho = 1;
+    cecho = true;
   }
 
   return (fecho != NULL);
@@ -245,7 +245,7 @@ fetchnum (char ch)
 {
   char num[MU_BUF + 1]; /* +1 for paranoia */
   int ind = 1;
-  int done = 0;
+  bool done = false;
 
   /* zeroize arrays */
   memset(num, 0, sizeof(num));
@@ -266,7 +266,7 @@ fetchnum (char ch)
     }
     else {
       UNGETROGUECHAR (ch2);
-      done = 1;
+      done = true;
     }
   }
 
@@ -678,18 +678,18 @@ getoldcommand (char *s)
 static int
 getlogtoken(void)
 {
-  int acceptline;
+  bool acceptline;
   int ch = GETLOGCHAR;
   int ch1, ch2, dig;
 
   while (ch == NEWLINE) {
-    acceptline = 0;
+    acceptline = false;
 
     if ((ch = GETLOGCHAR) == 'R')
       if ((ch = GETLOGCHAR) == ':')
         if ((ch = GETLOGCHAR) == ' ') {
           ch = GETLOGCHAR;
-          acceptline = 1;
+          acceptline = true;
         }
 
     if (!acceptline)

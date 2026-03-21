@@ -82,7 +82,7 @@ addmonster (char ch, int r, int c, int quiescence)
 
     setrc (MONSTER, r, c);
     lyinginwait = false;
-    new_arch = 1;
+    new_arch = true;
 
     /* If we can see it, it is not really invisible */
     if (stlmatch (monster, "invisible") || streq (monster, "phantom"))
@@ -99,7 +99,7 @@ deletemonster (int r, int c)
 {
   int   i;
 
-  new_arch = 1;
+  new_arch = true;
   unsetrc (MONSTER, r, c);
 
   for (i = 0; i < mlistlen; ++i)

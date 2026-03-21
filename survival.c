@@ -143,7 +143,7 @@ markcycles (int print)
 
   highlight (st[1].where, SE)
 
-  new_mark = 0;
+  new_mark = false;
   return (1);
 }
 
