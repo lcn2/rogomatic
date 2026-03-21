@@ -59,7 +59,8 @@ static char *titlepage[]= {
   "&w4'i4(n4)n4*e4+r4-a4.g4/a40i41n42s43t45R46o47g48u49e4;54<.4=24>,4@O4Ac4",
   "Bt4Co4Db4Ee4Fr4H14I04J,4L14M94N84O35 T5!o5\"t5#a5$l5&w5'i5(n5)n5*e5+r5-a",
   "5.g5/a50i51n52s53t55R56o57g58u59e5;55<.5=35>,5@F5Ae5Bb5Cr5Du5Ea5Fr5Gy5I1",
-  "5J65K,5M15N95O85P4",
+  "5J65K,5M15N95O85P46 c6!h6\"o6#n6$g6%o6& 6'<6(L6)a6*n6+d6,o6-n6. 6/C60u61",
+  "r62t63 64N65o66l67l68>69 6:/6;\\6<.6=.6>/6?\\~~~~~~~~~~~~~~~~~~~~~~~~~~~",
 
   /* The dynamic part of the display */
   "~~~~~~~~~~00/~/1/~.2)~-1\\~,0\\~~~.3>~.4=~.5=~.6=~.7=~.8=~.9>~~~.2>.3=.8",
@@ -78,9 +79,9 @@ static char *titlepage[]= {
   "~-[ .ZD/ZD.[ .[L.[ .\\D.]S.]D.^D._D.`D/aD-\\ -\\L-\\ -] -^ -_ -` ~/YD.Z ",
   "/\\D/]D/^D/_D.\\ .] .^ ._ .` 0`D0aD/a ~0XD0YD0ZD/Y /Z /` ~0VD0WD/[ /\\ /",
   "^ /_ 0bD0cD/] 0UD0dD~~~~~~~~~~,0 ~~-1 ~~.2 ~~/1 ~~00 ~~~~~~~~~~~~~~~~~~~",
-  "~~.5S~.6t~.7u~.8p~.9i~.:d~.<D~.=r~.>a~.?g~.@o~.An~.C!~.D!~.E!~~~~~~~~~~~",
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.5 .6 .7 .8 .9 .: .; .",
-  "< .= .> .? .@ .A .B .C .D .E .F 6  ~~~~~~~~~~~~~~~~~~",
+  "~~.5S~.6i~.7l~.8l~.9y~.;D~.<r~.=a~.>g~.?o~.@n~.B:~.C-~.D)~.E ~~~~~~~~~~~",
+  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+  ".5 .6 .7 .8 .9 .: .; .< .= .> .? .@ .A .B .C .D .E ~~~~~~~~~~~~~~~~~~~~~",
   NULL
 };
 
@@ -101,9 +102,10 @@ static void
 animate (char *movie[])
 {
   int baud;
-  int r, c, count = 0;
+  int r, c;
   char *cbf = "";
-  struct timespec rqt = { 0, 1e7 };		/* 0.01 seconds */
+  struct timespec rqt = { 0, 1e7 };		/* short 0.01 seconds */
+  struct timespec rqt2 = { 0, 5e8 };		/* longer 0.5 seconds */
 
   if (emacs || terse) return;			/* No screen ==> no movie */
 
@@ -124,19 +126,17 @@ animate (char *movie[])
     /* Update the screen and delay until one timestep is gone */
     else if (r == '~') {
       refresh ();				/* Write out screen */
-      count = 0;				/* Reset char count */
       (void) nanosleep(&rqt, NULL);
     }
 
-    /* Write out a single character and bump the character count */
+    /* Write out a single character */
     else {
       r -= 32;					/* Get screen row */
       c = NEXTCHAR - 32;			/* Get screen col */
       mvaddch (r, c, NEXTCHAR);			/* Write out character */
-
-      if (count++ < 4) count += 4;		/* Assume one cursor move */
     }
   }
+  (void) nanosleep(&rqt2, NULL);
 }
 
 /*
