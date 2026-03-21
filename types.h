@@ -131,11 +131,17 @@ typedef enum { false=0, true=1 } bool;
 /* Z is the number of monsters "A to Z" in a rogue game */
 #define Z (26)
 
+/* rogue as a 3x3 grin of possible rooms on each level */
+#define RGRID (9)
+
+/* rogue can move in one of 8 possible direction */
+#define DNUM (8)
+
 
 /* Global Preprocessor constants */
 
 # define ill         ";'"
-# define status		   "Str:"
+# define status	     "Str:"
 # define MAXATTEMPTS (10)
 # define ROGQUIT     (-2)
 # define DIED        (1)
@@ -369,14 +375,31 @@ typedef enum { false=0, true=1 } bool;
 
 /* Utility Macros */
 
+/* valrc - true if row and col are valid, false otherwise */
+# define valrc(r,c) ( ((r)>=0) && ((r)<R) && ((c)>=0) && ((c)<C) )
+
 /* onrc - tell if row and col have the proper attributes */
-# define onrc(type,r,c) ((type)&scrmap[r][c])
+# define onrc(type,r,c) \
+	     (valrc((r),(c)) ? \
+	       ((type)&scrmap[(r)][(c)]) : \
+	       (quit (1, "ERROR: %s: file: %s line: %d onrc(%d,%d,%d) out of range\n", \
+			         __func__, __FILE__, __LINE__, (type), (r), (c)), \
+	        not_reached(), \
+	        0) \
+	     )
 
 /* on - tell if current position has correct attributes */
 # define on(type) onrc(type,atrow,atcol)
 
 /* seerc - is this character at row,col */
-# define seerc(ch,r,c) ((ch)==screen[r][c])
+# define seerc(ch,r,c) \
+	      (valrc((r),(c)) ? \
+	        ((ch)==screen[(r)][(c)]) : \
+                (quit (1, "ERROR: %s: file: %s line: %d seerc(%d,%d,%d) out of range\n", \
+                                 __func__, __FILE__, __LINE__, (ch), (r), (c)), \
+                 not_reached(), \
+                 0) \
+              )
 
 /* see - is this character at current position */
 # define see(ch) seerc(atrow,atcol)
@@ -388,7 +411,14 @@ typedef enum { false=0, true=1 } bool;
 # define set(type) setrc(type,atrow,atcol)
 
 /* unsetrc - unset attribute at <r,c> */
-# define unsetrc(type,r,c) scrmap[r][c]&= ~(type)
+# define unsetrc(type,r,c) \
+		(valrc((r),(c)) ? \
+		  (scrmap[(r)][(c)]&= ~(type)) : \
+		  (quit (1, "ERROR: %s: file: %s line: %d unsetrc(%d,%d,%d) out of range\n", \
+			     __func__, __FILE__, __LINE__, (type), (r), (c)), \
+		   not_reached(), \
+		   0) \
+		)
 
 /* unset - unset attribute at current position */
 # define unset(type) unsetrc(type,atrow,atcol)
@@ -396,11 +426,28 @@ typedef enum { false=0, true=1 } bool;
 /* Direc - give the vector from an xy difference */
 # define direc(r,c) (r>0?(c>0?7:(c<0?5:6)):(r<0?(c>0?1:(c<0?3:2)):(c>0?0:4)))
 
+/* valdir - true if direction is valid, false otherwise */
+# define valdir(dir) ( ((dir)>=0) && ((dir)<DNUM) )
+
 /* atdrow - gives row of adjacent square given direction */
-# define atdrow(dir) (atrow+deltr[(dir)])
+# define atdrow(dir) \
+		(valdir((dir)) ? \
+		  (atrow+deltr[(dir)]) : \
+		  (quit (1, "ERROR: %s: file: %s line: %d atdrow(%d) out of range\n", \
+			     __func__, __FILE__, __LINE__, (dir)), \
+		   not_reached(), \
+		   0) \
+		)
 
 /* atdcol - gives col of adjacent square given direction */
-# define atdcol(dir) (atcol+deltc[(dir)])
+# define atdcol(dir) \
+		(valdir((dir)) ? \
+		  (atcol+deltc[(dir)]) : \
+		  (quit (1, "ERROR: %s: file: %s line: %d atdcol(%d) out of range\n", \
+			     __func__, __FILE__, __LINE__, (dir)), \
+		   not_reached(), \
+		   0) \
+		)
 
 /* Define a more mnemonic string comparison */
 # define streq(s1,s2) (strcmp ((s1),(s2)) == 0)
@@ -414,13 +461,13 @@ typedef enum { false=0, true=1 } bool;
 /* Item knowledge macros   DR UTexas 25 Jan 84 */
 
 /* itemis - test pack item for traits */
-# define itemis(obj,trait) ((obj>=0) ? ((trait)&inven[obj].traits) : 0)
+# define itemis(obj,trait) ((((obj)>=0) && ((obj)<MAXINV)) ? ((trait)&inven[(obj)].traits) : 0)
 
 /* remember - set traits for pack item */
-# define remember(obj,trait) ((obj>=0) ? (inven[obj].traits|=(trait)) : 0)
+# define remember(obj,trait) ((((obj)>=0) && ((obj)<MAXINV)) ? (inven[(obj)].traits|=(trait)) : 0)
 
 /* forget - clear traits for pack item */
-# define forget(obj,trait) ((obj>=0) ? (inven[obj].traits&= ~(trait)) : 0)
+# define forget(obj,trait) ((((obj)>=0) && ((obj)<MAXINV)) ? (inven[(obj)].traits&= ~(trait)) : 0)
 
 /* The types of objects */
 typedef enum { strange, food, potion, Scroll, wand, ring, hitter,

@@ -1,5 +1,6 @@
 # sort via: sort -d
 #
+asan.log.*
 [a-z]
 *.dSYM
 gene

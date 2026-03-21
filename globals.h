@@ -144,7 +144,7 @@ extern bool replaying;		/* True if replaying old game */
 extern bool revvideo;		/* True if in rev. video mode */
 extern int rightring;		/* Index of our right ring */
 extern int rogpid;		/* Process id of rogue process */
-extern int room[9];		/* Flags for each room */
+extern int room[RGRID + 1];	/* Flags for each room, +1 for paranoia */
 extern int row;			/* Current cursor position (row) */
 extern int col;			/* Current cursor position (col) */
 extern int scrmap[R][C + 1];	/* attribute flags for squares, +1 for paranoia */
@@ -163,7 +163,7 @@ extern int version;		/* rogue version is an integer as set by getrougeversion() 
 extern int wplusdam;		/* Our plus damage from weapon bonus */
 extern int wplushit;		/* Our plus hit from weapon bonus */
 extern int zone;		/* Current zone (0 to 8) */
-extern int zonemap[9][9];	/* Connectivity map - Map of zones connections */
+extern int zonemap[RGRID][RGRID + 1];	/* Connectivity map - Map of zones connections, +1 for paranoia */
 
 /* Status line variables */
 extern int Level, MaxLevel, Gold, Hp, Hpmax, Str, Strmax, Ac, Exp, Explev;
@@ -171,9 +171,10 @@ extern char Ms[];		/* Msg 'X', 'Hungry', 'Weak', 'Fainting' */
 extern int turns;		/* Est time in Rogue turns since start */
 
 /* Geometry data */
-extern int deltc[8], deltr[8];	/* Displacements for directions */
-extern int deltrc[8];		/* ditto */
-extern char keydir[8];		/* Directions for motion keys */
+extern int deltc[DNUM + 1];	/* Displacements for directions, +1 for paranoia */
+extern int deltr[DNUM + 1];	/* Displacements for directions, +1 for paranoia */
+extern int deltrc[DNUM + 1];	/* ditto, +1 for paranoia */
+extern char keydir[DNUM + 1];	/* Directions for motion keys, +1 for paranoia */
 extern int movedir;		/* Which direction did we last move */
 extern stuff translate[128];	/* what Rogue characters represent */
 

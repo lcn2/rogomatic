@@ -41,7 +41,7 @@
 
 /* static declarations */
 
-static int levelmap[9];
+static int levelmap[RGRID + 1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	/* +1 for paranoia */
 
 static void clearcurrect(void);
 static void teleport (void);
@@ -62,32 +62,40 @@ newlevel (void)
   droppedscare = 0;			/* Old stuff gone */
   maxobj = 22;				/* Reset maximum # of objs */
   newmonsterlevel ();			/* Do new monster stuff */
-  exploredlevel = false;			/* New level */
+  exploredlevel = false;		/* New level */
   aggravated = false;			/* Old monsters gone */
   beingstalked = 0;			/* Old monsters gone */
-  darkdir = NONE; darkturns = 0;	/* Not arching old monster */
-  stairrow = NONE; staircol = 0;	/* Get rid of old stairs */
+  darkdir = NONE;			/* Not arching old monster */
+  darkturns = 0;			/* Not arching old monster */
+  stairrow = NONE;			/* Get rid of old stairs */
+  staircol = 0;				/* Get rid of old stairs */
   missedstairs = false;
   newdoors = doorlist;			/* Clear door list */
-  goalr = goalc = NONE;			/* Old goal invalid */
-  trapr = trapc = NONE;			/* Old traps are gone */
-  foundarrowtrap = foundtrapdoor = false;   /* Old traps are gone */
+  goalr = NONE;				/* Old goal invalid */
+  goalc = NONE;				/* Old goal invalid */
+  trapr = NONE;				/* Old traps are gone */
+  trapc = NONE;				/* Old traps are gone */
+  foundarrowtrap = false;		/* Old traps are gone */
+  foundtrapdoor = false;		/* Old traps are gone */
   teleported = 0;			/* Not teleported yet */
   attempt = 0;				/* Haven't search for doors yet */
-  usesynch = false;				/* Force a new inventory */
-  compression = Level < 13;		/* Set move compression */
-  newarmor = newweapon = newring = true;	/* Reevaluate our items */
+  usesynch = false;			/* Force a new inventory */
+  compression = (Level < 13);		/* Set move compression */
+  newarmor = true;			/* Reevaluate our items */
+  newweapon = true;			/* Reevaluate our items */
+  newring = true;			/* Reevaluate our items */
   foundnew ();				/* Reactivate all rules */
-  clearsendqueue ();	/* Clear old commands */
+  clearsendqueue ();			/* Clear old commands */
 
   /*
    * Clear the highlevel map
    */
 
-  for (i = 0; i < 9; i++) levelmap[i] = 0;
-
-  for (i = 0; i < 9; i ++) for (j = 0; j < 9; j ++) zonemap[i][j] = (i == j);
-
+  memset(levelmap, 0, sizeof(levelmap));
+  memset(zonemap, 0, sizeof(zonemap));
+  for (i = 0; i < RGRID; ++i) {
+    zonemap[i][i] = 1;
+  }
   zone = NONE;
 
   /*
@@ -114,10 +122,15 @@ newlevel (void)
  *	     CANGO -- halls, but no room in sector
  */
 
-static struct {int top,bot,left,right;} bounds[9]=
+static struct {
+  int top;
+  int bot;
+  int left;
+  int right;
+} bounds[RGRID + 1] = {	/* +1 for paranoia */
 
-  /* top bot left right */
-  /*0*/	{{ 1,  6,   0,  25},
+       /* top bot left right */
+  /*0*/	 { 1,  6,   0,  25},
   /*1*/	 { 1,  6,  27,  51},
   /*2*/	 { 1,  6,  53,  79},
   /*3*/	 { 8, 14,   0,  25},
@@ -125,7 +138,8 @@ static struct {int top,bot,left,right;} bounds[9]=
   /*5*/	 { 8, 14,  53,  79},
   /*6*/	 {16, 22,   0,  25},
   /*7*/	 {16, 22,  27,  51},
-  /*8*/	 {16, 22,  53,  79}
+  /*8*/	 {16, 22,  53,  79},
+  /*paranoia*/{ 0, 0, 0, 0}
 };
 
 void
@@ -133,7 +147,7 @@ markmissingrooms (void)
 {
   int rm, i, j;
 
-  for (rm=0; rm<9; ++rm) {
+  for (rm=0; rm<RGRID; ++rm) {
     room[rm]=0;
 
     for (i=bounds[rm].top; i<=bounds[rm].bot; ++i)
@@ -148,11 +162,11 @@ nextroom: ;
 /*
  * whichroom: Return the zone number of a square (0..8) or -1, as follows:
  *
- *		room 0 | room 1 | room 2
+ *	room 0 | room 1 | room 2
  *    -------+--------+-------
- *		room 3 | room 4 | room 5
+ *	room 3 | room 4 | room 5
  *    -------+--------+-------
- *		room 6 | room 7 | room 8
+ *	room 6 | room 7 | room 8
  */
 
 int
@@ -160,7 +174,7 @@ whichroom (int r, int c)
 {
   int rm;
 
-  for (rm=0; rm<9; ++rm)
+  for (rm=0; rm<RGRID; ++rm)
     if (r >= bounds[rm].top  && r <= bounds[rm].bot &&
         c >= bounds[rm].left && c <= bounds[rm].right)
       return(rm);
@@ -185,7 +199,7 @@ nametrap (int traptype, int standingonit)
 
   else {
     /* Look all around and see what there is next to us */
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < DNUM; i++) {
       r = atdrow(i); c = atdcol(i);
 
       if (seerc ('^', r, c)) {	/* Aha, a trap! */
@@ -297,9 +311,9 @@ darkroom (void)
   if (!on (DOOR | ROOM))
     return (0);
 
-  for (dir=0; dir<8; dir++)
+  for (dir=0; dir<DNUM; dir++)
     if (seerc ('.', (drow = atdrow(dir)), (dcol = atdcol(dir))))
-      for (dir2=0; dir2<8; dir2++)
+      for (dir2=0; dir2<DNUM; dir2++)
         if (seerc (' ', drow+deltr[dir2], dcol+deltc[dir2]))
           return (1);
 
@@ -485,7 +499,7 @@ updateat (void)
     int halls = 0, rooms = 0, rm;
     char *terrain = "nothing";
 
-    for (i=0; i<8; i += 2) {
+    for (i=0; i<DNUM; i += 2) {
       rr = atdrow(i); cc = atdcol(i);
 
       if (onrc (HALL, rr, cc))
@@ -734,7 +748,7 @@ teleport (void)
 
   hitstokill = 0; darkdir = NONE; darkturns = 0;
 
-  if (movedir >= 0 && movedir < 8 && !confused) {
+  if (movedir >= 0 && movedir < DNUM && !confused) {
     teleported++;
 
     while (r > 1 && r < R-1 && c > 0 && c < C-1) {
@@ -884,7 +898,7 @@ inferhall (int r, int c)
 
   char dirch = ' ';
 
-  for (k = 0; k < 8; k += 2) {
+  for (k = 0; k < DNUM; k += 2) {
     if (onrc (HALL, r + deltr[k], c + deltc[k]))      /* Hall has been seen */
       return;
     else if (onrc (ROOM, r + deltr[k], c + deltc[k])) /* Room is over here */
@@ -1009,7 +1023,7 @@ canbedoor (int deadr, int deadc)
   int r, c, dr, dc, k, count;
 
   /* Check all orthogonal directions around the square */
-  for (k=0; k < 8; k+=2) {
+  for (k=0; k < DNUM; k+=2) {
     dr = deltr[k]; dc = deltc[k];
     r = deadr+dr; c = deadc+dc;
 

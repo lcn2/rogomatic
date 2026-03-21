@@ -225,7 +225,7 @@ bool replaying = false;		/* True if replaying old game */
 bool revvideo = false;		/* True if in rev. video mode */
 int rightring = NONE;		/* Index of our right ring */
 int rogpid = -1;		/* Pid of rogue process */
-int room[9];			/* Flags for each room */
+int room[RGRID + 1];		/* Flags for each room, +! for paranoia */
 int row = 0;			/* Current cursor position (row) */
 int col = 0;			/* Current cursor position (col) */
 int scrmap[R][C + 1];		/* Flags bits for level map, +1 for paranoia */
@@ -244,7 +244,7 @@ int version = 0;		/* rogue version is an integer as set by getrougeversion() */
 int wplusdam = 2;		/* Our plus damage from weapon bonus */
 int wplushit = 1;		/* Our plus hit from weapon bonus */
 int zone = NONE;		/* Current screen zone, 0..8 */
-int zonemap[9][9];		/* Connectivity map - Map of zones connections */
+int zonemap[RGRID][RGRID + 1];	/* Connectivity map - Map of zones connections, +1 for paranoia */
 
 /* Functions */
 void (*istat)(int);
@@ -320,11 +320,11 @@ int   Explev = 1;
 int   turns = 0;
 char  Ms[30];	/* The message about his state of hunger */
 
-/* Miscellaneous movement tables */
-int   deltrc[8] = { 1, -(C-1), -C, -(C+1), -1, C-1, C, C+1 };
-int   deltc[8]  = { 1, 1, 0, -1, -1, -1, 0, 1 };
-int   deltr[8]  = { 0, -1, -1, -1, 0, 1, 1, 1 };
-char  keydir[8] = { 'l', 'u', 'k', 'y', 'h', 'b', 'j', 'n' };
+/* Miscellaneous movement tables, +1 for paranoia */
+int   deltrc[DNUM + 1] = { 1, -(C-1), -C, -(C+1), -1, C-1, C, C+1, 0 };
+int   deltc[DNUM + 1]  = { 1, 1, 0, -1, -1, -1, 0, 1, 0 };
+int   deltr[DNUM + 1]  = { 0, -1, -1, -1, 0, 1, 1, 1, 0 };
+char  keydir[DNUM + 1] = { 'l', 'u', 'k', 'y', 'h', 'b', 'j', 'n', '\0' };
 int   movedir = 0;
 
 /* Map characters on screen into object types */
@@ -348,7 +348,7 @@ stuff translate[128] = {
 };
 
 /* Inventory, contents of our pack */
-invrec inven[MAXINV];
+invrec inven[MAXINV + 1];   /* +1 for paranoia */
 int invcount = 0;
 
 /* Time history */
