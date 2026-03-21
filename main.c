@@ -426,23 +426,35 @@ main (int argc, char *argv[])
 
   /* The third argument is an option list */
   if (argc > 3) {
+      int cheat_int;		/* integer form of cheat boolean */
+      int noterm_int;		/* integer form of noterm boolean */
+      int startecho_int;	/* integer form of startecho boolean */
+      int nohalf_int;		/* integer form of nohalf boolean */
+      int emacs_int;		/* integer form of emacs boolean */
+      int terse_int;		/* integer form of terse boolean */
+      int transparent_int;	/* integer form of transparent boolean */
+      int quitat_int;		/* integer form of quitat boolean */
+      int time_subpath_int;	/* integer form of time_subpath boolean */
+
+      /* parse options in third argument */
       i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d,%d",
-                            (int *)&cheat, (int *)&noterm, (int *)&startecho, (int *)&nohalf,
-                            (int *)&emacs, (int *)&terse, (int *)&transparent, (int *)&quitat, (int *)&time_subpath);
+                            &cheat_int, &noterm_int, &startecho_int, &nohalf_int,
+                            &emacs_int, &terse_int, &transparent_int, &quitat_int, &time_subpath_int);
       if (i != 9) {
 	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 9 flags, returned: %d\n", argv[3], i);
 	  exit(1);
       }
-      /* normalize ints to booleans */
-      cheat = (cheat == 0) ? false : true;
-      noterm = (noterm == 0) ? false : true;
-      startecho = (startecho == 0) ? false : true;
-      nohalf = (nohalf == 0) ? false : true;
-      emacs = (emacs == 0) ? false : true;
-      terse = (terse == 0) ? false : true;
-      transparent = (transparent == 0) ? false : true;
-      quitat = (quitat == 0) ? false : true;
-      time_subpath = (time_subpath == 0) ? false : true;
+
+      /* convert ints to booleans */
+      cheat = (cheat_int == 0) ? false : true;
+      noterm = (noterm_int == 0) ? false : true;
+      startecho = (startecho_int == 0) ? false : true;
+      nohalf = (nohalf_int == 0) ? false : true;
+      emacs = (emacs_int == 0) ? false : true;
+      terse = (terse_int == 0) ? false : true;
+      transparent = (transparent_int == 0) ? false : true;
+      quitat = (quitat_int == 0) ? false : true;
+      time_subpath = (time_subpath_int == 0) ? false : true;
   }
 
   /* The fourth argument is the Rogue name */
