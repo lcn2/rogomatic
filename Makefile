@@ -463,11 +463,11 @@ rogomatic.cat: rogomatic.6 rogomatic.cat.in
 # standard Makefile utility rules #
 ###################################
 
-clean:
+clean: legacy_clean
 	${RM} -f ${MISC_OBJS}
 	${RM} -f ${OBJS}
 
-clobber: clean
+clobber: legacy_clobber clean
 	${RM} -f tags index rogomatic.6 rogomatic.cat
 	${RM} -f ${OTHER_TARGES}
 	${RM} -f ${TARGETS}
@@ -525,6 +525,12 @@ index: ${CFILES}
 
 tags: ${SRC}
 	${CTAGS} -w ${SRC}
+
+legacy_clean:
+	${Q}${RM} -f datesub.o
+
+legacy_clobber:
+	${Q}${RM} -f datesub datesub.l
 
 
 ###############################
