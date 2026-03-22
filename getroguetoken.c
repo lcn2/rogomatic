@@ -24,6 +24,9 @@
 # include <stdlib.h>
 # include <string.h>
 # include <errno.h>
+# include <sys/stat.h>
+# include <fcntl.h>
+# include <unistd.h>
 
 # include "types.h"
 # include "globals.h"
@@ -54,6 +57,9 @@ static FILE *frogue;
 static void open_frogue (const char *file);
 static void close_frogue (void);
 #endif
+
+static int errlog = -1;		/* error log open file descriptor, or <0 ==> not open */
+
 static int fetchnum (char ch);
 static int match2 (char ch1, char ch2);
 static int match3 (char ch1, char ch2, char ch3);
@@ -815,4 +821,61 @@ getlogtoken(void)
   }
 
   return (ch);
+}
+
+void
+redirect_stderr (const char *dir, const char *file)
+{
+  char *path = NULL; /* error log path to open */
+
+  /* form full path to an error log */
+  path = form_path (dir, file);
+
+  /*
+   * be sure that the error log exists, writable at the end of file, and mode 0644 under umask
+   *
+   * Even though we will freopen(3) next, we want to first open(2) the error log file
+   * as this will give us better control over the file if needs to be created.
+   */
+  errlog = open (path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (errlog < 0) {
+    fprintf (stderr, "ERROR: %s: Couldn't open error log %s: %s\n", __func__, path, strerror(errno));
+    exit(1);
+  }
+
+  /*
+   * reopen error log as stderr, appending as needed
+   *
+   * Too bad there isn't a fdreopen(3) function as technically there is a race between the above open(2)
+   * call, and the freopen(3) call below.  On the other hand, such a call wouldn't have the open parameter
+   * control we have over t above open(2) call, AND the race is do no real consequence to future stderr output.
+   */
+  if (freopen(path, "a", stderr) == NULL) {
+    fprintf (stderr, "ERROR: %s: Couldn't freopen error log: %s onto stderr: %s\n", __func__, path, strerror(errno));
+    exit(1);
+  }
+
+  /*
+   * make sure that stderr is still unbuffered
+   */
+  setbuf (stderr, NULL);
+
+  /* free memory */
+  if (path != NULL) {
+    free(path);
+    path = NULL;
+  }
+}
+
+void
+close_errlog (void)
+{
+  if (errlog >= 0) {
+    if (fclose (stderr) != 0) {
+      fprintf (stderr, "ERROR: %s: Failed to fclose error log via stderr: %s\n", __func__, strerror(errno));
+      exit(1);
+    }
+    (void) close (errlog); /* paranoia */
+    errlog = -1;
+  }
 }
