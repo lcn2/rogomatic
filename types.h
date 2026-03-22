@@ -607,7 +607,7 @@ extern void open_frogue_fd (int frogue_fd);
 extern char getroguetoken (void);
 extern void getoldcommand (char *s);
 extern void redirect_stderr (const char *dir, const char *file);
-extern void close_errlog ();
+extern void close_errlog (void);
 
 /* io.c */
 extern void getrogue (char *waitstr, int onat);

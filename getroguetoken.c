@@ -852,7 +852,8 @@ redirect_stderr (const char *dir, const char *file)
 }
 
 void
-close_errlog() {
+close_errlog (void)
+{
   if (close(errlog) != 0) {
     fprintf (stderr, "Failed to close errlog\n");
     exit(1);
