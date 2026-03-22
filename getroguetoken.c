@@ -830,9 +830,9 @@ redirect_stderr (const char *dir, const char *file)
 
   /* form full path */
   path = form_path (dir, file);
-  
+
   /*
-   Redirect STDERR into a file to keep error log
+   * Redirect STDERR into a file to keep error log
    */
   errlog = open (path, O_WRONLY | O_CREAT, S_IREAD | S_IWRITE);
   if (errlog < 0) {
