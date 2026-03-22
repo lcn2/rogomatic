@@ -509,6 +509,9 @@ main (int argc, char *argv[])
    */
   set_rgmdir (time_subpath);
 
+  /*
+   * send stderr to an errlog file
+   */
   redirect_stderr(rgmdir, "errlog");
 
   /*
