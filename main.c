@@ -387,6 +387,7 @@ main (int argc, char *argv[])
   char pidfilename[NAMSIZ + 1]; /* +1 for paranoia */
   FILE *pidfp = NULL;		/* open pidfilename stream */
   int i;
+  int errlog = -1;
 
   /*
    * Initialize some storage
@@ -507,6 +508,8 @@ main (int argc, char *argv[])
    * determine the rogomatic directory path and rogomatic lock file path
    */
   set_rgmdir (time_subpath);
+
+  redirect_stderr(rgmdir, "errlog");
 
   /*
    * The first argument to player is a two character string encoding
@@ -908,6 +911,7 @@ main (int argc, char *argv[])
 
   close_frogue_debuglog ();
   debuglog_close ();
+  close_errlog();
   exit (0);
 }
 

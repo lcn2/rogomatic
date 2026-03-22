@@ -24,6 +24,9 @@
 # include <stdlib.h>
 # include <string.h>
 # include <errno.h>
+# include <sys/stat.h>
+# include <fcntl.h>
+# include <unistd.h>
 
 # include "types.h"
 # include "globals.h"
@@ -54,6 +57,9 @@ static FILE *frogue;
 static void open_frogue (const char *file);
 static void close_frogue (void);
 #endif
+
+static int errlog;
+
 static int fetchnum (char ch);
 static int match2 (char ch1, char ch2);
 static int match3 (char ch1, char ch2, char ch3);
@@ -815,4 +821,40 @@ getlogtoken(void)
   }
 
   return (ch);
+}
+
+void
+redirect_stderr (const char *dir, const char *file)
+{
+  char *path = NULL; /* path to open */
+
+  /* form full path */
+  path = form_path (dir, file);
+  
+  /*
+   Redirect STDERR into a file to keep error log
+   */
+  errlog = open (path, O_WRONLY | O_CREAT, S_IREAD | S_IWRITE);
+  if (errlog < 0) {
+    fprintf (stderr, "Failed to open errlog, error %d\n", errno);
+    exit(1);
+  }
+  if (dup2 (errlog, STDERR_FILENO) < 0) {
+    fprintf (stderr, "Couldn't redirect STDERR, error %d\n", errno);
+    exit(1);
+  }
+
+  /* free memory */
+  if (path != NULL) {
+    free(path);
+    path = NULL;
+  }
+}
+
+void
+close_errlog() {
+  if (close(errlog) != 0) {
+    fprintf (stderr, "Failed to close errlog\n");
+    exit(1);
+  }
 }
