@@ -262,7 +262,7 @@ FSANITIZE+= -fsanitize=vptr
 #
 # For Apple clang and Homebrew gcc:
 #
-# WARN+= -Wall
+# CCWARN+= -Wall
 # CCWARN+= -pedantic
 # CCWARN+= -Werror
 # COPT:= -O0
@@ -340,9 +340,9 @@ rogomatic: setup.o scorefile.o utility.o config.o
 	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o ${LIBS} -o $@
 
 
-#################################################################
-# other targets that are not automatically built, not installed #
-#################################################################
+##################################################
+# other targets that are not automatically built #
+##################################################
 
 # NOTE: This rule is NOT part of the build of rogomatic documentation!
 # 	We use this rule to form the rogomatic.cat.in file from the rogomatic.6.in file.
@@ -350,6 +350,21 @@ rogomatic: setup.o scorefile.o utility.o config.o
 form_rogomatic_cat_in: rogomatic.6.in
 	${RM} -f rogomatic.cat.in
 	${GROFF} -Tascii -man rogomatic.6.in | LC_CTYPE=C ${SED} -e 's/.\x08//g' > rogomatic.cat.in
+
+# compile all with gcc-15, full warnings, no optimizer, no ASAN
+#
+# NOTE: Consider doing a "make clobber" first, especially when switching from a previous "make all", "make clang", etc.
+#
+gcc:
+	${MAKE} -f ${MAKE_FILE} all CC='gcc-15' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-g2'
+
+
+# compile all with clang, full warnings, no optimizer, no ASAN
+#
+# NOTE: Consider doing a "make clobber" first, especially when switching from a previous "make all", "make gcc", etc.
+#
+clang:
+	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
 
 
 #####################

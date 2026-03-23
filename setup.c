@@ -45,8 +45,8 @@
 /*
  * global declarations
  */
-char rgmdir[SM_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-char lock_path[SM_BUF + 1] = { '\0' };	/* rogomatic lock file path, +1 for paranoia */
+char rgmdir[MU_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[TY_BUF + 1] = { '\0' };	/* rogomatic lock file path, +1 for paranoia */
 
 /*
  * static declarations
@@ -110,7 +110,6 @@ main (int argc, char *argv[])
   char *rogue_savefile = NULL;	    /* the rogue save file to restore */
   extern char *optarg;		    /* option argument */
   extern int optind;		    /* argv index of the next arg */
-  int ret;
   int i;
 
   /*
@@ -131,7 +130,7 @@ main (int argc, char *argv[])
   memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
 
   /* initialize rogomatic directory path to default */
-  strncpy (rgmdir, RGMDIR, SM_BUF);
+  strncpy (rgmdir, RGMDIR, sizeof(rgmdir)-1);
 
   /*
    * parse args
@@ -158,7 +157,7 @@ main (int argc, char *argv[])
 
       case 'D':		/* -D path ==> set the rogomatic directory path */
 	memset (rgmdir, 0, sizeof(rgmdir));
-	strncpy (rgmdir, optarg, SM_BUF);
+	strncpy (rgmdir, optarg, sizeof(rgmdir)-1);
 	break;
 
       case 'e':		/* -e ==> Echo file to roguelog */

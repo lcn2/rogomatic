@@ -121,7 +121,7 @@ FILE *trogue = NULL;		/* Pipe to Rogue process */
 
 /* Characters */
 char afterid = '\0';		/* Letter of obj after identify */
-char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
+char genepool[TY_BUF + 1];	/* Gene pool, +1 for paranoia */
 char *genocide;			/* List of monsters to be genocided */
 char genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
 char lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
@@ -134,8 +134,8 @@ char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone - How we died, +
 char pending_call_letter = ' ';	/* If non-blank we have a call it to do - Pack object we know a name for */
 char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
 char versionstr[MU_BUF + 1];		/* Version of Rogue being used, +1 for paranoia */
-char rgmdir[SM_BUF + 1];		/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-char lock_path[SM_BUF + 1];	/* rogomatic lock file path, +1 for paranoia */
+char rgmdir[MU_BUF + 1];		/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[TY_BUF + 1];	/* rogomatic lock file path, +1 for paranoia */
 char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 char *termination = "perditus";	/* Latin verb for how we died */
 
@@ -151,7 +151,7 @@ int atrow0 = 0;			/* Position at start of turn (row) */
 int atcol0 = 0;			/* Position at start of turn (col) */
 int attempt = 0;		/* Number times we searched whole level */
 bool badarrow = false;		/* True if cursed/lousy arrow in hand */
-bool beingheld = false;		/* True if a fungus has ahold of us */
+int beingheld = 0;		/* Turns a fungus has held of us */
 int beingstalked = 0;		/* Invisible stalker strategies */
 bool blinded = false;		/* True if blinded */
 int blindir = 0;		/* Last direction we moved when blind */
@@ -177,7 +177,7 @@ bool diddrop = false;		/* True if we dropped anything on this spot */
 bool emacs = false;		/* True ==> format output for Emacs */
 bool exploredlevel = false;	/* True if we completely explored this level */
 bool floating = false;		/* True if we are levitating */
-bool foughtmonster = false;	/* True if recently fought a monster */
+int foughtmonster = 0;		/* rounds we fought a monster */
 bool foundarrowtrap = false;	/* Found arrow trap this level */
 bool foundtrapdoor = false;	/* Found trap door this level */
 int goalr = NONE;		/* Current goal square (row) */
@@ -229,7 +229,7 @@ int room[RGRID + 1];		/* Flags for each room, +! for paranoia */
 int row = 0;			/* Current cursor position (row) */
 int col = 0;			/* Current cursor position (col) */
 int scrmap[R][C + 1];		/* Flags bits for level map, +1 for paranoia */
-bool slowed = false;		/* True ==> recently zapped w/slow monster */
+int slowed = 0;			/* turns since we slowed a monster */
 int stairrow = 0;		/* Position of stairs on this level (row) */
 int staircol = 0;		/* Position of stairs on this level (col) */
 int teleported = 0;		/* Number of times teleported this level */
@@ -361,8 +361,8 @@ char *gamename = "Rog-O-Matic";
 jmp_buf  commandtop;
 
 /* static storage */
-static char genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
-static char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
+static char genelock[TY_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
+static char genelog[TY_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
 
 /* static function declarations */
 static void onintr (int sig);
@@ -384,10 +384,9 @@ main (int argc, char *argv[])
   bool time_subpath = false;	/* True ==> use a UTC date and time sub-directory */
   char logfilename[100];	/* Name of log file */
   pid_t pid = -1;		/* process id */
-  char pidfilename[NAMSIZ + 1]; /* +1 for paranoia */
+  char pidfilename[TY_BUF + 1]; /* +1 for paranoia */
   FILE *pidfp = NULL;		/* open pidfilename stream */
   int i;
-  int errlog = -1;
 
   /*
    * Initialize some storage
@@ -501,7 +500,7 @@ main (int argc, char *argv[])
   /* The 5th argument is the non-default rogomatic directory path */
   if (argc > 5) {
     memset (rgmdir, 0, sizeof(rgmdir));
-    strncpy (rgmdir, argv[5], SM_BUF);
+    strncpy (rgmdir, argv[5], sizeof(rgmdir)-1);
   }
 
   /*
@@ -555,7 +554,7 @@ main (int argc, char *argv[])
   if (getenv("GETROGOMATICPID") != NULL) {
     pid = getpid ();
     memset (pidfilename, 0, sizeof(pidfilename));
-    snprintf (pidfilename, NAMSIZ, "%s/rogomaticpid.%d", rgmdir, pid);
+    snprintf (pidfilename, sizeof(pidfilename)-1, "%s/rogomaticpid.%d", rgmdir, pid);
     if ((pidfp = fopen (pidfilename, "w")) == NULL) {
       fprintf (stderr, "ERROR: Can't open '%s'.\n", pidfilename);
       exit(1);
@@ -948,9 +947,9 @@ startlesson (void)
   unsigned int tmpseed = 0;
   int lock_fd;
 
-  snprintf (genelog, MU_BUF, "%s/GeneLog%d", rgmdir, version);
-  snprintf (genepool, MU_BUF, "%s/GenePool%d", rgmdir, version);
-  snprintf (genelock, MU_BUF, "%s/GeneLock%d", rgmdir, version);
+  snprintf (genelog, sizeof(genelog)-1, "%s/GeneLog%d", rgmdir, version);
+  snprintf (genepool, sizeof(genepool)-1, "%s/GenePool%d", rgmdir, version);
+  snprintf (genelock, sizeof(genelock)-1, "%s/GeneLock%d", rgmdir, version);
 
   /* set up random number generation */
   if (getenv("SEED") != NULL) {

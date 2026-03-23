@@ -96,7 +96,7 @@ getname (void)
    * pre-load player name with rogo-
    */
   memset(name, 0, sizeof(name)); /* paranoia */
-  strncpy(name, "rogo-", strlen("rogo-"));
+  strncpy(name, "rogo-", sizeof(name));
 
   /*
    * paranoia check

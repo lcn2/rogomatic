@@ -40,7 +40,7 @@ extern FILE *trogue;		/* Pipe to Rogue process */
 
 /* global characters and strings */
 extern char afterid;			/* Letter of obj after identify */
-extern char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
+extern char genepool[TY_BUF + 1];	/* Gene pool, +1 for paranoia */
 extern char *genocide;			/* List of monsters to genocide */
 extern char genocided[MU_BUF + 1];	/* List of monsters genocided, +1 for paranoia */
 extern char lastcmd[MU_BUF + 1];	/* Copy of last command sent to Rogue, +1 for paranoia */
@@ -53,8 +53,8 @@ extern char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone - How we 
 extern char pending_call_letter;	/* If non-blank we have a call it to do - Pack object we know a name for */
 extern char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
 extern char versionstr[MU_BUF + 1];		/* Version of Rogue being used, +1 for paranoia */
-extern char rgmdir[SM_BUF + 1];			/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-extern char lock_path[SM_BUF + 1];		/* rogomatic lock file path, +1 for paranoia */
+extern char rgmdir[MU_BUF + 1];			/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+extern char lock_path[TY_BUF + 1];		/* rogomatic lock file path, +1 for paranoia */
 extern char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 extern char *termination;		/* Latin verb for how we died */
 
@@ -70,7 +70,7 @@ extern int atrow0;		/* Position at start of turn (row) */
 extern int atcol0;		/* Position at start of turn (col) */
 extern int attempt;		/* Number times we searched whole level */
 extern bool badarrow;		/* True if we missed with this arrow */
-extern bool beingheld;		/* True if being held by a fungus */
+extern int beingheld;		/* Turns a fungus has held of us */
 extern int beingstalked;	/* Invisible stalker strategies */
 extern bool blinded;		/* True if blinded */
 extern int blindir;		/* Last direction we moved when blind */
@@ -96,7 +96,7 @@ extern bool diddrop;		/* True if we dropped anything on this spot */
 extern bool emacs;		/* True ==> format output for Emacs */
 extern bool exploredlevel;	/* True if we completely explored this level */
 extern bool floating;		/* True if we are levitating */
-extern bool foughtmonster;	/* True if we recently fought a monster */
+extern int foughtmonster;	/* rounds we fought a monster */
 extern bool foundarrowtrap;	/* Found arrow trap this level */
 extern bool foundtrapdoor;	/* Found trap door this level */
 extern int goalr;		/* Current goal square (row) */
@@ -148,7 +148,7 @@ extern int room[RGRID + 1];	/* Flags for each room, +1 for paranoia */
 extern int row;			/* Current cursor position (row) */
 extern int col;			/* Current cursor position (col) */
 extern int scrmap[R][C + 1];	/* attribute flags for squares, +1 for paranoia */
-extern bool slowed;		/* True if we recently slowed a monster */
+extern int slowed;		/* turns since we slowed a monster */
 extern int stairrow;		/* Position of stairs on this level (row) */
 extern int staircol;		/* Position of stairs on this level (col) */
 extern int teleported;		/* Number of times teleported on this level */

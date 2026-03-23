@@ -604,7 +604,7 @@ parsemsg (char *mess, char *mend)
           forget (currentarmor, CURSED);
           remember (currentarmor, UNCURSED);
           cursedarmor = false;
-          protected++;
+          protected = true;
           remember (currentarmor, PROTECTED);
         }
 
@@ -1019,7 +1019,8 @@ killed (char *monster)
   monkilled[m]++; totalkilled++;	/* Bump kill count */
   hitstokill = mhit = mmiss = 0;	/* Clear indiviual monster stats */
   mtarget = NONE;			/* Clear target */
-  beingheld = cancelled = 0;		/* Clear flags */
+  beingheld = false;			/* Clear flags */
+  cancelled = false;			/* Clear flags */
 
   /* If we killed an invisible, assume no more invisible around */
   if (!cosmic && !blinded &&
@@ -1098,7 +1099,7 @@ didhit (void)
   addprob (&monhist[monindex[m]].wehit, SUCCESS);
 
   if (wielding (wand))
-    { inven[currentweapon].charges--; newweapon++; }
+    { inven[currentweapon].charges--; newweapon = true; }
 }
 
 /*

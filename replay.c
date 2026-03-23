@@ -92,7 +92,7 @@ positionreplay (void)
       return;
     }
 
-    logdigested++;
+    logdigested = true;
   }
 
   /* Now figure out the current level (so relative commands will work) */

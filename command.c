@@ -261,7 +261,10 @@ adjustpack (char *cmd)
       usingarrow = (inven[currentweapon].type == missile);
       goodweapon = (weaponclass (currentweapon) >= 100);
 
-      badarrow = goodarrow = poorarrow = hitstokill = 0;
+      badarrow = false;
+      goodarrow = false;
+      poorarrow = false;
+      hitstokill = false;
       newweapon = true;
       setbonuses ();
       }

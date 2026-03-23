@@ -53,9 +53,10 @@ set_rgmdir (bool time_subpath)
 {
   time_t tm;			/* now */
   struct tm *utc_now;		/* tm in UTC */
-  int rgmdirlen;		/* length of the default rogomatic directory path plus trailing slash "/" */
+  int rgmdirlen;		/* length of the rogomatic directory path plus trailing slash "/" */
+  int lockpathlen;		/* length of the rogomatic lock file */
   int datelen;			/* length of the UTC date string */
-  struct stat rgmdir_buf;	/* stat of rgmdir */
+  struct stat rgmdir_stat;	/* stat of rgmdir */
   int ret;			/* stat(2) return */
 
   /*
@@ -65,14 +66,15 @@ set_rgmdir (bool time_subpath)
    */
   if (rgmdir[0] == '\0') {
     memset (rgmdir, 0, sizeof(rgmdir));
-    strncpy (rgmdir, RGMDIR, SM_BUF);
+    strncpy (rgmdir, RGMDIR, sizeof(rgmdir)-1);
   }
+  rgmdirlen = strlen (rgmdir);
 
   /*
    * create the main rogomatic directory if it does not already exist
    */
-  memset (&rgmdir_buf, 0, sizeof(rgmdir_buf));
-  ret = stat(rgmdir, &rgmdir_buf);
+  memset (&rgmdir_stat, 0, sizeof(rgmdir_stat));
+  ret = stat(rgmdir, &rgmdir_stat);
   if (ret < 0) {
       /* no rgmdir, attempt to mkdir(rgmdir) */
       ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
@@ -85,8 +87,8 @@ set_rgmdir (bool time_subpath)
   /*
    * verify that main rogomatic directory is a read-write searchable directory
    */
-  ret = stat(rgmdir, &rgmdir_buf);
-  if (ret < 0 || ((rgmdir_buf.st_mode & S_IFDIR) == 0)) {
+  ret = stat(rgmdir, &rgmdir_stat);
+  if (ret < 0 || ((rgmdir_stat.st_mode & S_IFDIR) == 0)) {
     fprintf (stderr, "ERROR: %s: not a directory: %s: %s\n", __func__, rgmdir, strerror (errno));
     exit (1);
   }
@@ -107,41 +109,42 @@ set_rgmdir (bool time_subpath)
      */
     tm = time (NULL);
     if (tm == -1) {
-      fprintf (stderr, "ERROR: %s: failed to get current time\n", __func__);
+      fprintf (stderr, "Warning: %s: using default RGMDIR: %s: failed to get current time\n", __func__, rgmdir);
       return;
     }
     utc_now = gmtime (&tm);
     if (utc_now == NULL) {
-      fprintf (stderr, "ERROR: %s: failed convert now into UTC now\n", __func__);
+      fprintf (stderr, "Warning: %s: using default RGMDIR: %s: failed convert now into UTC now\n", __func__, rgmdir);
       return;
     }
 
     /*
      * attempt to append a UTC date and time sub-directory
      */
-    rgmdirlen = strlen (rgmdir); /* +1 for trailing slash "/" */
-    if (rgmdirlen >= SM_BUF) {
-      fprintf (stderr, "ERROR: %s: RGMDIR default is already too long to append UTC date and time sub-dir\n",
-		       __func__);
+    if (rgmdirlen >= sizeof(rgmdir)-1) {
+      fprintf (stderr, "Warning: %s: using default RGMDIR: %s: RGMDIR already too long to append UTC date & time sub-dir\n",
+		       __func__, rgmdir);
       return;
     }
     rgmdir[rgmdirlen] = '/';
     ++rgmdirlen;
     datelen = sizeof ("YYYYMMDD_HHMMSS");
-    if (rgmdirlen+datelen >= SM_BUF) {
-      fprintf (stderr, "ERROR: %s: RGMDIR default is too long to append UTC date and time sub-dir\n",
-		       __func__);
+    if (rgmdirlen+datelen >= sizeof(rgmdir)-1) {
+      fprintf (stderr, "Warning: %s: using default RGMDIR: %s: RGMDIR too long to append UTC date & time sub-dir\n",
+		       __func__, rgmdir);
       return;
     }
     if (strftime (rgmdir + rgmdirlen, datelen, "%Y%m%d_%H%M%S", utc_now) == 0) {
-      fprintf (stderr, "ERROR: %s: failed to convert time to string\n", __func__);
+      fprintf (stderr, "Warning: %s: using default RGMDIR: %s: failed to convert time to string\n", __func__, rgmdir);
+      return;
     }
+    rgmdirlen = strlen (rgmdir);
 
     /*
      * create the rogomatic sub-directory if it does not already exist
      */
-    memset (&rgmdir_buf, 0, sizeof(rgmdir_buf));
-    ret = stat(rgmdir, &rgmdir_buf);
+    memset (&rgmdir_stat, 0, sizeof(rgmdir_stat));
+    ret = stat(rgmdir, &rgmdir_stat);
     if (ret < 0) {
 	/* no rgmdir, attempt to mkdir(rgmdir) */
 	ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
@@ -154,8 +157,8 @@ set_rgmdir (bool time_subpath)
     /*
      * verify that rogomatic sub-directory is a read-write searchable directory
      */
-    ret = stat(rgmdir, &rgmdir_buf);
-    if (ret < 0 || ((rgmdir_buf.st_mode & S_IFDIR) == 0)) {
+    ret = stat(rgmdir, &rgmdir_stat);
+    if (ret < 0 || ((rgmdir_stat.st_mode & S_IFDIR) == 0)) {
       fprintf (stderr, "ERROR: %s: not a sub-directory: %s: %s\n", __func__, rgmdir, strerror (errno));
       exit (1);
     }
@@ -176,7 +179,12 @@ set_rgmdir (bool time_subpath)
    */
   if (lock_path[0] == '\0') {
     memset (lock_path, 0, sizeof(lock_path));
-    snprintf (lock_path, SM_BUF, "%s/Rgm.Lock", rgmdir);
+    lockpathlen = rgmdirlen + strlen ("/Rgm.Lock");
+    if (lockpathlen >= sizeof(lock_path)-1) {
+      fprintf (stderr, "ERROR: %s: RGMDIR %s: too long to form lock file path\n", __func__, rgmdir);
+      exit (1);
+    }
+    snprintf (lock_path, lockpathlen + 1, "%s/Rgm.Lock", rgmdir); /* +1 for paranoia */
   }
   return;
 }

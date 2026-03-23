@@ -43,10 +43,10 @@ extern void set_rgmdir (bool time_subpath);
 /*
  * global declarations
  */
-char rgmdir[SM_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-char lock_path[SM_BUF + 1] = { '\0' };  /* rogomatic lock file path, +1 for paranoia */
-char genelock[MU_BUF + 1];	/* Gene pool lock file, +1 for paranoia */
-char genepool[MU_BUF + 1];	/* Gene pool, +1 for paranoia */
+char rgmdir[MU_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[TY_BUF + 1] = { '\0' };  /* rogomatic lock file path, +1 for paranoia */
+char genelock[TY_BUF + 1] = { '\0' };	/* Gene pool lock file, +1 for paranoia */
+char genepool[TY_BUF + 1] = { '\0' };	/* Gene pool, +1 for paranoia */
 char *knob_name[MAXKNOB] = {
   "trap searching:   ",
   "door searching:   ",
@@ -61,7 +61,7 @@ char *knob_name[MAXKNOB] = {
 int
 main (int argc, char *argv[])
 {
-  char genelog[MU_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
+  char genelog[TY_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
   int m=10, init=0, version=RV53A, full=0;
   unsigned int seed = 0;
   int lock_fd;
@@ -106,9 +106,9 @@ main (int argc, char *argv[])
   }
 
   /* No file argument, assign the gene log and pool file names */
-  snprintf (genelock, MU_BUF, "%s/GeneLock%d", rgmdir, version);
-  snprintf (genelog, MU_BUF, "%s/GeneLog%d", rgmdir, version);
-  snprintf (genepool, MU_BUF, "%s/GenePool%d", rgmdir, version);
+  snprintf (genelock, sizeof(genelock)-1, "%s/GeneLock%d", rgmdir, version);
+  snprintf (genelog, sizeof(genelog)-1, "%s/GeneLog%d", rgmdir, version);
+  snprintf (genepool, sizeof(genepool)-1, "%s/GenePool%d", rgmdir, version);
 
   critical ();				/* Disable interrupts */
 

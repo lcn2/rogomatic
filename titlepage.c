@@ -101,7 +101,6 @@ static void animate (char *movie[]);
 static void
 animate (char *movie[])
 {
-  int baud;
   int r, c;
   char *cbf = "";
   struct timespec rqt = { 0, 1e7 };		/* short 0.01 seconds */

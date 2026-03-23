@@ -40,7 +40,7 @@
 
 /* static declarations */
 static bool nosave = false;	    /* True ==> dont write ltm back out */
-static char ltmnam[MU_BUF + 1];	    /* Long term memory file name, +1 for paranoia */
+static char ltmnam[TY_BUF + 1];	    /* Long term memory file name, +1 for paranoia */
 
 static void readltm (void);
 static void parsemonster (char *monster);
@@ -172,7 +172,7 @@ restoreltm (void)
   int lock_fd;
 
   memset (ltmnam, 0, sizeof(ltmnam));
-  snprintf (ltmnam, MU_BUF, "%s/ltm%d", rgmdir, version);
+  snprintf (ltmnam, sizeof(ltmnam)-1, "%s/ltm%d", rgmdir, version);
   dwait (D_CONTROL, __func__, "reading file: %s", ltmnam);
 
   clearltm (monhist);			/* Clear the original sums */
