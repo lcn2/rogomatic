@@ -345,7 +345,7 @@ rogomatic: setup.o scorefile.o utility.o config.o
 ##################################################
 
 # NOTE: This rule is NOT part of the build of rogomatic documentation!
-# 	We use this rule to form the rogomatic.cat.in file from the rogomatic.6.in file.
+#	We use this rule to form the rogomatic.cat.in file from the rogomatic.6.in file.
 #
 form_rogomatic_cat_in: rogomatic.6.in
 	${RM} -f rogomatic.cat.in
@@ -356,8 +356,11 @@ form_rogomatic_cat_in: rogomatic.6.in
 # NOTE: Consider doing a "make clobber" first, especially when switching from a previous "make all", "make clang", etc.
 #
 gcc:
+ifeq ($(target),Linux)
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
+else
 	${MAKE} -f ${MAKE_FILE} all CC='gcc-15' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-g2'
-
+endif
 
 # compile all with clang, full warnings, no optimizer, no ASAN
 #
