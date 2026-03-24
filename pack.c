@@ -180,7 +180,7 @@ clearpack (int pos)
   if (pos >= MAXINV) return;
 
   inven[pos].count = 0;
-  inven[pos].str[0] = '\0';
+  memset(inven[pos].str, 0, NAMSIZ);
   inven[pos].phit = UNKNOWN;
   inven[pos].pdam = UNKNOWN;
   inven[pos].charges = UNKNOWN;
@@ -295,7 +295,7 @@ void
 doresetinv (void)
 {
   int i;
-  static char space[MAXINV][C + 1]; /* +1 for paranoia */
+  static char space[MAXINV][NAMSIZ + 1]; /* +1 for paranoia */
 
   /* zeroize arrays */
   memset(space, 0, sizeof(space));

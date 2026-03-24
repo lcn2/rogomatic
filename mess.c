@@ -768,7 +768,7 @@ readident (char *name)
 {
   int obj; char id = '*';	/* Default is "* for list" */
   stuff item_type = none;
-  char lookup_name[NAMSIZ];
+  char lookup_name[NAMSIZ + 1];	/* +1 for paranoia */
 
   if (!replaying && version < RV53A &&
       (nextid < LETTER (0) || nextid > LETTER (invcount))) {
@@ -845,9 +845,9 @@ readident (char *name)
 
     if ((id != '*') &&
         (item_type == ring || item_type == wand || item_type == potion || item_type == Scroll)) {
-      memset (lastname, '\0', NAMSIZ);
-      memset (lookup_name, '\0', NAMSIZ);
-      strncpy (lookup_name, inven[obj].str, NAMSIZ-1);
+      memset (lastname, '\0', sizeof(lastname));
+      memset (lookup_name, '\0', sizeof(lookup_name));
+      strncpy (lookup_name, inven[obj].str, sizeof(lookup_name)-1);
       strncpy (lastname, findentry_getfakename (lookup_name, item_type), NAMSIZ-1);
     }
 

@@ -427,6 +427,7 @@ main (int argc, char *argv[])
   memset (timessearched, 0, sizeof(timessearched)); /* paranoia */
   memset (Ms, 0, sizeof(Ms)); /* paranoia */
   memset (inven, 0, sizeof(inven)); /* paranoia */
+  doresetinv (); /* reset the inventory */
   memset (timespent, 0, sizeof(timespent)); /* paranoia */
   memset (commandtop, 0, sizeof(commandtop)); /* paranoia */
 
@@ -630,7 +631,7 @@ main (int argc, char *argv[])
   /*
    * Note: If we are replaying, the logfile is now in synch
    */
-  getrogue (ill, 2);  /* Read the input up to end of first command */
+  getrogue (ILL, 2);  /* Read the input up to end of first command */
 
   /* Identify all 26 monsters */
   if (!replaying)
@@ -665,7 +666,7 @@ main (int argc, char *argv[])
       if (startingup) showcommand (lastcmd);
 
       sendnow (";");
-      getrogue (ill, 2);
+      getrogue (ILL, 2);
     }
 
     if (startingup) {	/* All monsters identified */
@@ -836,7 +837,7 @@ main (int argc, char *argv[])
         case 'F': dwait (D_FATAL, __func__, "Testing the FATAL trap"); break;
 
         case 'R': if (replaying) {
-            positionreplay (); getrogue (ill, 2);
+            positionreplay (); getrogue (ILL, 2);
 
             if (transparent) singlestep = true;
           }

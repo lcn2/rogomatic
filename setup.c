@@ -214,7 +214,7 @@ main (int argc, char *argv[])
 	break;
 
       case '?':
-	fprintf(stderr, "%s: ERROR: illegal option -- %c\n", program, optopt);
+	fprintf(stderr, "%s: ERROR: unknown option -- %c\n", program, optopt);
 	fprintf (stderr, usage, program, prog, VERSION);
 	exit (3);
 	break;

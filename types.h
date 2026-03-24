@@ -140,8 +140,7 @@ typedef enum { false=0, true=1 } bool;
 
 /* Global Preprocessor constants */
 
-# define ill         ";'"
-# define status	     "Str:"
+# define ILL         ";'"
 # define MAXATTEMPTS (10)
 # define ROGQUIT     (-2)
 # define DIED        (1)
