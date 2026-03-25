@@ -240,6 +240,21 @@ FSANITIZE+= -fsanitize=unreachable
 FSANITIZE+= -fsanitize=vla-bound
 FSANITIZE+= -fsanitize=vptr
 
+# Address Sanitizer (ASAN) options for macOS
+#
+MACOS_FSANITIZE+= -fsanitize=nullability-arg
+MACOS_FSANITIZE+= -fsanitize=nullability-assign
+MACOS_FSANITIZE+= -fsanitize=nullability-return
+MACOS_FSANITIZE+= -fstack-protector-all
+
+# Address Sanitizer (ASAN) options for Linux
+#
+LINUX_FSANITIZE+= -fstack-protector-all
+
+# Guess at Address Sanitizer (ASAN) options for non-macOS non-Linux
+#
+OTHER_FSANITIZE+= -fstack-protector-all
+
 ####
 # macOS Address Sanitizer (ASAN)
 #
@@ -368,6 +383,35 @@ endif
 #
 clang:
 	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
+
+# compile all with Address Sanitizer (ASAN) enabled
+#
+# If macOS (Darwin), set Address Sanitizer (ASAN) values for compiling and linking.
+# See the "macOS Address Sanitizer (ASAN)" section above for details.
+#
+# If Linux, set Address Sanitizer (ASAN) values for compiling and linking.
+# See the "RHEL (Linux) Address Sanitizer (ASAN)" section above for details.
+#
+# On all non-macOS non-Linux environments, make a best guess on (ASAN) values for compiling and linking.
+#
+# NOTE: Consider doing a "make clobber" first, especially when switching from a previous "make all", "make clang", etc.
+#
+# Suggestion:
+#
+#	make clobber asan
+# 	rm -f asan.log.* ; ASAN_OPTIONS="log_path=asan.log" ./rogomatic ; reset ; cat asan.log.*
+#
+asan:
+ifeq ($(target),Darwin)
+	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+				    DEBUG='-ggdb3 ${FSANITIZE} ${MACOS_FSANITIZE}'
+else ($(target),Linux)
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+				    DEBUG='-ggdb3 ${FSANITIZE} ${LINUX_FSANITIZE}'
+else
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+				    DEBUG='-ggdb3 ${FSANITIZE} ${OTHER_FSANITIZE}'
+endif
 
 
 #####################
