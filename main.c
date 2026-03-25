@@ -401,7 +401,7 @@ main (int argc, char *argv[])
   lastcmd[0] = 'i';
   memset (lastname, 0, sizeof(lastname)); /* paranoia */
   for (i=0; i < R; ++i) {
-      memset(&(screen[i][0]), ' ', C); /* screen lines initialize with ASCII space */
+      memset (&(screen[i][0]), ' ', sizeof(screen[i])); /* screen lines initialize with ASCII space */
       screen[i][C] = '\0'; /* paranoia */
   }
   memset (sumline, 0, sizeof(sumline)); /* paranoia */

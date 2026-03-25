@@ -242,7 +242,7 @@ callitpending (void)
   if (pending_call_letter != ' ') {
     command (T_OTHER, "c%c%s\n", pending_call_letter, pending_call_name);
     pending_call_letter = ' ';
-    memset (pending_call_name, '\0', NAMSIZ);
+    memset (pending_call_name, '\0', sizeof(pending_call_name));
     return (1);
   }
   return (0);

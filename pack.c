@@ -180,7 +180,7 @@ clearpack (int pos)
   if (pos >= MAXINV) return;
 
   inven[pos].count = 0;
-  memset(inven[pos].str, 0, NAMSIZ);
+  memset(inven[pos].str, 0, NAMSIZ); /* sizeof(space[x]) is NAMSIZ + 1 chars */
   inven[pos].phit = UNKNOWN;
   inven[pos].pdam = UNKNOWN;
   inven[pos].charges = UNKNOWN;
@@ -298,7 +298,7 @@ doresetinv (void)
   static char space[MAXINV][NAMSIZ + 1]; /* +1 for paranoia */
 
   /* zeroize arrays */
-  memset(space, 0, sizeof(space));
+  memset (space, 0, sizeof(space));
 
   usesynch = true;
   checkrange = false;
@@ -324,13 +324,18 @@ int
 inventory (char *msgstart, char *msgend)
 {
   char *p, *q, *mess = msgstart, *mend = msgend;
-  char objname[100];
-  char dbname[NAMSIZ];
-  char codename[NAMSIZ];
+  char objname[NAMSIZ + 1]; /* +1 for paranoia */
+  char dbname[NAMSIZ + 1]; /* +1 for paranoia */
+  char codename[NAMSIZ + 1]; /* +1 for paranoia */
   int  n, ipos, xknow = 0, newitem = 0, inuse = 0, printed = 0;
   int  plushit = UNKNOWN, plusdam = UNKNOWN, charges = UNKNOWN;
   stuff what;
   char *xbeg, *xend, *codenamebeg, *codenameend;
+
+  /* zeroize arrays */
+  memset (objname, 0, sizeof(objname));
+  memset (dbname, 0, sizeof(dbname));
+  memset (codename, 0, sizeof(codename));
 
   xbeg = xend = codenamebeg = codenameend = "";
   dwait (D_PACK, __func__, "%s", mess);
@@ -493,8 +498,6 @@ inventory (char *msgstart, char *msgend)
   else xtr(strange,0,0,0)
 
   /* Copy the name of the object into a string */
-  memset (objname, '\0', 100);
-
   for (p = objname, q = xbeg; q < xend;  p++, q++) *p = *q;
 
   /* Ring bonus is printed differently in Rogue 5.3 */
@@ -515,7 +518,6 @@ inventory (char *msgstart, char *msgend)
   /* If the name of the object matches something in the database, */
   /* slap the real name into the slot and mark it as known */
   if (!xknow && (what == potion || what == Scroll || what == wand || what == ring)) {
-    memset (dbname, '\0', NAMSIZ);
     strncpy (dbname, findentry_getrealname (objname, what), NAMSIZ-1);
 
     if (strlen (dbname) > 0) {
@@ -553,8 +555,6 @@ inventory (char *msgstart, char *msgend)
     (what == wand)) {
 
     /* Copy the codename of the object into a string */
-    memset (codename, '\0', NAMSIZ);
-
     for (p = codename, q = codenamebeg; q <= codenameend;  p++, q++) *p = *q;
 
     if ((strlen (codename) > 2) &&

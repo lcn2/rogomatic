@@ -89,12 +89,15 @@ static int getmonhist (char *monster, int hitormiss);
 void
 terpmes (void)
 {
-  char mess[128]; char topline[128];
+  char mess[MU_BUF + 1];
+  char topline[MU_BUF + 1];
   char *m, *mend, *s, *t;
 
+  /* zeroize arrays */
+  memset (topline, 0, sizeof(topline));
+
   s=&screen[0][0];
-  memset (topline, '\0', 128);
-  strncpy (topline, s, 127);
+  strncpy (topline, s, sizeof(topline)-1);
   s=topline;
 
   /* Set 't' to the tail of the message,
@@ -116,7 +119,7 @@ terpmes (void)
    */
 
   while (s<t) {				      /* While more chars in msg */
-    memset (mess, '\0', 128);
+    memset (mess, 0, sizeof(topline));
 
     while (*s==' ' && s<t) s++;			/* Skip leading blanks */
 
@@ -780,7 +783,7 @@ readident (char *name)
 
   at (0,0);
   clrtoeol ();
-  memset (screen, ' ', C);
+  memset (&(screen[0]), ' ', sizeof(screen[0]));
   at (row, col);
   refresh ();
 
@@ -854,7 +857,7 @@ readident (char *name)
     waitfor ("not a valid item");
     sendnow (" %c;", id);		    /* Pick an object to identify */
     if (id == '*')
-      memset (lastname, '\0', NAMSIZ);
+      memset (lastname, '\0', sizeof(lastname));
     usesynch = false; justreadid = true;    /* Must reset inventory */
   }
 
@@ -962,7 +965,7 @@ infer (char *objname, stuff item_type)
     for (i=0; i<MAXINV; i++) {
       if ((inven[i].count > 0) &&
            streq (inven[i].str, lastname) && inven[i].type == item_type) {
-        memset (inven[i].str, '\0', NAMSIZ);
+        memset (inven[i].str, '\0', NAMSIZ); /* sizeof(space[x]) is NAMSIZ + 1 chars */
         strncpy (inven[i].str, objname, NAMSIZ-1);
         remember (i, KNOWN);
       }

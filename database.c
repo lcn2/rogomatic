@@ -154,9 +154,9 @@ addobj (char *codename, int pack_index, stuff item_type)
   if (findfake (codename, item_type) == NOTFOUND) {
     dbase[datalen].pack_index = pack_index;
     dbase[datalen].item_type = item_type;
-    memset (dbase[datalen].fakename, '\0', NAMSIZ);
+    memset (dbase[datalen].fakename, 0, sizeof(dbase[datalen].fakename));
     strncpy (dbase[datalen].fakename, codename, NAMSIZ-1);
-    memset (dbase[datalen].realname, '\0', NAMSIZ);
+    memset (dbase[datalen].realname, 0, sizeof(dbase[datalen].realname));
     datalen++;
   }
 }
@@ -191,9 +191,9 @@ infername (char *codename, char *name, stuff item_type)
 
   if (i == NOTFOUND) {
     dbase[datalen].item_type = item_type;
-    memset (dbase[datalen].fakename, '\0', NAMSIZ);
+    memset (dbase[datalen].fakename, 0, sizeof(dbase[datalen].fakename));
     strncpy (dbase[datalen].fakename, codename, NAMSIZ-1);
-    memset (dbase[datalen].realname, '\0', NAMSIZ);
+    memset (dbase[datalen].realname, 0, sizeof(dbase[datalen].realname));
     strncpy (dbase[datalen].realname, name, NAMSIZ-1);
     datalen++;
   }
@@ -202,7 +202,7 @@ infername (char *codename, char *name, stuff item_type)
       dwait (D_ERROR, __func__, "dbase[%d].realname: %s != name: %s",
 		      i, dbase[i].realname, name);
     else {
-      memset (dbase[i].realname, '\0', NAMSIZ);
+      memset (dbase[i].realname, 0, sizeof(dbase[i].realname));
       strncpy (dbase[i].realname, name, NAMSIZ-1);
     }
   }
