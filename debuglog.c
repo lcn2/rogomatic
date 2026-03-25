@@ -157,8 +157,8 @@ append_pidlog (const char *dir, const char *file)
   /*
    * append line to pid log
    */
-  fprintf (stream, "%ld.%06d %s rogue-pid: %d player-pid: %d dungeon: %s\n",
-		   tp.tv_sec, tp.tv_usec, timebuf, rogpid, getpid(), rogoseed_str);
+  fprintf (stream, "%ld.%06ld %s rogue-pid: %d player-pid: %d dungeon: %s\n",
+		   (long) tp.tv_sec, (long) tp.tv_usec, timebuf, rogpid, (int) getpid(), rogoseed_str);
 
   /*
    * close pid log
