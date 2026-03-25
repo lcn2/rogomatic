@@ -33,6 +33,8 @@
 # include <unistd.h>
 # include <string.h>
 # include <errno.h>
+# include <time.h>
+# include <sys/time.h>
 
 # include "types.h"
 # include "install.h"
@@ -45,8 +47,8 @@
 /*
  * global declarations
  */
-char rgmdir[MU_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-char lock_path[TY_BUF + 1] = { '\0' };	/* rogomatic lock file path, +1 for paranoia */
+char rgmdir[MU_BUF + 1];	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[TY_BUF + 1];	/* rogomatic lock file path, +1 for paranoia */
 
 /*
  * static declarations
@@ -108,6 +110,7 @@ main (int argc, char *argv[])
   char *program = "";		    /* our name */
   char *prog = "";		    /* basename of our name */
   char *rogue_savefile = NULL;	    /* the rogue save file to restore */
+  char rogoseed[MU_BUF + 1];	    /* dungeon number to set as a unsigned seed */
   extern char *optarg;		    /* option argument */
   extern int optind;		    /* argv index of the next arg */
   int i;
@@ -128,6 +131,8 @@ main (int argc, char *argv[])
   memset (ropts, 0, sizeof(ropts)); /* paranoia */
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
   memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
+  memset (lock_path, 0, sizeof(lock_path)); /* paranoia */
+  memset (rogoseed, 0, sizeof(rogoseed)); /* paranoia */
 
   /* initialize rogomatic directory path to default */
   strncpy (rgmdir, RGMDIR, sizeof(rgmdir)-1);
@@ -185,10 +190,7 @@ main (int argc, char *argv[])
 	break;
 
       case 'S':
-	if (setenv ("ROGOSEED", optarg, 1) != 0) {
-	  fprintf (stderr, "ERROR: can't setenv (\"ROGOSEED\", \"%s\", 1)\n", optarg);
-	  exit (1);
-	}
+	strncpy(rogoseed, optarg, sizeof(rogoseed));
 	break;
 
       case 't':		/* -t ==> Give status lines only */
@@ -229,6 +231,39 @@ main (int argc, char *argv[])
   /* skip over command line options */
   argv += optind;
   argc -= optind;
+
+  /*
+   * set ROGOSEED environment variable
+   *
+   * For rogue, because we will prefix the rogue player name with "rogo-", the
+   * $ROGOSEED environment variable will determine the rogue dungeon number.
+   * For player, the value of the $ROGOSEED environment variable will be recorded
+   * in the "pidlog" file under the rogomatic directory.
+   */
+  if (rogoseed[0] == '\0') {
+    struct timeval tp;	/* now */
+    unsigned int dnum;	/* dungeon number to set */
+
+    /*
+     * determine dungeon number
+     */
+    if (gettimeofday (&tp, NULL) < 0) {
+      dnum = time(NULL);
+    } else {
+      dnum = ((unsigned int)(tp.tv_sec) ^ (((unsigned int)tp.tv_usec) << 12));
+    }
+    dnum += (unsigned int) getpid();
+    dnum += (unsigned int) getuid();
+
+    /*
+     * convert dungeon number into a string
+     */
+    snprintf (rogoseed, sizeof (rogoseed)-1, "%u", dnum);
+  }
+  if (setenv ("ROGOSEED", rogoseed, 1) != 0) {
+    fprintf (stderr, "ERROR: can't setenv (\"ROGOSEED\", \"%s\", 1)\n", rogoseed);
+    exit (1);
+  }
 
   /*
    * determine the rogomatic directory path and rogomatic lock file path
@@ -317,12 +352,16 @@ main (int argc, char *argv[])
     dup2 (ctp[WRITE], STDOUT_FILENO);
 
     /*
-     * set critical rogue environment variables
+     * set vt100 terminal as player can parse vt100 terminal output
      */
     if (setenv ("TERM", "vt100", 1) != 0) {
       fprintf (stderr, "ERROR: can't setenv (\"TERM\", \"vt100\", 1)\n");
       exit (1);
     }
+
+    /*
+     * set rogomatic options for player to use
+     */
     if (setenv ("ROGUEOPTS", ropts, 1) != 0) {
       fprintf (stderr, "ERROR: can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n",ropts);
       exit (1);

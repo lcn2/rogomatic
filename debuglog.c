@@ -20,15 +20,18 @@
  * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <errno.h>
+#include <time.h>
+#include <sys/time.h>
+#include <fcntl.h>
 
 #include "types.h"
-
-#define MAXLINE 4096
+#include "globals.h"
 
 /* static declarations */
 static FILE *debug = NULL;
@@ -37,10 +40,10 @@ static void err_doit(int errnoflag, int error, const char *fmt, va_list ap);
 static void
 err_doit(int errnoflag, int error, const char *fmt, va_list ap)
 {
-  char buf[MAXLINE + 1]; /* +1 for paranoia */
+  char buf[2*BIGBUF + 1]; /* +1 for paranoia */
 
   memset(buf, 0, sizeof(buf)); /* paranoia */
-  vsnprintf(buf, MAXLINE, fmt, ap);
+  vsnprintf(buf, 2*BIGBUF, fmt, ap);
 
   if (debug != NULL) {
     fputs(buf, debug);
@@ -88,4 +91,83 @@ debuglog (const char *fmt, ...)
   va_start (ap, fmt);
   err_doit (0, 0, fmt, ap);
   va_end (ap);
+}
+
+void
+append_pidlog (const char *dir, const char *file)
+{
+  FILE *stream;		    /* pid log open stream */
+  char *path;		    /* pid log path to open */
+  int pidlog;		    /* pid log open file descriptor, or <0 ==> not open */
+  char *rogoseed_str;	    /* rogue dungeon number from $ROGOSEED environment variable */
+  struct timeval tp;	    /* now */
+  struct tm *now;	    /* now broken out into segments */
+  char timebuf[MU_BUF + 1]; /* now as a string */
+
+  /*
+   * determine rogue dungeon number
+   */
+  rogoseed_str = getenv ("ROGOSEED");
+  if (rogoseed_str == NULL) {
+    rogoseed_str = "0"; /* no $ROGOSEED environment variable, just use a rogue dungeon number of 0 */
+  }
+
+  /*
+   * form our time string
+   */
+  if (gettimeofday (&tp, NULL) < 0) {
+    fprintf (stderr, "ERROR: %s: gettimeofday failed: %s\n", __func__, strerror(errno));
+    exit (1);
+  }
+  now = gmtime (&tp.tv_sec);
+  if (now == NULL) {
+    fprintf (stderr, "ERROR: %s: gmtime failed: %s\n", __func__, strerror(errno));
+    exit (1);
+  }
+  memset (timebuf, 0, sizeof(timebuf));
+  if (strftime (timebuf, MU_BUF, "%F %T", now) <= 0) {
+    fprintf (stderr, "ERROR: %s: strftime failed: %s\n", __func__, strerror(errno));
+    exit (1);
+  }
+
+  /* form full path to a pid log */
+  path = form_path (dir, file);
+
+  /*
+   * be sure that the pid log exists, writable at the end of file, and mode 0644 under umask
+   *
+   * Even though we will freopen(3) next, we want to first open(2) the error log file
+   * as this will give us better control over the file if needs to be created.
+   */
+  pidlog = open (path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (pidlog < 0) {
+    fprintf (stderr, "ERROR: %s: Couldn't open pid log %s: %s\n", __func__, path, strerror(errno));
+    exit (1);
+  }
+
+  /*
+   * convert pid log descriptor into a pid log stream
+   */
+  stream = fdopen (pidlog, "a");
+  if (stream == NULL) {
+    fprintf (stderr, "ERROR: %s: Couldn't freopen pid log: %s onto stderr: %s\n", __func__, path, strerror(errno));
+    exit (1);
+  }
+
+  /*
+   * append line to pid log
+   */
+  fprintf (stream, "%ld.%06d %s rogue-pid: %d player-pid: %d dungeon: %s\n",
+		   tp.tv_sec, tp.tv_usec, timebuf, rogpid, getpid(), rogoseed_str);
+
+  /*
+   * close pid log
+   */
+  fclose (stream);
+
+  /* free memory */
+  if (path != NULL) {
+    free(path);
+    path = NULL;
+  }
 }

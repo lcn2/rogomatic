@@ -512,7 +512,12 @@ main (int argc, char *argv[])
   /*
    * send stderr to an errlog file
    */
-  redirect_stderr(rgmdir, "errlog");
+  redirect_stderr (rgmdir, "errlog");
+
+  /*
+   * append rogue pid and $ROGOSEED environment variable to pidlog
+   */
+  append_pidlog (rgmdir, "pidlog");
 
   /*
    * The first argument to player is a two character string encoding

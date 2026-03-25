@@ -566,6 +566,7 @@ extern void toggledebug (void);
 extern void debuglog_open (const char *dir, const char *log);
 extern void debuglog_close (void);
 extern void debuglog (const char *fmt, ...);
+extern void append_pidlog (const char *dir, const char *file);
 
 /* explore.c */
 extern int genericinit (void);
