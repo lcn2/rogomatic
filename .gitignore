@@ -5,6 +5,8 @@ asan.log.*
 *.dSYM
 gene
 have_stdbool.h
+have_strlcat.h
+have_strlcpy.h
 histplot
 index
 lex.yy.c

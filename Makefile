@@ -341,20 +341,20 @@ all: ${BUILD_H_SRC} ${TARGETS} rogomatic.6
 .c.o:
 	${CC} ${CFLAGS} -c $*.c
 
-gene: gene.o rand.o learn.o stats.o utility.o config.o
-	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o config.o -lm ${LIBS} -o $@
+gene: gene.o rand.o learn.o stats.o utility.o config.o strl.o
+	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o config.o strl.o -lm ${LIBS} -o $@
 
-histplot: histplot.o utility.o
-	${CC} ${LDFLAGS} histplot.o utility.o ${LIBS} -o $@
+histplot: histplot.o utility.o strl.o
+	${CC} ${LDFLAGS} histplot.o utility.o strl.o ${LIBS} -o $@
 
 player: ${OBJS}
 	${CC} ${LDFLAGS} ${OBJS} -lm ${LIBS} -o $@
 
-rgmplot: rgmplot.o utility.o
-	${CC} ${LDFLAGS} rgmplot.o utility.o ${LIBS} -o $@
+rgmplot: rgmplot.o utility.o strl.o
+	${CC} ${LDFLAGS} rgmplot.o utility.o strl.o ${LIBS} -o $@
 
-rogomatic: setup.o scorefile.o utility.o config.o
-	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o ${LIBS} -o $@
+rogomatic: setup.o scorefile.o utility.o config.o strl.o
+	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o strl.o ${LIBS} -o $@
 
 
 ##################################################
@@ -401,7 +401,7 @@ clang:
 # Suggestion:
 #
 #	make clobber asan
-# 	rm -f asan.log.* ; ASAN_OPTIONS="log_path=asan.log" ./rogomatic ; reset ; cat asan.log.*
+#	rm -f asan.log.* ; ASAN_OPTIONS="log_path=asan.log" ./rogomatic ; reset ; cat asan.log.*
 #
 asan:
 ifeq ($(target),Darwin)
