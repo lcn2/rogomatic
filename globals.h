@@ -182,7 +182,9 @@ extern stuff translate[128];	/* what Rogue characters represent */
 extern timerec timespent[50];
 
 /* Objects in pack */
-extern invrec inven[MAXINV]; extern int invcount;
+extern char space[MAXINV][NAMSIZ + 1]; /* inventory string space, +1 for paranoia */
+extern invrec inven[MAXINV + 1]; /* +1 for paranoia */
+extern int invcount;
 
 /* Stuff on this level */
 extern stuffrec slist[MAXSTUFF + 1];

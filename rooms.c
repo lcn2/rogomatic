@@ -91,8 +91,8 @@ newlevel (void)
    * Clear the highlevel map
    */
 
-  memset(levelmap, 0, sizeof(levelmap));
-  memset(zonemap, 0, sizeof(zonemap));
+  memset (levelmap, 0, sizeof(levelmap));
+  memset (zonemap, 0, sizeof(zonemap));
   for (i = 0; i < RGRID; ++i) {
     zonemap[i][i] = 1;
   }

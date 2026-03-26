@@ -298,10 +298,6 @@ void
 doresetinv (void)
 {
   int i;
-  static char space[MAXINV][NAMSIZ + 1]; /* +1 for paranoia */
-
-  /* zeroize arrays */
-  memset (space, 0, sizeof(space));
 
   usesynch = true;
   checkrange = false;

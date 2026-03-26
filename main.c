@@ -351,6 +351,7 @@ stuff translate[128] = {
 };
 
 /* Inventory, contents of our pack */
+char space[MAXINV][NAMSIZ + 1]; /* inventory string space, +1 for paranoia */
 invrec inven[MAXINV + 1];   /* +1 for paranoia */
 int invcount = 0;
 
@@ -429,6 +430,7 @@ main (int argc, char *argv[])
   memset (monindex, 0, sizeof(monindex)); /* paranoia */
   memset (timessearched, 0, sizeof(timessearched)); /* paranoia */
   memset (Ms, 0, sizeof(Ms)); /* paranoia */
+  memset (space, 0, sizeof(space)); /* paranoia */
   memset (inven, 0, sizeof(inven)); /* paranoia */
   doresetinv (); /* reset the inventory */
   memset (timespent, 0, sizeof(timespent)); /* paranoia */
