@@ -29,8 +29,8 @@
 
 # include <stdio.h>
 # include <ctype.h>
-# include <curses.h>
 
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 # include "install.h"

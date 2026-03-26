@@ -31,21 +31,21 @@
  * defined here (otherwise the functions from -lcmu are used).
  */
 
-# include <curses.h>
-# include <pwd.h>
 # include <stdio.h>
 # include <stdlib.h>
+# include <unistd.h>
+# include <pwd.h>
 # include <signal.h>
 # include <string.h>
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <time.h>
 # include <fcntl.h>
-# include <unistd.h>
 # include <errno.h>
 # include <sys/file.h>
 # include <termios.h>
 
+# include "modern_curses.h"
 # include "types.h"
 # include "install.h"
 
@@ -96,7 +96,7 @@ getname (void)
    * pre-load player name with rogo-
    */
   memset(name, 0, sizeof(name)); /* paranoia */
-  strncpy(name, "rogo-", sizeof(name));
+  strlcpy(name, "rogo-", sizeof(name));
 
   /*
    * paranoia check
@@ -105,9 +105,9 @@ getname (void)
    * if the username is a non-empty string
    */
   if (pw != NULL && pw->pw_name != NULL && pw->pw_name[0] != '\0') {
-      strncat(name, pw->pw_name, MU_BUF);
+      strlcat(name, pw->pw_name, sizeof(name));
   } else {
-      strncat(name, "nobody", MU_BUF);
+      strlcat(name, "nobody", sizeof(name));
   }
 
   return (name);
@@ -355,7 +355,7 @@ form_path (const char *dir, const char *file)
       quit (1, "ERROR: %s: failed to calloc path for %s\n", __func__, file);
       not_reached ();
     }
-    strncpy(path, file, len+1);
+    strlcpy(path, file, len+1);
   }
 
   return path;

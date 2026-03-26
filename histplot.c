@@ -32,6 +32,9 @@
 # include <stdlib.h>
 # include <string.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
 # include "types.h"
 
 # define SKIPARG	while (*++(*argv)); --(*argv)
@@ -118,19 +121,19 @@ main (int argc, char *argv[])
   for (f = ((maxfreq+9)/10)*10; f; f--) {
     if (dolev) {
       if (f%10 == 0)
-        strncpy (plot, "|----+----|----+----|----+----|", MU_BUF);
+        strlcpy (plot, "|----+----|----+----|----+----|", sizeof(plot));
       else if (f%5 == 0)
-        strncpy (plot, "|    +    |    +    |    +    |", MU_BUF);
+        strlcpy (plot, "|    +    |    +    |    +    |", sizeof(plot));
       else
-        strncpy (plot, "|         |         |         |", MU_BUF);
+        strlcpy (plot, "|         |         |         |", sizeof(plot));
     }
     else {
       if (f%10 == 0)
-        strncpy (plot, "|----+----|----+----|----+----|----+----|----+----|", MU_BUF);
+        strlcpy (plot, "|----+----|----+----|----+----|----+----|----+----|", sizeof(plot));
       else if (f%5 == 0)
-        strncpy (plot, "|    +    |    +    |    +    |    +    |    +    |", MU_BUF);
+        strlcpy (plot, "|    +    |    +    |    +    |    +    |    +    |", sizeof(plot));
       else
-        strncpy (plot, "|         |         |         |         |         |", MU_BUF);
+        strlcpy (plot, "|         |         |         |         |         |", sizeof(plot));
     }
 
     for (i = 0; i < NUMBUK; i++)

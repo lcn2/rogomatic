@@ -92,18 +92,21 @@
  *	on a UTexas computer.
  *****************************************************************/
 
+# include <stdlib.h>
+# include <unistd.h>
 # include <stdio.h>
-# include <curses.h>
 # include <ctype.h>
 # include <signal.h>
 # include <setjmp.h>
 # include <string.h>
-# include <stdlib.h>
 # include <sys/types.h>
-# include <unistd.h>
 # include <errno.h>
 # include <sys/stat.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
+# include "modern_curses.h"
 # include "types.h"
 # include "install.h"
 # include "termtokens.h"
@@ -407,10 +410,10 @@ main (int argc, char *argv[])
   memset (sumline, 0, sizeof(sumline)); /* paranoia */
   memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
   memset (ourkiller, 0, sizeof(ourkiller)); /* paranoia */
-  strcpy (ourkiller, "unknown");
+  strlcpy (ourkiller, "unknown", sizeof(ourkiller));
   memset (pending_call_name, 0, sizeof(pending_call_name)); /* paranoia */
   memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
-  strncpy(versionstr, DEFVER, MU_BUF);
+  strlcpy (versionstr, DEFVER, sizeof(versionstr));
   memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
   memset (lock_path, 0, sizeof(lock_path)); /* paranoia */
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
@@ -492,7 +495,7 @@ main (int argc, char *argv[])
 
   /* The fourth argument is the Rogue name */
   if (argc > 4)	{
-      strncpy (roguename, argv[4], MU_BUF);
+      strlcpy (roguename, argv[4], sizeof(roguename));
   } else {
       snprintf (roguename, MU_BUF, "Rog-O-Matic %s", RGMVER);
   }
@@ -501,7 +504,7 @@ main (int argc, char *argv[])
   /* The 5th argument is the non-default rogomatic directory path */
   if (argc > 5) {
     memset (rgmdir, 0, sizeof(rgmdir));
-    strncpy (rgmdir, argv[5], sizeof(rgmdir)-1);
+    strlcpy (rgmdir, argv[5], sizeof(rgmdir));
   }
 
   /*
@@ -531,7 +534,7 @@ main (int argc, char *argv[])
     replaying = true;
     gamename = "Iteratum Rog-O-Maticus";
     termination = "finis";
-    strcpy (logfilename, argv[4]);
+    strlcpy (logfilename, argv[4], sizeof(logfilename));
     startreplay (&logfile, logfilename);
   }
   else {

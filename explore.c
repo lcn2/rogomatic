@@ -28,9 +28,9 @@
  * paths to explore, pick up something, or run away.
  */
 
-# include <curses.h>
 # include <string.h>
 
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 

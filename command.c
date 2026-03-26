@@ -28,12 +28,15 @@
  * Rogue, this file and 'things.c' make up the effector interface.
  */
 
-# include <curses.h>
+# include <stdlib.h>
 # include <ctype.h>
 # include <string.h>
 # include <stdarg.h>
-# include <stdlib.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 
@@ -228,14 +231,14 @@ adjustpack (char *cmd)
 
     case 'q':	lastobj = OBJECT (commandarg (cmd, 1));
       usemsg ("Quaffing", lastobj);
-      strcpy (lastname, inven[lastobj].str);
+      strlcpy (lastname, inven[lastobj].str, sizeof(lastname));
       useobj (inven[lastobj].str);
       removeinv (lastobj);
       break;
 
     case 'r':	lastobj = OBJECT (commandarg (cmd, 1));
       usemsg ("Reading", lastobj);
-      strcpy (lastname, inven[lastobj].str);
+      strlcpy (lastname, inven[lastobj].str, sizeof(lastname));
       useobj (inven[lastobj].str);
       removeinv (lastobj);
       break;
@@ -273,7 +276,7 @@ adjustpack (char *cmd)
     case 'p': case 'z':
       lastwand = OBJECT (commandarg (cmd, 2));
       usemsg ("Pointing", lastwand);
-      strcpy (lastname, inven[lastwand].str);
+      strlcpy (lastname, inven[lastwand].str, sizeof(lastname));
       useobj (inven[lastwand].str);
 
       /* Update number of charges */

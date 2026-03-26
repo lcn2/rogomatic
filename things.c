@@ -28,9 +28,9 @@
  */
 
 # include <ctype.h>
-# include <curses.h>
 # include <string.h>
 
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 

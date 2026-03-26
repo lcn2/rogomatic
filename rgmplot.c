@@ -28,10 +28,13 @@
  * and produces a scatter plot of the scores.
  */
 
-# include <stdio.h>
 # include <stdlib.h>
+# include <stdio.h>
 # include <string.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
 # include "types.h"
 
 # define WIDTH 50
@@ -100,7 +103,7 @@ main (int argc, char *argv[])
 
 
   /* Build an empty plot line */
-  strcpy (plot, "|                                                 |");
+  strlcpy (plot, "|                                                 |", sizeof(plot));
 
   /* While more scores do action for each score */
   while (getscore (&mm, &dd, &yy, player, &score, &cheated) != EOF) {
@@ -131,12 +134,12 @@ main (int argc, char *argv[])
       }
 
       printf ("%3s %2d %4d\t%s\n", month[lastmon-1], lastday, lastyy, plot);
-      strcpy (plot, "|                                                 |");
+      strlcpy (plot, "|                                                 |", sizeof(plot));
 
     }
 
     if (score > EOF) {
-      if ((h = SCALE(score)) >= WIDTH) { snprintf (buf, MU_BUF, " %d", score);  strcat(plot, buf); }
+      if ((h = SCALE(score)) >= WIDTH) { snprintf (buf, MU_BUF, " %d", score);  strlcat(plot, buf, sizeof(plot)); }
       else if (plot[h] == '9')          ;
       else if (isdigit(plot[h]))        plot[h]++;
       else                              plot[h] = '1';
@@ -183,7 +186,7 @@ getlin (char *s)
 
   if (ch == EOF) {
     endfile = 1;
-    strcpy (s, "-1 -1, -1 string -1 ");
+    strlcpy (s, "-1 -1, -1 string -1 ", TY_BUF); /* sizeof(line) is TY_BUF + 1 chars */
     return (20);
   }
 
@@ -193,7 +196,12 @@ getlin (char *s)
 static int
 getscore (int *mm, int *dd, int *yy, char *player, int *score, char *cheated)
 {
-  char line[128], reason[32];
+  char line[TY_BUF + 1];
+  char reason[TY_BUF + 1];
+
+  /* zeroize arrays */
+  memset(line, 0, sizeof(line));
+  memset(reason, 0, sizeof(reason));
 
   while (getlin (line) != EOF) {
     sscanf (line, "%d %d, %d %10s%d%c%17s",

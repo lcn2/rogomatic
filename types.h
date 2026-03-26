@@ -496,7 +496,7 @@ typedef struct { int   expdam, maxdam, mtokill; } attrec;
 typedef struct { int gamecnt, gamesum, inittime, timeswritten; } lrnrec;
 
 typedef struct {
-  char m_name[NAMSIZ];
+  char m_name[NAMSIZ + 1]; /* +1 for paranoia */
   probability wehit, theyhit, arrowhit;
   statistic htokill, damage, atokill;
 } ltmrec;
@@ -508,7 +508,7 @@ typedef struct {
 } invrec;
 
 typedef struct {
-  int activity[T_LISTLEN];
+  int activity[T_LISTLEN + 1]; /* +1 for paranoia */
   int timestamp;
 } timerec;
 

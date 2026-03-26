@@ -20,10 +20,10 @@
  * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# include <stdio.h>
-# include <sys/types.h>
 # include <stdlib.h>
 # include <unistd.h>
+# include <stdio.h>
+# include <sys/types.h>
 # include <string.h>
 # include <ctype.h>
 # include <sys/stat.h>
@@ -31,6 +31,9 @@
 # include <fcntl.h>
 # include <errno.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -66,7 +69,7 @@ set_rgmdir (bool time_subpath)
    */
   if (rgmdir[0] == '\0') {
     memset (rgmdir, 0, sizeof(rgmdir));
-    strncpy (rgmdir, RGMDIR, sizeof(rgmdir)-1);
+    strlcpy (rgmdir, RGMDIR, sizeof(rgmdir));
   }
   rgmdirlen = strlen (rgmdir);
 

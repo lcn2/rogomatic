@@ -28,10 +28,10 @@
  * Rog-O-Matic log file.
  */
 
-# include <curses.h>
 # include <ctype.h>
 # include <string.h>
 
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 

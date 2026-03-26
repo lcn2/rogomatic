@@ -31,11 +31,14 @@
  */
 
 # include <stdlib.h>
-# include <curses.h>
 # include <setjmp.h>
 # include <string.h>
 # include <stdarg.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -280,14 +283,14 @@ timehistory (FILE *f, char sep)
   for (i=1; i<=MaxLevel; i++) {
     memset (s2, 0, sizeof(s2)); /* paranoia */
     snprintf (s2, MU_BUF, "level %2d:     ", i);
-    strcat (s, s2);
+    strlcat (s, s2, sizeof(s));
     for (j = T_OTHER; j < T_LISTLEN; j++) {
       snprintf (s2, MU_BUF, "%5d", timespent[i].activity[j]);
-      strcat (s, s2);
+      strlcat (s, s2, sizeof(s));
     }
     snprintf (s2, MU_BUF, "%6d%c",
              timespent[i].timestamp - timespent[i-1].timestamp, sep);
-    strcat (s, s2);
+    strlcat (s, s2, sizeof(s));
   }
 
   if (f == NULL)
@@ -303,8 +306,11 @@ timehistory (FILE *f, char sep)
 void
 toggledebug (void)
 {
-  char debugstr[100];
+  char debugstr[MU_BUF + 1];
   int type = debugging & ~(D_FATAL | D_ERROR | D_WARNING);
+
+  /* zeroize arrays */
+  memset (debugstr, 0, sizeof(debugstr));
 
   if (debugging == D_ALL)         debugging = D_NORMAL;
   else if (debugging == D_NORMAL) debugging = D_NORMAL | D_SEARCH;
@@ -318,29 +324,29 @@ toggledebug (void)
   else if (!debug (D_INFORM))     debugging = D_NORMAL | D_WARNING | D_INFORM;
   else                            debugging = D_ALL;
 
-  strncpy (debugstr, "Debugging :", 100);
+  strlcpy (debugstr, "Debugging :", sizeof(debugstr));
 
-  if (debug(D_FATAL))     strcat (debugstr, "fatal:");
+  if (debug(D_FATAL))     strlcat (debugstr, "fatal:", sizeof(debugstr));
 
-  if (debug(D_ERROR))     strcat (debugstr, "error:");
+  if (debug(D_ERROR))     strlcat (debugstr, "error:", sizeof(debugstr));
 
-  if (debug(D_WARNING))   strcat (debugstr, "warn:");
+  if (debug(D_WARNING))   strlcat (debugstr, "warn:", sizeof(debugstr));
 
-  if (debug(D_INFORM))    strcat (debugstr, "info:");
+  if (debug(D_INFORM))    strlcat (debugstr, "info:", sizeof(debugstr));
 
-  if (debug(D_SEARCH))    strcat (debugstr, "search:");
+  if (debug(D_SEARCH))    strlcat (debugstr, "search:", sizeof(debugstr));
 
-  if (debug(D_BATTLE))    strcat (debugstr, "battle:");
+  if (debug(D_BATTLE))    strlcat (debugstr, "battle:", sizeof(debugstr));
 
-  if (debug(D_MESSAGE))   strcat (debugstr, "msg:");
+  if (debug(D_MESSAGE))   strlcat (debugstr, "msg:", sizeof(debugstr));
 
-  if (debug(D_PACK))      strcat (debugstr, "pack:");
+  if (debug(D_PACK))      strlcat (debugstr, "pack:", sizeof(debugstr));
 
-  if (debug(D_CONTROL))   strcat (debugstr, "ctrl:");
+  if (debug(D_CONTROL))   strlcat (debugstr, "ctrl:", sizeof(debugstr));
 
-  if (debug(D_SCREEN))    strcat (debugstr, "screen:");
+  if (debug(D_SCREEN))    strlcat (debugstr, "screen:", sizeof(debugstr));
 
-  if (debug(D_MONSTER))   strcat (debugstr, "monster:");
+  if (debug(D_MONSTER))   strlcat (debugstr, "monster:", sizeof(debugstr));
 
   saynow (debugstr);
 }

@@ -27,11 +27,14 @@
  * This file contains all of the functions which parse the message line.
  */
 
-# include <curses.h>
+# include <stdlib.h>
 # include <ctype.h>
 # include <string.h>
-# include <stdlib.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 
@@ -97,7 +100,7 @@ terpmes (void)
   memset (topline, 0, sizeof(topline));
 
   s=&screen[0][0];
-  strncpy (topline, s, sizeof(topline)-1);
+  strlcpy (topline, s, sizeof(topline));
   s=topline;
 
   /* Set 't' to the tail of the message,
@@ -848,10 +851,13 @@ readident (char *name)
 
     if ((id != '*') &&
         (item_type == ring || item_type == wand || item_type == potion || item_type == Scroll)) {
-      memset (lastname, '\0', sizeof(lastname));
-      memset (lookup_name, '\0', sizeof(lookup_name));
-      strncpy (lookup_name, inven[obj].str, sizeof(lookup_name)-1);
-      strncpy (lastname, findentry_getfakename (lookup_name, item_type), NAMSIZ-1);
+     char *fakename;
+
+      memset (lastname, 0, sizeof(lastname));
+      memset (lookup_name, 0, sizeof(lookup_name));
+      strlcpy (lookup_name, inven[obj].str, sizeof(lookup_name));
+      fakename = findentry_getfakename (lookup_name, item_type);
+      strlcpy (lastname, fakename, sizeof(lookup_name));
     }
 
     waitfor ("not a valid item");
@@ -966,7 +972,7 @@ infer (char *objname, stuff item_type)
       if ((inven[i].count > 0) &&
            streq (inven[i].str, lastname) && inven[i].type == item_type) {
         memset (inven[i].str, '\0', NAMSIZ); /* sizeof(space[x]) is NAMSIZ + 1 chars */
-        strncpy (inven[i].str, objname, NAMSIZ-1);
+        strlcpy (inven[i].str, objname, NAMSIZ); /* sizeof(space[x]) is NAMSIZ + 1 chars */
         remember (i, KNOWN);
       }
     }
@@ -1203,27 +1209,27 @@ summary (FILE *f, char sep)
   for (m=0; m<=26; m++) {
     if (monkilled[m] > 0) {
       memset (s2, 0, sizeof(s2)); /* paranoia */
-      snprintf (s2, SM_BUF, "\t%d %.*s%.*s%c",
+      snprintf (s2, sizeof(s2), "\t%d %.*s%.*s%c",
 	        monkilled[m], MU_BUF, monname (m+'A'-1),
                 MU_BUF, plural (monkilled[m]), sep);
-      strncat (s, s2, SM_BUF);
+      strlcat (s, s2, sizeof(s));
     }
   }
 
   memset (s2, 0, sizeof(s2)); /* paranoia */
-  snprintf (s2, MU_BUF, "%cTotal: %d%c%c", sep, totalkilled, sep, sep);
-  strncat (s, s2, TY_BUF);
+  snprintf (s2, sizeof(s2), "%cTotal: %d%c%c", sep, totalkilled, sep, sep);
+  strlcat (s, s2, sizeof(s));
 
   memset (s2, 0, sizeof(s2)); /* paranoia */
-  snprintf (s2, MU_BUF, "Hit %d out of %d times, was hit %d out of %d times.%c",
+  snprintf (s2, sizeof(s2), "Hit %d out of %d times, was hit %d out of %d times.%c",
             hits, misses+hits, timeshit, timesmissed+timeshit, sep);
-  strncat (s, s2, TY_BUF);
+  strlcat (s, s2, sizeof(s));
 
   if (numgold > 0) {
     memset (s2, 0, sizeof(s2)); /* paranoia */
-    snprintf (s2, MU_BUF, "Gold %d total, %d pots, %d average.%c",
+    snprintf (s2, sizeof(s2), "Gold %d total, %d pots, %d average.%c",
               sumgold, numgold, (sumgold*10+5) / (numgold*10), sep);
-    strncat (s, s2, TY_BUF);
+    strlcat (s, s2, sizeof(s));
   }
 
   if (f == NULL)

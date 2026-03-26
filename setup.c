@@ -27,15 +27,18 @@
  * This is the program which forks and execs the Rogue & the Player
  */
 
-# include <stdio.h>
 # include <stdlib.h>
-# include <signal.h>
 # include <unistd.h>
+# include <stdio.h>
+# include <signal.h>
 # include <string.h>
 # include <errno.h>
 # include <time.h>
 # include <sys/time.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
 # include "types.h"
 # include "install.h"
 
@@ -135,7 +138,7 @@ main (int argc, char *argv[])
   memset (rogoseed, 0, sizeof(rogoseed)); /* paranoia */
 
   /* initialize rogomatic directory path to default */
-  strncpy (rgmdir, RGMDIR, sizeof(rgmdir)-1);
+  strlcpy (rgmdir, RGMDIR, sizeof(rgmdir));
 
   /*
    * parse args
@@ -162,7 +165,7 @@ main (int argc, char *argv[])
 
       case 'D':		/* -D path ==> set the rogomatic directory path */
 	memset (rgmdir, 0, sizeof(rgmdir));
-	strncpy (rgmdir, optarg, sizeof(rgmdir)-1);
+	strlcpy (rgmdir, optarg, sizeof(rgmdir));
 	break;
 
       case 'e':		/* -e ==> Echo file to roguelog */
@@ -190,7 +193,7 @@ main (int argc, char *argv[])
 	break;
 
       case 'S':
-	strncpy(rogoseed, optarg, sizeof(rogoseed));
+	strlcpy(rogoseed, optarg, sizeof(rogoseed));
 	break;
 
       case 't':		/* -t ==> Give status lines only */

@@ -28,10 +28,10 @@
  * the dungeon levels, rooms, and passages.
  */
 
-# include <curses.h>
 # include <ctype.h>
 # include <string.h>
 
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 

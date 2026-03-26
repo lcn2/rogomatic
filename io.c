@@ -27,17 +27,20 @@
  * This file contains all of the functions which deal with the real world.
  */
 
-# include <curses.h>
+# include <stdlib.h>
+# include <unistd.h>
 # include <ctype.h>
 # include <string.h>
-# include <stdlib.h>
 # include <sys/ioctl.h>
 # include <time.h>
-# include <unistd.h>
 # include <sys/wait.h>
 # include <errno.h>
 # include <signal.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -577,11 +580,6 @@ terpbot (void)
     /* Stuff the new values into the argument space (for ps command) */
     snprintf (modeline, SM_BUF, "Rgm %d: Id%d L%d %d %d(%d) s%d a%d e%d    ",
               rogpid, geneid, Level, Gold, Hp, Hpmax, Str / 100, 10-Ac, Explev);
-#if 0 /* process arguments unused */
-    if (strlen(modeline)+1 < TY_BUF) {
-	strcpy (parmstr, modeline);
-    }
-#endif
 
     /* Handle Emacs and Terse mode */
     if (emacs || terse) {
@@ -1410,37 +1408,37 @@ statusline (void)
   char *ret;	/* static buffer to return as a NUL terminated string */
 
   memset (staticarea, 0, sizeof(staticarea)); /* paranoia */
-  strncpy (staticarea, "Status: ", MU_BUF);
+  strlcpy (staticarea, "Status: ", sizeof(staticarea));
 
-  if (aggravated)		strncat (staticarea, "aggravated, ", MU_BUF);
+  if (aggravated)		strlcat (staticarea, "aggravated, ", sizeof(staticarea));
 
-  if (beingheld)		strncat (staticarea, "being held, ", MU_BUF);
+  if (beingheld)		strlcat (staticarea, "being held, ", sizeof(staticarea));
 
-  if (blinded)			strncat (staticarea, "blind, ", MU_BUF);
+  if (blinded)			strlcat (staticarea, "blind, ", sizeof(staticarea));
 
-  if (confused)			strncat (staticarea, "confused, ", MU_BUF);
+  if (confused)			strlcat (staticarea, "confused, ", sizeof(staticarea));
 
-  if (cosmic)			strncat (staticarea, "cosmic, ", MU_BUF);
+  if (cosmic)			strlcat (staticarea, "cosmic, ", sizeof(staticarea));
 
-  if (cursedarmor)		strncat (staticarea, "cursed armor, ", MU_BUF);
+  if (cursedarmor)		strlcat (staticarea, "cursed armor, ", sizeof(staticarea));
 
-  if (cursedweapon)		strncat (staticarea, "cursed weapon, ", MU_BUF);
+  if (cursedweapon)		strlcat (staticarea, "cursed weapon, ", sizeof(staticarea));
 
-  if (doublehasted)		strncat (staticarea, "perm hasted, ", MU_BUF);
+  if (doublehasted)		strlcat (staticarea, "perm hasted, ", sizeof(staticarea));
 
-  if (droppedscare)		strncat (staticarea, "dropped scare, ", MU_BUF);
+  if (droppedscare)		strlcat (staticarea, "dropped scare, ", sizeof(staticarea));
 
-  if (diddrop)			strncat (staticarea, "dropped something, ", MU_BUF);
+  if (diddrop)			strlcat (staticarea, "dropped something, ", sizeof(staticarea));
 
-  if (floating)			strncat (staticarea, "floating, ", MU_BUF);
+  if (floating)			strlcat (staticarea, "floating, ", sizeof(staticarea));
 
-  if (hasted)			strncat (staticarea, "hasted, ", MU_BUF);
+  if (hasted)			strlcat (staticarea, "hasted, ", sizeof(staticarea));
 
-  if (protected)		strncat (staticarea, "protected, ", MU_BUF);
+  if (protected)		strlcat (staticarea, "protected, ", sizeof(staticarea));
 
-  if (redhands)			strncat (staticarea, "red hands, ", MU_BUF);
+  if (redhands)			strlcat (staticarea, "red hands, ", sizeof(staticarea));
 
-  if (Level == didreadmap)	strncat (staticarea, "mapped, ", MU_BUF);
+  if (Level == didreadmap)	strlcat (staticarea, "mapped, ", sizeof(staticarea));
 
   memset (staticarea2, 0, sizeof(staticarea2)); /* paranoia */
   if (*genocided)

@@ -29,11 +29,14 @@
  */
 
 # include <stdlib.h>
-# include <curses.h>
 # include <math.h>
 # include <string.h>
 # include <time.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 # include "install.h"
@@ -86,7 +89,7 @@ addmonhist (char *monster)
   if (nextmon >= MAXMON)			/* Check for overflow */
     dwait (D_FATAL, __func__, "Overflowed monster array");
 
-  strcpy (monhist[nextmon].m_name, monster);	/* Copy in the name */
+  strlcpy (monhist[nextmon].m_name, monster, sizeof(monhist[nextmon].m_name));	/* Copy in the name */
   return (nextmon++);				/* Return the index */
 }
 

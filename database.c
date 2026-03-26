@@ -35,9 +35,12 @@
  *
  */
 
-# include <curses.h>
 # include <string.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 
@@ -155,7 +158,7 @@ addobj (char *codename, int pack_index, stuff item_type)
     dbase[datalen].pack_index = pack_index;
     dbase[datalen].item_type = item_type;
     memset (dbase[datalen].fakename, 0, sizeof(dbase[datalen].fakename));
-    strncpy (dbase[datalen].fakename, codename, NAMSIZ-1);
+    strlcpy (dbase[datalen].fakename, codename, sizeof(dbase[datalen].fakename));
     memset (dbase[datalen].realname, 0, sizeof(dbase[datalen].realname));
     datalen++;
   }
@@ -192,9 +195,9 @@ infername (char *codename, char *name, stuff item_type)
   if (i == NOTFOUND) {
     dbase[datalen].item_type = item_type;
     memset (dbase[datalen].fakename, 0, sizeof(dbase[datalen].fakename));
-    strncpy (dbase[datalen].fakename, codename, NAMSIZ-1);
+    strlcpy (dbase[datalen].fakename, codename, sizeof(dbase[datalen].fakename));
     memset (dbase[datalen].realname, 0, sizeof(dbase[datalen].realname));
-    strncpy (dbase[datalen].realname, name, NAMSIZ-1);
+    strlcpy (dbase[datalen].realname, name, sizeof(dbase[datalen].realname));
     datalen++;
   }
   else {
@@ -203,7 +206,7 @@ infername (char *codename, char *name, stuff item_type)
 		      i, dbase[i].realname, name);
     else {
       memset (dbase[i].realname, 0, sizeof(dbase[i].realname));
-      strncpy (dbase[i].realname, name, NAMSIZ-1);
+      strlcpy (dbase[i].realname, name, sizeof(dbase[i].realname));
     }
   }
 }

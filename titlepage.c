@@ -31,10 +31,10 @@
 
 # include <stdio.h>
 # include <stdlib.h>
-# include <curses.h>
 # include <time.h>
 # include <limits.h>
 
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 

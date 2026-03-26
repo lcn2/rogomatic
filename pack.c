@@ -27,10 +27,13 @@
  * This file contains functions which mess with Rog-O-Matics pack
  */
 
-# include <curses.h>
-# include <string.h>
 # include <stdlib.h>
+# include <string.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
+# include "modern_curses.h"
 # include "types.h"
 # include "globals.h"
 
@@ -71,18 +74,18 @@ itemstr (int i)
     if (inven[i].phit != UNKNOWN && inven[i].pdam == UNKNOWN) {
       memset (ispace2, 0, sizeof(ispace2)); /* paranoia */
       snprintf (ispace2, SM_BUF, "%.*s (%d)", TY_BUF, ispace, inven[i].phit);
-      strncpy (ispace, ispace2, SM_BUF);
+      strlcpy (ispace, ispace2, sizeof(ispace));
     }
     else if (inven[i].phit != UNKNOWN) {
       memset (ispace2, 0, sizeof(ispace2)); /* paranoia */
       snprintf (ispace2, SM_BUF, "%.*s (%d,%d)", TY_BUF, ispace, inven[i].phit, inven[i].pdam);
-      strncpy (ispace, ispace2, SM_BUF);
+      strlcpy (ispace, ispace2, sizeof(ispace));
     }
 
     if (inven[i].charges != UNKNOWN) {
       memset (ispace2, 0, sizeof(ispace2)); /* paranoia */
       snprintf (ispace2, SM_BUF, "%.*s [%d]", TY_BUF, ispace, inven[i].charges);
-      strncpy (ispace, ispace2, SM_BUF);
+      strlcpy (ispace, ispace2, sizeof(ispace));
     }
 
     memset (ispace2, 0, sizeof(ispace2)); /* paranoia */
@@ -98,7 +101,7 @@ itemstr (int i)
              (!itemis (i, INUSE) ? "" :
               (inven[i].type == armor || inven[i].type == ring) ?
               ", on" : ", inhand"));
-      strncpy (ispace, ispace2, BIGBUF);
+      strlcpy (ispace, ispace2, sizeof(ispace));
   }
 
   return (item);
@@ -518,11 +521,14 @@ inventory (char *msgstart, char *msgend)
   /* If the name of the object matches something in the database, */
   /* slap the real name into the slot and mark it as known */
   if (!xknow && (what == potion || what == Scroll || what == wand || what == ring)) {
-    strncpy (dbname, findentry_getrealname (objname, what), NAMSIZ-1);
+    char *realname;
+
+    realname = findentry_getrealname (objname, what);
+    strlcpy (dbname, realname, sizeof(dbname));
 
     if (strlen (dbname) > 0) {
-      strcpy (objname, dbname);
-      strcpy (pending_call_name, dbname);
+      strlcpy (objname, dbname, sizeof(objname));
+      strlcpy (pending_call_name, dbname, sizeof(pending_call_name));
       pending_call_letter = LETTER (ipos);
       xknow = KNOWN;
 
@@ -619,7 +625,7 @@ inventory (char *msgstart, char *msgend)
   /* Set the name of the object */
   if (inven[ipos].str != NULL) {
     if (strlen (objname) > 0)
-      strcpy (inven[ipos].str, objname);
+      strlcpy (inven[ipos].str, objname, NAMSIZ); /* sizeof(space[x]) is NAMSIZ + 1 chars */
   }
   else if (!replaying) {
     dwait (D_ERROR, __func__, "null inven[%d].str, invcount %d.",
