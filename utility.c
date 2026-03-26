@@ -45,6 +45,9 @@
 # include <sys/file.h>
 # include <termios.h>
 
+# include "have_strlcat.h"
+# include "have_strlcpy.h"
+# include "strl.h"
 # include "modern_curses.h"
 # include "types.h"
 # include "install.h"
