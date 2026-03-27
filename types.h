@@ -46,16 +46,11 @@
  * Because we need the bool type in the external function declarations below we
  * must include "bool.h" here.
  */
-#  include "have_stdbool.h"
-#  if defined(HAVE_STDBOOL_H)
-#    include <stdbool.h>
-#  endif
-
 
 /*
  * standard truth :-) for pre-c23 environments without <stdbool.h>
  */
-#  if !defined(HAVE_STDBOOL_H) && _STDC_VERSION__ < 202311L
+#  if _STDC_VERSION__ < 202311L
 
 /* Avoid defines that could interfere with our ability to form a bool enum */
 #    if defined(true)
@@ -63,6 +58,9 @@
 #    endif
 #    if defined(false)
 #      undef false
+#    endif
+#    if defined(bool)
+#      undef bool
 #    endif
 
 /* make up for the lack of a <stdbool.h> and pre-c23 bool type */
