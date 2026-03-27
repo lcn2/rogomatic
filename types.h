@@ -386,7 +386,14 @@ typedef enum { false=0, true=1 } bool;
 	     )
 
 /* on - tell if current position has correct attributes */
-# define on(type) onrc(type,atrow,atcol)
+# define on(type) \
+	    (valrc((atrow),(atcol)) ? \
+               ((type)&scrmap[(atrow)][(atcol)]) : \
+               (quit (1, "ERROR: %s: file: %s line: %d on(%d) at (%d,%d) out of range\n", \
+                                 __func__, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+                not_reached(), \
+                0) \
+             )
 
 /* seerc - is this character at row,col */
 # define seerc(ch,r,c) \
@@ -399,13 +406,34 @@ typedef enum { false=0, true=1 } bool;
               )
 
 /* see - is this character at current position */
-# define see(ch) seerc(atrow,atcol)
+# define see(ch) \
+	    (valrc((atrow),(atcol)) ? \
+               ((ch)==screen[(atrow)][(atcol)]) : \
+               (quit (1, "ERROR: %s: file: %s line: %d see(%d) at (%d,%d) out of range\n", \
+                                 __func__, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+                not_reached(), \
+                0) \
+             )
 
 /* setrc - set attribute at <r,c> */
-# define setrc(type,r,c) scrmap[r][c]|=(type)
+# define setrc(type,r,c) \
+	      (valrc((r),(c)) ? \
+	        (scrmap[r][c]|=(type)) : \
+                (quit (1, "ERROR: %s: file: %s line: %d seerc(%d,%d,%d) out of range\n", \
+                                 __func__, __FILE__, __LINE__, (type), (r), (c)), \
+                 not_reached(), \
+                 0) \
+              )
 
 /* set - set attribute at current position */
-# define set(type) setrc(type,atrow,atcol)
+# define set(type) \
+	      (valrc((atrow),(atcol)) ? \
+	        (scrmap[atrow][atcol]|=(type)) : \
+                (quit (1, "ERROR: %s: file: %s line: %d set(%d) at (%d,%d) out of range\n", \
+                                 __func__, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+                 not_reached(), \
+                 0) \
+              )
 
 /* unsetrc - unset attribute at <r,c> */
 # define unsetrc(type,r,c) \
@@ -418,7 +446,14 @@ typedef enum { false=0, true=1 } bool;
 		)
 
 /* unset - unset attribute at current position */
-# define unset(type) unsetrc(type,atrow,atcol)
+# define unset(type) \
+		(valrc((atrow),(atcol)) ? \
+		  (scrmap[(atrow)][(atcol)]&= ~(type)) : \
+		  (quit (1, "ERROR: %s: file: %s line: %d unsetrc(%d) at (%d,%d) out of range\n", \
+			     __func__, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+		   not_reached(), \
+		   0) \
+		)
 
 /* Direc - give the vector from an xy difference */
 # define direc(r,c) (r>0?(c>0?7:(c<0?5:6)):(r<0?(c>0?1:(c<0?3:2)):(c>0?0:4)))
