@@ -742,7 +742,7 @@ extern int isexplored (int row, int col);
 extern int haveexplored (int n);
 extern void printexplored (void);
 extern void inferhall (int r, int c);
-extern int canbedoor (int deadr, int deadc);
+extern bool canbedoor (int deadr, int deadc);
 extern int mazedoor (int row, int col);
 extern int nextto (int type, int r, int c);
 extern int nexttowall (int r, int c);

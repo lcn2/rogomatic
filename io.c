@@ -99,14 +99,18 @@ scrollup (void)
 
   for (r = s_row1; r < s_row2; r++) {
     for (c = 0; c < C; c++) {
-      screen[r][c] = screen[r+1][c];
-      updatepos (screen[r][c], r, c);
+      if (valrc (r, c) && valrc (r+1, c)) {
+	screen[r][c] = screen[r+1][c];
+	updatepos (screen[r][c], r, c);
+      }
     }
   }
 
   for (c = 0; c < C; c++) {
-    screen[s_row2][c] = ' ';
-    updatepos (screen[s_row2][c], s_row2, c);
+    if (valrc (s_row2, c)) {
+      screen[s_row2][c] = ' ';
+      updatepos (screen[s_row2][c], s_row2, c);
+    }
   }
 }
 
@@ -118,14 +122,18 @@ scrolldown (void)
 
   for (r = s_row2; r > s_row1; r--) {
     for (c = 0; c < C; c++) {
-      screen[r][c] = screen[r-1][c];
-      updatepos (screen[r][c], r, c);
+      if (valrc (r, c) && valrc (r-1, c)) {
+	screen[r][c] = screen[r-1][c];
+	updatepos (screen[r][c], r, c);
+      }
     }
   }
 
   for (c = 0; c < C; c++) {
-    screen[s_row1][c] = ' ';
-    updatepos (screen[s_row1][c], s_row1, c);
+    if (valrc (s_row1, c)) {
+      screen[s_row1][c] = ' ';
+      updatepos (screen[s_row1][c], s_row1, c);
+    }
   }
 }
 
@@ -133,6 +141,12 @@ static void
 printscreen (void)
 {
   int i, j;
+
+  /* firewall */
+  if (!valrc (row, col)) {
+    return;
+  }
+
   debuglog ("-- cursor  [%2d, %2d] [%c] [%3d] -------------------------------------------------\n", row, col, screen[row][col], screen[row][col]);
   debuglog ("             1111111111222222222233333333334444444444555555555566666666667777777777\n");
   debuglog ("   01234567890123456789012345678901234567890123456789012345678901234567890123456789\n");
@@ -150,8 +164,9 @@ printscreen (void)
     for (j = 0; j < C; ++j) {
       if (i == row && j == col)
         debuglog ("_");
-      else
+      else if (valrc (i,j)) {
         debuglog ("%c", screen[i][j]);
+      }
     }
 
     debuglog ("\n");
@@ -187,6 +202,11 @@ getrogue (char *waitstr, int onat)
   char  ch, *s, *m, *q, *d, *call;
   int *doors;
   static bool moved = false;
+
+  /* firewall */
+  if (!valrc (row, col)) {
+    return;
+  }
 
   newdoors = doorlist;			/* no new doors found yet */
   atrow0 = atrow; atcol0 = atcol;	/* Save our current posistion */
@@ -250,7 +270,7 @@ getrogue (char *waitstr, int onat)
         else           sendnow (" ");
 
         /* Clear the --More-- of the end of the message */
-        for (i = col - 7; i < col; screen[0][i++] = ' ');
+        for (i = col - 7; i < col; valrc (0,i) && (screen[0][i++] = ' '));
 
         terpmes ();			/* Interpret the message */
       }
@@ -620,35 +640,39 @@ dumpwalls (void)
 
   for (r = 1; r < R-1; r++) {
     for (c = 0; c < C; c++) {
-      S=scrmap[r][c];
-      ch = (ARROW&S)                   ? 'a' :
-           (TELTRAP&S)                 ? 't' :
-           (TRAPDOR&S)                 ? 'v' :
-           (GASTRAP&S)                 ? 'g' :
-           (BEARTRP&S)                 ? 'b' :
-           (DARTRAP&S)                 ? 's' :
-           (WATERAP&S)                 ? 'w' :
-           (TRAP&S)                    ? '^' :
-           (STAIRS&S)                  ? '>' :
-           (RUNOK&S)                   ? '%' :
-           (((DOOR+BEEN)&S)==DOOR+BEEN)  ? 'D' :
-           (DOOR&S)                    ? 'd' :
-           (((BOUNDARY+BEEN)&S)==BOUNDARY+BEEN) ? 'B' :
-           (((ROOM+BEEN)&S)==ROOM+BEEN)  ? 'R' :
-           (BEEN&S)                    ? ':' :
-           (HALL&S)                    ? '#' :
-           (((BOUNDARY+WALL)&S)==BOUNDARY+WALL) ? 'W' :
-           (BOUNDARY&S)                ? 'b' :
-           (ROOM&S)                    ? 'r' :
-           (CANGO&S)                   ? '.' :
-           (WALL&S)                    ? 'W' :
-           (S)                         ? 'X' : '\0';
+      if (valrc (r, c)) {
+	S=scrmap[r][c];
+	ch = (ARROW&S)                   ? 'a' :
+	     (TELTRAP&S)                 ? 't' :
+	     (TRAPDOR&S)                 ? 'v' :
+	     (GASTRAP&S)                 ? 'g' :
+	     (BEARTRP&S)                 ? 'b' :
+	     (DARTRAP&S)                 ? 's' :
+	     (WATERAP&S)                 ? 'w' :
+	     (TRAP&S)                    ? '^' :
+	     (STAIRS&S)                  ? '>' :
+	     (RUNOK&S)                   ? '%' :
+	     (((DOOR+BEEN)&S)==DOOR+BEEN)  ? 'D' :
+	     (DOOR&S)                    ? 'd' :
+	     (((BOUNDARY+BEEN)&S)==BOUNDARY+BEEN) ? 'B' :
+	     (((ROOM+BEEN)&S)==ROOM+BEEN)  ? 'R' :
+	     (BEEN&S)                    ? ':' :
+	     (HALL&S)                    ? '#' :
+	     (((BOUNDARY+WALL)&S)==BOUNDARY+WALL) ? 'W' :
+	     (BOUNDARY&S)                ? 'b' :
+	     (ROOM&S)                    ? 'r' :
+	     (CANGO&S)                   ? '.' :
+	     (WALL&S)                    ? 'W' :
+	     (S)                         ? 'X' : '\0';
 
-      if (ch) mvaddch (r, c, ch);
+	if (ch) mvaddch (r, c, ch);
+      }
     }
   }
 
-  at (row, col);
+  if (valrc (row, col)) {
+    at (row, col);
+  }
 }
 
 /*
@@ -779,6 +803,10 @@ pending (void)
 void
 at (int r, int c)
 {
+  if (!valrc (r, c)) {
+    return;
+  }
+
   move (r, c);
 }
 

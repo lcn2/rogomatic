@@ -358,9 +358,11 @@ dumpstuff (void)
   at (1, 0);
 
   for (i = 0; i < slistlen; ++i)
-    printw ("%d at %d,%d (%c)\n",
-            slist[i].what, slist[i].srow, slist[i].scol,
-            screen[slist[i].srow][slist[i].scol]);
+    if (valrc (slist[i].srow, slist[i].scol)) {
+      printw ("%d at %d,%d (%c)\n",
+	      slist[i].what, slist[i].srow, slist[i].scol,
+	      screen[slist[i].srow][slist[i].scol]);
+    }
 
   printw ("You are at %d,%d.", atrow, atcol);
   at (row, col);

@@ -46,7 +46,7 @@
 static int expDor, expavoidval;
 static int avdmonsters[R][C + 1]; /* +1 for paranoia */
 
-static int rogo_connect[9][4] = {
+static int rogo_connect[RGRID][4] = {
   /* Room  top    bot   left  right*/
   /* 0 */  {-1,     3,    -1,     1},
   /* 1 */  {-1,     4,     0,     2},
@@ -140,6 +140,11 @@ static int gotorow = NONE, gotocol = NONE;
 int
 gotowards (int r, int c, int running)
 {
+  /* firewall */
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   gotorow = r; gotocol = c;
   return (makemove (running ? RUNAWAY:GOTOMOVE, gotoinit, gotovalue, REUSE));
 }
@@ -163,6 +168,15 @@ static int
 gotovalue (int r, int c, int depth __attribute__ ((__unused__)),
 	   int *val, int *avd, int *cont __attribute__ ((__unused__)))
 {
+  /* firewall */
+  if (val == NULL || avd == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p\n", __func__, (void *)val, (void *)avd);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   *avd = onrc (SAFE, r, c)    ? 0 :
          onrc (ARROW, r, c)   ? 50 :
          onrc (TRAPDOR, r, c) ? 175 :
@@ -191,6 +205,15 @@ int
 sleepvalue (int r, int c, int depth __attribute__ ((__unused__)),
 	    int *val, int *avd, int *cont __attribute__ ((__unused__)))
 {
+  /* firewall */
+  if (val == NULL || avd == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p\n", __func__, (void *)val, (void *)avd);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   *avd = onrc (SAFE, r, c)    ? 0 :
          onrc (ARROW, r, c)   ? 50 :
          onrc (TRAPDOR, r, c) ? 175 :
@@ -222,6 +245,11 @@ sleepvalue (int r, int c, int depth __attribute__ ((__unused__)),
 static int
 wallkind (int r, int c)
 {
+  /* firewall */
+  if (!valrc (r, c)) {
+    return NOTW;
+  }
+
   switch (screen[r][c]) {
 
     case '|': if (onrc (ROOM, r, c+1)) return (LEFTW);
@@ -309,10 +337,10 @@ setpsd (int print)
         if ((k = wallkind (i,j)) >= 0) {	/* A legit sort of wall */
           int rm = whichroom (i,j);
 
-          if (rm >= 0 && rm < 9) {
+          if (rm >= 0 && rm < RGRID) {
             whereto = rogo_connect[rm][k];
 
-            if (whereto >= 0 && whereto < 9 &&
+            if (whereto >= 0 && whereto < RGRID &&
                 (attempt > 1 || room[whereto] == 0)) {
               if (!onrc (PSD, i, j)) numberpsd++;
 
@@ -355,6 +383,15 @@ setpsd (int print)
 int
 downvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *avd, int *cont __attribute__ ((__unused__)))
 {
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   *avd = onrc (SAFE, r, c)    ? 0 :
          onrc (ARROW, r, c)   ? 50 :
          onrc (TRAPDOR, r, c) ? 175 :
@@ -395,6 +432,15 @@ expruninit (void)
 int
 exprunvalue (int r, int c, int depth, int *val, int *avd, int *cont)
 {
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   if (r == atrow && c == atcol)		/* Current square useless MLM */
     *val = 0;
   else if (onrc (MONSTER | TRAP, r, c))	/* Added TRAP useless MLM */
@@ -431,6 +477,15 @@ expunpininit (void)
 int
 expunpinvalue (int r, int c, int depth, int *val, int *avd, int *cont)
 {
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   if (r == atrow && c == atcol)		/* Current square useless MLM */
     *val = 0;
   else if (onrc (MONSTER | TRAP, r, c))	/* Added TRAP useless MLM */
@@ -472,6 +527,15 @@ runinit (void)
 int
 runvalue (int r, int c, int depth, int *val, int *avd, int *cont)
 {
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   *avd = onrc (ARROW, r, c) ? 50 :
          onrc (TRAPDOR, r, c) ? 0 :
          onrc (TELTRAP, r, c) ? 0 :
@@ -552,6 +616,15 @@ rundoorinit (void)
 int
 rundoorvalue (int r, int c, int depth , int *val, int *avd, int *cont)
 {
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   *avd = onrc (ARROW, r, c) ? 50 :
          onrc (TRAPDOR, r, c) ? 0 :
          onrc (TELTRAP, r, c) ? 0 :
@@ -616,6 +689,15 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
   int a, v = 0, nunseenb = 0, nseenb = 0;
   bool nearb = false;
 
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   a = onrc (SAFE|DOOR|STAIRS|HALL, r, c) ? 0 :
       onrc (ARROW, r, c)   ? 50 :
       onrc (TRAPDOR, r, c) ? 300 :
@@ -631,23 +713,24 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
     { *avd = a+1000; *val=0; return (1); }
 
   if (onrc (BEEN+SEEN, r, c) == SEEN) { /* If been or not seen, not a target */
-    for (k=0; k<8; k++) {
+    for (k=0; k<DNUM; k++) {
       nr = r + deltr[k];
       nc = c + deltc[k];
 
       /* For each unseen neighbour: add 10 to value. */
-      if (nr >= 1 && nr <= R-2 && nc >= 0 && nc <= C &&
-          !onrc (SEEN, nr, nc)) {
+      if (valrc (nr, nc) &&
+	  (nr >= 1 && nr <= R-2 && nc >= 0 && nc <= C && !onrc (SEEN, nr, nc))) {
         v += 10;
 
-        if (onrc (BOUNDARY, nr, nc)) {
+        if (valrc (nr, nc) &&
+	    onrc (BOUNDARY, nr, nc)) {
           /* Count unseen boundary neighbours. */
           nunseenb++;
 
           /* Count seen boundaries horiz/vert adjacent to unseen boundary */
-          for (l=0; l<8; l+=2)
-            if (onrc (SEEN+BOUNDARY, nr+deltr[l], nc+deltc[l]) ==
-                SEEN+BOUNDARY)
+          for (l=0; l<DNUM; l+=2)
+            if (valrc (nr+deltr[l], nc+deltc[l]) &&
+		(onrc (SEEN+BOUNDARY, nr+deltr[l], nc+deltc[l]) == SEEN+BOUNDARY))
               nseenb++;
 
         }
@@ -656,12 +739,14 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
           /* adjacent to neighbour and not a neighbour. */
           l = k / 2 * 2;		     /* horizontal/vertical */
 
-          if (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY)
+          if (valrc (nr+deltr[l], nc+deltc[l]) &&
+	      (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY))
             nearb = true;
           else {
-            l = ((k+1) / 2 * 2) % 8;
+            l = ((k+1) / 2 * 2) % DNUM;
 
-            if (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY)
+            if (valrc (nr+deltr[l], nc+deltc[l]) &&
+	      (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY))
               nearb = true;
           }
         }
@@ -722,6 +807,15 @@ zigzagvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
 {
   int k, nr, nc, a, v = 0, nunseenb = 0;
 
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   a = onrc (SAFE|DOOR|STAIRS|HALL, r, c) ? 0 :
       onrc (ARROW, r, c)   ? 50 :
       onrc (TRAPDOR, r, c) ? 300 :
@@ -737,7 +831,7 @@ zigzagvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
     { *avd = a+1000; *val=0; return (1); }
 
   if (onrc (BEEN+SEEN, r, c) == SEEN) { /* If been or not seen, not a target */
-    for (k=0; k<8; k++) {
+    for (k=0; k<DNUM; k++) {
       nr = r + deltr[k];
       nc = c + deltc[k];
 
@@ -792,6 +886,15 @@ secretvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
 {
   int v, a, k;
 
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   *val=0;
   v = 0;	/* establish value of square */
   a = onrc (SAFE, r, c)    ? 0 :
@@ -808,7 +911,7 @@ secretvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
   if (onrc (SCAREM, r, c) && version < RV53A && objcount != maxobj)
     a += 200;
 
-  for (k=0; k<8; k++) {  /* examine adjacent squares */
+  for (k=0; k<DNUM; k++) {  /* examine adjacent squares */
     int nr = r + deltr[k];
     int nc = c + deltc[k];
 
@@ -849,8 +952,14 @@ secretvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
  */
 
 # define AVOID(r,c,ch) \
-  { avdmonsters[r][c] = ROGINFINITY; \
-    if (debug (D_SCREEN)) { at((r),(c)); addch(ch); at(row,col); }}
+  { if (!valrc((r),(c))) { \
+      quit (1, "ERROR: %s: file: %s line: %d AVOID(%d,%d,%d) out of range\n", \
+                                 __func__, __FILE__, __LINE__, (r), (c), (ch)); \
+      not_reached(); \
+    } \
+    avdmonsters[r][c] = ROGINFINITY; \
+    if (debug (D_SCREEN)) { at((r),(c)); addch(ch); at(row,col); } \
+  }
 
 static void
 avoidmonsters (void)
@@ -891,13 +1000,16 @@ avoidmonsters (void)
     else if (!wearingstealth) {
       for (r = mlist[i].mrow-1; r<= mlist[i].mrow+1; r++)
         for (c = mlist[i].mcol-1; c<= mlist[i].mcol+1; c++)
-          if (!onrc (WALL, r, c))
+          if (valrc (r,c) && !onrc (WALL, r, c))
             AVOID (r, c, '$')
     }
 
     /* He's asleep, don't try to run through him */
-    else
-      AVOID (mlist[i].mrow, mlist[i].mcol, '$')
+    else {
+      if (valrc (mlist[i].mrow, mlist[i].mcol)) {
+	AVOID (mlist[i].mrow, mlist[i].mcol, '$')
+      }
+    }
   }
 
   /* Don't avoid current position */
@@ -913,11 +1025,16 @@ avoidmonsters (void)
 static void
 caddycorner (int r, int c, int d1, int d2, char ch)
 {
-  while (onrc (CANGO, r, c)) {
+  /* firewall */
+  if (!valrc (r, c)) {
+    return;
+  }
+
+  while (valrc (r, c) && onrc (CANGO, r, c)) {
     AVOID (r, c, ch);
     r += deltr[d1]; c += deltc[d1];
 
-    if (!onrc (CANGO, r, c)) break;
+    if (!valrc (r,c) || !onrc (CANGO, r, c)) break;
 
     AVOID (r, c, ch);
     r += deltr[d2]; c += deltc[d2];
@@ -959,7 +1076,9 @@ pinavoid (void)
       }
     }
 
-    AVOID (mlist[i].mrow, mlist[i].mcol, '&');
+    if (valrc (mlist[i].mrow, mlist[i].mcol)) {
+      AVOID (mlist[i].mrow, mlist[i].mcol, '&');
+    }
   }
 
   /* Don't avoid current position */
@@ -974,10 +1093,16 @@ pinavoid (void)
 int
 secret (void)
 {
+  if (!valrc (atrow, atcol)) {
+    return 0;
+  }
+
   /* Secret passage adjacent to door? */
   if (version >= RV53A && on (DOOR) && !blinded &&
-      (seerc (' ',atrow+1,atcol) || seerc (' ',atrow-1,atcol) ||
-       seerc (' ',atrow,atcol+1) || seerc (' ',atrow,atcol-1)) &&
+      ((valrc (atrow+1,atcol) && seerc (' ',atrow+1,atcol)) ||
+       (valrc (atrow-1,atcol) && seerc (' ',atrow-1,atcol)) ||
+       (valrc (atrow,atcol+1) && seerc (' ',atrow,atcol+1) )||
+       (valrc (atrow,atcol-1) && seerc (' ',atrow,atcol-1))) &&
       SEARCHES (atrow, atcol) < timestosearch+20) {
     int count = timessearched[atrow][atcol]+1;
     saynow ("Searching dead end door (%d,%d) for the %d%s time...",
@@ -986,8 +1111,10 @@ secret (void)
   }
 
   /* Verify that we are actually at a dead end */
-  if (onrc (CANGO,atrow-1,atcol) + onrc (CANGO,atrow,atcol-1) +
-      onrc (CANGO,atrow+1,atcol) + onrc (CANGO,atrow,atcol+1) != CANGO)
+  if (((valrc (atrow-1,atcol) ? onrc (CANGO,atrow-1,atcol) : 0) +
+       (valrc (atrow,atcol-1) ? onrc (CANGO,atrow,atcol-1) : 0) +
+       (valrc (atrow+1,atcol) ? onrc (CANGO,atrow+1,atcol) : 0) +
+       (valrc (atrow,atcol+1) ? onrc (CANGO,atrow,atcol+1) : 0)) != CANGO)
     return (0);
 
   /* If Level 1 or edge of screen: dead end cannot be room, mark and return */
@@ -1095,6 +1222,24 @@ safevalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
 {
   int k, v;
 
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   *avd = onrc (SAFE, r, c)    ? 0 :
          onrc (TRAPDOR | BEARTRP | GASTRAP, r, c) ? ROGINFINITY :
          onrc (ARROW, r, c)   ? 50 :
@@ -1111,7 +1256,7 @@ safevalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
   if (onrc(CANGO, r, c)) {
     v = 0;
 
-    for (k=0; k<8; k++)
+    for (k=0; k<DNUM; k++)
       if (onrc(CANGO, r+deltr[k], c+deltc[k]) &&
           onrc(CANGO, r+deltr[k], c) &&
           onrc(CANGO, r, c+deltc[k])) v++;
@@ -1212,7 +1357,7 @@ archeryinit (void)
   memset(archval, 0, sizeof(archval));
 
   /* Scan around monster to see how far away we can shoot from */
-  for (dir = 0; dir < 8; dir++) {
+  for (dir = 0; dir < DNUM; dir++) {
     dr = deltr[dir]; dc = deltc[dir];
 
     for (dist = 1, r = archrow+dr, c = archcol+dc;
@@ -1239,6 +1384,15 @@ archeryinit (void)
 static int
 archeryvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *avd, int *cont)
 {
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   *avd = (onrc (SAFE, r, c)	? 0 :
           onrc (TRAPDOR, r, c)	? ROGINFINITY :
           onrc (HALL, r, c)	? ROGINFINITY :
@@ -1315,6 +1469,15 @@ restvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
   int dr, dc, ar, ac;
   int count, dir, rm;
 
+  /* firewall */
+  if (val == NULL || avd == NULL || cont == NULL) {
+    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    not_reached();
+  }
+  if (!valrc (r, c)) {
+    return 0;
+  }
+
   /* Find room number for diagonal selection */
   if ((rm = whichroom (r, c)) < 0) rm = 4;
 
@@ -1344,16 +1507,16 @@ restvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
   /* In lit rooms (with ammo) stay away from doors, this gives us time */
   /* to shoot arrows at monsters coming in at us          MLM 06/21/83 */
   if (restinlight && ammo) {
-    for (dir = 0; dir < 8; dir += 2) {
+    for (dir = 0; dir < DNUM; dir += 2) {
       dr = deltr[dir]; dc = deltc[dir];
 
       for (count = 0, ar = r+dr, ac = c+dc;
            onrc (CANGO | HALL | MONSTER, ar, ac) == CANGO;
            ar += dr, ac += dc, count++) {
         /* Bonus of 'count' if this square covers a door */
-        if (onrc(DOOR,ar+deltr[(dir+2)%8],ac+deltc[(dir+2)%8])) *val += count;
+        if (onrc(DOOR,ar+deltr[(dir+2)%DNUM],ac+deltc[(dir+2)%DNUM])) *val += count;
 
-        if (onrc(DOOR,ar+deltr[(dir+6)%8],ac+deltc[(dir+6)%8])) *val += count;
+        if (onrc(DOOR,ar+deltr[(dir+6)%DNUM],ac+deltc[(dir+6)%DNUM])) *val += count;
 
         if (onrc(DOOR,ar,ac)) *val += count;
       }

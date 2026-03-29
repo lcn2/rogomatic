@@ -204,8 +204,11 @@ dwait(int msgtype, const char *from, char *f, ...)
       case '^': promptforflags ();	break;
       case '&':
 
-        if (getscrpos ("char", &r, &c))
-          saynow ("Char at %d,%d '%c'", r, c, screen[r][c]);
+        if (getscrpos ("char", &r, &c)) {
+	  if (valrc (r,c)) {
+	    saynow ("Char at %d,%d '%c'", r, c, screen[r][c]);
+	  }
+	}
 
         break;
       case '(': dumpdatabase (); at (row, col); break;

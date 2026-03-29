@@ -312,9 +312,11 @@ fightmonster (void)
         { wanddir = direc (rr-atrow, cc-atcol); }
 
       /* Debugging breakpoint */
-      dwait (D_BATTLE, __func__, "%c: (%d,%d) danger: %d worst %c: (%d,%d) total: %d",
-             screen[rr][cc], rr-atrow, cc-atcol,
-             danger, monc, mdir, mbad, adjacent);
+      if (valrc (rr,cc)) {
+	dwait (D_BATTLE, __func__, "%c: (%d,%d) danger: %d worst %c: (%d,%d) total: %d",
+	       screen[rr][cc], rr-atrow, cc-atcol,
+	       danger, monc, mdir, mbad, adjacent);
+      }
     }
   }
 

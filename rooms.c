@@ -202,12 +202,14 @@ nametrap (int traptype, int standingonit)
     for (i = 0; i < DNUM; i++) {
       r = atdrow(i); c = atdcol(i);
 
-      if (seerc ('^', r, c)) {	/* Aha, a trap! */
-        if (tdir != NONE) return;        /* Second trap, ambigous case */
-        else tdir = i;                    /* First trap,  record direction */
+      if (valrc (r,c)) {
+	if (seerc ('^', r, c)) {	/* Aha, a trap! */
+	  if (tdir != NONE) return;        /* Second trap, ambigous case */
+	  else tdir = i;                    /* First trap,  record direction */
+	}
+	else if (isupper(screen[r][c]))   /* Trap could be under monster */
+	  monsteradj++;
       }
-      else if (isupper(screen[r][c]))   /* Trap could be under monster */
-        monsteradj++;
     }
 
     /* See one trap, set (r,c) to the trap location */
@@ -227,16 +229,18 @@ nametrap (int traptype, int standingonit)
       { r = atrow; c = atcol; }
   }
 
-  /* Record last arror trap found (for cheating against 3.6) */
-  if (traptype == ARROW) { foundarrowtrap = true; trapr = r; trapc = c; }
-  else if (traptype == TRAPDOR) { foundtrapdoor = true; }
+  if (valrc (r,c)) {
+    /* Record last arror trap found (for cheating against 3.6) */
+    if (traptype == ARROW) { foundarrowtrap = true; trapr = r; trapc = c; }
+    else if (traptype == TRAPDOR) { foundtrapdoor = true; }
 
-  /* If a trapdor, reactivate rules */
-  if (traptype == TRAPDOR) foundnew ();
+    /* If a trapdor, reactivate rules */
+    if (traptype == TRAPDOR) foundnew ();
 
-  /* Set the trap type */
-  unsetrc (TELTRAP|TRAPDOR|BEARTRP|GASTRAP|ARROW|DARTRAP, r, c);
-  setrc (TRAP | traptype, r, c);
+    /* Set the trap type */
+    unsetrc (TELTRAP|TRAPDOR|BEARTRP|GASTRAP|ARROW|DARTRAP, r, c);
+    setrc (TRAP | traptype, r, c);
+  }
 }
 
 /*
@@ -311,11 +315,17 @@ darkroom (void)
   if (!on (DOOR | ROOM))
     return (0);
 
-  for (dir=0; dir<DNUM; dir++)
-    if (seerc ('.', (drow = atdrow(dir)), (dcol = atdcol(dir))))
-      for (dir2=0; dir2<DNUM; dir2++)
-        if (seerc (' ', drow+deltr[dir2], dcol+deltc[dir2]))
-          return (1);
+  for (dir=0; dir<DNUM; dir++) {
+    drow = atdrow(dir);
+    dcol = atdcol(dir);
+    if (valrc (drow, dcol)) {
+      if (seerc ('.', drow, dcol))
+	for (dir2=0; dir2<DNUM; dir2++)
+	  if (valrc (drow+deltr[dir2], dcol+deltc[dir2]) &&
+	      seerc (' ', drow+deltr[dir2], dcol+deltc[dir2]))
+	    return (1);
+    }
+  }
 
   return (0);
 }
@@ -357,38 +367,40 @@ currentrectangle (void)
 
       if (flags & fT) {
         for (r = curt - 1, c = curl - 1; r > 0 && c > 0 && c <= curr + 1; c++)
-          if (onrc (ROOM, r, c))      { curt--; any = 1; break; }
-          else if (seerc ('-', r, c)) { flags &= ~fT; break; }
+          if (valrc (r, c) && onrc (ROOM, r, c))      { curt--; any = 1; break; }
+          else if (valrc (r, c) && seerc ('-', r, c)) { flags &= ~fT; break; }
       }
 
       if (flags & fB) {
         for (r = curb + 1, c = curl - 1; r > 0 && c > 0 && c <= curr + 1; c++)
-          if (onrc (ROOM, r, c))      { curb++; any = 1; break; }
-          else if (seerc ('-', r, c)) { flags &= ~fB; break; }
+          if (valrc (r, c) && onrc (ROOM, r, c))      { curb++; any = 1; break; }
+          else if (valrc (r, c) && seerc ('-', r, c)) { flags &= ~fB; break; }
       }
 
       if (flags & fL) {
         for (r = curt, c = curl - 1; r > 0 && c > 0 && r <= curb; r++)
-          if (onrc (ROOM, r, c))      { curl--; any = 1; break; }
-          else if (seerc ('|', r, c)) { flags &= ~fL; break; }
+          if (valrc (r, c) && onrc (ROOM, r, c))      { curl--; any = 1; break; }
+          else if (valrc (r, c) && seerc ('|', r, c)) { flags &= ~fL; break; }
       }
 
       if (flags & fR) {
         for (r = curt, c = curr + 1; r <= curb; r++)
-          if (onrc (ROOM, r, c))      { curr++; any = 1; break; }
-          else if (seerc ('|', r, c)) { flags &= ~fR; break; }
+          if (valrc (r, c) && onrc (ROOM, r, c))      { curr++; any = 1; break; }
+          else if (valrc (r, c) && seerc ('|', r, c)) { flags &= ~fR; break; }
       }
 
     }
 
     for (r = curt; r <= curb; r++)
       for (c = curl; c <= curr; c++) {
-        setrc (ROOM + CANGO, r, c);
-        unsetrc	 (HALL, r, c);
+	if (valrc (r, c)) {
+	  setrc (ROOM + CANGO, r, c);
+	  unsetrc	(HALL, r, c);
+	}
       }
 
 # define ckdoor(FLAG, NODOOR, STATIC, INC, S1, S2, I1, I2) \
-    if (0 == (flags & FLAG)) \
+    if (valrc (r, c) && (0 == (flags & FLAG))) \
     { any = 0; \
       if (NODOOR) any = 1; \
       else \
@@ -421,13 +433,13 @@ currentrectangle (void)
 
     /* Fill in the corners of the room without seeing them */
     /* Prevents looking at corners to find missing doors */
-    if ((flags & (fT+fR)) == 0)  setrc (SEEN + WALL, curt-1, curr+1);
+    if (valrc (curt-1, curt-1) && ((flags & (fT+fR)) == 0))  setrc (SEEN + WALL, curt-1, curr+1);
 
-    if ((flags & (fT+fL)) == 0)  setrc (SEEN + WALL, curt-1, curl-1);
+    if (valrc (curt-1, curt-1) && ((flags & (fT+fL)) == 0))  setrc (SEEN + WALL, curt-1, curl-1);
 
-    if ((flags & (fB+fR)) == 0)  setrc (SEEN + WALL, curb+1, curr+1);
+    if (valrc (curb+1, curr+1) && ((flags & (fB+fR)) == 0))  setrc (SEEN + WALL, curb+1, curr+1);
 
-    if ((flags & (fB+fL)) == 0)  setrc (SEEN + WALL, curb+1, curl-1);
+    if (valrc (curb+1, curr+1) && ((flags & (fB+fL)) == 0))  setrc (SEEN + WALL, curb+1, curl-1);
   }
 }
 
@@ -484,7 +496,7 @@ updateat (void)
     dc = (dc > 0) ? 1 : (dc < 0) ? -1 : 0;
 
     for (r = atrow0, c = atcol0;
-         dist >= 0 && (onrc(DOOR,r,c) || !onrc(WALL,r,c));
+         dist >= 0 && valrc (r,c) && (onrc(DOOR,r,c) || !onrc(WALL,r,c));
          r += dr, c += dc, dist--) {
       setrc (BEEN | SEEN | CANGO, r, c);
 
@@ -502,14 +514,18 @@ updateat (void)
     for (i=0; i<DNUM; i += 2) {
       rr = atdrow(i); cc = atdcol(i);
 
-      if (onrc (HALL, rr, cc))
-        halls++;
-      else if (onrc (ROOM, rr, cc))
-        rooms++;
+      if (valrc (rr, cc)) {
+	if (onrc (HALL, rr, cc))
+	  halls++;
+	else if (onrc (ROOM, rr, cc))
+	  rooms++;
+      }
     }
 
-    if ((seerc ('|', atrow-1, atcol) && seerc ('|', atrow+1, atcol)) ||
-        (seerc ('-', atrow, atcol-1) && seerc ('-', atrow, atcol+1))) {
+    if ((valrc (atrow-1, atcol) && seerc ('|', atrow-1, atcol) &&
+	 valrc (atrow+1, atcol) && seerc ('|', atrow+1, atcol)) ||
+        (valrc (atrow, atcol-1) && seerc ('-', atrow, atcol-1) &&
+	 valrc (atrow, atcol+1) && seerc ('-', atrow, atcol+1))) {
       set (DOOR | SAFE); unset (HALL | ROOM); terrain = "door";
 
       if ((rm = whichroom (atrow, atcol)) != NONE) levelmap[rm] |= HASROOM;
@@ -535,11 +551,23 @@ updateat (void)
 void
 updatepos (char ch, int row, int col)
 {
-  char  oldch = screen[row][col], *monster;
-  int   seenbefore = onrc (EVERCLR, row, col);
-  int   couldgo = onrc (CANGO, row, col);
-  int   unseen = !onrc (SEEN, row, col);
-  int   rm = whichroom (row, col);
+  char  oldch;
+  char  *monster;
+  int   seenbefore;
+  int   couldgo;
+  int   unseen;
+  int   rm;
+
+  /* firewall */
+  if (!valrc (row, col)) {
+    return;
+  }
+
+  oldch = screen[row][col];
+  seenbefore = onrc (EVERCLR, row, col);
+  couldgo = onrc (CANGO, row, col);
+  unseen = !onrc (SEEN, row, col);
+  rm = whichroom (row, col);
 
   debuglog ("rooms : updatepos (%c, %d, %d)\n",ch, row, col);
 
@@ -898,10 +926,15 @@ inferhall (int r, int c)
 
   char dirch = ' ';
 
+  /* firewall */
+  if (!valrc (r, c)) {
+    return;
+  }
+
   for (k = 0; k < DNUM; k += 2) {
-    if (onrc (HALL, r + deltr[k], c + deltc[k]))      /* Hall has been seen */
+    if (valrc (r + deltr[k], c + deltc[k]) && onrc (HALL, r + deltr[k], c + deltc[k]))      /* Hall has been seen */
       return;
-    else if (onrc (ROOM, r + deltr[k], c + deltc[k])) /* Room is over here */
+    else if (valrc (r + deltr[k], c + deltc[k]) && onrc (ROOM, r + deltr[k], c + deltc[k])) /* Room is over here */
       dir = k;
   }
 
@@ -928,12 +961,16 @@ inferhall (int r, int c)
       for (i = end1; i <= end2; i++) {
         if (debug (D_SCREEN | D_SEARCH | D_INFORM)) mvaddch (i, j, dirch);
 
-        if (onrc (DOOR | WALL | ROOM | HALL, i, j)) {
-          /* Modified only to find doors on vertical walls */
-          if (onrc (DOOR,i,j) && (onrc (WALL,i-1,j) || onrc (WALL,i+1,j)))
-            connectdoors (r, c+inc, i, j-inc);
+	if (valrc (i,j)) {
+	  if (onrc (DOOR | WALL | ROOM | HALL, i, j)) {
+	    /* Modified only to find doors on vertical walls */
+	    if (onrc (DOOR,i,j) &&
+		((valrc (i-1,j) && onrc (WALL,i-1,j)) ||
+		 (valrc (i+1,j) && onrc (WALL,i+1,j))))
+	      connectdoors (r, c+inc, i, j-inc);
 
-          dropout = 1;
+	    dropout = 1;
+	  }
         }
       }
 
@@ -961,12 +998,16 @@ inferhall (int r, int c)
       for (j = end1; j <= end2; j++) {
         if (debug (D_SCREEN | D_SEARCH | D_INFORM)) mvaddch (i, j, dirch);
 
-        if (onrc (DOOR | WALL | ROOM | HALL, i, j)) {
-          /* Modified only to find doors on horizontal walls */
-          if (onrc (DOOR,i,j) && (onrc (WALL,i,j-1) || onrc (WALL,i,j+1)))
-            connectdoors (r+inc, c, i-inc, j);
+	if (valrc (i,j)) {
+	  if (onrc (DOOR | WALL | ROOM | HALL, i, j)) {
+	    /* Modified only to find doors on horizontal walls */
+	    if (onrc (DOOR,i,j) &&
+		((valrc (i,j-1) && onrc (WALL,i,j-1)) ||
+		 (valrc (i,j+1) && onrc (WALL,i,j+1))))
+	      connectdoors (r+inc, c, i-inc, j);
 
-          dropout = 1;
+	    dropout = 1;
+	  }
         }
       }
 
@@ -1002,11 +1043,15 @@ connectdoors (int r1, int c1, int r2, int c2)
 
   for (r = min (r1, r2); r <= endr; r++)
     for (c = min (c1, c2); c <= endc; c++)
-      setrc (CANGO|SAFE, r, c);              /* Can go (somewhere) here */
+      if (valrc (r,c)) {
+	setrc (CANGO|SAFE, r, c);              /* Can go (somewhere) here */
+      }
 
   for (r = min (r1, r2) - 1; r <= endr + 1; r++)
     for (c = min (c1, c2) - 1; c <= endc + 1; c++)
-      setrc (SEEN, r, c);		     /* Nothing to see here */
+      if (valrc (r,c)) {
+	setrc (SEEN, r, c);		     /* Nothing to see here */
+      }
 }
 
 /*
@@ -1017,25 +1062,27 @@ connectdoors (int r1, int c1, int r2, int c2)
  * September 25, 1983	Michael L. Mauldin
  */
 
-int
+bool
 canbedoor (int deadr, int deadc)
 {
   int r, c, dr, dc, k, count;
 
   /* Check all orthogonal directions around the square */
-  for (k=0; k < DNUM; k+=2) {
+  for (k=0; k < 8; k+=2) {
     dr = deltr[k]; dc = deltc[k];
     r = deadr+dr; c = deadc+dc;
 
     /* If there are four blank squares, then it could be a door */
-    for (count=0; count < 4 && seerc (' ',r,c); count++)
-      { r+=dr; c+=dc; }
+    for (count=0; count < 4 && valrc (r,c) && seerc (' ',r,c); count++) {
+	r+=dr;
+	c+=dc;
+    }
 
-    if (count >= 4) return (1);
+    if (count >= 4) return true;
   }
 
   /* Not enough room in any direction */
-  return (0);
+  return false;
 }
 
 /*
@@ -1047,29 +1094,33 @@ mazedoor (int row, int col)
 {
   int r=row, c=col, dr, dc, k=0, dir = NONE;
 
-  if (onrc (HALL,r,c+1)) {dir=0; k++; dr=0;   dc=1;}
+  if (valrc (r,c+1) && onrc (HALL,r,c+1)) {dir=0; k++; dr=0;   dc=1;}
 
-  if (onrc (HALL,r-1,c)) {dir=2; k++; dr= -1; dc=0;}
+  if (valrc (r-1,c) && onrc (HALL,r-1,c)) {dir=2; k++; dr= -1; dc=0;}
 
-  if (onrc (HALL,r+1,c)) {dir=6; k++; dr=1;   dc=0;}
+  if (valrc (r+1,c) && onrc (HALL,r+1,c)) {dir=6; k++; dr=1;   dc=0;}
 
-  if (onrc (HALL,r,c-1)) {dir=4; k++; dr=0,   dc= -1;}
+  if (valrc (r,c-1) && onrc (HALL,r,c-1)) {dir=4; k++; dr=0,   dc= -1;}
 
   if (k != 1) return (0);
 
   /* Fail if no adjacent hall, or not double corridor */
-  if ((onrc (HALL, r+dr+dr, c+dc+dc) == 0))
+  if (valrc (r+dr+dr, c+dc+dc) && (onrc (HALL, r+dr+dr, c+dc+dc) == 0))
     return (0);
 
   /* Must have two sets of double corridor */
-  if (! (((onrc (HALL, r+dr+deltr[(dir+1)&7], c+dc+deltc[(dir+1)&7])) &&
-          (onrc (HALL, r+dr+deltr[(dir+2)&7], c+dc+deltc[(dir+2)&7]))) ||
-         ((onrc (HALL, r+dr+deltr[(dir-1)&7], c+dc+deltc[(dir-1)&7])) &&
-          (onrc (HALL, r+dr+deltr[(dir-2)&7], c+dc+deltc[(dir-2)&7])))))
+  if (! (((     valrc (r+dr+deltr[(dir+1)&7], c+dc+deltc[(dir+1)&7]) &&
+	   onrc (HALL, r+dr+deltr[(dir+1)&7], c+dc+deltc[(dir+1)&7])) &&
+          (     valrc (r+dr+deltr[(dir+2)&7], c+dc+deltc[(dir+2)&7]) &&
+	   onrc (HALL, r+dr+deltr[(dir+2)&7], c+dc+deltc[(dir+2)&7]))) ||
+         ((     valrc (r+dr+deltr[(dir-1)&7], c+dc+deltc[(dir-1)&7]) &&
+	   onrc (HALL, r+dr+deltr[(dir-1)&7], c+dc+deltc[(dir-1)&7])) &&
+          (     valrc (r+dr+deltr[(dir-2)&7], c+dc+deltc[(dir-2)&7]) &&
+	   onrc (HALL, r+dr+deltr[(dir-2)&7], c+dc+deltc[(dir-2)&7])))))
     return (0);
 
   /* If there are four blank squares, then it could be a door */
-  for (r = row-dr, c = col-dc, k=0;  k < 4 && seerc (' ',r,c);  k++)
+  for (r = row-dr, c = col-dc, k=0;  k < 4 && valrc (r,c) && seerc (' ',r,c);  k++)
     { r-=dr; c-=dc; }
 
   if (k >= 4) return (1);
@@ -1087,17 +1138,25 @@ nextto (int type, int r, int c)
 {
   int result;
 
-  result = onrc (type, r-1, c);
-  if (result) return (result);
+  if (valrc (r-1, c)) {
+    result = onrc (type, r-1, c);
+    if (result) return (result);
+  }
 
-  result = onrc (type, r+1, c);
-  if (result) return (result);
+  if (valrc (r+1, c)) {
+    result = onrc (type, r+1, c);
+    if (result) return (result);
+  }
 
-  result = onrc (type, r, c-1);
-  if (result) return (result);
+  if (valrc (r, c-1)) {
+    result = onrc (type, r, c-1);
+    if (result) return (result);
+  }
 
-  result = onrc (type, r, c+1);
-  if (result) return (result);
+  if (valrc (r, c+1)) {
+    result = onrc (type, r, c+1);
+    if (result) return (result);
+  }
 
   return (0);
 }
@@ -1113,10 +1172,10 @@ nextto (int type, int r, int c)
 int
 nexttowall (int r, int c)
 {
-  return (onrc (DOOR | WALL, r-1, c) == WALL ||
-          onrc (DOOR | WALL, r+1, c) == WALL ||
-          onrc (DOOR | WALL, r, c-1) == WALL ||
-          onrc (DOOR | WALL, r, c+1) == WALL);
+  return ((valrc (r-1,c) && onrc (DOOR | WALL, r-1, c) == WALL) ||
+          (valrc (r+1,c) && onrc (DOOR | WALL, r+1, c) == WALL) ||
+          (valrc (r,c-1) && onrc (DOOR | WALL, r, c-1) == WALL) ||
+          (valrc (r,c+1) && onrc (DOOR | WALL, r, c+1) == WALL));
 }
 
 /*
