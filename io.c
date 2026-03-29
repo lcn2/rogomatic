@@ -511,7 +511,7 @@ getrogue (char *waitstr, int onat)
   if (!blinded)
     for (i = atrow-1; i <= atrow+1; i++)         /* For blanks around the  */
       for (j = atcol-1; j <= atcol+1; j++)       /* rogue...               */
-        if (seerc(' ',i,j) && onrc(CANGO,i,j)) { /* CANGO+BLANK impossible */
+        if (valrc (i,j) && seerc(' ',i,j) && onrc(CANGO,i,j)) { /* CANGO+BLANK impossible */
           unsetrc (CANGO | SAFE, i, j);          /* Infer cant go and...   */
           setnewgoal ();		         /* invalidate the map.    */
         }
