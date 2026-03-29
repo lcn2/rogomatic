@@ -277,7 +277,7 @@ fightmonster (void)
     }
   }
 
-  if (!melee) return (0);               /* No one to fight */
+  if (!melee || monc == ':') return (0);               /* No one to fight */
 
   /* Loop to find worst monster and tally danger & number adjacent */
   for (i = 0; i < mlistlen; i++) {
