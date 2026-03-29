@@ -29,6 +29,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include "types.h"
 #include "globals.h"
@@ -40,19 +41,45 @@ static void err_doit(int errnoflag, int error, const char *fmt, va_list ap);
 static void
 err_doit(int errnoflag, int error, const char *fmt, va_list ap)
 {
+  FILE *stream = stderr;  /* stream to write and flush */
   char buf[2*BIGBUF + 1]; /* +1 for paranoia */
+  char *p;		  /* bug char to write write as "^" + un-controlled character */
 
-  memset(buf, 0, sizeof(buf)); /* paranoia */
-  vsnprintf(buf, 2*BIGBUF, fmt, ap);
+  /* zeroize arrays */
+  memset (buf, 0, sizeof(buf)); /* paranoia */
 
+  /* form debug message */
+  vsnprintf (buf, 2*BIGBUF, fmt, ap);
+
+  /* divert output to debug stream if needed */
   if (debug != NULL) {
-    fputs(buf, debug);
-    fflush (debug);
+      stream = debug;
   }
-  else {
-    fputs (buf, stderr);
-    fflush (stderr);
+
+  /*
+   * process message a character at a time
+   */
+  for (p = buf; *p != '\0'; ++p) {
+
+      /* special control character processing */
+      if (iscntrl (*p)) {
+
+	  /* newline and horizontal tab characters are processed as is */
+	  if (*p == '\n' || *p == '\t') {
+	      fputc (*p, stream);
+
+	  /* all other characters are processed as "^" + un-controlled character */
+	  } else {
+	      fputc ('^', stream);	       /* write out "^" prefix */
+	      fputc (ctrl (*p) + 0100, stream); /* un-control the control character */
+	  }
+
+      /* non-control characters are written as is */
+      } else {
+	  fputc (*p, stream);
+      }
   }
+  fflush (stream);
 }
 
 void

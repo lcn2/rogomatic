@@ -607,7 +607,7 @@ main (int argc, char *argv[])
   else if (terse)
     { fprintf (realstdout, "%s\n", msg); fflush (realstdout); }
   else
-    { saynow (msg); }
+    { saynow ("%s", msg); }
 
   /*
    * Now that we have the version figured out, we can properly
@@ -783,7 +783,7 @@ main (int argc, char *argv[])
           refresh ();
           break;
 
-        case '-': saynow (statusline ());
+	case '-': saynow ("%s", statusline ());
           break;
 
         case '`': clear ();

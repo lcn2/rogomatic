@@ -145,7 +145,7 @@ command (int tmode, char *f, ...)
   if (wearing ("searching") != NONE)
     bumpsearchcount ();
 
-  rogo_send (cmd);
+  rogo_send ("%s", cmd);
   va_end (ap);
 }
 
@@ -368,7 +368,7 @@ replaycommand (void)
   char oldcmd[128];
 
   getoldcommand (oldcmd);
-  command (T_OTHER, oldcmd);
+  command (T_OTHER, "%s", oldcmd);
   return (1);
 }
 

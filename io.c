@@ -1068,8 +1068,10 @@ say (char *f, ...)
 }
 
 /*
- * saynow: Display a messsage on the top line. Restore cursor to Rogue,
+ * saynow: Display a message on the top line. Restore cursor to Rogue,
  *         and refresh the screen.
+ *
+ * NOTE: Special case: f == NULL ==> do not format / "say" anything, just refresh the screen.
  */
 
 void
@@ -1081,9 +1083,11 @@ saynow (char *f, ...)
 
   if (!emacs && !terse) {
     memset (buf, 0, sizeof(buf)); /* paranoia */
-    va_start (ap, f);
-    vsnprintf (buf, BUFSIZ, f, ap);
-    va_end (ap);
+    if (f != NULL) {
+      va_start (ap, f);
+      vsnprintf (buf, BUFSIZ, f, ap);
+      va_end (ap);
+    }
 
     at (0,0);
 
@@ -1139,7 +1143,7 @@ givehelp (void)
 {
   if (*helpline == NULL) helpline = nexthelp;
 
-  saynow (*helpline++);
+  saynow ("%s", *helpline++);
 }
 
 /*

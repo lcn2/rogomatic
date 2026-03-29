@@ -115,7 +115,7 @@ wield (int obj)
   }
 
   /* send 2 escapes because I needed to patch the new rogue to not hang
-   * momentatirily on the first escape
+   * momentarily on the first escape
    */
   else if (version == RV53A)
     command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('p'));
@@ -375,7 +375,7 @@ dumpstuff (void)
 void
 display (char *s)
 {
-  saynow (s);
+  saynow ("%s", s);
   msgonscreen = true;
 }
 

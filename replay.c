@@ -71,7 +71,7 @@ positionreplay (void)
   if (isupper ((cmd = getch ()))) cmd = tolower (cmd);
 
   /* Clear the prompt */
-  saynow ("");
+  saynow (NULL);    /* NOTE: NULL ==> do not format / "say" anything, just refresh the screen */
 
   /* If command is not in the list, clear the prompt and exit. */
   switch (cmd) {

@@ -170,7 +170,7 @@ dwait(int msgtype, const char *from, char *f, ...)
 
   if (msgtype & D_FATAL) {
     extern jmp_buf commandtop;			/* From play */
-    saynow (msg);
+    saynow ("%s", msg);
     playing = false;
     quitrogue (msg, Gold, SAVED);
     longjmp (commandtop, 0);
@@ -178,7 +178,7 @@ dwait(int msgtype, const char *from, char *f, ...)
 
   if (! debug (msgtype | D_INFORM)) {	/* If debugoff */
     if (msgtype & D_SAY)			  /* Echo? */
-      { saynow (msg); va_end (ap); return (1); }  /* Yes => win */
+      { saynow ("%s", msg); va_end (ap); return (1); }  /* Yes => win */
 
     return (0);					  /* No => lose */
   }
@@ -351,7 +351,7 @@ toggledebug (void)
 
   if (debug(D_MONSTER))   strlcat (debugstr, "monster:", sizeof(debugstr));
 
-  saynow (debugstr);
+  saynow ("%s", debugstr);
 }
 
 /*

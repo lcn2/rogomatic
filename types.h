@@ -569,7 +569,7 @@ extern void move1 (int d);
 extern void fmove (int d);
 extern void rmove (int count, int d, int mode);
 extern void mmove (int d, int mode);
-extern void command (int tmode, char *f, ...);
+extern void command (int tmode, char *f, ...) __attribute__((format(printf, 2, 3)));
 extern char functionchar (char *cmd);
 extern int replaycommand (void);
 extern void showcommand (char *cmd);
@@ -598,7 +598,7 @@ extern void toggledebug (void);
 /* debuglog.c */
 extern void debuglog_open (const char *dir, const char *log);
 extern void debuglog_close (void);
-extern void debuglog (const char *fmt, ...);
+extern void debuglog (const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 extern void append_pidlog (const char *dir, const char *file);
 
 /* explore.c */
@@ -646,14 +646,14 @@ extern void close_errlog (void);
 extern void getrogue (char *waitstr, int onat);
 extern void terpbot (void);
 extern void dumpwalls (void);
-extern void sendnow (char *f, ...);
-extern void rogo_send (char *f, ...);
+extern void sendnow (char *f, ...) __attribute__((format(printf, 1, 2)));
+extern void rogo_send (char *f, ...) __attribute__((format(printf, 1, 2)));
 extern int resend (void);
 extern void at (int r, int c);
 extern void quitrogue (char *reason, int gld, int terminationtype);
 extern void waitfor (char *mess);
-extern void say (char *f, ...);
-extern void saynow (char *f, ...);
+extern void say (char *f, ...) __attribute__((format(printf, 1, 2)));
+extern void saynow (char *f, ...) __attribute__((format(printf, 1, 2)));
 extern void givehelp (void);
 extern void pauserogue (void);
 extern void getrogver (void);

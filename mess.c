@@ -720,7 +720,7 @@ parsemsg (char *mess, char *mend)
 
   /* Send it to dwait; if dwait doesnt print it (and echo is on) echo it */
   if (echoit & !dwait (D_MESSAGE, __func__, "%s", mess))
-    saynow (mess);
+    saynow ("%s", mess);
 }
 
 /*
