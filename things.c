@@ -108,7 +108,7 @@ wield (int obj)
       /* current weapon might be cursed */
       if (currentweapon != NONE) {
         lastdrop = currentweapon;
-        command (T_HANDLING, "w%c", ESC);
+        command (T_HANDLING, "w%c;", ESC);
       }
     return (0);
     }
@@ -119,6 +119,8 @@ wield (int obj)
    */
   else if (version == RV53A)
     command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('p'));
+  else if (version >= RV54B)
+    command (T_HANDLING, "w%c;w%c;%c", LETTER (obj), ESC, ctrl('r'));
   else
     command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('r'));
 
