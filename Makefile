@@ -81,7 +81,7 @@ MAN6DIR= ${MANDIR}/man6
 # It must be writable by everyone, since score files must be
 # created and destroyed by anyone running the program.
 #
-TMPDIR= /tmp
+TMPDIR= /var/tmp
 RGMDIR= ${TMPDIR}/rogomatic
 
 # ROGUE - default location of the rogue game
