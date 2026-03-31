@@ -119,7 +119,11 @@ wield (int obj)
    */
   else if (version == RV53A)
     command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('p'));
-  else if (version >= RV54B)
+  else if (version >= RV54A)
+    /*
+     * For rogue version RV54A or later, we issue ";" to
+     * cause the "Illegal command ';'" sync message to be generated.
+     */
     command (T_HANDLING, "w%c;w%c;%c", LETTER (obj), ESC, ctrl('r'));
   else
     command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('r'));
@@ -208,7 +212,23 @@ quaff (int obj)
     return (0);
   }
 
-  command (T_HANDLING, "q%c", LETTER (obj));
+  if (version >= RV54B) {
+      /*
+       * In case quaffing generates a reaction message that ends in "--More--"
+       * we issue a " " (space).  Then if it asks "What do you want to call it?"
+       * we issue a "?\n", which for version RV54B or later will call it
+       * by the true name.
+       *
+       * If quaffing doesn't generate a reaction message, the " " (space(
+       * does nothing, and then the "?\n" will be treated as a "ask for
+       * help in ^J (run down until adjacent).
+       *
+       * Finally the ";" will cause the "Illegal command ';'" sync message.
+       */
+      command (T_HANDLING, "q%c ?\n;", LETTER (obj));
+  } else {
+      command (T_HANDLING, "q%c", LETTER (obj));
+  }
   return (1);
 }
 
