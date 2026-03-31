@@ -245,7 +245,23 @@ reads (int obj)
     return (0);
   }
 
-  command (T_HANDLING, "r%c", LETTER (obj));
+  if (version >= RV54B) {
+      /*
+       * In case quaffing generates a reaction message that ends in "--More--"
+       * we issue a " " (space).  Then if it asks "What do you want to call it?"
+       * we issue a "?\n", which for version RV54B or later will call it
+       * by the true name.
+       *
+       * If quaffing doesn't generate a reaction message, the " " (space(
+       * does nothing, and then the "?\n" will be treated as a "ask for
+       * help in ^J (run down until adjacent).
+       *
+       * Finally the ";" will cause the "Illegal command ';'" sync message.
+       */
+      command (T_HANDLING, "r%c ?\n;", LETTER (obj));
+  } else {
+      command (T_HANDLING, "r%c", LETTER (obj));
+  }
   return (1);
 }
 
