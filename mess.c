@@ -271,7 +271,9 @@ parsemsg (char *mess, char *mend)
 
       case 'c':
 
-        if (MATCH("call it*")) { echoit = false; }
+        if (MATCH("call it*")) {
+	  echoit = false;
+	}
         else if (MATCH("call what*")) { echoit = false; }
         else unknown = true;
 

@@ -202,8 +202,11 @@ infername (char *codename, char *name, stuff item_type)
   }
   else {
     if (*dbase[i].realname && strcmp (dbase[i].realname, name))
-      dwait (D_ERROR, __func__, "dbase[%d].realname: %s != name: %s",
-		      i, dbase[i].realname, name);
+	dwait (D_ERROR, __func__, "codename: %s dbase[%d].fakename: %s dbase[%d].realname: %s != name: %s",
+			(codename == NULL ? "((NULL))" : codename),
+			i, (dbase[i].fakename[0] == '\0' ? "((empty))" : dbase[i].fakename),
+			i, (dbase[i].realname[0] == '\0' ? "((empty))" : dbase[i].realname),
+			(name == NULL ? "((NULL))" : name));
     else {
       memset (dbase[i].realname, 0, sizeof(dbase[i].realname));
       strlcpy (dbase[i].realname, name, sizeof(dbase[i].realname));
