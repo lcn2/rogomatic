@@ -64,17 +64,59 @@ err_doit(int errnoflag, int error, const char *fmt, va_list ap)
       /* special control character processing */
       if (iscntrl (*p)) {
 
-	  /* newline and horizontal tab characters are processed as is */
-	  if (*p == '\n' || *p == '\t') {
-	      fputc (*p, stream);
+	  switch (*p) {
+	  case '\a':
+	    fputs ("\\a", stream);
+	    break;
 
-	  /* all other characters are processed as "^" + un-controlled character */
-	  } else {
-	      fputc ('^', stream);	       /* write out "^" prefix */
-	      fputc (ctrl (*p) + 0100, stream); /* un-control the control character */
+	  case '\b':
+	    fputs ("\\b", stream);
+	    break;
+
+	  case 0x1b: /* \e */
+	    fputs ("^[", stream);		/* escape characters as ^[ */
+	    break;
+
+	  case '\f':
+	    fputs ("\\f", stream);
+	    break;
+
+	  case '\n':
+	    fputc ('\n', stream);		/* newlines show as newlines */
+	    break;
+
+	  case '\r':
+	    fputs ("\\r", stream);
+	    break;
+
+	  case '\t':
+	    fputs ("\\t", stream);
+	    break;
+
+	  case '\v':
+	    fputs ("\\v", stream);
+	    break;
+
+	  /* non-special control character processing */
+	  default:
+	    fputc ('^', stream);		/* write out "^" prefix */
+	    fputc (ctrl (*p) + 0100, stream);	/* un-control the control character */
+	    break;
 	  }
 
-      /* non-control characters are written as is */
+      /* as ^ (carrot) is special escape character, we escape them when they appear bare */
+      } else if (*p == '^') {
+	  fputs ("\\^", stream);
+
+      /* as \\ (backslash) is special escape character, we escape them when they appear bare */
+      } else if (*p == '\\') {
+	  fputs ("\\\\", stream);
+
+      /* DEL character, by convention, is denoted as ^? */
+      } else if (*p == 0x7f) {
+	  fputs ("^?", stream);
+
+      /* non-control characters are written as they are */
       } else {
 	  fputc (*p, stream);
       }

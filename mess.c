@@ -81,7 +81,7 @@ static int getmonhist (char *monster, int hitormiss);
  * terpmes: called when a message from Rogue is on the top line,
  * this function parses the message and notes the information.
  * Note that the messages are all lower cased, to help with
- * compatability bewtween 3.6 and 5.2, since 5.2 capitalizes more
+ * compatibility between 3.6 and 5.2, since 5.2 capitalizes more
  * messages than does 3.6.  Trailing punctuation is also ignored.
  *
  * As of Rogue 5.3, multiple messages are broken into single

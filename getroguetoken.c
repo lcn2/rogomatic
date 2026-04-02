@@ -110,6 +110,48 @@ rogue_log_write_command (char c)
   }
 }
 
+/*
+ * is_token: determine if character is a special screen reading package token
+ *
+ * The screen reading package tokens are defined by termtokens.h.
+ *
+ * returns:
+ *	true ==> character is a special screen reading package token
+ *	false ==> character is a normal character
+ */
+
+bool
+is_token (char ch)
+{
+  switch (ch) {
+    case BS_TOK:
+    case CE_TOK:
+    case CL_TOK:
+    case CM_TOK:
+    case CR_TOK:
+    case ER_TOK:
+    case LF_TOK:
+    case ND_TOK:
+    case SE_TOK:
+    case SO_TOK:
+    case TA_TOK:
+    case UP_TOK:
+    case HM_TOK:
+    case CH_TOK:
+    case NU_TOK:
+    case NR_TOK:
+    case NL_TOK:
+    case SC_TOK:
+    case RC_TOK:
+    case SR_TOK:
+    case CB_TOK:
+      return true;
+    default:
+      break;
+  }
+  return false;
+}
+
 static void
 rogue_log_write_token (char ch)
 {

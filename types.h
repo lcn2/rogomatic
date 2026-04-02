@@ -634,6 +634,7 @@ extern int findscore (char *rogue, char *roguename);
 extern int rogue_log_open (const char *filename);
 extern void rogue_log_close (void);
 extern void rogue_log_write_command (char c);
+extern bool is_token (char ch);
 extern void open_frogue_debuglog (const char *dir, const char *file);
 extern void close_frogue_debuglog (void);
 extern void open_frogue_fd (int frogue_fd);

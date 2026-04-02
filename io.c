@@ -216,8 +216,10 @@ getrogue (char *waitstr, int onat)
   q = "(* for list): ";			/* FSM to check for prompt */
   d = ")______";			/* FSM to check for tombstone grass */
 
-  if (moved)				/* If we moved last time, put any */
-    { sleepmonster (); moved = false; }	/* Old monsters to sleep */
+  if (moved) {				/* If we moved last time, put any */
+    sleepmonster ();			/* Old monsters to sleep */
+    moved = false;
+  }
 
   /* debugging info */
   if debug(D_MESSAGE) {
@@ -234,10 +236,11 @@ getrogue (char *waitstr, int onat)
   /* While we have not reached the end of the Rogue input, read */
   /* characters from Rogue and figure out what they mean.       */
   while ((*s) ||
-         ((!hasted || version != RV36A) && onat && screen[row][col] != '@')) {
+         ((!hasted || version != RV36A) &&
+	  onat && screen[row][col] != '@')) {
     ch = getroguetoken ();
 
-    if debug(D_MESSAGE) {
+    if (debug(D_MESSAGE)) {
       at (28,col);
       printw ("%s", unctrl(ch));
       at (row, col);
@@ -245,50 +248,76 @@ getrogue (char *waitstr, int onat)
     }
 
     /* If message ends in "(* for list): ", call terpmes */
-    if (ch == *q) { if (*++q == 0) terpmes (); }
-    else q = "(* for list): ";
+    if (ch == *q) {
+      if (*++q == 0) {
+	terpmes ();
+      }
+    } else {
+      q = "(* for list): ";
+    }
 
     /* Rogomatic now keys off of the grass under the Tombstone to  */
     /* detect that it has been killed. This was done because the   */
     /* "Press return" prompt only happens if there is a score file */
     /* Available on that system. Hopefully the grass is the same   */
     /* in all versions of Rogue!                                   */
-    if (ch == *d) { if (0 == *++d) { addch (ch); deadrogue (); return; } }
-    else d = ")_______";
+    if (ch == *d) {
+      if (0 == *++d) {
+	addch (ch);
+	deadrogue ();
+	return;
+      }
+    } else {
+      d = ")_______";
+    }
 
     /* If the message has a more, strip it off and call terpmes */
     if (ch == *m) {
       if (*++m == 0) {
-        /* More than 50 messages since last command ==> start logging */
-        if (++morecount > 50 && !logging) {
-          toggleecho ();
-          dwait (D_WARNING, __func__, "Started logging --More-- loop");
-        }
+	/* More than 50 messages since last command ==> start logging */
+	if (++morecount > 50 && !logging) {
+	  toggleecho ();
+	  dwait (D_WARNING, __func__, "Started logging --More-- loop");
+	}
 
-        /* Send a space (and possibly a semicolon) to clear the message */
-        if (onat == 2) sendnow (" ;");
-        else           sendnow (" ");
+	/* Send a space (and possibly a semicolon) to clear the message */
+	if (onat == 2) {
+	  sendnow (" ;");
+	} else {
+	  sendnow (" ");
+	}
 
-        /* Clear the --More-- of the end of the message */
-        for (i = col - 7; i < col; valrc (0,i) && (screen[0][i++] = ' '));
+	/* Clear the --More-- of the end of the message */
+	for (i = col - 7; i < col; valrc (0,i) && (screen[0][i++] = ' '));
 
-        terpmes ();			/* Interpret the message */
+	terpmes ();			/* Interpret the message */
       }
+    } else {
+      m = "re--";
     }
-    else m = "re--";
 
     /* If the message is 'Call it:', cancel the request */
     if (ch == *call) {
       if (*++call == 0) {
-        /* Send an escape (and possibly a semicolon) to clear the message */
-        if (onat == 2) sendnow ("%c;", ESC);
-        else           sendnow ("%c", ESC);
+	/* Send an escape (and possibly a semicolon) to clear the message */
+	if (onat == 2) {
+	  sendnow ("%c;", ESC);
+	} else {
+	  sendnow ("%c", ESC);
+	}
       }
+    } else {
+      call = "Call it:";
     }
-    else call = "Call it:";
 
     /* Check to see whether we have read the synchronization string */
-    if (*s) { if (ch == *s) s++; else s = waitstr; }
+    if (*s) {
+      if (ch == *s) {
+	s++;
+      } else {
+	s = waitstr;
+      }
+    }
 
     /* Now figure out what the token means */
     switch (ch) {
@@ -298,7 +327,6 @@ getrogue (char *waitstr, int onat)
         break;
 
       case CB_TOK:
-
         for (i =0; i < col; i++) {
           updatepos (' ', row, i);
           screen[row][i] = ' ';
@@ -308,7 +336,6 @@ getrogue (char *waitstr, int onat)
         break;
 
       case CE_TOK:
-
         if (row && row < R-1)
           for (i = col; i < C; i++) {
             updatepos (' ', row, i);
@@ -318,8 +345,12 @@ getrogue (char *waitstr, int onat)
           for (i = col; i < C; i++)
             screen[row][i] = ' ';
 
-        if (row) { at (row, col); clrtoeol (); }
-        else if (col == 0) screen00 = ' ';
+        if (row) {
+	  at (row, col);
+	  clrtoeol ();
+	} else if (col == 0) {
+	  screen00 = ' ';
+	}
 
         debuglog ("CE_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
         break;
@@ -393,10 +424,12 @@ getrogue (char *waitstr, int onat)
         break;
 
       case EOF:
-
         if (interrupted) return;
 
-        if (!replaying || !logdigested) { playing = false; return; }
+        if (!replaying || !logdigested) {
+	  playing = false;
+	  return;
+	}
 
         saynow ("End of game log, type 'Q' to exit.");
         return;
@@ -443,7 +476,6 @@ getrogue (char *waitstr, int onat)
         break;
 
       default:
-
         if (ch < ' ') {
           saynow ("Unknown character '\\%o'--more--", ch);
           waitforspace ();
@@ -451,17 +483,24 @@ getrogue (char *waitstr, int onat)
         else if (row) {
           at (row, col);
 
-          if (!emacs && !terse) addch (ch);
+          if (!emacs && !terse) {
+	    addch (ch);
+	  }
 
-          if (row == R-1) botprinted = true;
-          else            updatepos (ch, row, col);
+          if (row == R-1) {
+	    botprinted = true;
+	  } else {
+	    updatepos (ch, row, col);
+	  }
         }
-        else if (col == 0)
-          { screen00 = screen[0][0]; }
-        else if (col == 1 && ch == 'l' && screen[0][0] == 'I') {
+        else if (col == 0) {
+	  screen00 = screen[0][0];
+	} else if (col == 1 && ch == 'l' && screen[0][0] == 'I') {
           screen[0][0] = screen00;
 
-          if (screen00 != ' ') terpmes ();
+          if (screen00 != ' ') {
+	    terpmes ();
+	  }
 
           screen[0][0] = 'I';
         }
@@ -487,8 +526,10 @@ getrogue (char *waitstr, int onat)
     resetinv();
   }
 
-  if (version < RV53A && checkrange && !pending ())
-    { command (T_OTHER, "Iz"); checkrange = false; }
+  if (version < RV53A && checkrange && !pending ()) {
+    command (T_OTHER, "Iz");
+    checkrange = false;
+  }
 
   /* If mapping status has changed */
   if (wasmapped != didreadmap) {
@@ -518,10 +559,12 @@ getrogue (char *waitstr, int onat)
 
   at (row, col);
 
-  if (!emacs && !terse) refresh ();
+  if (!emacs && !terse) {
+    refresh ();
+  }
 
   printscreen ();
-
+  return;
 }
 
 /*

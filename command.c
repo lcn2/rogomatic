@@ -102,7 +102,7 @@ command (int tmode, char *f, ...)
   vsnprintf (cmd, MU_BUF, f, ap);
   va_end (ap);
 
-  debuglog ("command : command (%s)\n",cmd);
+  debuglog ("%s: rogue cmd: (%s)\n", __func__, cmd);
 
   /* Echo the command if in transparent mode */
   if (transparent)		showcommand (cmd);
