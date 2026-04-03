@@ -146,7 +146,7 @@ command (int tmode, char *f, ...)
     bumpsearchcount ();
 
   rogo_send ("%s", cmd);
-  va_end (ap);
+  return;
 }
 
 /*

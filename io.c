@@ -69,6 +69,17 @@ static char screen00 = ' ';
 
 # define SENDQ 256
 
+/* quaffing potion state */
+enum q_state {
+  q_unset = 0,	    /* no multi-message quaffing in progress */
+  q_what = 1,	    /* "Quaff what? " seen */
+  q_list = 2,	    /* "(* for list): " seen */
+  q_more = 3,	    /* "--More--" seen */
+  q_call = 4,	    /* "Call it: " seen */
+  q_quest = 5,	    /* sent "?" reply to set proper name */
+};
+static enum q_state quaff_state = q_unset;
+
 /* The command queue */
 
 static char  queue[SENDQ];             /* stuff to be sent to Rogue */
@@ -175,6 +186,28 @@ printscreen (void)
   debuglog ("--------------------------------------------------------------------------------\n");
 }
 
+static const char *
+q_state_name (enum q_state state)
+{
+  switch (state) {
+    case q_unset:
+      return "q_unset";
+    case q_what:
+      return "q_what";
+    case q_list:
+      return "q_list";
+    case q_more:
+      return "q_more";
+    case q_call:
+      return "q_call";
+    case q_quest:
+      return "q_quest";
+    default:
+      break;
+  }
+  return "q_unknown";
+}
+
 /*
  * Getrogue: Sensory interface.
  *
@@ -194,14 +227,21 @@ printscreen (void)
 void
 getrogue (char *waitstr, int onat)
 {
+  char  ch;				/* rogue output character, or screen reading package token */
+  char *quaff_what = "Quaff what? ";	/* FSM to check for "Quaff what? " */
+  char *call_it = "Call it: ";		/* FSM to check for "Call it: " */
+  char *tombstone_grass = ")______";	/* FSM to check for ")______" (tombstone grass) */
+  char *more = "--More--";		/* FSM to check for "--More--' */
+  char *for_list = "(* for list): ";	/* FSM to check for "(* for list): " prompt */
+  char *wait_msg = waitstr;		/* FSM to check for the wait msg */
+
   bool botprinted = false;
   int wasmapped = didreadmap;
+  int *doors;
+  static bool moved = false;
   int r;
   int c;
   int i, j;
-  char  ch, *s, *m, *q, *d, *call;
-  int *doors;
-  static bool moved = false;
 
   /* firewall */
   if (!valrc (row, col)) {
@@ -209,12 +249,8 @@ getrogue (char *waitstr, int onat)
   }
 
   newdoors = doorlist;			/* no new doors found yet */
-  atrow0 = atrow; atcol0 = atcol;	/* Save our current posistion */
-  s = waitstr;				/* FSM to check for the wait msg */
-  m = "re--";				/* FSM to check for '--More--' */
-  call = "Call it:";			/* FSM to check for 'Call it:' */
-  q = "(* for list): ";			/* FSM to check for prompt */
-  d = ")______";			/* FSM to check for tombstone grass */
+  atrow0 = atrow;			/* Save our current position */
+  atcol0 = atcol;			/* Save our current position */
 
   if (moved) {				/* If we moved last time, put any */
     sleepmonster ();			/* Old monsters to sleep */
@@ -235,11 +271,14 @@ getrogue (char *waitstr, int onat)
 
   /* While we have not reached the end of the Rogue input, read */
   /* characters from Rogue and figure out what they mean.       */
-  while ((*s) ||
+  while ((*wait_msg) ||
          ((!hasted || version != RV36A) &&
 	  onat && screen[row][col] != '@')) {
-    ch = getroguetoken ();
 
+    /*
+     * get next rogue output character, or screen reading package token
+     */
+    ch = getroguetoken ();
     if (debug(D_MESSAGE)) {
       at (28,col);
       printw ("%s", unctrl(ch));
@@ -247,75 +286,197 @@ getrogue (char *waitstr, int onat)
       refresh ();
     }
 
-    /* If message ends in "(* for list): ", call terpmes */
-    if (ch == *q) {
-      if (*++q == 0) {
-	terpmes ();
-      }
-    } else {
-      q = "(* for list): ";
-    }
+    /*
+     * Tokens used by the screen reading package are NOT processed
+     * for matching against various messages.  This is in case
+     * the ncurses system generates such token, such as a clear
+     * screen, or such as a cursor movement while rogue is
+     * printing a message.
+     */
+    if (!is_token (ch)) {
 
-    /* Rogomatic now keys off of the grass under the Tombstone to  */
-    /* detect that it has been killed. This was done because the   */
-    /* "Press return" prompt only happens if there is a score file */
-    /* Available on that system. Hopefully the grass is the same   */
-    /* in all versions of Rogue!                                   */
-    if (ch == *d) {
-      if (0 == *++d) {
-	addch (ch);
-	deadrogue ();
-	return;
-      }
-    } else {
-      d = ")_______";
-    }
+      /*
+       * If message ends in "Quaff what? ", note it
+       */
+      if (ch == *quaff_what) {
+	++quaff_what;
+	if (*quaff_what == '\0') {
 
-    /* If the message has a more, strip it off and call terpmes */
-    if (ch == *m) {
-      if (*++m == 0) {
-	/* More than 50 messages since last command ==> start logging */
-	if (++morecount > 50 && !logging) {
-	  toggleecho ();
-	  dwait (D_WARNING, __func__, "Started logging --More-- loop");
+	  /*
+	   * start the quaff state
+	   */
+	  debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_what saw: \"Quaff what? \"\n",
+		    __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	  quaff_state = q_what;
 	}
-
-	/* Send a space (and possibly a semicolon) to clear the message */
-	if (onat == 2) {
-	  sendnow (" ;");
-	} else {
-	  sendnow (" ");
-	}
-
-	/* Clear the --More-- of the end of the message */
-	for (i = col - 7; i < col; valrc (0,i) && (screen[0][i++] = ' '));
-
-	terpmes ();			/* Interpret the message */
-      }
-    } else {
-      m = "re--";
-    }
-
-    /* If the message is 'Call it:', cancel the request */
-    if (ch == *call) {
-      if (*++call == 0) {
-	/* Send an escape (and possibly a semicolon) to clear the message */
-	if (onat == 2) {
-	  sendnow ("%c;", ESC);
-	} else {
-	  sendnow ("%c", ESC);
-	}
-      }
-    } else {
-      call = "Call it:";
-    }
-
-    /* Check to see whether we have read the synchronization string */
-    if (*s) {
-      if (ch == *s) {
-	s++;
       } else {
-	s = waitstr;
+	quaff_what = "Quaff what? ";
+      }
+
+      /*
+       * If message ends in "(* for list): ", call terpmes()
+       */
+      if (ch == *for_list) {
+	++for_list;
+	if (*for_list == '\0') {
+
+	  /*
+	   * advance the quaff state, or unset it
+	   */
+	  if (quaff_state == q_what) {
+	    quaff_state = q_list;
+	    debuglog ("%s: file: %s line: %d quaff_state: q_what ==> %s saw: \"(* for list) \"\n",
+		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	  } else {
+	    debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_unset saw: \"(* for list) \"\n",
+		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	    quaff_state = q_unset;
+	  }
+
+	  /*
+	   * parse top line message from rogue
+	   */
+	  terpmes ();
+	}
+      } else {
+	for_list = "(* for list): ";
+      }
+
+      /*
+       * If the message has a "--More--", strip it off and call terpmes()
+       */
+      if (ch == *more) {
+	++more;
+	if (*more == '\0') {
+
+	  /*
+	   * advance the quaff state, or unset it
+	   */
+	  if (quaff_state == q_list) {
+	    quaff_state = q_more;
+	    debuglog ("%s: file: %s line: %d quaff_state: q_list ==> %s saw: \"--More--\"\n",
+		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	  } else {
+	    debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_unset saw: \"--More--\"\n",
+		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	    quaff_state = q_unset;
+	  }
+
+	  /* More than 50 messages since last command ==> start logging */
+	  ++morecount;
+	  if (morecount > 50 && !logging) {
+	    toggleecho ();
+	    dwait (D_WARNING, __func__, "Started logging --More-- loop");
+	  }
+
+	  /* Send a space (and possibly a semicolon) to clear the message */
+	  if (onat == 2) {
+	    if (version >= RV54B && quaff_state == q_more) {
+	      sendnow (" ");
+	    } else {
+	      sendnow (" ;");
+	    }
+	  } else {
+	    sendnow (" ");
+	  }
+
+	  /* Clear the "--More--" of the end of the message */
+	  for (i = col - 7; i < col; ++i) {
+	    if (valrc (0,i)) {
+	      screen[0][i] = ' ';
+	    }
+	  }
+
+	  terpmes ();			/* Interpret the message */
+	}
+      } else {
+	more = "--More--";
+      }
+
+      /*
+       * If the message is "Call it: ", clear or process the call it the request
+       */
+      if (ch == *call_it) {
+	++call_it;
+	if (*call_it == '\0') {
+
+	  /*
+	   * advance the quaff state, or unset it
+	   */
+	  if (quaff_state == q_more) {
+	    quaff_state = q_call;
+	    debuglog ("%s: file: %s line: %d quaff_state: q_more ==> %s saw: \"Call it: \"\n",
+		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	  } else {
+	    debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_unset saw: \"Call it: \"\n",
+		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	    quaff_state = q_unset;
+	  }
+
+	  /*
+	   * process a "Call it: " message
+	   */
+	  if (onat == 2) {
+
+	    /*
+	     * advance the quaff state, or unset it
+	     */
+	    if (version >= RV54B && quaff_state == q_call) {
+	      quaff_state = q_quest;
+	      debuglog ("%s: file: %s line: %d quaff_state: q_call ==> %s saw: \"Call it: \"\n",
+			__func__, __FILE__, __LINE__, q_state_name(quaff_state));
+
+	      /* since rogue 5.4.5, calling something ? sets the proper name be set automatically */
+	      debuglog ("%s: file: %s line: %d sending: \"?{nl}\"\n", __func__, __FILE__, __LINE__);
+	      sendnow ("?\n");
+	    } else {
+	      debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_unset saw: \"Call it: \"\n",
+		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	      quaff_state = q_unset;
+	    }
+
+	    /* Send an escape and semicolon to clear the message */
+	    debuglog ("%s: file: %s line: %d sending: \"ESC;\"\n", __func__, __FILE__, __LINE__);
+	    sendnow ("%c;", ESC);
+	  } else {
+	    /* Send an escape and semicolon to clear the message */
+	    debuglog ("%s: file: %s line: %d sending: \"ESC\"\n", __func__, __FILE__, __LINE__);
+	    sendnow ("%c", ESC);
+	  }
+	}
+      } else {
+	call_it = "Call it: ";
+      }
+
+      /*
+       * Rogomatic now keys off of the grass under the Tombstone to
+       * detect that it has been killed. This was done because the
+       * "Press return" prompt only happens if there is a score file
+       * Available on that system. Hopefully the grass is the same
+       * in all versions of Rogue!
+       */
+      if (ch == *tombstone_grass) {
+	++tombstone_grass;
+	if (*tombstone_grass == '\0') {
+	  debuglog ("%s: file: %s line: %d saw: \")_______\"\n", __func__, __FILE__, __LINE__);
+	  addch (ch);
+	  debuglog ("%s: file: %s line: %d calling: deadrogue()\n", __func__, __FILE__, __LINE__);
+	  deadrogue ();
+	  return;
+	}
+      } else {
+	tombstone_grass = ")_______";
+      }
+
+      /*
+       * Check to see whether we have read the synchronization string
+       */
+      if (*wait_msg) {
+	if (ch == *wait_msg) {
+	  wait_msg++;
+	} else {
+	  wait_msg = waitstr;
+	}
       }
     }
 
