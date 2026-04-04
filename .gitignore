@@ -12,6 +12,7 @@ index
 lex.yy.c
 .lldbinit
 Makefile.bak
+modern_curses.h
 NOTES
 *.o
 player

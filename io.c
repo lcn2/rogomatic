@@ -69,16 +69,27 @@ static char screen00 = ' ';
 
 # define SENDQ 256
 
-/* quaffing potion state */
-enum q_state {
-  q_unset = 0,	    /* no multi-message quaffing in progress */
-  q_what = 1,	    /* "Quaff what? " seen */
-  q_list = 2,	    /* "(* for list): " seen */
-  q_more = 3,	    /* "--More--" seen */
-  q_call = 4,	    /* "Call it: " seen */
-  q_quest = 5,	    /* sent "?" reply to set proper name */
+/* potion quaffing state */
+enum p_state {
+  p_unset = 0,	    /* no multi-message potion quaffing in progress */
+  p_what = 1,	    /* "Quaff what? " seen */
+  p_list = 2,	    /* "(* for list): " seen */
+  p_more = 3,	    /* "--More--" seen */
+  p_call = 4,	    /* "Call it: " seen */
+  p_quest = 5,	    /* sent "?" reply to set proper name */
 };
-static enum q_state quaff_state = q_unset;
+static enum p_state potion_state = p_unset;
+
+/* scroll reading state */
+enum s_state {
+  s_unset = 0,	    /* no multi-message scroll reading in progress */
+  s_what = 1,	    /* "Read what? " seen */
+  s_list = 2,	    /* "(* for list): " seen */
+  s_more = 3,	    /* "--More--" seen */
+  s_call = 4,	    /* "Call it: " seen */
+  s_quest = 5,	    /* sent "?" reply to set proper name */
+};
+static enum s_state scroll_state = s_unset;
 
 /* The command queue */
 
@@ -187,25 +198,47 @@ printscreen (void)
 }
 
 static const char *
-q_state_name (enum q_state state)
+p_state_name (enum p_state state)
 {
   switch (state) {
-    case q_unset:
-      return "q_unset";
-    case q_what:
-      return "q_what";
-    case q_list:
-      return "q_list";
-    case q_more:
-      return "q_more";
-    case q_call:
-      return "q_call";
-    case q_quest:
-      return "q_quest";
+    case p_unset:
+      return "p_unset";
+    case p_what:
+      return "p_what";
+    case p_list:
+      return "p_list";
+    case p_more:
+      return "p_more";
+    case p_call:
+      return "p_call";
+    case p_quest:
+      return "p_quest";
     default:
       break;
   }
-  return "q_unknown";
+  return "p_unknown";
+}
+
+static const char *
+s_state_name (enum s_state state)
+{
+  switch (state) {
+    case s_unset:
+      return "s_unset";
+    case s_what:
+      return "s_what";
+    case s_list:
+      return "s_list";
+    case s_more:
+      return "s_more";
+    case s_call:
+      return "s_call";
+    case s_quest:
+      return "s_quest";
+    default:
+      break;
+  }
+  return "s_unknown";
 }
 
 /*
@@ -228,11 +261,13 @@ void
 getrogue (char *waitstr, int onat)
 {
   char  ch;				/* rogue output character, or screen reading package token */
+  char *welcome_to = "Welcome to level ";   /* FSM to check for "Welcome to level ((level)) */
   char *quaff_what = "Quaff what? ";	/* FSM to check for "Quaff what? " */
+  char *read_what = "Read what? ";	/* FSM to check for "Read what? " */
   char *call_it = "Call it: ";		/* FSM to check for "Call it: " */
-  char *tombstone_grass = ")______";	/* FSM to check for ")______" (tombstone grass) */
   char *more = "--More--";		/* FSM to check for "--More--' */
   char *for_list = "(* for list): ";	/* FSM to check for "(* for list): " prompt */
+  char *tombstone_grass = ")______";	/* FSM to check for ")______" (tombstone grass) */
   char *wait_msg = waitstr;		/* FSM to check for the wait msg */
 
   bool botprinted = false;
@@ -303,14 +338,50 @@ getrogue (char *waitstr, int onat)
 	if (*quaff_what == '\0') {
 
 	  /*
-	   * start the quaff state
+	   * force the scroll reading state to be unset
 	   */
-	  debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_what saw: \"Quaff what? \"\n",
-		    __func__, __FILE__, __LINE__, q_state_name(quaff_state));
-	  quaff_state = q_what;
+	  if (scroll_state != s_unset) {
+	      debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Quaff what? \"\n",
+			__func__, __FILE__, __LINE__, s_state_name(scroll_state));
+	      scroll_state = s_unset;
+	  }
+
+	  /*
+	   * start the potion quaffing state
+	   */
+	  debuglog ("%s: file: %s line: %d potion_state: %s ==> p_what saw: \"Quaff what? \"\n",
+		    __func__, __FILE__, __LINE__, p_state_name(potion_state));
+	  potion_state = p_what;
 	}
       } else {
 	quaff_what = "Quaff what? ";
+      }
+
+      /*
+       * If message ends in "Read what? ", note it
+       */
+      if (ch == *read_what) {
+	++read_what;
+	if (*read_what == '\0') {
+
+	  /*
+	   * force the potion quaffing state to be unset
+	   */
+	  if (potion_state != p_unset) {
+	      debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Read what? \"\n",
+			__func__, __FILE__, __LINE__, p_state_name(potion_state));
+	      potion_state = p_unset;
+	  }
+
+	  /*
+	   * start the scroll reading state
+	   */
+	  debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_what saw: \"Read what? \"\n",
+		    __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+	  scroll_state = s_what;
+	}
+      } else {
+	read_what = "Read what? ";
       }
 
       /*
@@ -321,16 +392,69 @@ getrogue (char *waitstr, int onat)
 	if (*for_list == '\0') {
 
 	  /*
-	   * advance the quaff state, or unset it
+	   * advance the potion quaffing state if it was p_what
 	   */
-	  if (quaff_state == q_what) {
-	    quaff_state = q_list;
-	    debuglog ("%s: file: %s line: %d quaff_state: q_what ==> %s saw: \"(* for list) \"\n",
-		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	  if (potion_state == p_what) {
+
+	    /*
+	     * force the scroll reading state to be unset
+	     */
+	    if (scroll_state != s_unset) {
+              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"(* for list) \"\n",
+                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+              scroll_state = s_unset;
+	    }
+
+	    /*
+	     * advance potion quaff state
+	     */
+	    potion_state = p_list;
+	    debuglog ("%s: file: %s line: %d potion_state: p_what ==> %s saw: \"(* for list) \"\n",
+		      __func__, __FILE__, __LINE__, p_state_name(potion_state));
+
+	  /*
+	   * advance the scroll reading state if it was s_what
+	   */
+	  } else if (scroll_state == s_what) {
+
+	    /*
+	     * force the potion quaffing state to be unset
+	     */
+	    if (potion_state != p_unset) {
+              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"(* for list) \"\n",
+                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
+              potion_state = p_unset;
+	    }
+
+	    /*
+	     * advance scroll reading state
+	     */
+	    scroll_state = s_list;
+	    debuglog ("%s: file: %s line: %d scroll_state: s_what ==> %s saw: \"(* for list) \"\n",
+		      __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+
+	  /*
+	   * otherwise force the scroll reading, and force the potion quaffing state to be unset
+	   */
 	  } else {
-	    debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_unset saw: \"(* for list) \"\n",
-		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
-	    quaff_state = q_unset;
+
+	    /*
+	     * force the scroll reading state to be unset
+	     */
+	    if (scroll_state != s_unset) {
+              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"(* for list) \"\n",
+                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+              scroll_state = s_unset;
+	    }
+
+	    /*
+	     * force the potion quaffing state to be unset
+	     */
+	    if (potion_state != p_unset) {
+              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"(* for list) \"\n",
+                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
+              potion_state = p_unset;
+	    }
 	  }
 
 	  /*
@@ -350,16 +474,69 @@ getrogue (char *waitstr, int onat)
 	if (*more == '\0') {
 
 	  /*
-	   * advance the quaff state, or unset it
+	   * advance the potion quaffing state if it was p_list
 	   */
-	  if (quaff_state == q_list) {
-	    quaff_state = q_more;
-	    debuglog ("%s: file: %s line: %d quaff_state: q_list ==> %s saw: \"--More--\"\n",
-		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	  if (potion_state == p_list) {
+
+	    /*
+	     * force the scroll reading state to be unset
+	     */
+	    if (scroll_state != s_unset) {
+              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"--More--\"\n",
+                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+              scroll_state = s_unset;
+	    }
+
+	    /*
+	     * advance potion quaff state
+	     */
+	    potion_state = p_more;
+	    debuglog ("%s: file: %s line: %d potion_state: p_list ==> %s saw: \"--More--\"\n",
+		      __func__, __FILE__, __LINE__, p_state_name(potion_state));
+
+	  /*
+	   * advance the scroll reading state if it was s_list
+	   */
+	  } else if (scroll_state == s_list) {
+
+	    /*
+	     * force the potion quaffing state to be unset
+	     */
+	    if (potion_state != p_unset) {
+              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"--More--\"\n",
+                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
+              potion_state = p_unset;
+	    }
+
+	    /*
+	     * advance scroll reading state
+	     */
+	    scroll_state = s_more;
+	    debuglog ("%s: file: %s line: %d scroll_state: s_list ==> %s saw: \"--More--\"\n",
+		      __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+
+	  /*
+	   * otherwise force the scroll reading, and force the potion quaffing state to be unset
+	   */
 	  } else {
-	    debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_unset saw: \"--More--\"\n",
-		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
-	    quaff_state = q_unset;
+
+	    /*
+	     * force the scroll reading state to be unset
+	     */
+	    if (scroll_state != s_unset) {
+              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"--More--\"\n",
+                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+              scroll_state = s_unset;
+	    }
+
+	    /*
+	     * force the potion quaffing state to be unset
+	     */
+	    if (potion_state != p_unset) {
+              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"--More--\"\n",
+                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
+              potion_state = p_unset;
+	    }
 	  }
 
 	  /* More than 50 messages since last command ==> start logging */
@@ -371,7 +548,7 @@ getrogue (char *waitstr, int onat)
 
 	  /* Send a space (and possibly a semicolon) to clear the message */
 	  if (onat == 2) {
-	    if (version >= RV54B && quaff_state == q_more) {
+	    if (version >= RV54B && potion_state == p_more) {
 	      sendnow (" ");
 	    } else {
 	      sendnow (" ;");
@@ -401,16 +578,81 @@ getrogue (char *waitstr, int onat)
 	if (*call_it == '\0') {
 
 	  /*
-	   * advance the quaff state, or unset it
+	   * advance the potion quaffing state if it was p_more
 	   */
-	  if (quaff_state == q_more) {
-	    quaff_state = q_call;
-	    debuglog ("%s: file: %s line: %d quaff_state: q_more ==> %s saw: \"Call it: \"\n",
-		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	  if (potion_state == p_list || potion_state == p_more) {
+
+	    /*
+	     * force the scroll reading state to be unset
+	     */
+	    if (scroll_state != s_unset) {
+              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Call it: \"\n",
+                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+              scroll_state = s_unset;
+	    }
+
+	    /*
+	     * advance potion quaff state
+	     */
+	    if (potion_state == p_list) {
+	      potion_state = p_call;
+	      debuglog ("%s: file: %s line: %d potion_state: p_list ==> %s saw: \"Call it: \"\n",
+			__func__, __FILE__, __LINE__, p_state_name(potion_state));
+	    } else if (potion_state == p_more) {
+	      potion_state = p_call;
+	      debuglog ("%s: file: %s line: %d potion_state: p_more ==> %s saw: \"Call it: \"\n",
+			__func__, __FILE__, __LINE__, p_state_name(potion_state));
+	    }
+
+	  /*
+	   * advance the scroll reading state if it was s_more
+	   */
+	  } else if (scroll_state == s_list || scroll_state == s_more) {
+
+	    /*
+	     * force the potion quaffing state to be unset
+	     */
+	    if (potion_state != p_unset) {
+              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Call it: \"\n",
+                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
+              potion_state = p_unset;
+	    }
+
+	    /*
+	     * advance scroll reading state
+	     */
+	    if (scroll_state == s_list) {
+	      scroll_state = s_call;
+	      debuglog ("%s: file: %s line: %d scroll_state: s_list ==> %s saw: \"Call it: \"\n",
+			__func__, __FILE__, __LINE__, s_state_name(scroll_state));
+	    } else if (scroll_state == s_more) {
+	      scroll_state = s_call;
+	      debuglog ("%s: file: %s line: %d scroll_state: s_more ==> %s saw: \"Call it: \"\n",
+			__func__, __FILE__, __LINE__, s_state_name(scroll_state));
+	    }
+
+	  /*
+	   * otherwise force the scroll reading, and force the potion quaffing state to be unset
+	   */
 	  } else {
-	    debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_unset saw: \"Call it: \"\n",
-		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
-	    quaff_state = q_unset;
+
+	    /*
+	     * force the scroll reading state to be unset
+	     */
+	    if (scroll_state != s_unset) {
+              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Call it: \"\n",
+                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+              scroll_state = s_unset;
+	    }
+
+	    /*
+	     * force the potion quaffing state to be unset
+	     */
+	    if (potion_state != p_unset) {
+              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Call it: \"\n",
+                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
+              potion_state = p_unset;
+	    }
 	  }
 
 	  /*
@@ -419,29 +661,50 @@ getrogue (char *waitstr, int onat)
 	  if (onat == 2) {
 
 	    /*
-	     * advance the quaff state, or unset it
+	     * advance the potion quaffing state
 	     */
-	    if (version >= RV54B && quaff_state == q_call) {
-	      quaff_state = q_quest;
-	      debuglog ("%s: file: %s line: %d quaff_state: q_call ==> %s saw: \"Call it: \"\n",
-			__func__, __FILE__, __LINE__, q_state_name(quaff_state));
+	    if (version >= RV54B) {
 
-	      /* since rogue 5.4.5, calling something ? sets the proper name be set automatically */
-	      debuglog ("%s: file: %s line: %d sending: \"?{nl}\"\n", __func__, __FILE__, __LINE__);
-	      sendnow ("?\n");
-	    } else {
-	      debuglog ("%s: file: %s line: %d quaff_state: %s ==> q_unset saw: \"Call it: \"\n",
-		      __func__, __FILE__, __LINE__, q_state_name(quaff_state));
-	      quaff_state = q_unset;
+	      if (potion_state == p_call) {
+
+		/*
+		 * advance potion quaffing state to p_quest
+		 */
+		potion_state = p_quest;
+		debuglog ("%s: file: %s line: %d potion_state: p_call ==> %s saw: \"Call it: \"\n",
+			  __func__, __FILE__, __LINE__, p_state_name(potion_state));
+
+		/* since rogue 5.4.5, calling something ? sets the proper name be set automatically */
+		debuglog ("%s: file: %s line: %d sending: \"?{nl};\"\n", __func__, __FILE__, __LINE__);
+		sendnow ("?\n;");
+
+	      /*
+	       * advance the scroll reading state
+	       */
+	      } else if (scroll_state == s_call) {
+
+		/*
+		 * advance scroll reading state to s_quest
+		 */
+		scroll_state = s_quest;
+		debuglog ("%s: file: %s line: %d scroll_state: s_call ==> %s saw: \"Call it: \"\n",
+			  __func__, __FILE__, __LINE__, s_state_name(scroll_state));
+
+		/* since rogue 5.4.5, calling something ? sets the proper name be set automatically */
+		debuglog ("%s: file: %s line: %d sending: \"?{nl};\"\n", __func__, __FILE__, __LINE__);
+		sendnow ("?\n;");
+	      }
 	    }
 
 	    /* Send an escape and semicolon to clear the message */
 	    debuglog ("%s: file: %s line: %d sending: \"ESC;\"\n", __func__, __FILE__, __LINE__);
 	    sendnow ("%c;", ESC);
+
 	  } else {
-	    /* Send an escape and semicolon to clear the message */
-	    debuglog ("%s: file: %s line: %d sending: \"ESC\"\n", __func__, __FILE__, __LINE__);
-	    sendnow ("%c", ESC);
+
+	      /* Send an escape to clear the message */
+	      debuglog ("%s: file: %s line: %d sending: \"ESC\"\n", __func__, __FILE__, __LINE__);
+	      sendnow ("%c", ESC);
 	  }
 	}
       } else {
