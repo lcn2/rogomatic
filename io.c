@@ -261,7 +261,6 @@ void
 getrogue (char *waitstr, int onat)
 {
   char  ch;				/* rogue output character, or screen reading package token */
-  char *welcome_to = "Welcome to level ";   /* FSM to check for "Welcome to level ((level)) */
   char *quaff_what = "Quaff what? ";	/* FSM to check for "Quaff what? " */
   char *read_what = "Read what? ";	/* FSM to check for "Read what? " */
   char *call_it = "Call it: ";		/* FSM to check for "Call it: " */
