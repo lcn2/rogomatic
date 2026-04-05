@@ -357,6 +357,7 @@ main (int argc, char *argv[])
     /*
      * set vt100 terminal as player can parse vt100 terminal output
      */
+    save_termattr(rgmdir);
     if (setenv ("TERM", "vt100", 1) != 0) {
       fprintf (stderr, "ERROR: can't setenv (\"TERM\", \"vt100\", 1)\n");
       exit (1);

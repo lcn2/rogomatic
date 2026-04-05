@@ -63,6 +63,51 @@ static void  (*pstat)(int) = NULL;
 static void  (*qstat)(int) = NULL;
 static void  (*tstat)(int) = NULL;
 
+static char *termattr_path = NULL;
+
+void save_termattr(char *dir) {
+  termattr_path = form_path(dir, "saved_termattr");
+  int f = open (termattr_path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (f < 0) {
+    fprintf(stderr, "Failed to open file %s with error %m, terminal attributes will not be saved\n", termattr_path, errno);
+    return;
+  }
+
+  struct termios tattr;
+  tcgetattr (STDIN_FILENO, &tattr);
+  write(f, &tattr, sizeof(tattr));
+  tcgetattr (STDOUT_FILENO, &tattr);
+  write(f, &tattr, sizeof(tattr));
+  tcgetattr (STDERR_FILENO, &tattr);
+  write(f, &tattr, sizeof(tattr));
+
+  if (close(f) < 0) {
+    fprintf(stderr, "Failed to close file %s with error %m\n", termattr_path, errno);
+    exit(1);
+  }
+}
+
+void restore_termattr() {
+  int f = open (termattr_path, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (f < 0) {
+    fprintf(stderr, "Failed to open file %s with error %m, terminal state will not be restored\n", termattr_path, errno);
+    return;
+  }
+
+  struct termios tattr;
+  read(f, &tattr, sizeof(tattr));
+  tcsetattr(STDIN_FILENO, TCSANOW, &tattr);
+  read(f, &tattr, sizeof(tattr));
+  tcsetattr(STDOUT_FILENO, TCSANOW, &tattr);
+  read(f, &tattr, sizeof(tattr));
+  tcsetattr(STDERR_FILENO, TCSANOW, &tattr);
+
+  if (close(f) < 0) {
+    fprintf(stderr, "Failed to close file %s with error %m\n", termattr_path, errno);
+    exit(1);
+  }
+}
+
 /*
  * rogo_baudrate: Determine the baud rate of the terminal
  */
@@ -176,60 +221,60 @@ ncurses_delete(void)
 void
 endwin_and_ncurses_cleanup (void)
 {
-    struct termios current;	/* current terminal settings */
+  /*
+   * flush all output
+   */
+  fflush (stdout);
+  fflush (stderr);
 
-    /*
-     * flush all output
-     */
-    fflush (stdout);
-    fflush (stderr);
+  /*
+   * ncurses cleanup unless endwin() was already called
+   */
+  if (stdscr != NULL && !isendwin ()) {
+  /*
+   * move to corner of window
+   */
+    mvcur (0, C-1, R-1, 0);
 
-    /*
-     * ncurses cleanup unless endwin() was already called
-     */
-    if (stdscr != NULL && !isendwin ()) {
+  /*
+   * turn on echo and turn off raw
+   */
+    (void) echo ();
+    (void) noraw ();
 
-	/*
-	 * move to corner of window
-	 */
-        mvcur (0, C-1, R-1, 0);
+  /*
+   * clean up and delete curses
+   */
+    (void) endwin ();
+    ncurses_delete ();
+  }
 
-	/*
-	 * turn on echo and turn off raw
-	 */
-	(void) echo ();
-	(void) noraw ();
+  /*
+   * restore previously saved terminal attributes
+   */
 
-	/*
-	 * clean up and delete curses
-	 */
-	(void) endwin ();
-	ncurses_delete ();
-    }
+  restore_termattr();
 
-    /*
-     * turn off raw mode
-     *
-     * NOTE: We need to explicitly enable canonical mode, and echo
-     *	     in case isendwin() was false while in raw mode.
-     */
-    tcgetattr (STDIN_FILENO, &current);
-    current.c_lflag |= ICANON;	    /* enable canonical mode */
-    current.c_lflag |= ECHO;	    /* enable echo */
-    tcsetattr (STDIN_FILENO, TCSANOW, &current);
+  /*
+    * output newline only once, even if this function is called several times
+    *
+    * NOTE: This function might be called via the atexit(3) facility, or as
+    *	     a result of a signal handler, or both.  As a result we have
+    *	     to guard against multiple calls to this function.
+    */
+  if (!final_newline) {
+    putchar ('\n');
+  }
+  final_newline = true;
+  fflush (stdout);
+}
 
-    /*
-     * output newline only once, even if this function is called several times
-     *
-     * NOTE: This function might be called via the atexit(3) facility, or as
-     *	     a result of a signal handler, or both.  As a result we have
-     *	     to guard against multiple calls to this function.
-     */
-    if (!final_newline) {
-	putchar ('\n');
-    }
-    final_newline = true;
-    fflush (stdout);
+void
+inter_endwin_and_ncurses_cleanup (int sig __attribute__ ((__unused__)))
+{
+  endwin_and_ncurses_cleanup();
+  signal(sig, SIG_DFL);
+  raise(sig);
 }
 
 /*

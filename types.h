@@ -851,6 +851,7 @@ extern FILE *wopen(char *fname, char *mode);
 extern int fexists (char *fn);
 extern int filelength (char *f);
 extern void endwin_and_ncurses_cleanup (void);
+extern void inter_endwin_and_ncurses_cleanup (int sig __attribute__ ((__unused__)));
 extern void critical (void);
 extern void uncritical (void);
 extern void reset_int (void);
@@ -861,6 +862,7 @@ extern int lock_file (const char *caller, const char *dir, const char *lokfil);
 extern void unlock_file (const char *caller, int lock_fd);
 extern void quit (int code, char *fmt, ...) __attribute__((format(printf, 2, 3))) __attribute__((noreturn));
 extern int stlmatch (char *big, char *small);
+extern void save_termattr(char *dir);
 
 /* worth.c */
 extern int worth (int obj);
