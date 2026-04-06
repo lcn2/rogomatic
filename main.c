@@ -385,7 +385,6 @@ main (int argc, char *argv[])
   bool singlestep = false;	/* True ==> go one turn */
   bool startecho = false;	/* True ==> turn on echoing on startup */
   bool startingup = true;	/* True ==> startup started but not complete */
-  bool time_subpath = false;	/* True ==> use a UTC date and time sub-directory */
   char logfilename[100];	/* Name of log file */
   pid_t pid = -1;		/* process id */
   char pidfilename[TY_BUF + 1]; /* +1 for paranoia */
@@ -474,14 +473,13 @@ main (int argc, char *argv[])
       int emacs_int;		/* integer form of emacs boolean */
       int terse_int;		/* integer form of terse boolean */
       int transparent_int;	/* integer form of transparent boolean */
-      int time_subpath_int;	/* integer form of time_subpath boolean */
 
       /* parse options in third argument */
-      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%d",
+      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d",
                             &cheat_int, &noterm_int, &startecho_int, &nohalf_int,
-                            &emacs_int, &terse_int, &transparent_int, &time_subpath_int);
-      if (i != 8) {
-	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 8 flags, returned: %d\n", argv[3], i);
+                            &emacs_int, &terse_int, &transparent_int);
+      if (i != 7) {
+	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 7 flags, returned: %d\n", argv[3], i);
 	  exit(1);
       }
 
@@ -493,7 +491,6 @@ main (int argc, char *argv[])
       emacs = (emacs_int == 0) ? false : true;
       terse = (terse_int == 0) ? false : true;
       transparent = (transparent_int == 0) ? false : true;
-      time_subpath = (time_subpath_int == 0) ? false : true;
   }
 
   /* The fourth argument is the Rogue name */
@@ -513,7 +510,7 @@ main (int argc, char *argv[])
   /*
    * determine the rogomatic directory path and rogomatic lock file path
    */
-  set_rgmdir (time_subpath);
+  set_rgmdir (false);
 
   /*
    * send stderr to an errlog file

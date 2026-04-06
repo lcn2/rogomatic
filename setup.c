@@ -45,7 +45,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.2 20026-03-21"
+# define VERSION "14.1.3 20026-04-06"
 
 /*
  * global declarations
@@ -271,11 +271,10 @@ main (int argc, char *argv[])
   /*
    * determine the rogomatic directory path and rogomatic lock file path
    *
-   * However, do not form the UTC date and time sub-directory just yet.
-   * Let the player command do that so that the UTC date and time
-   * is of when the player command starts.
+   * We will form the UTC date and time sub-directory, modifying rgmdir.
+   * When player is execl()-ed, the modified rgmdir as the kast arg.
    */
-  set_rgmdir (false);
+  set_rgmdir (time_subpath);
 
   /*
    * Find which rogue executable to use
@@ -323,13 +322,13 @@ main (int argc, char *argv[])
     exit (1);
   }
 
-  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%d",
-           cheat, noterm, echo, nohalf, emacs, terse, user, time_subpath);
+  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d",
+           cheat, noterm, echo, nohalf, emacs, terse, user);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
   /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir */
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
 	    "terse", "noflush", "jump", "seefloor", "nopassgo", "tombstone", "slow", getname (), "apricot",
-	    rgmdir, "rogue.sav", rgmdir, "rogue.scr", rgmdir, "rogue.lck");
+	    RGMDIR, "rogue.sav", RGMDIR, "rogue.scr", RGMDIR, "rogue.lck");
 
   if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
 
