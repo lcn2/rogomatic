@@ -448,8 +448,8 @@ main (int argc, char *argv[])
   /*
    * on exit: cleanup I/O, and shutdown ncurses (if needed)
    */
-  (void) atexit(endwin_and_ncurses_cleanup);
-  int_exit(inter_endwin_and_ncurses_cleanup);
+  (void) atexit (endwin_and_ncurses_cleanup);
+  int_exit (inter_endwin_and_ncurses_cleanup);
 
   /* The second argument to player is the process id of Rogue */
   errno = 0;

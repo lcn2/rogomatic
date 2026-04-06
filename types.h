@@ -862,7 +862,8 @@ extern int lock_file (const char *caller, const char *dir, const char *lokfil);
 extern void unlock_file (const char *caller, int lock_fd);
 extern void quit (int code, char *fmt, ...) __attribute__((format(printf, 2, 3))) __attribute__((noreturn));
 extern int stlmatch (char *big, char *small);
-extern void save_termattr(char *dir);
+extern void save_termattr (char *dir);
+extern void restore_termattr (void);
 
 /* worth.c */
 extern int worth (int obj);
