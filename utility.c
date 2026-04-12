@@ -42,6 +42,7 @@
 # include <time.h>
 # include <fcntl.h>
 # include <errno.h>
+# include <sys/file.h>
 
 # include "have_strlcat.h"
 # include "have_strlcpy.h"
