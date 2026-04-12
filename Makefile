@@ -171,12 +171,12 @@ H_SRC= ${BUILD_H_SRC} types.h globals.h install.h termtokens.h getroguetoken.h \
 
 OBJS= arms.o command.o config.o database.o debug.o debuglog.o explore.o \
 	getroguetoken.o io.o learn.o ltm.o main.o mess.o monsters.o pack.o \
-	rand.o replay.o rooms.o scorefile.o search.o stats.o strategy.o strl.o \
+	rand.o replay.o rooms.o terminal.o scorefile.o search.o stats.o strategy.o strl.o \
 	survival.o tactics.o things.o titlepage.o utility.o worth.o
 
 CFILES= arms.c command.c config.c database.c debug.c debuglog.c explore.c \
 	getroguetoken.c io.c learn.c ltm.c main.c mess.c monsters.c pack.c \
-	rand.c replay.c rooms.c scorefile.c search.c stats.c strategy.c strl.c \
+	rand.c replay.c rooms.c terminal.c scorefile.c search.c stats.c strategy.c strl.c \
 	survival.c tactics.c things.c titlepage.c utility.c worth.c
 
 MISC_C= setup.c histplot.c rgmplot.c gene.c
@@ -341,20 +341,20 @@ all: ${BUILD_H_SRC} ${TARGETS} rogomatic.6
 .c.o:
 	${CC} ${CFLAGS} -c $*.c
 
-gene: gene.o rand.o learn.o stats.o utility.o config.o strl.o
-	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o config.o strl.o -lm ${LIBS} -o $@
+gene: gene.o rand.o learn.o stats.o utility.o config.o strl.o terminal.o
+	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o config.o strl.o terminal.o -lm ${LIBS} -o $@
 
-histplot: histplot.o utility.o strl.o
-	${CC} ${LDFLAGS} histplot.o utility.o strl.o ${LIBS} -o $@
+histplot: histplot.o utility.o strl.o config.o terminal.o
+	${CC} ${LDFLAGS} histplot.o utility.o strl.o config.o terminal.o ${LIBS} -o $@
 
 player: ${OBJS}
 	${CC} ${LDFLAGS} ${OBJS} -lm ${LIBS} -o $@
 
-rgmplot: rgmplot.o utility.o strl.o
-	${CC} ${LDFLAGS} rgmplot.o utility.o strl.o ${LIBS} -o $@
+rgmplot: rgmplot.o utility.o strl.o config.o terminal.o
+	${CC} ${LDFLAGS} rgmplot.o utility.o strl.o config.o terminal.o ${LIBS} -o $@
 
-rogomatic: setup.o scorefile.o utility.o config.o strl.o
-	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o strl.o ${LIBS} -o $@
+rogomatic: setup.o scorefile.o utility.o config.o strl.o terminal.o
+	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o strl.o terminal.o ${LIBS} -o $@
 
 
 ##################################################
@@ -795,10 +795,8 @@ command.o: modern_curses.h
 command.o: strl.h
 command.o: types.h
 config.o: config.c
-config.o: globals.h
 config.o: have_strlcat.h
 config.o: have_strlcpy.h
-config.o: install.h
 config.o: strl.h
 config.o: types.h
 database.o: database.c
@@ -929,6 +927,9 @@ tactics.o: install.h
 tactics.o: modern_curses.h
 tactics.o: tactics.c
 tactics.o: types.h
+terminal.o: globals.h
+terminal.o: terminal.c
+terminal.o: types.h
 things.o: globals.h
 things.o: modern_curses.h
 things.o: things.c

@@ -32,6 +32,7 @@
 # include <string.h>
 
 # include "types.h"
+# include "config.h"
 # include "install.h"
 
 /*
@@ -42,8 +43,6 @@ extern void set_rgmdir (bool time_subpath);
 /*
  * global declarations
  */
-char rgmdir[MU_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-char lock_path[TY_BUF + 1] = { '\0' };  /* rogomatic lock file path, +1 for paranoia */
 char genelock[TY_BUF + 1] = { '\0' };	/* Gene pool lock file, +1 for paranoia */
 char genepool[TY_BUF + 1] = { '\0' };	/* Gene pool, +1 for paranoia */
 char *knob_name[MAXKNOB] = {

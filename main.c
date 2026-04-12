@@ -108,6 +108,7 @@
 # include "strl.h"
 # include "modern_curses.h"
 # include "types.h"
+# include "config.h"
 # include "install.h"
 # include "termtokens.h"
 
@@ -137,8 +138,6 @@ char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone - How we died, +
 char pending_call_letter = ' ';	/* If non-blank we have a call it to do - Pack object we know a name for */
 char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
 char versionstr[MU_BUF + 1];		/* Version of Rogue being used, +1 for paranoia */
-char rgmdir[MU_BUF + 1];		/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-char lock_path[TY_BUF + 1];	/* rogomatic lock file path, +1 for paranoia */
 char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 char *termination = "perditus";	/* Latin verb for how we died */
 

@@ -42,8 +42,6 @@
 # include <time.h>
 # include <fcntl.h>
 # include <errno.h>
-# include <sys/file.h>
-# include <termios.h>
 
 # include "have_strlcat.h"
 # include "have_strlcpy.h"
@@ -55,421 +53,13 @@
 # define TRUE 1
 # define FALSE 0
 
-static bool final_newline = false;	/* True is endwin_and_ncurses_cleanup() has been called */
-
 static void  (*hstat)(int) = NULL;
 static void  (*istat)(int) = NULL;
 static void  (*pstat)(int) = NULL;
 static void  (*qstat)(int) = NULL;
 static void  (*tstat)(int) = NULL;
 
-static char *termattr_path = NULL;
-
-/*
- * save_termattr: save stdin, stdout, and stderr terminal state into saved_termattr file
- */
-
-void
-save_termattr (char *dir)
-{
-  struct termios tattr_stdin;    /* stdin terminal state */
-  struct termios tattr_stdout;   /* stdout terminal state */
-  struct termios tattr_stderr;   /* stderr terminal state */
-  int f;			 /* saved_termattr open file descriptor */
-  int ret;			 /* tcgetattr() return status */
-  ssize_t wr_ret;		 /* write() return status */
-  ssize_t cl_ret;		 /* close() return status */
-
-  /*
-   * obtain the stdin, stdout and stderr terminal states
-   */
-  memset (&tattr_stdin, 0, sizeof(tattr_stdin)); /* paranoia */
-  ret = tcgetattr (STDIN_FILENO, &tattr_stdin);
-  if (ret != 0) {
-    fprintf(stderr, "Warning: terminal attributes not saved: tcgetattr of stdin state failed: %s", strerror (errno));
-    return;
-  }
-  /**/
-  memset (&tattr_stdout, 0, sizeof(tattr_stdout)); /* paranoia */
-  ret = tcgetattr (STDOUT_FILENO, &tattr_stdout);
-  if (ret != 0) {
-    fprintf(stderr, "Warning: terminal attributes not saved: tcgetattr of stdout state failed: %s", strerror (errno));
-    return;
-  }
-  /**/
-  memset (&tattr_stderr, 0, sizeof(tattr_stderr)); /* paranoia */
-  ret = tcgetattr (STDERR_FILENO, &tattr_stderr);
-  if (ret != 0) {
-    fprintf(stderr, "Warning: terminal attributes not saved: tcgetattr of stderr state failed: %s", strerror (errno));
-    return;
-  }
-
-  /*
-   * form saved_termattr path
-   */
-  termattr_path = form_path(dir, "saved_termattr");
-
-  /*
-   * open for writing (create if needed with more 0644) saved_termattr
-   */
-  f = open (termattr_path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH); /* mode 0644 */
-  if (f < 0) {
-
-    /* indicate that saved_termattr is not setup */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: open: %s failed: %s\n", termattr_path, strerror (errno));
-    return;
-
-  }
-
-  /*
-   * write stdin, stdout and stderr terminal states to the saved_termattr file
-   */
-  wr_ret = write (f, &tattr_stdin, sizeof(tattr_stdin));
-  if (wr_ret < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: write of stdin state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  } else if (wr_ret != sizeof(tattr_stdin)) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: write size of stdin state: %zd != %zu", wr_ret, sizeof(tattr_stdin));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  }
-  /**/
-  wr_ret = write (f, &tattr_stdout, sizeof(tattr_stdout));
-  if (wr_ret < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: write of stdout state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  } else if (wr_ret != sizeof(tattr_stdout)) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: write size of stdout state: %zd != %zu", wr_ret, sizeof(tattr_stdout));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  }
-  /**/
-  wr_ret = write (f, &tattr_stderr, sizeof(tattr_stderr));
-  if (wr_ret < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: write of stderr state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  } else if (wr_ret != sizeof(tattr_stderr)) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: write size of stderr state: %zd != %zu", wr_ret, sizeof(tattr_stderr));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  }
-
-  /*
-   * close saved_termattr
-   */
-  cl_ret = close(f);
-  if (cl_ret < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-
-  }
-  return;
-}
-
-/*
- * restore_termattr: restore terminal state for stdin, stdout, and stderr from the saved_termattr file
- */
-
-void
-restore_termattr (void)
-{
-  struct termios tattr_stdin;    /* stdin terminal state */
-  struct termios tattr_stdout;   /* stdout terminal state */
-  struct termios tattr_stderr;   /* stderr terminal state */
-  int f;			 /* saved_termattr open file descriptor */
-  int ret;			 /* tcsetattr() return status */
-  ssize_t rd_ret;		 /* read() return status */
-  ssize_t cl_ret;		 /* close() return status */
-
-  /*
-   * firewall
-   */
-  if (termattr_path == NULL) {
-    fprintf(stderr, "Warning: terminal attributes not restored: saved_termattr file was not formed, or was incomplete\n");
-    return;
-  }
-
-  /*
-   * open of reading saved_termattr
-   */
-  f = open (termattr_path, O_RDONLY);
-  if (f < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: open: %s failed: %s\n", termattr_path, strerror (errno));
-    return;
-
-  }
-
-  /*
-   * read stdin, stdout and stderr terminal states from the saved_termattr file
-   */
-  memset (&tattr_stdin, 0, sizeof(tattr_stdin)); /* paranoia */
-  rd_ret = read (f, &tattr_stdin, sizeof(tattr_stdin));
-  if (rd_ret < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: read of stdin state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  } else if (rd_ret != sizeof(tattr_stdin)) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: read size of stdin state: %zd != %zu", rd_ret, sizeof(tattr_stdin));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  }
-  /**/
-  memset (&tattr_stdout, 0, sizeof(tattr_stdout)); /* paranoia */
-  rd_ret = read (f, &tattr_stdout, sizeof(tattr_stdout));
-  if (rd_ret < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: read of stdout state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  } else if (rd_ret != sizeof(tattr_stdout)) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: read size of stdout state: %zd != %zu", rd_ret, sizeof(tattr_stdout));
-    return;
-
-  }
-  /**/
-  memset (&tattr_stderr, 0, sizeof(tattr_stderr)); /* paranoia */
-  rd_ret = read (f, &tattr_stderr, sizeof(tattr_stderr));
-  if (rd_ret < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: read of stderr state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  } else if (rd_ret != sizeof(tattr_stderr)) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: read size of stderr state: %zd != %zu", rd_ret, sizeof(tattr_stderr));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  }
-
-  /*
-   * restore the stdin, stdout and stderr terminal states
-   */
-  ret = tcsetattr (STDIN_FILENO, TCSANOW, &tattr_stdin);
-  if (ret != 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: tcsetattr of stdin state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  }
-  /**/
-  ret = tcsetattr (STDOUT_FILENO, TCSANOW, &tattr_stdout);
-  if (ret != 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: tcsetattr of stdout state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  }
-  /**/
-  ret = tcsetattr (STDERR_FILENO, TCSANOW, &tattr_stderr);
-  if (ret != 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not restored: tcsetattr of stderr state failed: %s", strerror (errno));
-
-    /* close termattr_path */
-    cl_ret = close(f);
-    if (cl_ret < 0) {
-      fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-    }
-    return;
-
-  }
-
-  /*
-   * close saved_termattr
-   */
-  cl_ret = close(f);
-  if (cl_ret < 0) {
-
-    /* report failed to save terminal state */
-    if (termattr_path != NULL) {
-      free (termattr_path);
-      termattr_path = NULL;
-    }
-    fprintf(stderr, "Warning: terminal attributes not saved: close of: %s failed: %s\n", termattr_path, strerror (errno));
-
-  }
-  return;
-}
+static bool final_newline = false;	/* True is endwin_and_ncurses_cleanup() has been called */
 
 /*
  * rogo_baudrate: Determine the baud rate of the terminal
@@ -615,7 +205,7 @@ endwin_and_ncurses_cleanup (void)
   /*
    * restore previously saved terminal attributes
    */
-  restore_termattr ();
+  restore_termattr (NULL);
 
   /*
     * output newline only once, even if this function is called several times
@@ -724,6 +314,8 @@ int_exit (void (*exitproc)(int))
  *
  * If dir is NULL, then file is taken to be the full path.
  *
+ * If dir is a non=NULL empty string, then RGMDIR will be used.
+ *
  * The caller must free the calloc-ed return value.
  *
  * This function will never return NULL.
@@ -745,6 +337,13 @@ form_path (const char *dir, const char *file)
 
   /* form path */
   if (dir != NULL) {
+
+    /*
+     * empty dir string becomes RGMDIR
+     */
+    if (dir[0] == '\0') {
+      dir = RGMDIR;
+    }
 
     /* form full path */
     len = strlen (dir) + 1 + strlen (file);

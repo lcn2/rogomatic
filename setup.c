@@ -40,18 +40,13 @@
 # include "have_strlcpy.h"
 # include "strl.h"
 # include "types.h"
+# include "config.h"
 # include "install.h"
 
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.3 20026-04-06"
-
-/*
- * global declarations
- */
-char rgmdir[MU_BUF + 1];	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-char lock_path[TY_BUF + 1];	/* rogomatic lock file path, +1 for paranoia */
+# define VERSION "14.1.4 20026-04-11"
 
 /*
  * static declarations
@@ -87,8 +82,6 @@ static const char * const usage =
 
 static int   frogue, trogue;
 
-static void replaylog (char *pname, char *fname, char *options);
-
 int
 main (int argc, char *argv[])
 {
@@ -104,12 +97,13 @@ main (int argc, char *argv[])
   bool user = false;		    /* true ==> Start up in user mode */
   bool noterm = false;		    /* true ==> Watched mode */
   bool emacs = false;		    /* true ==> Emacs mode */
-  int child;
-  char *rfile = "", *rfilearg = "";
+  int child;			    /* fork return: child process id (parent), or 0 (child) */
+  char *rfile = NULL;		    /* rogue executable path, or NULL */
+  char *rfilearg = NULL;	    /* rogue executable path as specified by -f rogue, or NULL*/
   char options[MU_BUF + 1];	    /* rogomatic options, +1 for paranoia */
   char ropts[SM_BUF + 1];	    /* rogue options, +1 for paranoia */
   char roguename[MU_BUF + 1];	    /* rogue player name, +1 for paranoia */
-  char *pfile = "";
+  char *pfile = NULL;		    /* player path, or NULL */
   char *program = "";		    /* our name */
   char *prog = "";		    /* basename of our name */
   char *rogue_savefile = NULL;	    /* the rogue save file to restore */
@@ -277,9 +271,16 @@ main (int argc, char *argv[])
   set_rgmdir (time_subpath);
 
   /*
+   * save stdin, stdout, and stderr terminal state into saved_termattr file
+   */
+  if (! save_termattr (rgmdir)) {
+    fprintf (stderr, "Warning: terminal attributes will NOT be restored later on\n");
+  }
+
+  /*
    * Find which rogue executable to use
    */
-  if (*rfilearg) {
+  if (rfilearg != NULL) {
     if (access (rfilearg, R_OK|X_OK) == 0) {
 	rfile = rfilearg;
     }
@@ -322,6 +323,9 @@ main (int argc, char *argv[])
     exit (1);
   }
 
+  /*
+   * setup values that will be used as arguments to player
+   */
   snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d",
            cheat, noterm, echo, nohalf, emacs, terse, user);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
@@ -330,18 +334,56 @@ main (int argc, char *argv[])
 	    "terse", "noflush", "jump", "seefloor", "nopassgo", "tombstone", "slow", getname (), "apricot",
 	    RGMDIR, "rogue.sav", RGMDIR, "rogue.scr", RGMDIR, "rogue.lck");
 
-  if (score)  { dumpscore (argc==1 ? argv[0] : DEFVER); exit (0); }
+  /*
+   * special execution case: dumping rogomatic score
+   */
+  if (score)  {
+    dumpscore (argc==1 ? argv[0] : DEFVER);
+    exit (0);
+  }
 
-  if (replay) { replaylog (pfile, argc==1 ? argv[0] : ROGUELOG, options); exit (0); }
+  /*
+   * special execution case: replay log
+   */
+  if (replay) {
+    if (pfile != NULL) {
+      char *fname;	/* log file name */
 
+      /*
+       * replaylog: Given a log file name and an options string, exec the player
+       * process to replay the game.  No Rogue process is needed (since we are
+       * replaying an old game), so the frogue and trogue file descriptors are
+       * given the fake value 'Z'.
+       *
+       * ZZ is the an indicator that player does NOT have a pipe pair to use
+       */
+      if (argc == 1) {
+	fname = argv[0];
+      } else {
+	fname = ROGUELOG;
+      }
+      execl (pfile, "player", "ZZ", "0", options, fname, rgmdir, NULL);
+      fprintf (stderr, "ERROR: Replay not available, player binary missing: %s\n", pfile);
+    } else {
+      fprintf (stderr, "ERROR: replay: true, pfile == NULL\n");
+    }
+    exit(1);
+
+  }
+
+  /*
+   * setup pipes between rogue and player
+   */
   if ((pipe (ptc) < 0) || (pipe (ctp) < 0)) {
     fprintf (stderr, "ERROR: Cannot get pipes!\n");
     exit (1);
   }
-
   trogue = ptc[WRITE];
   frogue = ctp[READ];
 
+  /*
+   * fork rogue child
+   */
   child = fork ();
   if (child == 0) {
 
@@ -356,7 +398,6 @@ main (int argc, char *argv[])
     /*
      * set vt100 terminal as player can parse vt100 terminal output
      */
-    save_termattr (rgmdir);
     if (setenv ("TERM", "vt100", 1) != 0) {
       fprintf (stderr, "ERROR: can't setenv (\"TERM\", \"vt100\", 1)\n");
       exit (1);
@@ -374,22 +415,54 @@ main (int argc, char *argv[])
     close (ptc[WRITE]);
     close (ctp[READ]);
 
+    /*
+     * exec a rogue game with the args as needed
+     */
     if (oldgame) {
-      rogue_savefile = form_path (rgmdir, "rogue.sav");
-      execl (rfile, "rogue", "-r", rogue_savefile, NULL);
-      fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r %s: %s\n",
-		       rfile, rogue_savefile, strerror (errno));
-    } else if (argc > 0) {
-      execl (rfile, "rogue", argv[0], NULL);
-      fprintf (stderr, "ERROR: rogue restore exec failed: %s %s: %s\n", rfile, argv[0], strerror (errno));
 
-    } else {
+      if (rfile != NULL) {
+	rogue_savefile = form_path (rgmdir, "rogue.sav");
+	execl (rfile, "rogue", "-r", rogue_savefile, NULL);
+	fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r %s: %s\n",
+			 rfile, rogue_savefile, strerror (errno));
+      } else {
+	fprintf (stderr, "ERROR: oldgame: true, rogue path is NULL\n");
+      }
+
+    } else if (argc > 0) {
+
+      if (rfile != NULL) {
+	execl (rfile, "rogue", argv[0], NULL);
+	fprintf (stderr, "ERROR: rogue restore exec failed: %s %s: %s\n", rfile, argv[0], strerror (errno));
+      } else {
+	fprintf (stderr, "ERROR: argc: %d > 0, rogue path is NULL\n", argc);
+      }
+
+    } else if (rfile != NULL) {
+
       execl (rfile, "rogue", NULL);
       fprintf (stderr, "ERROR: rogue exec failed: %s: %s\n", rfile, strerror (errno));
+
+    } else {
+
+      fprintf (stderr, "ERROR: rogue path never set, rogue path is NULL\n");
+
     }
     exit (1);
   }
 
+  /*
+   * execute player as parent process
+   *
+   * XXX - Instead of execl(2) of player, we should start off running code along the lines of main.c,
+   *	   and fork a child (with pipes) to run rogue.  The global variables that are used in main.c
+   *	   should instead of a function that re-initializes those global variables that need to be
+   *	   re-initialized.  The SIGCHLD received should trigger whatever "end of rogue" game that
+   *	   is needed, and when have the option re-spawning a new rogue game.  We don't need a separate
+   *	   player executable, just a rogomatic executable that does the proper job of parsing
+   *	   command line arg, initializing (or re-initializing those global variables as needed),
+   *	   forking a rogue(6) game with pipes, and handling the case where the rogue(6) game exits.
+   */
   else {
     /* Encode the open files into a two character string */
     char ft[3];
@@ -414,24 +487,13 @@ main (int argc, char *argv[])
     close (ptc[READ]);
     close (ctp[WRITE]);
 
-    execl (pfile, "player", ft, rp, options, roguename, rgmdir, NULL);
-    fprintf (stderr, "ERROR: Rogomatic not available, player binary missing: %s\n", pfile);
-    kill (child, SIGKILL);
+    if (pfile != NULL) {
+      execl (pfile, "player", ft, rp, options, roguename, rgmdir, NULL);
+      fprintf (stderr, "ERROR: Rogomatic not available, player binary missing: %s\n", pfile);
+      kill (child, SIGKILL);
+    } else {
+      fprintf (stderr, "ERROR: player path never set, pfile is NULL\n");
+      exit (1);
+    }
   }
-}
-
-/*
- * replaylog: Given a log file name and an options string, exec the player
- * process to replay the game.  No Rogue process is needed (since we are
- * replaying an old game), so the frogue and trogue file descriptors are
- * given the fake value 'Z'.
- */
-
-static void
-replaylog (char *pfile, char *fname, char *options)
-{
-  /* ZZ is the an indicator that player does NOT have a pipe pair to use */
-  execl (pfile, "player", "ZZ", "0", options, fname, rgmdir, NULL);
-  fprintf (stderr, "ERROR: Replay not available, player binary missing: %s\n", pfile);
-  exit (1);
 }

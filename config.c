@@ -35,8 +35,13 @@
 # include "have_strlcpy.h"
 # include "strl.h"
 # include "types.h"
-# include "globals.h"
-# include "install.h"
+# include "config.h"
+
+/*
+ * global declarations
+ */
+char rgmdir[MU_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+char lock_path[TY_BUF + 1] = { '\0' };  /* rogomatic lock file path, +1 for paranoia */
 
 /*
  * static declarations

@@ -41,6 +41,7 @@
 # include <errno.h>
 
 # include "types.h"
+# include "config.h"
 # include "globals.h"
 # include "install.h"
 
