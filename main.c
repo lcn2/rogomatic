@@ -138,7 +138,8 @@ char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone - How we died, +
 char pending_call_letter = ' ';	/* If non-blank we have a call it to do - Pack object we know a name for */
 char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
 char versionstr[MU_BUF + 1];		/* Version of Rogue being used, +1 for paranoia */
-char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
+char roguename[MU_BUF + 1];	/* "Rog-O-Matic XIV for" + Name we are playing under, +1 for paranoia */
+char playername[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 char *termination = "perditus";	/* Latin verb for how we died */
 
 /* Integers */
@@ -379,7 +380,6 @@ static void endlesson (void);
 int
 main (int argc, char *argv[])
 {
-  char  ch, *s;
   char msg[SM_BUF + 1];		/* message buffer, +1 for paranoia */
   bool singlestep = false;	/* True ==> go one turn */
   bool startecho = false;	/* True ==> turn on echoing on startup */
@@ -388,6 +388,8 @@ main (int argc, char *argv[])
   pid_t pid = -1;		/* process id */
   char pidfilename[TY_BUF + 1]; /* +1 for paranoia */
   FILE *pidfp = NULL;		/* open pidfilename stream */
+  char ch;
+  char *s;
   int i;
 
   /*
@@ -416,6 +418,7 @@ main (int argc, char *argv[])
   memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
   memset (lock_path, 0, sizeof(lock_path)); /* paranoia */
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
+  memset (playername, 0, sizeof(playername)); /* paranoia */
   /**/
   memset (room, 0, sizeof(room)); /* paranoia */
   memset (scrmap, 0, sizeof(scrmap)); /* paranoia */
@@ -499,6 +502,20 @@ main (int argc, char *argv[])
       snprintf (roguename, MU_BUF, "Rog-O-Matic %s", RGMVER);
   }
   roguename[MU_BUF] = '\0'; /* paranoia */
+
+  /*
+   * use the final word of the roguename as the player name
+   */
+  s = strrchr (roguename, ' ');
+  if (s == NULL) {
+      s = roguename;
+  } else {
+      ++s;
+  }
+  if (*s == '\0') {
+      s = "((rogo-rogue))";
+  }
+  strlcpy (playername, s, sizeof(playername));
 
   /* The 5th argument is the non-default rogomatic directory path */
   if (argc > 5) {

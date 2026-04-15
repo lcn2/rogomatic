@@ -1293,7 +1293,8 @@ deadrogue (void)
   int    mh;
   char  *killer, *killend;
 
-  printw ("\n\nOops... our rogue died deep within the dungeon!");
+  printw ("\n\nOh dear, %s died while inside the dungeon!",
+	  (playername[0] == '\0') ? "((rogo-rogue))" : playername);
   refresh ();
 
   sscanf (&screen[GOLDROW][TOMBCOL], "%18d", &Gold);

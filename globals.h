@@ -52,7 +52,8 @@ extern char ourkiller[MU_BUF + 1];	/* What was listed on the tombstone - How we 
 extern char pending_call_letter;	/* If non-blank we have a call it to do - Pack object we know a name for */
 extern char pending_call_name[NAMSIZ + 1];	/* Pack object name for letter, +1 for paranoia */
 extern char versionstr[MU_BUF + 1];		/* Version of Rogue being used, +1 for paranoia */
-extern char roguename[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
+extern char roguename[MU_BUF + 1];	/* "Rog-O-Matic XIV for" + Name we are playing under, +1 for paranoia */
+extern char playername[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 extern char *termination;		/* Latin verb for how we died */
 
 /* global integers */
