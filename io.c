@@ -47,7 +47,7 @@
 # include "termtokens.h"
 # include "getroguetoken.h"
 
-# define ROGUE_SECONDS (3)  /* seconds to wait for rogue to exit */
+# define ROGUE_SECONDS (4)  /* seconds to wait for rogue to exit */
 
 # define READ	0
 
@@ -1371,9 +1371,6 @@ quitrogue (char *reason, int gld, int terminationtype)
   if (!replaying)
     add_score (sumline, versionstr, (terse || emacs || noterm));
 
-  /* Restore interrupt status */
-  reset_int ();
-
   /* Set the termination message based on the termination method */
   if (stlmatch (reason, "total winner"))
     termination = "victorius";
@@ -1387,6 +1384,7 @@ quitrogue (char *reason, int gld, int terminationtype)
     termination = "suspendus";
 
   /* Send the requisite handshaking to Rogue */
+  critical (); /* avoid SIGPIPE if rogue process as exited */
   if (terminationtype == DIED)
     if (version >= RV54A)
       sendnow ("\n\n");
@@ -1396,10 +1394,7 @@ quitrogue (char *reason, int gld, int terminationtype)
     sendnow ("Qy\n");
   else
     sendnow ("Syy"); /* Must send two yesses,  R5.2 MLM */
-
-  /*
-   * we need to be sure that the rogue process quit
-   */
+  uncritical (); /* restore interrupts */
 
   /*
    * look for a rogue process, either running, or stopped, or a killed zombie process
@@ -1450,6 +1445,9 @@ quitrogue (char *reason, int gld, int terminationtype)
 
   /*
    * analyze the status of the rogue process as returned by waitpid()
+   *
+   * We need to be sure that the rogue process quit.  If the rogue process is still running,
+   * try to kill it nicely (with a SIGHUP) before terminating it.
    */
   if (stat_loc == -1) {
       quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) stat_loc remains -1\n",

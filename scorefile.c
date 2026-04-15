@@ -197,8 +197,8 @@ dumpscore (char *vers)
   }
 
   printf ("Rog-O-Matic Scores against version %s:\n\n", vers);
-  printf ("%s%s", "Date         User        Gold    Killed by",
-          "      Lvl  Hp  Str  Ac  Exp\n\n");
+  printf ("%s%s", "Date         User           Gold Killed by",
+	  "         Lvl  Hp  Str  Ac  Exp    Game\n");
 
   while ((int) (ch = fgetc (scoref)) != EOF)
     putchar (ch);

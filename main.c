@@ -893,22 +893,37 @@ main (int argc, char *argv[])
   /* Print termination messages */
   at (R-1, 0);
   clrtoeol ();
-//  clear ();
   refresh ();
-  endwin (); nocrmode (); noraw (); echo ();
+
+  /*
+   * Give the user a brief period of time to see the termination messages from rogue
+   */
+  sleep (2);
+
+  /*
+   * restore the normal (non-ncurses) terminal state
+   */
+  nocrmode ();
+  noraw ();
+  echo ();
+  endwin ();
+  restore_termattr (NULL);
 
   if (emacs) {
     if (*sumline) fprintf (realstdout, " %s", sumline);
   }
   else if (terse) {
-    if (*sumline) fprintf (realstdout, "%s\n",sumline);
+    if (*sumline) fprintf (realstdout, "\n%s\n",sumline);
 
-    fprintf (realstdout, "%s %s est.\n", gamename, termination);
+    fprintf (realstdout, "\n%s %s est.\n", gamename, termination);
   }
   else {
+    putchar ('\n');
+    printf ("%s%s", "Date         User           Gold Killed by",
+	    "         Lvl  Hp  Str  Ac  Exp    Game\n");
     if (*sumline) printf ("%s\n",sumline);
 
-    printf ("%s %s est.\n", gamename, termination);
+    printf ("\n%s %s est.\n", gamename, termination);
   }
 
   /*
