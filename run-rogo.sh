@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.0 2026-04-15"
+export VERSION="1.1 2026-04-15"
 NAME=$(basename "$0")
 export NAME
 #
@@ -223,6 +223,9 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: VERSION=$VERSION" 1>&2
     echo "$0: debug[3]: NAME=$NAME" 1>&2
     echo "$0: debug[3]: V_FLAG=$V_FLAG" 1>&2
+    echo "$0: debug[3]: NOOP=$NOOP" 1>&2
+    echo "$0: debug[3]: DO_NOT_PROCESS=$DO_NOT_PROCESS" 1>&2
+    echo "$0: debug[3]: V_FLAG=$V_FLAG" 1>&2
     echo "$0: debug[3]: ROGOMATIC_TOOL=$ROGOMATIC_TOOL" 1>&2
     echo "$0: debug[3]: PLAYER_TOOL=$PLAYER_TOOL" 1>&2
     echo "$0: debug[3]: ROGUE_TOOL=$ROGUE_TOOL" 1>&2
@@ -241,21 +244,21 @@ if [[ -n $DO_NOT_PROCESS ]]; then
 fi
 
 
-# run rogomatic
+# exec the rogomatic code
 #
 if [[ -z $SEED ]]; then
     if [[ $V_FLAG -ge 1 ]]; then
-	echo "$0: debug[1]: run: $ROGOMATIC_TOOL -D $RGMDIR -f $ROGUE_TOOL -P $PLAYER_TOOL" 1>&2
+	echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR" 1>&2
     fi
     if [[ -z $NOOP ]]; then
-	"$ROGOMATIC_TOOL" -D "$RGMDIR" -f "$ROGUE_TOOL" -P "$PLAYER_TOOL"
+	exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR"
     fi
 else
     if [[ $V_FLAG -ge 1 ]]; then
-	echo "$0: debug[1]: run: $ROGOMATIC_TOOL -D $RGMDIR -f $ROGUE_TOOL -P $PLAYER_TOOL -S $SEED" 1>&2
+	echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED" 1>&2
     fi
     if [[ -z $NOOP ]]; then
-	"$ROGOMATIC_TOOL" -D "$RGMDIR" -f "$ROGUE_TOOL"  -P "$PLAYER_TOOL" -S "$SEED"
+	exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED"
     fi
 fi
 

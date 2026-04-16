@@ -372,10 +372,10 @@ typedef enum { false=0, true=1 } bool;
 
 /* Utility Macros */
 
-/* valrc - true if row and col are valid, false otherwise */
+/* valrc - true if r and c are valid, false otherwise */
 # define valrc(r,c) ( ((r)>=0) && ((r)<R) && ((c)>=0) && ((c)<C) )
 
-/* onrc - tell if row and col have the proper attributes */
+/* onrc - tell if r and c have the proper attributes */
 # define onrc(type,r,c) \
 	     (valrc((r),(c)) ? \
 	       ((type)&scrmap[(r)][(c)]) : \
@@ -384,6 +384,9 @@ typedef enum { false=0, true=1 } bool;
 	        not_reached(), \
 	        0) \
 	     )
+
+/* if_onrc - if r and c are valid, then tell if row and col have the proper attributes, else 0 */
+# define if_onrc(type,r,c) (valrc((r),(c)) ? ((type)&scrmap[(r)][(c)]) : 0)
 
 /* on - tell if current position has correct attributes */
 # define on(type) \
@@ -395,7 +398,10 @@ typedef enum { false=0, true=1 } bool;
                 0) \
              )
 
-/* seerc - is this character at row,col */
+/* if_on - if current position is valid, then tell if current position has correct attributes, else 0 */
+# define if_on(type) (valrc((atrow),(atcol)) ? ((type)&scrmap[(atrow)][(atcol)]) : 0)
+
+/* seerc - is this character at r and c */
 # define seerc(ch,r,c) \
 	      (valrc((r),(c)) ? \
 	        ((ch)==screen[(r)][(c)]) : \
@@ -404,6 +410,9 @@ typedef enum { false=0, true=1 } bool;
                  not_reached(), \
                  0) \
               )
+
+/* if_seerc - if r and c are valid, then is this character at row,col, else 0 */
+# define if_seerc(ch,r,c) (valrc((r),(c)) ? ((ch)==screen[(r)][(c)]) : 0)
 
 /* see - is this character at current position */
 # define see(ch) \
@@ -414,6 +423,9 @@ typedef enum { false=0, true=1 } bool;
                 not_reached(), \
                 0) \
              )
+
+/* if_see - if current position is valid, is this character at current position, else 0 */
+# define if_see(ch) (valrc((atrow),(atcol)) ? ((ch)==screen[(atrow)][(atcol)]) : 0)
 
 /* setrc - set attribute at <r,c> */
 # define setrc(type,r,c) \
@@ -435,7 +447,10 @@ typedef enum { false=0, true=1 } bool;
                  0) \
               )
 
-/* unsetrc - unset attribute at <r,c> */
+/* if_set - if current position is valid, set attribute at current position, else 0 */
+# define if_set(type) (valrc((atrow),(atcol)) ? (scrmap[atrow][atcol]|=(type)) : 0)
+
+/* unsetrc - unset attribute at r and c */
 # define unsetrc(type,r,c) \
 		(valrc((r),(c)) ? \
 		  (scrmap[(r)][(c)]&= ~(type)) : \
@@ -444,6 +459,9 @@ typedef enum { false=0, true=1 } bool;
 		   not_reached(), \
 		   0) \
 		)
+
+/* if_unsetrc - if r and c are valid, unset attribute at r and c, else 0 */
+# define if_unsetrc(type,r,c) (valrc((r),(c)) ? (scrmap[(r)][(c)]&= ~(type)) : 0)
 
 /* unset - unset attribute at current position */
 # define unset(type) \
@@ -454,6 +472,9 @@ typedef enum { false=0, true=1 } bool;
 		   not_reached(), \
 		   0) \
 		)
+
+/* if_unset - if current position is valid, unset attribute at current position, else 0 */
+# define if_unset(type) (valrc((atrow),(atcol)) ? (scrmap[(atrow)][(atcol)]&= ~(type)) : 0)
 
 /* Direc - give the vector from an xy difference */
 # define direc(r,c) (r>0?(c>0?7:(c<0?5:6)):(r<0?(c>0?1:(c<0?3:2)):(c>0?0:4)))
@@ -471,6 +492,9 @@ typedef enum { false=0, true=1 } bool;
 		   0) \
 		)
 
+/* if_atdrow - if direction is valid, gives row of adjacent square given direction, else 0 */
+# define if_atdrow(dir) (valdir((dir)) ? (atrow+deltr[(dir)]) : 0)
+
 /* atdcol - gives col of adjacent square given direction */
 # define atdcol(dir) \
 		(valdir((dir)) ? \
@@ -480,6 +504,9 @@ typedef enum { false=0, true=1 } bool;
 		   not_reached(), \
 		   0) \
 		)
+
+/* if_atdcol - if direction is valid, gives col of adjacent square given direction, else 0 */
+# define if_atdcol(dir) (valdir((dir)) ? (atcol+deltc[(dir)]) : 0)
 
 /* Define a more mnemonic string comparison */
 # define streq(s1,s2) (strcmp ((s1),(s2)) == 0)
