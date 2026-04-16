@@ -920,7 +920,7 @@ main (int argc, char *argv[])
   else {
     putchar ('\n');
     printf ("%s%s", "Date         User           Gold Killed by",
-	    "         Lvl  Hp  Str  Ac  Exp    Game\n");
+	    "         Lvl  Hp  Str  Ac  Exp     Game\n");
     if (*sumline) printf ("%s\n",sumline);
 
     printf ("\n%s %s est.\n", gamename, termination);

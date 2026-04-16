@@ -46,7 +46,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.6 2026-04-14"
+# define VERSION "14.1.7 2026-04-15"
 
 /*
  * static declarations
@@ -108,6 +108,7 @@ main (int argc, char *argv[])
   char *prog = "";		    /* basename of our name */
   char *rogue_savefile = NULL;	    /* the rogue save file to restore */
   char rogoseed[MU_BUF + 1];	    /* dungeon number to set as a unsigned seed */
+  char rogue_dir[MU_BUF + 1];	    /* directory for the rogue files, not impacted by -d */
   extern char *optarg;		    /* option argument */
   extern int optind;		    /* argv index of the next arg */
   int i;
@@ -130,9 +131,13 @@ main (int argc, char *argv[])
   memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
   memset (lock_path, 0, sizeof(lock_path)); /* paranoia */
   memset (rogoseed, 0, sizeof(rogoseed)); /* paranoia */
+  memset (rogue_dir, 0, sizeof(rogue_dir)); /* paranoia */
 
   /* initialize rogomatic directory path to default */
   strlcpy (rgmdir, RGMDIR, sizeof(rgmdir));
+
+  /* initialize rogue directory path to default */
+  strlcpy (rogue_dir, RGMDIR, sizeof(rogue_dir));
 
   /*
    * parse args
@@ -158,8 +163,10 @@ main (int argc, char *argv[])
 	break;
 
       case 'D':		/* -D path ==> set the rogomatic directory path */
-	memset (rgmdir, 0, sizeof(rgmdir));
+	memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
 	strlcpy (rgmdir, optarg, sizeof(rgmdir));
+	memset (rogue_dir, 0, sizeof(rogue_dir)); /* paranoia */
+	strlcpy (rogue_dir, optarg, sizeof(rogue_dir));
 	break;
 
       case 'e':		/* -e ==> Echo file to roguelog */
@@ -332,7 +339,7 @@ main (int argc, char *argv[])
   /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir */
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
 	    "terse", "noflush", "jump", "seefloor", "nopassgo", "tombstone", "slow", getname (), "apricot",
-	    RGMDIR, "rogue.sav", RGMDIR, "rogue.scr", RGMDIR, "rogue.lck");
+	    rogue_dir, "rogue.sav", rogue_dir, "rogue.scr", rogue_dir, "rogue.lck");
 
   /*
    * special execution case: dumping rogomatic score
