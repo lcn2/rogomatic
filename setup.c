@@ -104,6 +104,7 @@ main (int argc, char *argv[])
   char ropts[SM_BUF + 1];	    /* rogue options, +1 for paranoia */
   char roguename[MU_BUF + 1];	    /* rogue player name, +1 for paranoia */
   char *pfile = NULL;		    /* player path, or NULL */
+  char *pfilearg = NULL;	    /* player executable path as specified by -P player, or NULL*/
   char *program = "";		    /* our name */
   char *prog = "";		    /* basename of our name */
   char *rogue_savefile = NULL;	    /* the rogue save file to restore */
@@ -142,7 +143,7 @@ main (int argc, char *argv[])
   /*
    * parse args
    */
-  while ((i = getopt (argc, argv, "hVcdD:ef:HprsS:tuwE:")) != -1) {
+  while ((i = getopt (argc, argv, "hVcdD:ef:HpP:rsS:tuwE:")) != -1) {
     switch (i) {
       case 'h':		/* -h ==> print usage message */
 	fprintf (stderr, usage, program, prog, VERSION);
@@ -185,6 +186,10 @@ main (int argc, char *argv[])
 	replay = true;
 	break;
 
+      case 'P':		/* -P player ==> change the path of player */
+	pfilearg = optarg;
+	break;
+
       case 'r':		/* -r ==> Use saved game */
 	oldgame = true;
 	break;
@@ -193,7 +198,7 @@ main (int argc, char *argv[])
 	score = true;
 	break;
 
-      case 'S':
+      case 'S':		/* -S SEED ==> set the rogomatic seed */
 	strlcpy(rogoseed, optarg, sizeof(rogoseed));
 	break;
 
@@ -317,7 +322,16 @@ main (int argc, char *argv[])
   /*
    * Find which player executable to use
    */
-  if (access ("./player", R_OK|X_OK) == 0) {
+  if (pfilearg != NULL) {
+    if (access (pfilearg, R_OK|X_OK) == 0) {
+	pfile = pfilearg;
+    }
+    else {
+	fprintf (stderr, "ERROR: player arg not executable: %s - %s\n", pfilearg, strerror (errno));
+	exit (1);
+    }
+  }
+  else if (access ("./player", R_OK|X_OK) == 0) {
       pfile = "./player";
   }
 # ifdef PLAYER
