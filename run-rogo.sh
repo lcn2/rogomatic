@@ -65,7 +65,7 @@ export SEED=""
 
 # usage
 #
-export USAGE="usage: $0 [-h] [-v level] [-V] [-N] [-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-S seed]
+export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-S seed]
 
     -h          print help message and exit
     -v level    set verbosity level (def level: $V_FLAG)
@@ -85,7 +85,7 @@ Exit codes:
      2         -h and help string printed or -V and version string printed
      3         command line error
      5	       some internal tool is not found or not an executable file
-     6         problems found with or in the rogoomatic directory
+     6         problems found with or in the rogomatic directory
  >= 10         internal error
 
 $NAME version: $VERSION"
