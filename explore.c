@@ -35,7 +35,7 @@
 # include "globals.h"
 
 # define SEARCHES(r,c)						\
-	(onrc(DEADEND,r,c) ?					\
+	(if_onrc(DEADEND,r,c) ?					\
 	    ((version < RV53A || !isexplored (r,c)) ?		\
 		(timestosearch + k_door / 5) :			\
 		(timestosearch - k_door / 5 + 5)) :		\
@@ -252,11 +252,11 @@ wallkind (int r, int c)
 
   switch (screen[r][c]) {
 
-    case '|': if (onrc (ROOM, r, c+1)) return (LEFTW);
+    case '|': if (if_onrc (ROOM, r, c+1)) return (LEFTW);
       else return (RIGHTW);
 
-    case '-': if (onrc (ROOM, r+1, c)) return (TOPW);
-      else if (onrc (ROOM, r-1, c)) return (BOTW);
+    case '-': if (if_onrc (ROOM, r+1, c)) return (TOPW);
+      else if (if_onrc (ROOM, r-1, c)) return (BOTW);
       else return (CORNERW);
 
     case '+': return (DOORW);
@@ -288,29 +288,33 @@ setpsd (int print)
       unsetrc (PSD|DEADEND,i,j);
 
       /* If attempt > 3, allow ANYTHING to be a secret door! */
-      if (attempt > 3 && ! onrc (BEEN|DOOR|HALL|ROOM|WALL|STAIRS, i, j) &&
+      if (attempt > 3 && ! if_onrc (BEEN|DOOR|HALL|ROOM|WALL|STAIRS, i, j) &&
           nextto (CANGO, i, j))
-        { if (!onrc (PSD, i, j)) numberpsd++; setrc(PSD,i,j); }
+        { if (!if_onrc (PSD, i, j)) numberpsd++; setrc(PSD,i,j); }
 
       /* Set Possible Secret Door for maze room secret doors */
-      else if (attempt > 0 && ! onrc (BEEN|DOOR|HALL|ROOM|WALL|STAIRS, i, j) &&
+      else if (attempt > 0 && ! if_onrc (BEEN|DOOR|HALL|ROOM|WALL|STAIRS, i, j) &&
                mazedoor (i, j))
-        { if (!onrc (PSD, i, j)) numberpsd++; setrc(PSD,i,j); }
+        { if (!if_onrc (PSD, i, j)) numberpsd++; setrc(PSD,i,j); }
 
       /* Set Possible Secret Door for corridor secret door */
       else if (version >= RV53A &&
-               ! onrc (BEEN|DOOR|HALL|ROOM|WALL|STAIRS, i, j) &&
+               ! if_onrc (BEEN|DOOR|HALL|ROOM|WALL|STAIRS, i, j) &&
                nextto (DOOR, i, j))
-        { if (!onrc (PSD, i, j)) numberpsd++; setrc(PSD,i,j); }
+        { if (!if_onrc (PSD, i, j)) numberpsd++; setrc(PSD,i,j); }
 
       /* Set Possible Secret Door for dead end corridors */
-      else if (! onrc (BEEN|DOOR|HALL|ROOM|WALL|STAIRS, i, j) &&
-               (onrc (HALL, i-1, j) + onrc (HALL, i+1, j) +
-                onrc (HALL, i, j-1) + onrc (HALL, i, j+1) == HALL) &&
-               !(onrc(HALL|DOOR, i-1, j-1) || onrc(HALL|DOOR, i+1, j+1) ||
-                 onrc(HALL|DOOR, i-1, j+1) || onrc(HALL | DOOR, i+1, j-1)) &&
+      else if (! if_onrc (BEEN|DOOR|HALL|ROOM|WALL|STAIRS, i, j) &&
+               (if_onrc (HALL, i-1, j) +
+		if_onrc (HALL, i+1, j) +
+                if_onrc (HALL, i, j-1) +
+		if_onrc (HALL, i, j+1) == HALL) &&
+               !(if_onrc(HALL|DOOR, i-1, j-1) ||
+		 if_onrc(HALL|DOOR, i+1, j+1) ||
+                 if_onrc(HALL|DOOR, i-1, j+1) ||
+		 if_onrc(HALL | DOOR, i+1, j-1)) &&
                canbedoor (i, j)) {
-        if (!onrc (PSD, i, j)) numberpsd++;
+        if (!if_onrc (PSD, i, j)) numberpsd++;
 
         setrc(DEADEND,i,j); setrc(PSD,i,j);
       }
@@ -342,7 +346,7 @@ setpsd (int print)
 
             if (whereto >= 0 && whereto < RGRID &&
                 (attempt > 1 || room[whereto] == 0)) {
-              if (!onrc (PSD, i, j)) numberpsd++;
+              if (!if_onrc (PSD, i, j)) numberpsd++;
 
               setrc (PSD,i,j);
             }
@@ -353,24 +357,24 @@ setpsd (int print)
 
   /* Now remove PSD bits from walls which already have doors */
   for (i=2; i < R-2; i++) for (j=1; j < C-1; j++) {
-      if (onrc (DOOR, i, j)) {
-        for (k = i-1; onrc (WALL, k, j); k--)
-          { if (onrc (PSD, k, j)) numberpsd--; unsetrc (PSD, k, j);}
+      if (if_onrc (DOOR, i, j)) {
+        for (k = i-1; if_onrc (WALL, k, j); k--)
+          { if (if_onrc (PSD, k, j)) numberpsd--; unsetrc (PSD, k, j);}
 
-        for (k = i+1; onrc (WALL, k, j); k++)
-          { if (onrc (PSD, k, j)) numberpsd--; unsetrc (PSD, k, j);}
+        for (k = i+1; if_onrc (WALL, k, j); k++)
+          { if (if_onrc (PSD, k, j)) numberpsd--; unsetrc (PSD, k, j);}
 
-        for (k = j-1; onrc (WALL, i, k); k--)
-          { if (onrc (PSD, i, k)) numberpsd--; unsetrc (PSD, i, k);}
+        for (k = j-1; if_onrc (WALL, i, k); k--)
+          { if (if_onrc (PSD, i, k)) numberpsd--; unsetrc (PSD, i, k);}
 
-        for (k = j+1; onrc (WALL, i, k); k++)
-          { if (onrc (PSD, i, k)) numberpsd--; unsetrc (PSD, i, k);}
+        for (k = j+1; if_onrc (WALL, i, k); k++)
+          { if (if_onrc (PSD, i, k)) numberpsd--; unsetrc (PSD, i, k);}
       }
     }
 
   if (print || debug (D_SCREEN))
     for (i=0; i < R; i++) for (j=0; j < C; j++)
-        if (onrc (PSD,i,j)) { at (i,j); addch ('P'); }
+        if (if_onrc (PSD,i,j)) { at (i,j); addch ('P'); }
 
   reusepsd = numberpsd+1;
   return (numberpsd);
@@ -718,19 +722,16 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
       nc = c + deltc[k];
 
       /* For each unseen neighbour: add 10 to value. */
-      if (valrc (nr, nc) &&
-	  (nr >= 1 && nr <= R-2 && nc >= 0 && nc <= C && !onrc (SEEN, nr, nc))) {
+      if (nr >= 1 && nr <= R-2 && nc >= 0 && nc <= C && !if_onrc (SEEN, nr, nc)) {
         v += 10;
 
-        if (valrc (nr, nc) &&
-	    onrc (BOUNDARY, nr, nc)) {
+        if (if_onrc (BOUNDARY, nr, nc)) {
           /* Count unseen boundary neighbours. */
           nunseenb++;
 
           /* Count seen boundaries horiz/vert adjacent to unseen boundary */
           for (l=0; l<DNUM; l+=2)
-            if (valrc (nr+deltr[l], nc+deltc[l]) &&
-		(onrc (SEEN+BOUNDARY, nr+deltr[l], nc+deltc[l]) == SEEN+BOUNDARY))
+            if (if_onrc (SEEN+BOUNDARY, nr+deltr[l], nc+deltc[l]) == SEEN+BOUNDARY)
               nseenb++;
 
         }
@@ -739,14 +740,12 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
           /* adjacent to neighbour and not a neighbour. */
           l = k / 2 * 2;		     /* horizontal/vertical */
 
-          if (valrc (nr+deltr[l], nc+deltc[l]) &&
-	      (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY))
+          if (if_onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY)
             nearb = true;
           else {
             l = ((k+1) / 2 * 2) % DNUM;
 
-            if (valrc (nr+deltr[l], nc+deltc[l]) &&
-	      (onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY))
+            if (if_onrc (BOUNDARY+SEEN, nr+deltr[l], nc+deltc[l]) == BOUNDARY)
               nearb = true;
           }
         }
@@ -837,10 +836,10 @@ zigzagvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
 
       /* For each unseen neighbour: add 10 to value. */
       if (nr >= 1 && nr <= R-2 && nc >= 0 && nc <= C &&
-          !onrc (SEEN, nr, nc)) {
+          !if_onrc (SEEN, nr, nc)) {
         v += 10;
 
-        if (onrc (BOUNDARY, nr, nc)) {
+        if (if_onrc (BOUNDARY, nr, nc)) {
           /* Count unseen boundary neighbours. */
           nunseenb++;
         }
@@ -917,12 +916,12 @@ secretvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
 
     if (nr >= 1 && nr <= R-2 &&
         nc >= 0 && nc <= C &&
-        onrc (PSD, nr, nc) && timessearched[nr][nc] < SEARCHES(nr,nc)) {
+        if_onrc (PSD, nr, nc) && timessearched[nr][nc] < SEARCHES(nr,nc)) {
       /* If adjacent square is on the screen */
       /* and if it has PSD set but has not been searched completely */
       /* count useful neighbours */
-      if (screen[nr][nc] == '|')	v += 4;
-      else				v ++;
+      if (valrc (nr, nc) && (screen[nr][nc] == '|'))	v += 4;
+      else						v ++;
 
       if (debug (D_SCREEN | D_INFORM)) mvaddch (nr, nc, 'S');
     }
@@ -931,8 +930,10 @@ secretvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
   if (v>0) {
     if (version >= RV53A &&
         onrc (DOOR|BEEN, r, c) == (DOOR|BEEN) &&
-        (onrc (CANGO|WALL, r+1, c) == 0 || onrc (CANGO|WALL, r-1, c) == 0 ||
-         onrc (CANGO|WALL, r, c+1) == 0 || onrc (CANGO|WALL, r, c-1) == 0))
+        (if_onrc (CANGO|WALL, r+1, c) == 0 ||
+	 if_onrc (CANGO|WALL, r-1, c) == 0 ||
+         if_onrc (CANGO|WALL, r, c+1) == 0 ||
+	 if_onrc (CANGO|WALL, r, c-1) == 0))
       { *val = v+100; *cont = 5; }
     else {
       v = min (15, v);
@@ -952,13 +953,14 @@ secretvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
  */
 
 # define AVOID(r,c,ch) \
-  { if (!valrc((r),(c))) { \
-      quit (1, "ERROR: %s: file: %s line: %d AVOID(%d,%d,%d) out of range\n", \
-                                 __func__, __FILE__, __LINE__, (r), (c), (ch)); \
-      not_reached(); \
+  { if (valrc((r),(c))) { \
+      avdmonsters[r][c] = ROGINFINITY; \
+      if (debug (D_SCREEN)) { \
+	at((r),(c)); \
+	addch(ch); \
+	at(row,col); \
+      } \
     } \
-    avdmonsters[r][c] = ROGINFINITY; \
-    if (debug (D_SCREEN)) { at((r),(c)); addch(ch); at(row,col); } \
   }
 
 static void
@@ -977,7 +979,7 @@ avoidmonsters (void)
 
     /* First check whether this monster is really wimpy */
     if (maxhit(i) < Hp/2) {
-      AVOID (mlist[i].mrow, mlist[i].mcol, '$')
+      AVOID (mlist[i].mrow, mlist[i].mcol, '$');
     }
 
     /* If not a wimp and awake, avoid him all together */
@@ -1000,15 +1002,13 @@ avoidmonsters (void)
     else if (!wearingstealth) {
       for (r = mlist[i].mrow-1; r<= mlist[i].mrow+1; r++)
         for (c = mlist[i].mcol-1; c<= mlist[i].mcol+1; c++)
-          if (valrc (r,c) && !onrc (WALL, r, c))
-            AVOID (r, c, '$')
+          if (!if_onrc (WALL, r, c))
+            AVOID (r, c, '$');
     }
 
     /* He's asleep, don't try to run through him */
     else {
-      if (valrc (mlist[i].mrow, mlist[i].mcol)) {
-	AVOID (mlist[i].mrow, mlist[i].mcol, '$')
-      }
+      AVOID (mlist[i].mrow, mlist[i].mcol, '$');
     }
   }
 
@@ -1030,11 +1030,13 @@ caddycorner (int r, int c, int d1, int d2, char ch)
     return;
   }
 
-  while (valrc (r, c) && onrc (CANGO, r, c)) {
+  while (if_onrc (CANGO, r, c)) {
     AVOID (r, c, ch);
     r += deltr[d1]; c += deltc[d1];
 
-    if (!valrc (r,c) || !onrc (CANGO, r, c)) break;
+    if (!if_onrc (CANGO, r, c)) {
+      break;
+    }
 
     AVOID (r, c, ch);
     r += deltr[d2]; c += deltc[d2];
@@ -1076,9 +1078,7 @@ pinavoid (void)
       }
     }
 
-    if (valrc (mlist[i].mrow, mlist[i].mcol)) {
-      AVOID (mlist[i].mrow, mlist[i].mcol, '&');
-    }
+    AVOID (mlist[i].mrow, mlist[i].mcol, '&');
   }
 
   /* Don't avoid current position */
@@ -1099,10 +1099,10 @@ secret (void)
 
   /* Secret passage adjacent to door? */
   if (version >= RV53A && on (DOOR) && !blinded &&
-      ((valrc (atrow+1,atcol) && seerc (' ',atrow+1,atcol)) ||
-       (valrc (atrow-1,atcol) && seerc (' ',atrow-1,atcol)) ||
-       (valrc (atrow,atcol+1) && seerc (' ',atrow,atcol+1) )||
-       (valrc (atrow,atcol-1) && seerc (' ',atrow,atcol-1))) &&
+      (if_seerc (' ', atrow+1, atcol) ||
+       if_seerc (' ', atrow-1, atcol) ||
+       if_seerc (' ', atrow,   atcol+1) ||
+       if_seerc (' ', atrow,   atcol-1)) &&
       SEARCHES (atrow, atcol) < timestosearch+20) {
     int count = timessearched[atrow][atcol]+1;
     saynow ("Searching dead end door (%d,%d) for the %d%s time...",
@@ -1111,10 +1111,10 @@ secret (void)
   }
 
   /* Verify that we are actually at a dead end */
-  if (((valrc (atrow-1,atcol) ? onrc (CANGO,atrow-1,atcol) : 0) +
-       (valrc (atrow,atcol-1) ? onrc (CANGO,atrow,atcol-1) : 0) +
-       (valrc (atrow+1,atcol) ? onrc (CANGO,atrow+1,atcol) : 0) +
-       (valrc (atrow,atcol+1) ? onrc (CANGO,atrow,atcol+1) : 0)) != CANGO)
+  if ((if_onrc (CANGO, atrow-1, atcol) +
+       if_onrc (CANGO, atrow,   atcol-1) +
+       if_onrc (CANGO, atrow+1, atcol) +
+       if_onrc (CANGO, atrow,   atcol+1)) != CANGO)
     return (0);
 
   /* If Level 1 or edge of screen: dead end cannot be room, mark and return */
@@ -1231,15 +1231,6 @@ safevalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
     return 0;
   }
 
-  /* firewall */
-  if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
-    not_reached();
-  }
-  if (!valrc (r, c)) {
-    return 0;
-  }
-
   *avd = onrc (SAFE, r, c)    ? 0 :
          onrc (TRAPDOR | BEARTRP | GASTRAP, r, c) ? ROGINFINITY :
          onrc (ARROW, r, c)   ? 50 :
@@ -1253,13 +1244,13 @@ safevalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
   if (onrc (SCAREM, r, c) && version < RV53A && objcount != maxobj)
     *avd += 500;
 
-  if (onrc(CANGO, r, c)) {
+  if (onrc (CANGO, r, c)) {
     v = 0;
 
     for (k=0; k<DNUM; k++)
-      if (onrc(CANGO, r+deltr[k], c+deltc[k]) &&
-          onrc(CANGO, r+deltr[k], c) &&
-          onrc(CANGO, r, c+deltc[k])) v++;
+      if (if_onrc (CANGO, r+deltr[k], c+deltc[k]) &&
+          if_onrc (CANGO, r+deltr[k], c) &&
+          if_onrc (CANGO, r, c+deltc[k])) v++;
 
     if (v < 3)
       *val = 1;        /* *cont = 0; // default // */
@@ -1361,9 +1352,9 @@ archeryinit (void)
     dr = deltr[dir]; dc = deltc[dir];
 
     for (dist = 1, r = archrow+dr, c = archcol+dc;
-         onrc (CANGO | HALL | MONSTER, r, c) == CANGO;
+         if_onrc (CANGO | HALL | MONSTER, r, c) == CANGO;
          r += dr, c += dc, dist++)
-      if (dist > archturns && !onrc (TRAP, r, c)) {
+      if (dist > archturns && !if_onrc (TRAP, r, c)) {
         archval[r][c] = dist - 1; /* number of arrows we get to shoot */
 
         if (debug (D_SCREEN)) { at (r, c); addch ('=');  at (row, col); }
@@ -1496,12 +1487,16 @@ restvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
   else if (!onrc (SAFE|BEEN|STUFF, r, c))     { *avd = 5; }
 
   /* Give bonus for being next to a trap door or a teleport trap */
-  if (onrc (TRAPDOR|TELTRAP, r-1, c-1) || onrc (TRAPDOR|TELTRAP, r+1, c-1) ||
-      onrc (TRAPDOR|TELTRAP, r-1, c+1) || onrc (TRAPDOR|TELTRAP, r+1, c+1))
+  if (if_onrc (TRAPDOR|TELTRAP, r-1, c-1) ||
+      if_onrc (TRAPDOR|TELTRAP, r+1, c-1) ||
+      if_onrc (TRAPDOR|TELTRAP, r-1, c+1) ||
+      if_onrc (TRAPDOR|TELTRAP, r+1, c+1))
     { *val += 80; *cont = 99;}
 
-  if (onrc (TRAPDOR|TELTRAP, r-1, c) || onrc (TRAPDOR|TELTRAP, r+1, c) ||
-      onrc (TRAPDOR|TELTRAP, r, c-1) || onrc (TRAPDOR|TELTRAP, r, c+1))
+  if (if_onrc (TRAPDOR|TELTRAP, r-1, c) ||
+      if_onrc (TRAPDOR|TELTRAP, r+1, c) ||
+      if_onrc (TRAPDOR|TELTRAP, r, c-1) ||
+      if_onrc (TRAPDOR|TELTRAP, r, c+1))
     { *val += 30; *cont = 99;}
 
   /* In lit rooms (with ammo) stay away from doors, this gives us time */
@@ -1511,30 +1506,33 @@ restvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
       dr = deltr[dir]; dc = deltc[dir];
 
       for (count = 0, ar = r+dr, ac = c+dc;
-           onrc (CANGO | HALL | MONSTER, ar, ac) == CANGO;
+           if_onrc (CANGO | HALL | MONSTER, ar, ac) == CANGO;
            ar += dr, ac += dc, count++) {
         /* Bonus of 'count' if this square covers a door */
-        if (onrc(DOOR,ar+deltr[(dir+2)%DNUM],ac+deltc[(dir+2)%DNUM])) *val += count;
+        if (if_onrc (DOOR,ar+deltr[(dir+2)%DNUM],ac+deltc[(dir+2)%DNUM])) *val += count;
 
-        if (onrc(DOOR,ar+deltr[(dir+6)%DNUM],ac+deltc[(dir+6)%DNUM])) *val += count;
+        if (if_onrc (DOOR,ar+deltr[(dir+6)%DNUM],ac+deltc[(dir+6)%DNUM])) *val += count;
 
-        if (onrc(DOOR,ar,ac)) *val += count;
+        if (if_onrc (DOOR,ar,ac)) *val += count;
       }
     }
   }
 
   /* In dark rooms, stand diagonally away from doors (1 extra turn) */
-  else if (onrc (ROOM, r, c)) {
-    if (onrc (DOOR,r-1,c-1) && (rm!=0 && rm!=1 && rm!=3)) {*val+=80; *cont=99;}
+  else if (onrc (ROOM, r,   c)) {
+    if (if_onrc (DOOR, r-1, c-1) && (rm!=0 && rm!=1 && rm!=3)) {*val+=80; *cont=99;}
 
-    if (onrc (DOOR,r+1,c-1) && (rm!=3 && rm!=6 && rm!=7)) {*val+=80; *cont=99;}
+    if (if_onrc (DOOR, r+1, c-1) && (rm!=3 && rm!=6 && rm!=7)) {*val+=80; *cont=99;}
 
-    if (onrc (DOOR,r-1,c+1) && (rm!=1 && rm!=2 && rm!=5)) {*val+=80; *cont=99;}
+    if (if_onrc (DOOR, r-1, c+1) && (rm!=1 && rm!=2 && rm!=5)) {*val+=80; *cont=99;}
 
-    if (onrc (DOOR,r+1,c+1) && (rm!=5 && rm!=7 && rm!=8)) {*val+=80; *cont=99;}
+    if (if_onrc (DOOR, r+1, c+1) && (rm!=5 && rm!=7 && rm!=8)) {*val+=80; *cont=99;}
 
     /* Bonus for door also orthogonally away */
-    if(onrc(DOOR,r,c-1)||onrc(DOOR,r-1,c)||onrc(DOOR,r,c+1)||onrc(DOOR,r+1,c))
+    if(if_onrc (DOOR, r,   c-1) ||
+       if_onrc (DOOR, r-1, c) ||
+       if_onrc (DOOR, r,   c+1) ||
+       if_onrc (DOOR, r+1, c))
       { *val+=30; *cont=99; }
   }
 
