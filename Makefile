@@ -155,7 +155,7 @@ endif
 
 OTHER_TARGES=
 
-TARGETS= rogomatic player rgmplot histplot gene
+TARGETS= rogomatic player rgmplot histplot gene run-rogo
 
 
 ################################
@@ -184,6 +184,10 @@ MISC_C= setup.c histplot.c rgmplot.c gene.c
 C_SRC= ${CFILES} ${MISC_C}
 
 SRC= ${C_SRC} ${H_SRC}
+
+SH_SRC= run-rogo.sh
+
+SH_TOOL= run-rogo
 
 MISC_OBJS= gene.o histplot.o rgmplot.o setup.o
 
@@ -356,6 +360,9 @@ rgmplot: rgmplot.o utility.o strl.o config.o terminal.o
 rogomatic: setup.o scorefile.o utility.o config.o strl.o terminal.o
 	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o strl.o terminal.o ${LIBS} -o $@
 
+run-rogo: run-rogo.sh
+	${CP} -f run-rogo.sh $@
+	${CHMOD} +x $@
 
 ##################################################
 # other targets that are not automatically built #
@@ -614,6 +621,7 @@ clobber: legacy_clobber clean
 install: all ${MISC_DOC} ${ORIG_DOC} stddocs
 	${INSTALL} -d -m 0755 ${BINDIR}
 	${INSTALL} -m 0755 ${TARGETS} ${BINDIR}
+	${INSTALL} -m 0755 run-rogo.sh ${BINDIR}
 	${INSTALL} -d -m 1777 ${TMPDIR}
 	${INSTALL} -d -m 1777 ${RGMDIR}
 	${INSTALL} -d -m 0755 ${SHAREDIR}
