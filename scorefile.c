@@ -77,7 +77,8 @@ add_score (char *new_line, char *vers, int ntrm)
 
   /* Now create a temporary to copy into */
   if ((newlog = wopen (newfil, "a")) == NULL) {
-    quit (1, "ERROR: %s: Unable to write: %s: %s\n", __func__, newfil, strerror (errno));
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Unable to write: %s: %s\n",
+	     __func__, __FILE__, __LINE__, dnum, newfil, strerror (errno));
     not_reached ();
   } else {
     fprintf (newlog, "%s\n", new_line);
@@ -160,7 +161,8 @@ dumpscore (char *vers)
 
 	/* unlock */
 	unlock_file (__func__, lock_fd);
-	quit (1, "ERROR: %s: new file is wrong length!\n", __func__);
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u new file is wrong length!\n",
+		 __func__, __FILE__, __LINE__, dnum);
 	not_reached ();
       }
       else {
@@ -192,13 +194,14 @@ dumpscore (char *vers)
 
     /* unlock */
     unlock_file (__func__, lock_fd);
-    quit (1, "ERROR: %s: Can't find: %s\n", __func__, scrfil);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Can't find: %s\n",
+	      __func__, __FILE__, __LINE__, dnum, scrfil);
     not_reached ();
   }
 
   printf ("Rog-O-Matic Scores against version %s:\n\n", vers);
-  printf ("%s%s", "Date         User           Gold Killed by",
-	  "         Lvl  Hp  Str  Ac  Exp     Game\n");
+  printf ("%s%s", "Date        Time     User           Gold Killed by",
+	  "         Lvl  Hp  Str  Ac  Exp        Game Dungeon\n");
 
   while ((int) (ch = fgetc (scoref)) != EOF)
     putchar (ch);

@@ -30,6 +30,7 @@
  */
 extern char rgmdir[MU_BUF + 1];		/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
 extern char lock_path[TY_BUF + 1];	/* rogomatic lock file path, +1 for paranoia */
+extern unsigned int dnum;		/* rogue dungeon number */
 
 
 #endif

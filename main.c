@@ -457,11 +457,13 @@ main (int argc, char *argv[])
   if (argc > 2) {
       rogpid = atoi (argv[2]);
       if (errno != 0) {
-	  fprintf (stderr, "ERROR: argv[2]: %s cannot be converted into an int: %s\n", argv[2], strerror (errno));
+	  fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u argv[2]: %s cannot be converted into an int: %s\n",
+			   __func__, __FILE__, __LINE__, dnum, argv[2], strerror (errno));
 	  exit(1);
       }
       if (rogpid < 0) {
-	  fprintf (stderr, "ERROR: argv[2]: %s pid arg < 0: %d\n", argv[2], rogpid);
+	  fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u argv[2]: %s pid arg < 0: %d\n",
+			   __func__, __FILE__, __LINE__, dnum, argv[2], rogpid);
 	  exit(1);
       }
   }
@@ -477,11 +479,12 @@ main (int argc, char *argv[])
       int transparent_int;	/* integer form of transparent boolean */
 
       /* parse options in third argument */
-      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d",
+      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%u",
                             &cheat_int, &noterm_int, &startecho_int, &nohalf_int,
-                            &emacs_int, &terse_int, &transparent_int);
-      if (i != 7) {
-	  fprintf (stderr, "ERROR: argv[3]: %s failed to scanf 7 flags, returned: %d\n", argv[3], i);
+                            &emacs_int, &terse_int, &transparent_int, &dnum);
+      if (i != 8) {
+	  fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u argv[3]: %s failed to scanf 8 flags or values, returned: %d\n",
+			   __func__, __FILE__, __LINE__, dnum, argv[3], i);
 	  exit(1);
       }
 
@@ -534,7 +537,7 @@ main (int argc, char *argv[])
   redirect_stderr (rgmdir, "errlog");
 
   /*
-   * append rogue pid and $ROGOSEED environment variable to pidlog
+   * append rogue pid and rogue dungeon number to pidlog
    */
   append_pidlog (rgmdir, "pidlog");
 
@@ -581,7 +584,8 @@ main (int argc, char *argv[])
     memset (pidfilename, 0, sizeof(pidfilename));
     snprintf (pidfilename, sizeof(pidfilename)-1, "%s/rogomaticpid.%d", rgmdir, pid);
     if ((pidfp = fopen (pidfilename, "w")) == NULL) {
-      fprintf (stderr, "ERROR: Can't open '%s'.\n", pidfilename);
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Can't open '%s'.\n",
+		       __func__, __FILE__, __LINE__, dnum, pidfilename);
       exit(1);
     }
   }
@@ -680,7 +684,9 @@ main (int argc, char *argv[])
     transparent = true;
   }
 
-  if (transparent) noterm = false;
+  if (transparent) {
+    noterm = false;
+  }
 
   while (playing) {
     refresh ();
@@ -919,8 +925,8 @@ main (int argc, char *argv[])
   }
   else {
     putchar ('\n');
-    printf ("%s%s", "Date         User           Gold Killed by",
-	    "         Lvl  Hp  Str  Ac  Exp     Game\n");
+    printf ("%s%s", "Date        Time     User           Gold Killed by",
+	    "         Lvl  Hp  Str  Ac  Exp        Game Dungeon\n");
     if (*sumline) printf ("%s\n",sumline);
 
     printf ("\n%s %s est.\n", gamename, termination);

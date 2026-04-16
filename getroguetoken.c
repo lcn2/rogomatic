@@ -29,6 +29,7 @@
 # include <fcntl.h>
 
 # include "types.h"
+# include "config.h"
 # include "globals.h"
 # include "termtokens.h"
 
@@ -211,7 +212,8 @@ open_frogue_debuglog (const char *dir, const char *file)
   /* open the log file */
   froguelog = fopen (path, "w");
   if (froguelog == NULL) {
-    fprintf (stderr, "ERROR: failed to open for writing: %s: %s\n", path, strerror (errno));
+    fprintf (stderr, "ERROR: %s file: %s line: %d dungeon: %u failed to open for writing: %s: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, path, strerror (errno));
     exit (1);
   }
 
@@ -305,7 +307,8 @@ fetchnum (char ch)
     if (matchnum (ch2)) {
       /* firewall */
       if (ind >= MU_BUF) {
-	quit (1, "ERROR: %s: ind: %d > MU_BUF: %d\n", __func__, ind, MU_BUF);
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u ind: %d > MU_BUF: %d\n",
+		 __func__, __FILE__, __LINE__, dnum, ind, MU_BUF);
 	not_reached ();
       }
       num[ind] = ch2;
@@ -881,7 +884,8 @@ redirect_stderr (const char *dir, const char *file)
    */
   errlog = open (path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (errlog < 0) {
-    fprintf (stderr, "ERROR: %s: Couldn't open error log %s: %s\n", __func__, path, strerror(errno));
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't open error log %s: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
     exit(1);
   }
 
@@ -893,7 +897,8 @@ redirect_stderr (const char *dir, const char *file)
    * control we have over t above open(2) call, AND the race is do no real consequence to future stderr output.
    */
   if (freopen(path, "a", stderr) == NULL) {
-    fprintf (stderr, "ERROR: %s: Couldn't freopen error log: %s onto stderr: %s\n", __func__, path, strerror(errno));
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't freopen error log: %s onto stderr: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
     exit(1);
   }
 
@@ -914,7 +919,8 @@ close_errlog (void)
 {
   if (errlog >= 0) {
     if (fclose (stderr) != 0) {
-      fprintf (stderr, "ERROR: %s: Failed to fclose error log via stderr: %s\n", __func__, strerror(errno));
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Failed to fclose error log via stderr: %s\n",
+		       __func__, __FILE__, __LINE__, dnum, strerror(errno));
       exit(1);
     }
     (void) close (errlog); /* paranoia */

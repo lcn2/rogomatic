@@ -32,6 +32,7 @@
 
 # include "modern_curses.h"
 # include "types.h"
+# include "config.h"
 # include "globals.h"
 
 /* static declarations */

@@ -96,7 +96,8 @@ main (int argc, char *argv[])
     if (readgenes (argv[0]))		/* Read the gene pool */
       analyzepool (full);		/* Print a summary */
     else {
-      quit (0, "ERROR: %s: Cannot read file: %s\n", __func__, argv[0]);
+      quit (0, "ERROR: %s: file: %s line: %d dungeon: %u Cannot read file: %s\n",
+	       __func__, __FILE__, __LINE__, dnum, argv[0]);
       not_reached ();
     }
 
@@ -119,7 +120,8 @@ main (int argc, char *argv[])
     rogo_closelog ();			/* Close the log file */
   }
   else if (! readgenes (genepool)) {	/* Read the gene pool */
-    quit (1, "ERROR: %s: Cannot read file '%s'\n", __func__, genepool);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Cannot read file '%s'\n",
+	      __func__, __FILE__, __LINE__, dnum, genepool);
     not_reached ();
   }
   unlock_file (__func__, lock_fd);

@@ -35,6 +35,7 @@
 # include <errno.h>
 
 # include "types.h"
+# include "config.h"
 
 # define TRIALS(g)		((g)->score.count)
 # define NONE		(-1)
@@ -301,7 +302,8 @@ readgenes (char *genepool)
 
   if ((gfil = fopen (genepool, "r")) == NULL) {
     if (fexists (genepool)) {
-      quit (1, "ERROR: %s: Cannot open file: %s: %s\n", __func__, genepool, strerror (errno));
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Cannot open file: %s: %s\n",
+	        __func__, __FILE__, __LINE__, dnum, genepool, strerror (errno));
       not_reached ();
     }
     else
@@ -377,7 +379,8 @@ writegenes (char *genepool)
 
   /* Open the gene file */
   if ((gfil = wopen (genepool, "w")) == NULL) {
-    quit (1, "ERROR: %s: Cannot open file: %s\n", __func__, genepool);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Cannot open file: %s\n",
+	      __func__, __FILE__, __LINE__, dnum, genepool);
     not_reached ();
   }
 

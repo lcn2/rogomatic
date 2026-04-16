@@ -32,6 +32,7 @@
 
 # include "modern_curses.h"
 # include "types.h"
+# include "config.h"
 # include "globals.h"
 
 # define SEARCHES(r,c)						\
@@ -170,7 +171,8 @@ gotovalue (int r, int c, int depth __attribute__ ((__unused__)),
 {
   /* firewall */
   if (val == NULL || avd == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p\n", __func__, (void *)val, (void *)avd);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p\n",
+	      __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -207,7 +209,8 @@ sleepvalue (int r, int c, int depth __attribute__ ((__unused__)),
 {
   /* firewall */
   if (val == NULL || avd == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p\n", __func__, (void *)val, (void *)avd);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p\n",
+	      __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -389,7 +392,8 @@ downvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
 {
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	     __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -438,7 +442,8 @@ exprunvalue (int r, int c, int depth, int *val, int *avd, int *cont)
 {
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	     __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -483,7 +488,8 @@ expunpinvalue (int r, int c, int depth, int *val, int *avd, int *cont)
 {
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	     __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -533,7 +539,8 @@ runvalue (int r, int c, int depth, int *val, int *avd, int *cont)
 {
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	      __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -622,7 +629,8 @@ rundoorvalue (int r, int c, int depth , int *val, int *avd, int *cont)
 {
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	     __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -695,7 +703,8 @@ expvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *a
 
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	     __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -808,7 +817,8 @@ zigzagvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
 
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	     __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -887,7 +897,8 @@ secretvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int
 
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	      __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -1224,7 +1235,8 @@ safevalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
 
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	     __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -1377,7 +1389,8 @@ archeryvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, in
 {
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	      __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {
@@ -1462,7 +1475,8 @@ restvalue (int r, int c, int depth __attribute__ ((__unused__)), int *val, int *
 
   /* firewall */
   if (val == NULL || avd == NULL || cont == NULL) {
-    quit (1, "ERROR: %s: NULL arg(s): val: %p avd: %p cont: %p\n", __func__, (void *)val, (void *)avd, (void *)cont);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u NULL arg(s): val: %p avd: %p cont: %p\n",
+	      __func__, __FILE__, __LINE__, dnum, (void *)val, (void *)avd, (void *)cont);
     not_reached();
   }
   if (!valrc (r, c)) {

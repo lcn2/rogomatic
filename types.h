@@ -375,25 +375,39 @@ typedef enum { false=0, true=1 } bool;
 /* valrc - true if r and c are valid, false otherwise */
 # define valrc(r,c) ( ((r)>=0) && ((r)<R) && ((c)>=0) && ((c)<C) )
 
-/* onrc - tell if r and c have the proper attributes */
+/*
+ * onrc - tell if r and c have the proper attributes
+ *
+ * For a valid location:
+ *
+ *	tell if r and c have the proper attributes
+ *
+ * else:
+ *
+ *	quit
+ */
 # define onrc(type,r,c) \
 	     (valrc((r),(c)) ? \
 	       ((type)&scrmap[(r)][(c)]) : \
-	       (quit (1, "ERROR: %s: file: %s line: %d onrc(%d,%d,%d) out of range\n", \
-			         __func__, __FILE__, __LINE__, (type), (r), (c)), \
+	       (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d onrc(%d,%d,%d) out of range\n", \
+			         __func__, dnum, __FILE__, __LINE__, (type), (r), (c)), \
 	        not_reached(), \
 	        0) \
 	     )
 
-/* if_onrc - if r and c are valid, then tell if row and col have the proper attributes, else 0 */
+/*
+ * if_onrc - onrc(type,r,c) for valid location, 0 otherwise
+ *
+ * tell if r and c have the proper attributes
+ */
 # define if_onrc(type,r,c) (valrc((r),(c)) ? ((type)&scrmap[(r)][(c)]) : 0)
 
 /* on - tell if current position has correct attributes */
 # define on(type) \
 	    (valrc((atrow),(atcol)) ? \
                ((type)&scrmap[(atrow)][(atcol)]) : \
-               (quit (1, "ERROR: %s: file: %s line: %d on(%d) at (%d,%d) out of range\n", \
-                                 __func__, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+               (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d on(%d) at (%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (type), (atrow), (atcol)), \
                 not_reached(), \
                 0) \
              )
@@ -405,8 +419,8 @@ typedef enum { false=0, true=1 } bool;
 # define seerc(ch,r,c) \
 	      (valrc((r),(c)) ? \
 	        ((ch)==screen[(r)][(c)]) : \
-                (quit (1, "ERROR: %s: file: %s line: %d seerc(%d,%d,%d) out of range\n", \
-                                 __func__, __FILE__, __LINE__, (ch), (r), (c)), \
+                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d seerc(%d,%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (ch), (r), (c)), \
                  not_reached(), \
                  0) \
               )
@@ -418,8 +432,8 @@ typedef enum { false=0, true=1 } bool;
 # define see(ch) \
 	    (valrc((atrow),(atcol)) ? \
                ((ch)==screen[(atrow)][(atcol)]) : \
-               (quit (1, "ERROR: %s: file: %s line: %d see(%d) at (%d,%d) out of range\n", \
-                                 __func__, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+               (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d see(%d) at (%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (type), (atrow), (atcol)), \
                 not_reached(), \
                 0) \
              )
@@ -431,8 +445,8 @@ typedef enum { false=0, true=1 } bool;
 # define setrc(type,r,c) \
 	      (valrc((r),(c)) ? \
 	        (scrmap[r][c]|=(type)) : \
-                (quit (1, "ERROR: %s: file: %s line: %d seerc(%d,%d,%d) out of range\n", \
-                                 __func__, __FILE__, __LINE__, (type), (r), (c)), \
+                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d seerc(%d,%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (type), (r), (c)), \
                  not_reached(), \
                  0) \
               )
@@ -441,8 +455,8 @@ typedef enum { false=0, true=1 } bool;
 # define set(type) \
 	      (valrc((atrow),(atcol)) ? \
 	        (scrmap[atrow][atcol]|=(type)) : \
-                (quit (1, "ERROR: %s: file: %s line: %d set(%d) at (%d,%d) out of range\n", \
-                                 __func__, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d set(%d) at (%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (type), (atrow), (atcol)), \
                  not_reached(), \
                  0) \
               )
@@ -454,8 +468,8 @@ typedef enum { false=0, true=1 } bool;
 # define unsetrc(type,r,c) \
 		(valrc((r),(c)) ? \
 		  (scrmap[(r)][(c)]&= ~(type)) : \
-		  (quit (1, "ERROR: %s: file: %s line: %d unsetrc(%d,%d,%d) out of range\n", \
-			     __func__, __FILE__, __LINE__, (type), (r), (c)), \
+		  (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d unsetrc(%d,%d,%d) out of range\n", \
+			     __func__, dnum, __FILE__, __LINE__, (type), (r), (c)), \
 		   not_reached(), \
 		   0) \
 		)
@@ -467,8 +481,8 @@ typedef enum { false=0, true=1 } bool;
 # define unset(type) \
 		(valrc((atrow),(atcol)) ? \
 		  (scrmap[(atrow)][(atcol)]&= ~(type)) : \
-		  (quit (1, "ERROR: %s: file: %s line: %d unsetrc(%d) at (%d,%d) out of range\n", \
-			     __func__, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+		  (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d unsetrc(%d) at (%d,%d) out of range\n", \
+			     __func__, dnum, __FILE__, __LINE__, (type), (atrow), (atcol)), \
 		   not_reached(), \
 		   0) \
 		)
@@ -486,8 +500,8 @@ typedef enum { false=0, true=1 } bool;
 # define atdrow(dir) \
 		(valdir((dir)) ? \
 		  (atrow+deltr[(dir)]) : \
-		  (quit (1, "ERROR: %s: file: %s line: %d atdrow(%d) out of range\n", \
-			     __func__, __FILE__, __LINE__, (dir)), \
+		  (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d atdrow(%d) out of range\n", \
+			     __func__, dnum, __FILE__, __LINE__, (dir)), \
 		   not_reached(), \
 		   0) \
 		)
@@ -499,8 +513,8 @@ typedef enum { false=0, true=1 } bool;
 # define atdcol(dir) \
 		(valdir((dir)) ? \
 		  (atcol+deltc[(dir)]) : \
-		  (quit (1, "ERROR: %s: file: %s line: %d atdcol(%d) out of range\n", \
-			     __func__, __FILE__, __LINE__, (dir)), \
+		  (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d atdcol(%d) out of range\n", \
+			     __func__, dnum, __FILE__, __LINE__, (dir)), \
 		   not_reached(), \
 		   0) \
 		)

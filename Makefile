@@ -166,8 +166,8 @@ TARGETS= rogomatic player rgmplot histplot gene run-rogo
 #
 BUILD_H_SRC= modern_curses.h have_strlcpy.h have_strlcat.h
 
-H_SRC= ${BUILD_H_SRC} types.h globals.h install.h termtokens.h getroguetoken.h \
-	strl.h
+H_SRC= ${BUILD_H_SRC} config.h getroguetoken.h globals.h install.h strl.h \
+	termtokens.h types.h
 
 OBJS= arms.o command.o config.o database.o debug.o debuglog.o explore.o \
 	getroguetoken.o io.o learn.o ltm.o main.o mess.o monsters.o pack.o \
@@ -796,6 +796,7 @@ arms.o: globals.h
 arms.o: modern_curses.h
 arms.o: types.h
 command.o: command.c
+command.o: config.h
 command.o: globals.h
 command.o: have_strlcat.h
 command.o: have_strlcpy.h
@@ -803,6 +804,7 @@ command.o: modern_curses.h
 command.o: strl.h
 command.o: types.h
 config.o: config.c
+config.o: config.h
 config.o: have_strlcat.h
 config.o: have_strlcpy.h
 config.o: strl.h
@@ -814,6 +816,7 @@ database.o: have_strlcpy.h
 database.o: modern_curses.h
 database.o: strl.h
 database.o: types.h
+debug.o: config.h
 debug.o: debug.c
 debug.o: globals.h
 debug.o: have_strlcat.h
@@ -822,16 +825,20 @@ debug.o: install.h
 debug.o: modern_curses.h
 debug.o: strl.h
 debug.o: types.h
+debuglog.o: config.h
 debuglog.o: debuglog.c
 debuglog.o: globals.h
 debuglog.o: types.h
+explore.o: config.h
 explore.o: explore.c
 explore.o: globals.h
 explore.o: modern_curses.h
 explore.o: types.h
+gene.o: config.h
 gene.o: gene.c
 gene.o: install.h
 gene.o: types.h
+getroguetoken.o: config.h
 getroguetoken.o: getroguetoken.c
 getroguetoken.o: globals.h
 getroguetoken.o: termtokens.h
@@ -841,6 +848,7 @@ histplot.o: have_strlcpy.h
 histplot.o: histplot.c
 histplot.o: strl.h
 histplot.o: types.h
+io.o: config.h
 io.o: getroguetoken.h
 io.o: globals.h
 io.o: have_strlcat.h
@@ -851,8 +859,10 @@ io.o: modern_curses.h
 io.o: strl.h
 io.o: termtokens.h
 io.o: types.h
+learn.o: config.h
 learn.o: learn.c
 learn.o: types.h
+ltm.o: config.h
 ltm.o: globals.h
 ltm.o: have_strlcat.h
 ltm.o: have_strlcpy.h
@@ -861,6 +871,7 @@ ltm.o: ltm.c
 ltm.o: modern_curses.h
 ltm.o: strl.h
 ltm.o: types.h
+main.o: config.h
 main.o: have_strlcat.h
 main.o: have_strlcpy.h
 main.o: install.h
@@ -869,6 +880,7 @@ main.o: modern_curses.h
 main.o: strl.h
 main.o: termtokens.h
 main.o: types.h
+mess.o: config.h
 mess.o: globals.h
 mess.o: have_strlcat.h
 mess.o: have_strlcpy.h
@@ -876,10 +888,12 @@ mess.o: mess.c
 mess.o: modern_curses.h
 mess.o: strl.h
 mess.o: types.h
+monsters.o: config.h
 monsters.o: globals.h
 monsters.o: modern_curses.h
 monsters.o: monsters.c
 monsters.o: types.h
+pack.o: config.h
 pack.o: globals.h
 pack.o: have_strlcat.h
 pack.o: have_strlcpy.h
@@ -897,18 +911,22 @@ rgmplot.o: have_strlcpy.h
 rgmplot.o: rgmplot.c
 rgmplot.o: strl.h
 rgmplot.o: types.h
+rooms.o: config.h
 rooms.o: globals.h
 rooms.o: modern_curses.h
 rooms.o: rooms.c
 rooms.o: types.h
+scorefile.o: config.h
 scorefile.o: globals.h
 scorefile.o: install.h
 scorefile.o: scorefile.c
 scorefile.o: types.h
+search.o: config.h
 search.o: globals.h
 search.o: modern_curses.h
 search.o: search.c
 search.o: types.h
+setup.o: config.h
 setup.o: have_strlcat.h
 setup.o: have_strlcpy.h
 setup.o: install.h
@@ -917,6 +935,7 @@ setup.o: strl.h
 setup.o: types.h
 stats.o: stats.c
 stats.o: types.h
+strategy.o: config.h
 strategy.o: globals.h
 strategy.o: install.h
 strategy.o: modern_curses.h
@@ -926,18 +945,22 @@ strl.o: have_strlcat.h
 strl.o: have_strlcpy.h
 strl.o: strl.c
 strl.o: strl.h
+survival.o: config.h
 survival.o: globals.h
 survival.o: modern_curses.h
 survival.o: survival.c
 survival.o: types.h
+tactics.o: config.h
 tactics.o: globals.h
 tactics.o: install.h
 tactics.o: modern_curses.h
 tactics.o: tactics.c
 tactics.o: types.h
+terminal.o: config.h
 terminal.o: globals.h
 terminal.o: terminal.c
 terminal.o: types.h
+things.o: config.h
 things.o: globals.h
 things.o: modern_curses.h
 things.o: things.c

@@ -62,6 +62,8 @@ static void  (*tstat)(int) = NULL;
 
 static bool final_newline = false;	/* True is endwin_and_ncurses_cleanup() has been called */
 
+extern unsigned int dnum;	/* rogue dungeon number */
+
 /*
  * rogo_baudrate: Determine the baud rate of the terminal
  */
@@ -332,7 +334,8 @@ form_path (const char *dir, const char *file)
   /* firewall */
   /* dir can be NULL */
   if (file == NULL) {
-    quit (1, "ERROR: %s: file is NULL\n", __func__);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u file is NULL\n",
+	     __func__, __FILE__, __LINE__, dnum);
     not_reached ();
   }
 
@@ -350,7 +353,8 @@ form_path (const char *dir, const char *file)
     len = strlen (dir) + 1 + strlen (file);
     path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
     if (path == NULL) {
-      quit (1, "ERROR: %s: failed to calloc full path for %s/%s\n", __func__, dir, file);
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc full path for %s/%s\n",
+	       __func__, __FILE__, __LINE__, dnum, dir, file);
       not_reached ();
     }
     snprintf(path, len+1, "%s/%s", dir, file); /* +1 for NUL */
@@ -362,7 +366,8 @@ form_path (const char *dir, const char *file)
     len = strlen (file);
     path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
     if (path == NULL) {
-      quit (1, "ERROR: %s: failed to calloc path for %s\n", __func__, file);
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc path for %s\n",
+	       __func__, __FILE__, __LINE__, dnum, file);
       not_reached ();
     }
     strlcpy(path, file, len+1);
@@ -391,11 +396,13 @@ form_prefix_path (const char *dir, const char *prefix, const char *file)
   /* firewall */
   /* dir can be NULL */
   if (prefix == NULL) {
-    quit (1, "ERROR: %s: prefix is NULL\n", __func__);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u prefix is NULL\n",
+	     __func__, __FILE__, __LINE__, dnum);
     not_reached ();
   }
   if (file == NULL) {
-    quit (1, "ERROR: %s: file is NULL\n", __func__);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u file is NULL\n",
+	     __func__, __FILE__, __LINE__, dnum);
     not_reached ();
   }
 
@@ -406,7 +413,8 @@ form_prefix_path (const char *dir, const char *prefix, const char *file)
     len = strlen (dir) + 1 + strlen(prefix) + strlen (file);
     path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
     if (path == NULL) {
-      quit (1, "ERROR: %s: failed to calloc full path for %s/%s\n", __func__, dir, file);
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc full path for %s/%s\n",
+	       __func__, __FILE__, __LINE__, dnum, dir, file);
       not_reached ();
     }
     snprintf(path, len+1, "%s/%s%s", dir, prefix, file); /* +1 for NUL */
@@ -418,7 +426,8 @@ form_prefix_path (const char *dir, const char *prefix, const char *file)
     len = strlen(prefix) + strlen (file);
     path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
     if (path == NULL) {
-      quit (1, "ERROR: %s: failed to calloc path for %s\n", __func__, file);
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc path for %s\n",
+	       __func__, __FILE__, __LINE__, dnum, file);
       not_reached ();
     }
     snprintf(path, len+1, "%s%s", prefix, file); /* +1 for NUL */
@@ -441,12 +450,14 @@ lock_file (const char *caller, const char *dir, const char *lokfil)
 
   /* firewall */
   if (caller == NULL) {
-    quit (1, "ERROR: %s: caller is NULL\n", __func__);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n",
+	     __func__, __FILE__, __LINE__, dnum);
     not_reached ();
   }
   /* is it OK for dir == NULL */
   if (lokfil == NULL) {
-    quit (1, "ERROR: caller: %s: lokfil is NULL\n", caller);
+    quit (1, "ERROR: caller: %s: file: %s line: %d dungeon: %u lokfil is NULL\n",
+	     caller, __FILE__, __LINE__, dnum);
     not_reached ();
   }
 
@@ -461,7 +472,8 @@ lock_file (const char *caller, const char *dir, const char *lokfil)
   lock_fd = open (path, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH); /* mode 0644 */
   if (lock_fd < 0) {
     /* failed to open and/or create the lock file */
-    quit (1, "ERROR: %s: failed to open lock file: %s: %s\n", caller, path, strerror (errno));
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to open lock file: %s: %s\n",
+	     caller, __FILE__, __LINE__, dnum, path, strerror (errno));
     not_reached ();
   }
 
@@ -471,7 +483,8 @@ lock_file (const char *caller, const char *dir, const char *lokfil)
   ret = flock (lock_fd, LOCK_EX);
   if (ret < 0) {
     /* failed to lock */
-    quit (1, "ERROR: %s: failed to lock: %s: %s\n", caller, path, strerror (errno));
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to lock: %s: %s\n",
+	      caller, __FILE__, __LINE__, dnum, path, strerror (errno));
     not_reached ();
   }
 
@@ -498,7 +511,8 @@ unlock_file (const char *caller, int lock_fd)
 
   /* firewall */
   if (caller == NULL) {
-    quit (1, "ERROR: %s: caller is NULL\n", __func__);
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n",
+	     __func__, __FILE__, __LINE__, dnum);
     not_reached ();
   }
 
@@ -516,7 +530,8 @@ unlock_file (const char *caller, int lock_fd)
   ret = flock (lock_fd, LOCK_UN);
   if (ret < 0) {
     /* failed to lock */
-    quit (1 , "ERROR: %s: failed to unlock\n", caller);
+    quit (1 , "ERROR: %s: file: %s line: %d dungeon: %u failed to unlock\n",
+	      caller, __FILE__, __LINE__, dnum);
     not_reached ();
   }
 

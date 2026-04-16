@@ -33,6 +33,7 @@
 
 # include "modern_curses.h"
 # include "types.h"
+# include "config.h"
 # include "globals.h"
 
 # define ADJACENT(m) (max (abs (mlist[m].mrow - atrow),\

@@ -46,7 +46,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.7 2026-04-15"
+# define VERSION "14.1.8 2026-04-16"
 
 /*
  * static declarations
@@ -110,6 +110,7 @@ main (int argc, char *argv[])
   char *rogue_savefile = NULL;	    /* the rogue save file to restore */
   char rogoseed[MU_BUF + 1];	    /* dungeon number to set as a unsigned seed */
   char rogue_dir[MU_BUF + 1];	    /* directory for the rogue files, not impacted by -d */
+  unsigned int dnum = 0;	    /* rogue dungeon number to set */
   extern char *optarg;		    /* option argument */
   extern int optind;		    /* argv index of the next arg */
   int i;
@@ -219,19 +220,19 @@ main (int argc, char *argv[])
 	break;
 
       case ':':
-	fprintf(stderr, "%s: ERROR: requires an argument -- %c\n", program, optopt);
+	fprintf(stderr, "%s: requires an argument -- %c\n", program, optopt);
 	fprintf (stderr, usage, program, prog, VERSION);
 	exit (3);
 	break;
 
       case '?':
-	fprintf(stderr, "%s: ERROR: unknown option -- %c\n", program, optopt);
+	fprintf(stderr, "%s: unknown option -- %c\n", program, optopt);
 	fprintf (stderr, usage, program, prog, VERSION);
 	exit (3);
 	break;
 
       default:
-	fprintf(stderr, "%s: ERROR: invalid -flag\n", program);
+	fprintf(stderr, "%s: invalid -flag\n", program);
 	fprintf (stderr, usage, program, prog, VERSION);
 	exit (3);
 	break;
@@ -251,7 +252,6 @@ main (int argc, char *argv[])
    */
   if (rogoseed[0] == '\0') {
     struct timeval tp;	/* now */
-    unsigned int dnum;	/* dungeon number to set */
 
     /*
      * determine dungeon number
@@ -267,10 +267,17 @@ main (int argc, char *argv[])
     /*
      * convert dungeon number into a string
      */
+    memset (rogoseed, 0, sizeof(rogoseed)); /* paranoia */
     snprintf (rogoseed, sizeof (rogoseed)-1, "%u", dnum);
   }
+  if (rogoseed[0] == '\0') {	/* paranoia */
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogoseed is an empty string\n",
+		     __func__, __FILE__, __LINE__, dnum);
+    exit (1);
+  }
   if (setenv ("ROGOSEED", rogoseed, 1) != 0) {
-    fprintf (stderr, "ERROR: can't setenv (\"ROGOSEED\", \"%s\", 1)\n", rogoseed);
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGOSEED\", \"%s\", 1)\n",
+		     __func__, __FILE__, __LINE__, dnum, rogoseed);
     exit (1);
   }
 
@@ -297,7 +304,8 @@ main (int argc, char *argv[])
 	rfile = rfilearg;
     }
     else {
-	fprintf (stderr, "ERROR: rogue arg not executable: %s - %s\n", rfilearg, strerror (errno));
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue arg not executable: %s - %s\n",
+			 __func__, __FILE__, __LINE__, dnum, rfilearg, strerror (errno));
 	exit (1);
     }
   }
@@ -315,7 +323,8 @@ main (int argc, char *argv[])
   }
 # endif
   else {
-    fprintf (stderr, "ERROR: rogue not found\n");
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue not found\n",
+		      __func__, __FILE__, __LINE__, dnum);
     exit (1);
   }
 
@@ -327,7 +336,8 @@ main (int argc, char *argv[])
 	pfile = pfilearg;
     }
     else {
-	fprintf (stderr, "ERROR: player arg not executable: %s - %s\n", pfilearg, strerror (errno));
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u player arg not executable: %s - %s\n",
+			 __func__, __FILE__, __LINE__, dnum, pfilearg, strerror (errno));
 	exit (1);
     }
   }
@@ -340,15 +350,16 @@ main (int argc, char *argv[])
   }
 # endif
   else {
-    fprintf (stderr, "ERROR: player not found\n");
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u player not found\n",
+		      __func__, __FILE__, __LINE__, dnum);
     exit (1);
   }
 
   /*
    * setup values that will be used as arguments to player
    */
-  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d",
-           cheat, noterm, echo, nohalf, emacs, terse, user);
+  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%u",
+           cheat, noterm, echo, nohalf, emacs, terse, user, dnum);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
   /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir */
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
@@ -384,9 +395,11 @@ main (int argc, char *argv[])
 	fname = ROGUELOG;
       }
       execl (pfile, "player", "ZZ", "0", options, fname, rgmdir, NULL);
-      fprintf (stderr, "ERROR: Replay not available, player binary missing: %s\n", pfile);
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Replay not available, player binary missing: %s\n",
+		       __func__, __FILE__, __LINE__, dnum, pfile);
     } else {
-      fprintf (stderr, "ERROR: replay: true, pfile == NULL\n");
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u replay: true, pfile == NULL\n",
+		       __func__, __FILE__, __LINE__, dnum);
     }
     exit(1);
 
@@ -396,7 +409,8 @@ main (int argc, char *argv[])
    * setup pipes between rogue and player
    */
   if ((pipe (ptc) < 0) || (pipe (ctp) < 0)) {
-    fprintf (stderr, "ERROR: Cannot get pipes!\n");
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Cannot get pipes!\n",
+		     __func__, __FILE__, __LINE__, dnum);
     exit (1);
   }
   trogue = ptc[WRITE];
@@ -420,7 +434,8 @@ main (int argc, char *argv[])
      * set vt100 terminal as player can parse vt100 terminal output
      */
     if (setenv ("TERM", "vt100", 1) != 0) {
-      fprintf (stderr, "ERROR: can't setenv (\"TERM\", \"vt100\", 1)\n");
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"TERM\", \"vt100\", 1)\n",
+		       __func__, __FILE__, __LINE__, dnum);
       exit (1);
     }
 
@@ -428,7 +443,8 @@ main (int argc, char *argv[])
      * set rogomatic options for player to use
      */
     if (setenv ("ROGUEOPTS", ropts, 1) != 0) {
-      fprintf (stderr, "ERROR: can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n",ropts);
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n",
+		       __func__, __FILE__, __LINE__, dnum, ropts);
       exit (1);
     }
 
@@ -444,29 +460,34 @@ main (int argc, char *argv[])
       if (rfile != NULL) {
 	rogue_savefile = form_path (rgmdir, "rogue.sav");
 	execl (rfile, "rogue", "-r", rogue_savefile, NULL);
-	fprintf (stderr, "ERROR: rogue default restore exec failed: %s -r %s: %s\n",
-			 rfile, rogue_savefile, strerror (errno));
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue default restore exec failed: %s -r %s: %s\n",
+			 __func__, __FILE__, __LINE__, dnum, rfile, rogue_savefile, strerror (errno));
       } else {
-	fprintf (stderr, "ERROR: oldgame: true, rogue path is NULL\n");
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u oldgame: true, rogue path is NULL\n",
+		         __func__, __FILE__, __LINE__, dnum);
       }
 
     } else if (argc > 0) {
 
       if (rfile != NULL) {
 	execl (rfile, "rogue", argv[0], NULL);
-	fprintf (stderr, "ERROR: rogue restore exec failed: %s %s: %s\n", rfile, argv[0], strerror (errno));
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue restore exec failed: %s %s: %s\n",
+			 __func__, __FILE__, __LINE__, dnum, rfile, argv[0], strerror (errno));
       } else {
-	fprintf (stderr, "ERROR: argc: %d > 0, rogue path is NULL\n", argc);
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u argc: %d > 0, rogue path is NULL\n",
+			 __func__, __FILE__, __LINE__, dnum, argc);
       }
 
     } else if (rfile != NULL) {
 
       execl (rfile, "rogue", NULL);
-      fprintf (stderr, "ERROR: rogue exec failed: %s: %s\n", rfile, strerror (errno));
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue exec failed: %s: %s\n",
+		       __func__, __FILE__, __LINE__, dnum, rfile, strerror (errno));
 
     } else {
 
-      fprintf (stderr, "ERROR: rogue path never set, rogue path is NULL\n");
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue path never set, rogue path is NULL\n",
+		       __func__, __FILE__, __LINE__, dnum);
 
     }
     exit (1);
@@ -510,10 +531,12 @@ main (int argc, char *argv[])
 
     if (pfile != NULL) {
       execl (pfile, "player", ft, rp, options, roguename, rgmdir, NULL);
-      fprintf (stderr, "ERROR: Rogomatic not available, player binary missing: %s\n", pfile);
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Rogomatic not available, player binary missing: %s\n",
+		       __func__, __FILE__, __LINE__, dnum, pfile);
       kill (child, SIGKILL);
     } else {
-      fprintf (stderr, "ERROR: player path never set, pfile is NULL\n");
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u player path never set, pfile is NULL\n",
+		       __func__, __FILE__, __LINE__, dnum);
       exit (1);
     }
   }

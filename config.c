@@ -42,6 +42,7 @@
  */
 char rgmdir[MU_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
 char lock_path[TY_BUF + 1] = { '\0' };  /* rogomatic lock file path, +1 for paranoia */
+unsigned int dnum = 0;			/* rogue dungeon number */
 
 /*
  * static declarations
@@ -87,7 +88,8 @@ set_rgmdir (bool time_subpath)
       /* no rgmdir, attempt to mkdir(rgmdir) */
       ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
       if (ret < 0) {
-	fprintf (stderr, "ERROR: %s: mkdir %s failed: %s\n", __func__, rgmdir, strerror (errno));
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u mkdir %s failed: %s\n",
+			  __func__, __FILE__, __LINE__, dnum, rgmdir, strerror (errno));
 	exit (1);
       }
   }
@@ -97,12 +99,14 @@ set_rgmdir (bool time_subpath)
    */
   ret = stat(rgmdir, &rgmdir_stat);
   if (ret < 0 || ((rgmdir_stat.st_mode & S_IFDIR) == 0)) {
-    fprintf (stderr, "ERROR: %s: not a directory: %s: %s\n", __func__, rgmdir, strerror (errno));
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u not a directory: %s: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, rgmdir, strerror (errno));
     exit (1);
   }
   ret = access(rgmdir, R_OK|W_OK|X_OK);
   if (ret < 0) {
-    fprintf (stderr, "ERROR: %s: directory is not read-write and searchable: %s\n", __func__, rgmdir);
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u directory is not read-write and searchable: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, rgmdir);
     exit (1);
   }
 
@@ -157,7 +161,8 @@ set_rgmdir (bool time_subpath)
 	/* no rgmdir, attempt to mkdir(rgmdir) */
 	ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
 	if (ret < 0) {
-	  fprintf (stderr, "ERROR: %s: sub-dir mkdir %s failed: %s\n", __func__, rgmdir, strerror (errno));
+	  fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u sub-dir mkdir %s failed: %s\n",
+			   __func__, __FILE__, __LINE__, dnum, rgmdir, strerror (errno));
 	  exit (1);
 	}
     }
@@ -167,12 +172,14 @@ set_rgmdir (bool time_subpath)
      */
     ret = stat(rgmdir, &rgmdir_stat);
     if (ret < 0 || ((rgmdir_stat.st_mode & S_IFDIR) == 0)) {
-      fprintf (stderr, "ERROR: %s: not a sub-directory: %s: %s\n", __func__, rgmdir, strerror (errno));
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u not a sub-directory: %s: %s\n",
+		       __func__, __FILE__, __LINE__, dnum, rgmdir, strerror (errno));
       exit (1);
     }
     ret = access(rgmdir, R_OK|W_OK|X_OK);
     if (ret < 0) {
-      fprintf (stderr, "ERROR: %s: sub-directory is not read-write and searchable: %s\n", __func__, rgmdir);
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u sub-directory is not read-write and searchable: %s\n",
+		       __func__, __FILE__, __LINE__, dnum, rgmdir);
       exit (1);
     }
 
@@ -189,7 +196,8 @@ set_rgmdir (bool time_subpath)
     memset (lock_path, 0, sizeof(lock_path));
     lockpathlen = rgmdirlen + strlen ("/Rgm.Lock");
     if (lockpathlen >= sizeof(lock_path)-1) {
-      fprintf (stderr, "ERROR: %s: RGMDIR %s: too long to form lock file path\n", __func__, rgmdir);
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u RGMDIR %s: too long to form lock file path\n",
+		       __func__, __FILE__, __LINE__, dnum, rgmdir);
       exit (1);
     }
     snprintf (lock_path, lockpathlen + 1, "%s/Rgm.Lock", rgmdir); /* +1 for paranoia */

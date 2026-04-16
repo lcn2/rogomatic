@@ -32,6 +32,7 @@
 #include <ctype.h>
 
 #include "types.h"
+#include "config.h"
 #include "globals.h"
 
 /* static declarations */
@@ -135,7 +136,8 @@ debuglog_open (const char *dir, const char *log)
   /* open the log file */
   debug = fopen (path, "w");
   if (debug == NULL) {
-    quit (1, "ERROR: %s: failed to open for writing: %s: %s\n", __func__, path, strerror (errno));
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to open for writing: %s: %s\n",
+	      __func__, __FILE__, __LINE__, dnum, path, strerror (errno));
     not_reached ();
   }
 
@@ -168,34 +170,28 @@ append_pidlog (const char *dir, const char *file)
   FILE *stream;		    /* pid log open stream */
   char *path;		    /* pid log path to open */
   int pidlog;		    /* pid log open file descriptor, or <0 ==> not open */
-  char *rogoseed_str;	    /* rogue dungeon number from $ROGOSEED environment variable */
   struct timeval tp;	    /* now */
   struct tm *now;	    /* now broken out into segments */
   char timebuf[MU_BUF + 1]; /* now as a string */
 
   /*
-   * determine rogue dungeon number
-   */
-  rogoseed_str = getenv ("ROGOSEED");
-  if (rogoseed_str == NULL) {
-    rogoseed_str = "0"; /* no $ROGOSEED environment variable, just use a rogue dungeon number of 0 */
-  }
-
-  /*
    * form our time string
    */
   if (gettimeofday (&tp, NULL) < 0) {
-    fprintf (stderr, "ERROR: %s: gettimeofday failed: %s\n", __func__, strerror(errno));
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u gettimeofday failed: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, strerror(errno));
     exit (1);
   }
   now = gmtime (&tp.tv_sec);
   if (now == NULL) {
-    fprintf (stderr, "ERROR: %s: gmtime failed: %s\n", __func__, strerror(errno));
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u gmtime failed: %s\n",
+		      __func__, __FILE__, __LINE__, dnum, strerror(errno));
     exit (1);
   }
   memset (timebuf, 0, sizeof(timebuf));
   if (strftime (timebuf, MU_BUF, "%F %T", now) <= 0) {
-    fprintf (stderr, "ERROR: %s: strftime failed: %s\n", __func__, strerror(errno));
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u strftime failed: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, strerror(errno));
     exit (1);
   }
 
@@ -210,7 +206,8 @@ append_pidlog (const char *dir, const char *file)
    */
   pidlog = open (path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (pidlog < 0) {
-    fprintf (stderr, "ERROR: %s: Couldn't open pid log %s: %s\n", __func__, path, strerror(errno));
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't open pid log %s: %s\n",
+		      __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
     exit (1);
   }
 
@@ -219,15 +216,16 @@ append_pidlog (const char *dir, const char *file)
    */
   stream = fdopen (pidlog, "a");
   if (stream == NULL) {
-    fprintf (stderr, "ERROR: %s: Couldn't freopen pid log: %s onto stderr: %s\n", __func__, path, strerror(errno));
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't freopen pid log: %s onto stderr: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
     exit (1);
   }
 
   /*
    * append line to pid log
    */
-  fprintf (stream, "%ld.%06ld %s rogue-pid: %d player-pid: %d dungeon: %s\n",
-		   (long) tp.tv_sec, (long) tp.tv_usec, timebuf, rogpid, (int) getpid(), rogoseed_str);
+  fprintf (stream, "%ld.%06ld %s rogue-pid: %d player-pid: %d dungeon: %u\n",
+		   (long) tp.tv_sec, (long) tp.tv_usec, timebuf, rogpid, (int) getpid(), dnum);
 
   /*
    * close pid log

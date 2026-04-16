@@ -42,6 +42,7 @@
 # include "strl.h"
 # include "modern_curses.h"
 # include "types.h"
+# include "config.h"
 # include "globals.h"
 # include "install.h"
 # include "termtokens.h"
@@ -1350,8 +1351,9 @@ quitrogue (char *reason, int gld, int terminationtype)
 
   /* Build a summary line */
   memset (sumline, 0, sizeof(sumline)); /* paranoia */
-  snprintf (sumline, SM_BUF, "%3s %2d, %4d %-.32s %7d%s%-17.17s %3d %3d ",
-           month[ts -> tm_mon], ts -> tm_mday, 1900 + ts -> tm_year,
+  snprintf (sumline, SM_BUF, "%4d %3s %02d %02d:%02d:%02d %-.32s %7d%s%-17.17s %3d %3d ",
+	   1900 + ts -> tm_year, month[ts -> tm_mon], ts -> tm_mday,
+	   ts -> tm_hour, ts -> tm_min, ts -> tm_sec,
            getname (), gld, cheat ? "*" : " ", reason, MaxLevel, Hpmax);
 
   memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
@@ -1361,8 +1363,8 @@ quitrogue (char *reason, int gld, int terminationtype)
     snprintf (sumline2, BIGBUF, "%.*s  %2d ", SM_BUF, sumline, Str/100);
 
   memset (sumline, 0, sizeof(sumline)); /* paranoia */
-  snprintf (sumline, BIGBUF, "%.*s %2d %2d/%-6d  %d",
-            SM_BUF, sumline2, Ac, Explev, Exp, ltm.gamecnt);
+  snprintf (sumline, BIGBUF, "%.*s %2d %2d/%-6d %6d %-10u",
+            SM_BUF, sumline2, Ac, Explev, Exp, ltm.gamecnt, dnum);
 
   /* Now write the summary line to the log file */
   at (R-1, 0); clrtoeol (); refresh ();
@@ -1400,7 +1402,8 @@ quitrogue (char *reason, int gld, int terminationtype)
    * look for a rogue process, either running, or stopped, or a killed zombie process
    */
   if (rogpid < 0) {
-      quit (1, "ERROR: %s: no rogue pid to wait for: %d\n", __func__, rogpid);
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u no rogue pid to wait for: %d\n",
+	       __func__, __FILE__, __LINE__, dnum, rogpid);
       not_reached ();
   }
   options = (WNOHANG | WUNTRACED);
@@ -1424,20 +1427,20 @@ quitrogue (char *reason, int gld, int terminationtype)
   if (ret < 0) {
     switch (errno) {
     case EINVAL:
-      quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) invalid options: %s\n",
-	       __func__, rogpid, options, strerror(errno));
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) invalid options: %s\n",
+	       __func__, __FILE__, __LINE__, dnum, rogpid, options, strerror(errno));
       not_reached ();
       break;
 
     case ECHILD:
-      quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) cannot obtain process status: %s\n",
-	       __func__, rogpid, options, strerror(errno));
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) cannot obtain process status: %s\n",
+	       __func__, __FILE__, __LINE__, dnum, rogpid, options, strerror(errno));
       not_reached ();
       break;
 
     default:
-      quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) returned: %d: %s\n",
-	       __func__, rogpid, options, ret, strerror(errno));
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) returned: %d: %s\n",
+	       __func__, __FILE__, __LINE__, dnum, rogpid, options, ret, strerror(errno));
       not_reached ();
       break;
     }
@@ -1450,8 +1453,8 @@ quitrogue (char *reason, int gld, int terminationtype)
    * try to kill it nicely (with a SIGHUP) before terminating it.
    */
   if (stat_loc == -1) {
-      quit (1, "ERROR: %s: waitpid (%d, &stat_loc, 0x%x) stat_loc remains -1\n",
-	       __func__, rogpid, options);
+      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) stat_loc remains -1\n",
+	       __func__, __FILE__, __LINE__, dnum, rogpid, options);
       not_reached ();
   }
   if (ret == 0 || WIFSTOPPED(stat_loc) || WIFCONTINUED(stat_loc)) {

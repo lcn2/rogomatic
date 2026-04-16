@@ -33,6 +33,7 @@
 
 # include "modern_curses.h"
 # include "types.h"
+# include "config.h"
 # include "globals.h"
 
 # define sign(x) ((x)?(x)>0?1:-1:0)
