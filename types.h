@@ -372,131 +372,279 @@ typedef enum { false=0, true=1 } bool;
 
 /* Utility Macros */
 
-/* valrc - true if r and c are valid, false otherwise */
+/*
+ * valrc (r,c) - test of r and c are a valid row and column location - no ERROR
+ *
+ * The row r, must be in 1/2 open interval: [0, R)
+ * The column c, must be in 1/2 open interval: [0, C)
+ *
+ * For a valid r and c location:
+ *	true
+ *
+ * else:
+ *	false
+ */
 # define valrc(r,c) ( ((r)>=0) && ((r)<R) && ((c)>=0) && ((c)<C) )
 
 /*
- * onrc - tell if r and c have the proper attributes
+ * onrc (attribute,r,c) - test if a screen map location has certain attribute bit(s) set
  *
- * For a valid location:
- *
- *	tell if r and c have the proper attributes
+ * For a valid r and c location:
+ *	screen map at a given location, scrmap[r][c], masked with attribute
  *
  * else:
- *
- *	quit
+ *	quit with ERROR message
  */
-# define onrc(type,r,c) \
+# define onrc(attribute,r,c) \
 	     (valrc((r),(c)) ? \
-	       ((type)&scrmap[(r)][(c)]) : \
-	       (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d onrc(%d,%d,%d) out of range\n", \
-			         __func__, dnum, __FILE__, __LINE__, (type), (r), (c)), \
+	       ((attribute)&scrmap[(r)][(c)]) : \
+	       (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d onrc(0x%x,%d,%d) out of range\n", \
+			         __func__, dnum, __FILE__, __LINE__, (attribute), (r), (c)), \
 	        not_reached(), \
 	        0) \
 	     )
 
 /*
- * if_onrc - onrc(type,r,c) for valid location, 0 otherwise
+ * if_onrc (attribute,r,c) - test if a screen map location has certain attribute bit(s) set - no ERROR
  *
- * tell if r and c have the proper attributes
+ * For a valid r and c location:
+ *	screen map at a given location, scrmap[r][c], masked with attribute
+ *
+ * else:
+ *	0
  */
-# define if_onrc(type,r,c) (valrc((r),(c)) ? ((type)&scrmap[(r)][(c)]) : 0)
+# define if_onrc(attribute,r,c) (valrc((r),(c)) ? ((attribute)&scrmap[(r)][(c)]) : 0)
 
-/* on - tell if current position has correct attributes */
-# define on(type) \
+/*
+ * on (attribute) - test if current screen map location has certain attribute bit(s) set
+ *
+ * For a valid current position:
+ *	current screen map location, scrmap[atlow][atcol], masked with attribute
+ *
+ * else:
+ *	quit with ERROR message
+ */
+# define on(attribute) \
 	    (valrc((atrow),(atcol)) ? \
-               ((type)&scrmap[(atrow)][(atcol)]) : \
-               (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d on(%d) at (%d,%d) out of range\n", \
-                                 __func__, dnum, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+               ((attribute)&scrmap[(atrow)][(atcol)]) : \
+               (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d on(0x%x) at (%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (attribute), (atrow), (atcol)), \
                 not_reached(), \
                 0) \
              )
 
-/* if_on - if current position is valid, then tell if current position has correct attributes, else 0 */
-# define if_on(type) (valrc((atrow),(atcol)) ? ((type)&scrmap[(atrow)][(atcol)]) : 0)
+/*
+ * if_on (attribute) - test if current screen map location has certain attribute bit(s) set - no ERROR
+ *
+ * For a valid current position:
+ *	current screen map location, scrmap[atlow][atcol], masked with attribute
+ *
+ * else:
+ *	0
+ */
+# define if_on(attribute) (valrc((atrow),(atcol)) ? ((attribute)&scrmap[(atrow)][(atcol)]) : 0)
 
-/* seerc - is this character at r and c */
-# define seerc(ch,r,c) \
+/*
+ * seerc (character,r,c) - test if a given screen location is a given character
+ *
+ * For a valid r and c location:
+ *	test if a given character is at a given screen[r][c] location
+ *
+ * else:
+ *	quit with ERROR message
+ */
+# define seerc(character,r,c) \
 	      (valrc((r),(c)) ? \
-	        ((ch)==screen[(r)][(c)]) : \
-                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d seerc(%d,%d,%d) out of range\n", \
-                                 __func__, dnum, __FILE__, __LINE__, (ch), (r), (c)), \
+	        ((character)==screen[(r)][(c)]) : \
+                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d seerc('%c',%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (character), (r), (c)), \
                  not_reached(), \
-                 0) \
+                 false) \
               )
 
-/* if_seerc - if r and c are valid, then is this character at row,col, else 0 */
-# define if_seerc(ch,r,c) (valrc((r),(c)) ? ((ch)==screen[(r)][(c)]) : 0)
+/*
+ * if_seerc (character,r,c) - test if a given screen location is a given character - no ERROR
+ *
+ * For a valid r and c location:
+ *	test if a given character is at a given screen[r][c] location
+ *
+ * else:
+ *	false
+ */
+# define if_seerc(character,r,c) (valrc((r),(c)) ? ((character)==screen[(r)][(c)]) : false)
 
-/* see - is this character at current position */
-# define see(ch) \
+/*
+ * see (character) - test if the current screen location is a given character
+ *
+ * For a valid r and c location:
+ *	test if a given character is at the current screen[atrow][atcol] position
+ *
+ * else:
+ *	quit with ERROR message
+ */
+# define see(character) \
 	    (valrc((atrow),(atcol)) ? \
-               ((ch)==screen[(atrow)][(atcol)]) : \
-               (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d see(%d) at (%d,%d) out of range\n", \
-                                 __func__, dnum, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+               ((character)==screen[(atrow)][(atcol)]) : \
+               (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d see('%c') at (%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (character), (atrow), (atcol)), \
                 not_reached(), \
-                0) \
+                false) \
              )
 
-/* if_see - if current position is valid, is this character at current position, else 0 */
-# define if_see(ch) (valrc((atrow),(atcol)) ? ((ch)==screen[(atrow)][(atcol)]) : 0)
+/*
+ * if_see (character) - test if the current screen location is a given character - no ERROR
+ *
+ * For a valid r and c location:
+ *	test if a given character is at the current screen[atrow][atcol] position
+ *
+ * else:
+ *	false
+ */
+# define if_see(character) (valrc((atrow),(atcol)) ? ((character)==screen[(atrow)][(atcol)]) : false)
 
-/* setrc - set attribute at <r,c> */
-# define setrc(type,r,c) \
+/*
+ * setrc (attribute,r,c) - set attribute bit(s) at a given screen map location
+ *
+ * For a valid r and c location:
+ *	set attribute bit(s) at a given screen map location, scrmap[r][c]
+ *
+ * else:
+ *	quit with ERROR message
+ */
+# define setrc(attribute,r,c) \
 	      (valrc((r),(c)) ? \
-	        (scrmap[r][c]|=(type)) : \
-                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d seerc(%d,%d,%d) out of range\n", \
-                                 __func__, dnum, __FILE__, __LINE__, (type), (r), (c)), \
+	        (scrmap[r][c]|=(attribute)) : \
+                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d seerc(0x%x,%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (attribute), (r), (c)), \
                  not_reached(), \
                  0) \
               )
 
-/* set - set attribute at current position */
-# define set(type) \
+/*
+ * if_setrc (attribute,r,c) - set attribute bit(s) at a given screen map location - no ERROR
+ *
+ * For a valid r and c location:
+ *	set attribute bit(s) at a given screen map location, scrmap[r][c]
+ *
+ * else:
+ *	0
+ */
+# define if_setrc(attribute,r,c) (valrc((atrow),(atcol)) ? (scrmap[atrow][atcol]|=(attribute)) : 0)
+
+/*
+ * set (attribute) - set attribute bit(s) at the current screen map location
+ *
+ * For a valid r and c location:
+ *	set attribute bit(s) at the current screen map location, scrmap[atlow][atcol]
+ *
+ * else:
+ *	quit with ERROR message
+ */
+# define set(attribute) \
 	      (valrc((atrow),(atcol)) ? \
-	        (scrmap[atrow][atcol]|=(type)) : \
-                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d set(%d) at (%d,%d) out of range\n", \
-                                 __func__, dnum, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+	        (scrmap[atrow][atcol]|=(attribute)) : \
+                (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d set(0x%x) at (%d,%d) out of range\n", \
+                                 __func__, dnum, __FILE__, __LINE__, (attribute), (atrow), (atcol)), \
                  not_reached(), \
                  0) \
               )
 
-/* if_set - if current position is valid, set attribute at current position, else 0 */
-# define if_set(type) (valrc((atrow),(atcol)) ? (scrmap[atrow][atcol]|=(type)) : 0)
+/*
+ * if_set (attribute) - set attribute bit(s) at the current screen map location - no ERROR
+ *
+ * For a valid r and c location:
+ *	set attribute bit(s) at the current screen map location, scrmap[atlow][atcol]
+ *
+ * else:
+ *	0
+ */
+# define if_set(attribute) (valrc((atrow),(atcol)) ? (scrmap[atrow][atcol]|=(attribute)) : 0)
 
-/* unsetrc - unset attribute at r and c */
-# define unsetrc(type,r,c) \
+/*
+ * unsetrc (attribute,r,c) - clear attribute bit(s) at a given screen map location
+ *
+ * For a valid r and c location:
+ *	clear attribute bit(s) at a given screen map location, scrmap[r][c]
+ *
+ * else:
+ *	quit with ERROR message
+ */
+# define unsetrc(attribute,r,c) \
 		(valrc((r),(c)) ? \
-		  (scrmap[(r)][(c)]&= ~(type)) : \
-		  (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d unsetrc(%d,%d,%d) out of range\n", \
-			     __func__, dnum, __FILE__, __LINE__, (type), (r), (c)), \
+		  (scrmap[(r)][(c)]&= ~(attribute)) : \
+		  (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d unsetrc(0x%x,%d,%d) out of range\n", \
+			     __func__, dnum, __FILE__, __LINE__, (attribute), (r), (c)), \
 		   not_reached(), \
 		   0) \
 		)
 
-/* if_unsetrc - if r and c are valid, unset attribute at r and c, else 0 */
-# define if_unsetrc(type,r,c) (valrc((r),(c)) ? (scrmap[(r)][(c)]&= ~(type)) : 0)
+/*
+ * if_unsetrc (attribute,r,c) - clear attribute bit(s) at a given screen map location - no ERROR
+ *
+ * For a valid r and c location:
+ *	clear attribute bit(s) at a given screen map location, scrmap[r][c]
+ *
+ * else:
+ *	0
+ */
+# define if_unsetrc(attribute,r,c) (valrc((r),(c)) ? (scrmap[(r)][(c)]&= ~(attribute)) : 0)
 
-/* unset - unset attribute at current position */
-# define unset(type) \
+/*
+ * unset (attribute) - clear attribute bit(s) at the current screen map location
+ *
+ * For a valid r and c location:
+ *	clear attribute bit(s) at the current screen map location, scrmap[r][c]
+ *
+ * else:
+ *	quit with ERROR message
+ */
+# define unset(attribute) \
 		(valrc((atrow),(atcol)) ? \
-		  (scrmap[(atrow)][(atcol)]&= ~(type)) : \
-		  (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d unsetrc(%d) at (%d,%d) out of range\n", \
-			     __func__, dnum, __FILE__, __LINE__, (type), (atrow), (atcol)), \
+		  (scrmap[(atrow)][(atcol)]&= ~(attribute)) : \
+		  (quit (1, "ERROR: %s: dungeon: %u file: %s line: %d unsetrc(0x%x) at (%d,%d) out of range\n", \
+			     __func__, dnum, __FILE__, __LINE__, (attribute), (atrow), (atcol)), \
 		   not_reached(), \
 		   0) \
 		)
 
-/* if_unset - if current position is valid, unset attribute at current position, else 0 */
-# define if_unset(type) (valrc((atrow),(atcol)) ? (scrmap[(atrow)][(atcol)]&= ~(type)) : 0)
+/*
+ * if_unset (attribute) - clear attribute bit(s) at the current screen map location - no ERROR
+ *
+ * For a valid r and c location:
+ *	clear attribute bit(s) at the current screen map location, scrmap[r][c]
+ *
+ * else:
+ *	0
+ */
+# define if_unset(attribute) (valrc((atrow),(atcol)) ? (scrmap[(atrow)][(atcol)]&= ~(attribute)) : 0)
 
-/* Direc - give the vector from an xy difference */
+/*
+ * direc (r,c) - give the vector from an xy difference - no ERROR
+ */
 # define direc(r,c) (r>0?(c>0?7:(c<0?5:6)):(r<0?(c>0?1:(c<0?3:2)):(c>0?0:4)))
 
-/* valdir - true if direction is valid, false otherwise */
+/*
+ * valdir (dir) - test if direction is valid - no ERROR
+ *
+ * The direction, dir, must be in 1/2 open interval: [0, DNUM)
+ *
+ * For a valid direction:
+ *	true
+ *
+ * else:
+ *	false
+ */
 # define valdir(dir) ( ((dir)>=0) && ((dir)<DNUM) )
 
-/* atdrow - gives row of adjacent square given direction */
+/*
+ * atdrow (dir) - row number adjacent to the current location in a given direction
+ *
+ * For a valid direction:
+ *	row number adjacent to the current location in a given direction
+ *
+ * else:
+ *	quit with ERROR message
+ */
 # define atdrow(dir) \
 		(valdir((dir)) ? \
 		  (atrow+deltr[(dir)]) : \
@@ -506,10 +654,26 @@ typedef enum { false=0, true=1 } bool;
 		   0) \
 		)
 
-/* if_atdrow - if direction is valid, gives row of adjacent square given direction, else 0 */
+/*
+ * is_atdrow (dir) - row number adjacent to the current location in a given direction - no ERROR
+ *
+ * For a valid direction:
+ *	row number adjacent to the current location in a given direction
+ *
+ * else:
+ *	0
+ */
 # define if_atdrow(dir) (valdir((dir)) ? (atrow+deltr[(dir)]) : 0)
 
-/* atdcol - gives col of adjacent square given direction */
+/*
+ * atdcol (dir) - column number adjacent to the current location in a given direction
+ *
+ * For a valid direction:
+ *	column number adjacent to the current location in a given direction
+ *
+ * else:
+ *	quit with ERROR message
+ */
 # define atdcol(dir) \
 		(valdir((dir)) ? \
 		  (atcol+deltc[(dir)]) : \
@@ -519,17 +683,25 @@ typedef enum { false=0, true=1 } bool;
 		   0) \
 		)
 
-/* if_atdcol - if direction is valid, gives col of adjacent square given direction, else 0 */
+/*
+ * if_atdcol (dir) - column number adjacent to the current location in a given direction - no ERROR
+ *
+ * For a valid direction:
+ *	column number adjacent to the current location in a given direction
+ *
+ * else:
+ *	0
+ */
 # define if_atdcol(dir) (valdir((dir)) ? (atcol+deltc[(dir)]) : 0)
 
 /* Define a more mnemonic string comparison */
 # define streq(s1,s2) (strcmp ((s1),(s2)) == 0)
 
 /* Monster value macros */
-# define maxhitchar(m) (cosmic ? Level*3/2+6 : monatt[(m)-'A'].maxdam)
-# define avghitchar(m) (cosmic ? Level*2/3+4 : monatt[(m)-'A'].expdam)
-# define maxhit(m) maxhitchar(mlist[m].chr)
-# define avghit(m) avghitchar(mlist[m].chr)     /* times 10 */
+# define maxhitchar(m) (((((m)-'A') >= 0) && (((m)-'A') < Z)) ? (cosmic ? Level*3/2+6 : monatt[(m)-'A'].maxdam) : 0)
+# define avghitchar(m) (((((m)-'A') >= 0) && (((m)-'A') < Z)) ? (cosmic ? Level*2/3+4 : monatt[(m)-'A'].expdam) : 0)
+# define maxhit(m) ((((m) >= 0) && ((m) < MAXMONST)) ? (maxhitchar(mlist[(m)].chr)) : 0)
+# define avghit(m) ((((m) >= 0) && ((m) < MAXMONST)) ? (avghitchar(mlist[(m)].chr)) : 0)     /* times 10 */
 
 /* Item knowledge macros   DR UTexas 25 Jan 84 */
 
