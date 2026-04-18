@@ -155,7 +155,7 @@ endif
 
 OTHER_TARGES=
 
-TARGETS= rogomatic player rgmplot histplot gene run-rogo
+TARGETS= rogomatic player rgmplot histplot gene run-rogo rerun-rogo unstuck_player
 
 
 ################################
@@ -185,7 +185,7 @@ C_SRC= ${CFILES} ${MISC_C}
 
 SRC= ${C_SRC} ${H_SRC}
 
-SH_SRC= run-rogo.sh
+SH_SRC= run-rogo.sh rerun-rogo.sh unstuck_player.sh
 
 SH_TOOL= run-rogo
 
@@ -362,6 +362,14 @@ rogomatic: setup.o scorefile.o utility.o config.o strl.o terminal.o
 
 run-rogo: run-rogo.sh
 	${CP} -f run-rogo.sh $@
+	${CHMOD} +x $@
+
+rerun-rogo: rerun-rogo.sh
+	${CP} -f rerun-rogo.sh $@
+	${CHMOD} +x $@
+
+unstuck_player: unstuck_player.sh
+	${CP} -f unstuck_player.sh $@
 	${CHMOD} +x $@
 
 ##################################################

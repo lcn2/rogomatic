@@ -16,6 +16,7 @@ modern_curses.h
 NOTES
 *.o
 player
+rerun-rogo
 rgmplot
 rogomatic
 rogomatic.6
@@ -26,3 +27,4 @@ skel/
 *.swo
 *.swp
 tags
+unstuck_player
