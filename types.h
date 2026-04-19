@@ -843,6 +843,9 @@ extern int movetorest (void);
 /* findscore.c */
 extern int findscore (char *rogue, char *roguename);
 
+/* fork_exec.c */
+extern int fork_exec (char *file, char *arglist[]);
+
 /* getroguetoken.c */
 extern int rogue_log_open (const char *filename);
 extern void rogue_log_close (void);

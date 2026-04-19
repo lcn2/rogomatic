@@ -169,12 +169,12 @@ BUILD_H_SRC= modern_curses.h have_strlcpy.h have_strlcat.h
 H_SRC= ${BUILD_H_SRC} config.h getroguetoken.h globals.h install.h strl.h \
 	termtokens.h types.h
 
-OBJS= arms.o command.o config.o database.o debug.o debuglog.o explore.o \
+OBJS= arms.o command.o config.o database.o debug.o debuglog.o explore.o fork_exec.o \
 	getroguetoken.o io.o learn.o ltm.o main.o mess.o monsters.o pack.o \
 	rand.o replay.o rooms.o terminal.o scorefile.o search.o stats.o strategy.o strl.o \
 	survival.o tactics.o things.o titlepage.o utility.o worth.o
 
-CFILES= arms.c command.c config.c database.c debug.c debuglog.c explore.c \
+CFILES= arms.c command.c config.c database.c debug.c debuglog.c explore.c fork_exec.c \
 	getroguetoken.c io.c learn.c ltm.c main.c mess.c monsters.c pack.c \
 	rand.c replay.c rooms.c terminal.c scorefile.c search.c stats.c strategy.c strl.c \
 	survival.c tactics.c things.c titlepage.c utility.c worth.c
@@ -357,8 +357,8 @@ player: ${OBJS}
 rgmplot: rgmplot.o utility.o strl.o config.o terminal.o
 	${CC} ${LDFLAGS} rgmplot.o utility.o strl.o config.o terminal.o ${LIBS} -o $@
 
-rogomatic: setup.o scorefile.o utility.o config.o strl.o terminal.o
-	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o strl.o terminal.o ${LIBS} -o $@
+rogomatic: setup.o scorefile.o utility.o config.o strl.o terminal.o fork_exec.o
+	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o strl.o terminal.o fork_exec.o ${LIBS} -o $@
 
 run-rogo: run-rogo.sh
 	${CP} -f run-rogo.sh $@
@@ -842,6 +842,9 @@ explore.o: explore.c
 explore.o: globals.h
 explore.o: modern_curses.h
 explore.o: types.h
+fork_exec.o: config.h
+fork_exec.o: fork_exec.c
+fork_exec.o: types.h
 gene.o: config.h
 gene.o: gene.c
 gene.o: install.h

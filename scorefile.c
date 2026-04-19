@@ -109,15 +109,17 @@ add_score (char *new_line, char *vers, int ntrm)
 void
 dumpscore (char *vers)
 {
-  char  ch;
   char  *scrfil = NULL;	    /* rogomatic score file path */
   char  *delfil = NULL;	    /* rogomatic delta file path */
   char  *newfil = NULL;	    /* rogomatic new file path */
   char  *allfil = NULL;	    /* rogomatic all scores file path */
   char  cmd[BIGBUF + 1];    /* shell command buffer, +1 for paranoia */
-  FILE *scoref, *deltaf;
-  int   oldmask;
-  int   lock_fd;
+  FILE *scoref;		    /* score file stream */
+  FILE *deltaf;		    /* delta file stream */
+  int   oldmask;	    /* original umask */
+  int   lock_fd;	    /* lock file descriptor */
+  int   code = 0;	    /* command exit code */
+  char  ch;
 
   /* zeroize arrays */
   memset (cmd, 0, sizeof(cmd)); /* paranoia */
@@ -135,10 +137,21 @@ dumpscore (char *vers)
   lock_fd = lock_file (__func__, NULL, lock_path);
 
   deltaf = fopen (delfil, "r");
+  if (deltaf == NULL) {
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to open rogomatic delta file: %s error: %s\n",
+	     __func__, __FILE__, __LINE__, dnum, delfil, strerror (errno));
+    not_reached ();
+  }
   scoref = fopen (scrfil, "r");
+  if (scoref == NULL) {
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to open rogomatic score file: %s error: %s\n",
+	     __func__, __FILE__, __LINE__, dnum, scrfil, strerror (errno));
+    not_reached ();
+  }
 
   /* If there are new scores, sort and merge them into the score file */
   if (deltaf != NULL) {
+
     fclose (deltaf);
 
     /* Defer interrupts while mucking with the score file */
@@ -149,10 +162,40 @@ dumpscore (char *vers)
 
     /* If we have an old file and a delta file, merge them */
     if (scoref != NULL) {
+
+      /* first sort command and args */
+      char *args_0[] = {
+	"sort", "+4nr", "-o", newfil, delfil, NULL
+      };
+
+      /* second sort command and args */
+      char *args_1[] = {
+	"sort", "+4nr", "-o", allfil, newfil, scrfil, NULL
+      };
+
+
+      /* close out the score file */
       fclose (scoref);
-      snprintf (cmd, BIGBUF, "sort +4nr -o %s %s; sort -m +4nr -o %s %s %s",
-               newfil, delfil, allfil, newfil, scrfil);
-      system (cmd);
+
+      /*
+       * sort delta score file into a new rogomatic score file
+       */
+      code = fork_exec ("sort", args_0);
+      if (code != 0) {
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort +4nr -o %s %s failed, exit code: %d\n",
+		 __func__, __FILE__, __LINE__, dnum, newfil, delfil, code);
+	not_reached ();
+      }
+
+      /*
+       * sort merge the new rogomatic score file, and existing rogomatic score file into rogomatic all score file
+       */
+      code = fork_exec ("sort", args_1);
+      if (code != 0) {
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort +4nr -o %s %s %s failed, exit code: %d\n",
+		 __func__, __FILE__, __LINE__, dnum, allfil, newfil, scrfil, code);
+	not_reached ();
+      }
 
       if (filelength (allfil) != filelength (delfil) + filelength (scrfil)) {
 	/* unlink */
@@ -167,8 +210,11 @@ dumpscore (char *vers)
       }
       else {
         /* New file is okay, unlink old files and pointer swap score file */
-        unlink (delfil); unlink (newfil);
-        unlink (scrfil); link (allfil, scrfil); unlink (allfil);
+        unlink (delfil);
+	unlink (newfil);
+        unlink (scrfil);
+	link (allfil, scrfil);
+	unlink (allfil);
       }
 
       scoref = fopen (scrfil, "r");
@@ -176,8 +222,22 @@ dumpscore (char *vers)
     else
       /* Only have delta file, sort into scorefile and unlink delta */
     {
-      snprintf (cmd, BIGBUF, "sort +4nr -o %s %s", scrfil, delfil);
-      system (cmd);
+
+      /* first sort command and args */
+      char *args[] = {
+	"sort", "+4nr", "-o", scrfil, delfil, NULL
+      };
+
+      /*
+       * sort delta score file into a rogomatic score file
+       */
+      code = fork_exec ("sort", args);
+      if (code != 0) {
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort +4nr -o %s %s failed, exit code: %d\n",
+		 __func__, __FILE__, __LINE__, dnum, scrfil, delfil, code);
+	not_reached ();
+      }
+
       unlink (delfil);
       scoref = fopen (scrfil, "r");
     }
