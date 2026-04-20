@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.0 2026-04-16"
+export VERSION="1.0.1 2026-04-19"
 NAME=$(basename "$0")
 export NAME
 #
@@ -67,11 +67,13 @@ fi
 #
 export RGMDIR="/var/tmp/rogomatic"
 export IDLE_SEC="20"
+export STOP_FILE=".stopfile"
 
 
 # usage
 #
-export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-R run-rogo] [-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-i idlesec]
+export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-R run-rogo]
+	[-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-i idlesec] [-s stopfile]
 
     -h          print help message and exit
     -v level    set verbosity level (def level: $V_FLAG)
@@ -86,6 +88,7 @@ export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-R run-rogo] [-r rogomat
     -f rogue		path to rogue (def: $ROGUE_TOOL)
     -D rmdir		rogomatic directory (def: $RGMDIR)
     -i idlesec		seconds to check for an idle rogomatic (def: $IDLE_SEC)
+    -s stopfile		stop the rerun cycle if stopfile exists (def: $STOP_FILE)
 
 Exit codes:
      0         all OK
@@ -100,7 +103,7 @@ $NAME version: $VERSION"
 
 # parse command line
 #
-while getopts :hv:VnNR:r:P:f:D:i: flag; do
+while getopts :hv:VnNR:r:P:f:D:i:s: flag; do
   case "$flag" in
     h) echo "$USAGE"
 	exit 2
@@ -123,6 +126,8 @@ while getopts :hv:VnNR:r:P:f:D:i: flag; do
     f) ROGUE_TOOL="$OPTARG"
         ;;
     D) RGMDIR="$OPTARG"
+        ;;
+    i) IDLE_SEC="$OPTARG"
         ;;
     i) IDLE_SEC="$OPTARG"
         ;;
@@ -257,6 +262,7 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: ROGUE_TOOL=$ROGUE_TOOL" 1>&2
     echo "$0: debug[3]: RGMDIR=$RGMDIR" 1>&2
     echo "$0: debug[3]: IDLE_SEC=$IDLE_SEC" 1>&2
+    echo "$0: debug[3]: STOP_FILE=$STOP_FILE" 1>&2
 fi
 
 
@@ -269,17 +275,39 @@ if [[ -n $DO_NOT_PROCESS ]]; then
     exit 0
 fi
 
+# setup for process cycling
+#
+trap "tput reset; exit" 0 1 2 3 15
+if [[ -e $STOP_FILE ]]; then
+    if [[ $V_FLAG -ge 1 ]]; then
+	echo "$0: debug[1]: rm -f $STOP_FILE" 1>&2
+    fi
+    rm -f "$STOP_FILE"
+fi
+if [[ -e $STOP_FILE ]]; then
+    echo "$0: ERROR: unable to pre-remote stopfile: $STOP_FILE" 1>&2
+    exit 10
+fi
+
 
 # run the run-rogo tool
 #
 if [[ -z $NOOP ]]; then
     while :; do
+	if [[ -e $STOP_FILE ]]; then
+	    if [[ $V_FLAG -ge 1 ]]; then
+		echo "$0: debug[1]: stopfile detected, exiting: $STOP_FILE" 1>&2
+	    fi
+	    trap "exit" 0 1 2 3 15
+	    exit 0
+	fi
 	if [[ $V_FLAG -ge 1 ]]; then
 	    echo "$0: debug[1]: about to run: $RUN_ROGO_TOOL -r $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR" 1>&2
 	fi
+	tput reset  # paranoia
 	"$RUN_ROGO_TOOL" -r "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR"
     done
-else
+elif [[ $V_FLAG -ge 1 ]]; then
     echo "$0: debug[1]: due to use of -n, there is nothing to do" 1>&2
 fi
 

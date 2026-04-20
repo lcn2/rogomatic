@@ -23,6 +23,7 @@ rogomatic.6
 rogomatic.cat
 run-rogo
 skel/
+.stopfile
 *.swn
 *.swo
 *.swp
