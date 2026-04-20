@@ -295,6 +295,7 @@ fi
 if [[ -z $NOOP ]]; then
     while :; do
 	if [[ -e $STOP_FILE ]]; then
+	    tput reset  # paranoia
 	    if [[ $V_FLAG -ge 1 ]]; then
 		echo "$0: debug[1]: stopfile detected, exiting: $STOP_FILE" 1>&2
 	    fi
