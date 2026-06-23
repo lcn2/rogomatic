@@ -143,12 +143,14 @@ terpmes (void)
     /* :ANT: for debugging screen now has to be at least 31x80 */
     if debug(D_MESSAGE) {
       at (R,0);
-      printw (">%-*.*s", C-1, C-1, screen);
+      printw (">%-*.*s", C-1, C-1, (char *)screen);
       at (R+1,0);
-      printw (">%-*.*s", C-1, C-1, topline);
+      topline[MU_BUF] = 0; /* paranoia */
+      printw (">%-*.*s", C-1, C-1, (char *)topline);
       at (R+2,0);
       clrtoeol ();
-      printw (">%-*.*s", C-1, C-1, mess);
+      mess[MU_BUF] = 0; /* paranoia */
+      printw (">%-*.*s", C-1, C-1, (char *)mess);
       refresh ();
     }
 
@@ -159,12 +161,14 @@ terpmes (void)
     /* :ANT: for debugging */
     if debug(D_MESSAGE) {
       at (R,0);
-      printw ("<%-*.*", C-1, C-1, screen);
+      printw ("<%-*.*", C-1, C-1, (char *)screen);
       at (R+1,0);
-      printw ("<%-*.*", C-1, C-1, topline);
+      topline[MU_BUF] = 0; /* paranoia */
+      printw ("<%-*.*", C-1, C-1, (char *)topline);
       at (R+2,0);
       clrtoeol ();
-      printw ("<%-*.*", C-1, C-1, mess);
+      mess[MU_BUF] = 0; /* paranoia */
+      printw ("<%-*.*", C-1, C-1, (char *)mess);
       refresh ();
     }
 
