@@ -1624,7 +1624,7 @@ void
 pauserogue (void)
 {
   at (R-1, 0);
-  addstr ("--press space to continue--");
+  addstr ("--More--");
   clrtoeol ();
   refresh ();
 
