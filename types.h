@@ -1079,6 +1079,7 @@ extern void int_exit (void (*exitproc)(int));
 extern char *form_path (const char *dir, const char *file);
 extern char *form_prefix_path (const char *dir, const char *prefix, const char *file);
 extern int lock_file (const char *caller, const char *dir, const char *lokfil);
+extern int test_lock_file (const char *caller, const char *dir, const char *lokfil);
 extern void unlock_file (const char *caller, int lock_fd);
 extern void quit (int code, char *fmt, ...) __attribute__((format(printf, 2, 3))) __attribute__((noreturn));
 extern int stlmatch (char *big, char *small);

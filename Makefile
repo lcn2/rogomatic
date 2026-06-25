@@ -155,7 +155,7 @@ endif
 
 OTHER_TARGES=
 
-TARGETS= rogomatic player rgmplot histplot gene run-rogo rerun-rogo unstuck_player
+TARGETS= rogomatic player rgmplot histplot gene run-rogo rerun-rogo unstuck_player kill_player
 
 
 ################################
@@ -185,7 +185,7 @@ C_SRC= ${CFILES} ${MISC_C}
 
 SRC= ${C_SRC} ${H_SRC}
 
-SH_SRC= run-rogo.sh rerun-rogo.sh unstuck_player.sh
+SH_SRC= run-rogo.sh rerun-rogo.sh unstuck_player.sh kill_player.sh
 
 SH_TOOL= run-rogo
 
@@ -220,7 +220,7 @@ MAKE_FILE= Makefile
 # See also: https://developer.apple.com/documentation/xcode/diagnosing-memory-thread-and-crash-issues-early
 # And also: https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
 #
-# The following Address Sanitizer (ASAN) are common to both RHEL9.7 (Linux) and macOS 26.2.
+# The following Address Sanitizer (ASAN) are common to both RHEL 10.2 (Linux) and macOS 26.5.1.
 #
 # By default, the Address Sanitizer is NOT enabled.
 #
@@ -266,19 +266,19 @@ OTHER_FSANITIZE+= -fstack-protector-all
 #
 # This comment block was tested under:
 #
-#       macOS 26.2 with Apple clang version 17.0.0 (clang-1700.6.3.2)
+#       macOS 26.5.1 with Apple clang version 21.0.0 (clang-2100.1.1.101)
 #
-#       See: https://releases.llvm.org/17.0.1/tools/clang/docs/AddressSanitizer.html
+#       See: https://developer.apple.com/documentation/xcode/diagnosing-memory-thread-and-crash-issues-early
 #
 # To use the Address Sanitizer, uncomment this set set of lines and recompile (make clobber all):
 #
 # For more info see: https://github.com/google/sanitizers/wiki/AddressSanitizer
-# See also: https://developer.apple.com/documentation/xcode/diagnosing-memory-thread-and-crash-issues-early
+#
 # And also: https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
 #
-# For Homebrew gcc version 15 only:
+# For Homebrew gcc version 16 only:
 #
-# CC:= gcc-15
+# CC:= gcc-16
 # DEBUG:= -g2
 #
 # For Apple clang and Homebrew gcc:
@@ -304,16 +304,17 @@ OTHER_FSANITIZE+= -fstack-protector-all
 #
 # This comment block was tested under:
 #
-#       RHEL9.7 with clang version 20.1.8 (Red Hat, Inc. 20.1.8-3.el9)
+#       RHEL 10.2 with clang version 21.1.8 (Red Hat, Inc. 21.1.8-1.el10)
 #
 # with these RPMs installed:
 #
-#       libasan-11.5.0-11.el9.x86_64
-#       libubsan-11.5.0-11.el9.x86_64
+#       libasan-14.3.1-4.4.el10.x86_64
+#       libubsan-14.3.1-4.4.el10.x86_64
 #
 # To use the Address Sanitizer, uncomment this set set of lines and recompile (make clobber all):
 #
 # For more info see: https://github.com/google/sanitizers/wiki/AddressSanitizer
+#
 # And also: https://github.com/google/sanitizers/wiki/AddressSanitizerFlags
 #
 # Be sure you have the following dnf packages installed:
@@ -372,6 +373,10 @@ unstuck_player: unstuck_player.sh
 	${CP} -f unstuck_player.sh $@
 	${CHMOD} +x $@
 
+kill_player: kill_player.sh
+	${CP} -f kill_player.sh $@
+	${CHMOD} +x $@
+
 ##################################################
 # other targets that are not automatically built #
 ##################################################
@@ -383,7 +388,7 @@ form_rogomatic_cat_in: rogomatic.6.in
 	${RM} -f rogomatic.cat.in
 	${GROFF} -Tascii -man rogomatic.6.in | LC_CTYPE=C ${SED} -e 's/.\x08//g' > rogomatic.cat.in
 
-# compile all with gcc-15, full warnings, no optimizer, no ASAN
+# compile all with gcc-16, full warnings, no optimizer, no ASAN
 #
 # NOTE: Consider doing a "make clobber" first, especially when switching from a previous "make all", "make clang", etc.
 #
@@ -391,7 +396,7 @@ gcc:
 ifeq ($(target),Linux)
 	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
 else
-	${MAKE} -f ${MAKE_FILE} all CC='gcc-15' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-g2'
+	${MAKE} -f ${MAKE_FILE} all CC='gcc-16' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-g2'
 endif
 
 # compile all with clang, full warnings, no optimizer, no ASAN

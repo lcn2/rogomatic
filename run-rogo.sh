@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.1 2026-04-15"
+export VERSION="1.1.1 2026-06-24"
 NAME=$(basename "$0")
 export NAME
 #
@@ -41,23 +41,28 @@ export V_FLAG=0
 export NOOP=
 export DO_NOT_PROCESS=
 #
-ROGOMATIC_TOOL=$(type -P rogomatic)
-export ROGOMATIC_TOOL
-if [[ -z $ROGOMATIC_TOOL ]]; then
+if [[ -x ./rogomatic ]]; then
     ROGOMATIC_TOOL="./rogomatic"
+else
+    ROGOMATIC_TOOL=$(type -P rogomatic)
 fi
+export ROGOMATIC_TOOL
 #
-PLAYER_TOOL=$(type -P player)
-export PLAYER_TOOL
-if [[ -z $PLAYER_TOOL ]]; then
+if [[ -x ./player ]]; then
     PLAYER_TOOL="./player"
+else
+    PLAYER_TOOL=$(type -P player)
 fi
+export PLAYER_TOOL
 #
-ROGUE_TOOL=$(type -P rogue)
-export ROGUE_TOOL
-if [[ -z $ROGUE_TOOL ]]; then
+if [[ -x ./rogue ]]; then
     ROGUE_TOOL="./rogue"
+elif [[ -x ../rogue5.4/rogue ]]; then
+    ROGUE_TOOL="../rogue5.4/rogue"
+else
+    ROGUE_TOOL=$(type -P rogue)
 fi
+export ROGUE_TOOL
 #
 export RGMDIR="/var/tmp/rogomatic"
 export SEED=""
@@ -82,6 +87,7 @@ export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-r rogomatic] [-P player
 
 Exit codes:
      0         all OK
+     1         player already running
      2         -h and help string printed or -V and version string printed
      3         command line error
      5	       some internal tool is not found or not an executable file
@@ -241,6 +247,19 @@ if [[ -n $DO_NOT_PROCESS ]]; then
 	echo "$0: debug[3]: arguments parsed, -N given, exiting 0" 1>&2
     fi
     exit 0
+fi
+
+
+# verify that player isn't already running
+#
+flock -n -E 1 -o "$RGMDIR/player.lck" true
+status="$?"
+if [[ $status -eq 1 ]]; then
+    echo "$0: ERROR: player appears to be running, file is locked: $RGMDIR/player.lck" 1>&2
+    exit 1
+elif [[ $status -ne 0 ]]; then
+    echo "$0: ERROR: flock -n -E 1 -o $RGMDIR/player.lck failed, error: $status" 1>&2
+    exit 10
 fi
 
 

@@ -9,6 +9,7 @@ have_strlcat.h
 have_strlcpy.h
 histplot
 index
+kill_player
 lex.yy.c
 .lldbinit
 Makefile.bak

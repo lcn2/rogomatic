@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.0 2026-04-16"
+export VERSION="1.0 2026-06-24"
 NAME=$(basename "$0")
 export NAME
 #
@@ -55,19 +55,19 @@ export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-r recheck_sec] [-R rest
     -v level    set verbosity level (def level: $V_FLAG)
     -V          print version string and exit
 
-    -n		go thru the actions, but do not update any files (def: do the action)
+    -n          go thru the actions, but do not update any files (def: do the action)
     -N          do not process anything, just parse arguments (def: process something)
 
-    -r recheck_sec	seconds to re-check running player (def: $RUNNING_RECHECK_SEC)
-    -R restart_sec	seconds to wait while player restarts (def: $RESTART_SEC)
-    -m missing_sec	seconds to re-check for missing player (def: $MISSING_RECHECK_SEC)
-    -u user		only process player and rogue run by user (def: run by $USR)
+    -r recheck_sec      seconds to re-check running player (def: $RUNNING_RECHECK_SEC)
+    -R restart_sec      seconds to wait while player restarts (def: $RESTART_SEC)
+    -m missing_sec      seconds to re-check for missing player (def: $MISSING_RECHECK_SEC)
+    -u user             only process player and rogue run by user (def: run by $USR)
 
 Exit codes:
      0         all OK
      2         -h and help string printed or -V and version string printed
      3         command line error
-     5	       some internal tool is not found or not an executable file
+     5         some internal tool is not found or not an executable file
      6         problems found with or in the rogomatic directory
  >= 10         internal error
 
@@ -146,6 +146,8 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: RUNNING_RECHECK_SEC=$RUNNING_RECHECK_SEC" 1>&2
     echo "$0: debug[3]: RESTART_SEC=$RESTART_SEC" 1>&2
     echo "$0: debug[3]: MISSING_RECHECK_SEC=$MISSING_RECHECK_SEC" 1>&2
+    echo "$0: debug[3]: USER=$USER" 1>&2
+    echo "$0: debug[3]: USR=$USR" 1>&2
 fi
 
 

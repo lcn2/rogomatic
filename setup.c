@@ -46,13 +46,13 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.11 2026-06-23"
+# define VERSION "14.1.12 2026-06-24"
 
 /*
  * static declarations
  */
 static const char * const usage =
-  "usage: %s [-h] [-V] [-c] [-e] [-f rogue] [-H] [-p] [-r] [-s] [-S ROGOSEED] [-t] [-u] [-w] [-E]\n"
+  "usage: %s [-h] [-V] [-c] [-e] [-f rogue] [-H] [-p] [-P player] [-r] [-s] [-S ROGOSEED] [-t] [-u] [-w] [-E]\n"
   "\n"
   "    -h            print help message and exit\n"
   "    -V            print version string and exit\n"
@@ -63,6 +63,7 @@ static const char * const usage =
   "    -f rogue      set path to rogue\n"
   "    -H            disable \"halftime\" show\n"
   "    -p            play back roguelog\n"
+  "    -P player     set path to player\n"
   "    -r            use saved game\n"
   "    -s            print scores only\n"
   "    -S ROGOSEED   set $ROGOSEED environment variable for rogue\n"
@@ -73,7 +74,7 @@ static const char * const usage =
   "\n"
   "Exit codes:\n"
   "    0         all OK\n"
-  "    1         some error occured\n"
+  "    1         some error occurred, or player.lck is locked\n"
   "    2         -h and help string printed or -V and version string printed\n"
   "    3         command line error\n"
   " >= 10        internal error\n"
@@ -111,6 +112,7 @@ main (int argc, char *argv[])
   char rogoseed[MU_BUF + 1];	    /* dungeon number to set as a unsigned seed */
   char rogue_dir[MU_BUF + 1];	    /* directory for the rogue files, not impacted by -d */
   unsigned int dnum = 0;	    /* rogue dungeon number to set */
+  int player_lock_fd = -1;	    /* player lock file descriptor */
   extern char *optarg;		    /* option argument */
   extern int optind;		    /* argv index of the next arg */
   int i;
@@ -285,9 +287,27 @@ main (int argc, char *argv[])
    * determine the rogomatic directory path and rogomatic lock file path
    *
    * We will form the UTC date and time sub-directory, modifying rgmdir.
-   * When player is execl()-ed, the modified rgmdir as the kast arg.
+   * When player is execl()-ed, the modified rgmdir as the last arg.
    */
   set_rgmdir (time_subpath);
+
+  /*
+   * verify that the player lock is not already locked
+   *
+   * We temporally obtain player lock, and then release it if we obtain it.
+   * We know there is a "race condition between releasing it and when player
+   * run are locks the file.  That is OK.  We just want to minimize the chance
+   * that we will try to launch player when another player is running.
+   */
+  player_lock_fd = test_lock_file (__func__, rgmdir, "player.lck");
+  if (player_lock_fd < 0) {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u failed to to lock %s/player.lck\n",
+		       __func__, __FILE__, __LINE__, dnum, rgmdir);
+      exit(1);
+  }
+  /* release the player lock */
+  unlock_file (__func__, player_lock_fd);
+  player_lock_fd = -1;
 
   /*
    * save stdin, stdout, and stderr terminal state into saved_termattr file

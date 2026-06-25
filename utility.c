@@ -437,8 +437,15 @@ form_prefix_path (const char *dir, const char *prefix, const char *file)
 }
 
 /*
- * lock_file: lock a file for a maximum number of seconds.
- *            Based on the method used in Rogue 5.2.
+ * lock_file: lock a file using flock(2)
+ *
+ * given:
+ *	caller	    - name of calling function
+ *	dir	    - directory containing the lock file, or NULL ==> lokfil is the path
+ *	lokfil	    - path within dir if dir != NULL, else path of lock file
+ *
+ * NOTE: This function will not return if unable to obtain the lock.
+ *	 See test_lock_file () below to lock without quitting.
  */
 
 int
@@ -486,6 +493,86 @@ lock_file (const char *caller, const char *dir, const char *lokfil)
     quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to lock: %s: %s\n",
 	      caller, __FILE__, __LINE__, dnum, path, strerror (errno));
     not_reached ();
+  }
+
+  /* free memory */
+  if (path != NULL) {
+    free(path);
+    path = NULL;
+  }
+
+  /*
+   * return the successful lock file descriptor
+   */
+  return lock_fd;
+}
+
+/*
+ * test_lock_file: attempt to lock a file flock(2)
+ *
+ * given:
+ *	caller	    - name of calling function
+ *	dir	    - directory containing the lock file, or NULL ==> lokfil is the path
+ *	lokfil	    - path within dir if dir != NULL, else path of lock file
+ *
+ * returns:
+ *	<0 ==> failed to open lock file, or failed to lock open file
+ *	>= 0 ==> opened locked file descriptor (lock successful)
+ */
+
+int
+test_lock_file (const char *caller, const char *dir, const char *lokfil)
+{
+  char *path;	     /* path to open */
+  int ret;	     /* flock return */
+  int lock_fd;	     /* opened locked file descriptor */
+
+  /* firewall */
+  if (caller == NULL) {
+    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n",
+	     __func__, __FILE__, __LINE__, dnum);
+    not_reached ();
+  }
+  /* is it OK for dir == NULL */
+  if (lokfil == NULL) {
+    quit (1, "ERROR: caller: %s: file: %s line: %d dungeon: %u lokfil is NULL\n",
+	     caller, __FILE__, __LINE__, dnum);
+    not_reached ();
+  }
+
+  /*
+   * form lock path if needed
+   */
+  path = form_path (dir, lokfil);
+
+  /*
+   * open lock file
+   */
+  lock_fd = open (path, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH); /* mode 0644 */
+  if (lock_fd < 0) {
+    /* free memory */
+    if (path != NULL) {
+      free(path);
+      path = NULL;
+    }
+    /* return lock failure */
+    return lock_fd;
+  }
+
+  /*
+   * lock the file
+   */
+  ret = flock (lock_fd, LOCK_EX|LOCK_NB);
+  if (ret < 0) {
+    /* free memory */
+    if (path != NULL) {
+      free(path);
+      path = NULL;
+    }
+    /* close lock file */
+    close (lock_fd);
+    /* return lock failure */
+    return ret;
   }
 
   /* free memory */

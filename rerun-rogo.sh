@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.0.1 2026-04-19"
+export VERSION="1.0.2 2026-06-24"
 NAME=$(basename "$0")
 export NAME
 #
@@ -47,23 +47,28 @@ if [[ -z $RUN_ROGO_TOOL ]]; then
     RUN_ROGO_TOOL="./run-rogo.sh"
 fi
 #
-ROGOMATIC_TOOL=$(type -P rogomatic)
-export ROGOMATIC_TOOL
-if [[ -z $ROGOMATIC_TOOL ]]; then
+if [[ -x ./rogomatic ]]; then
     ROGOMATIC_TOOL="./rogomatic"
+else
+    ROGOMATIC_TOOL=$(type -P rogomatic)
 fi
+export ROGOMATIC_TOOL
 #
-PLAYER_TOOL=$(type -P player)
-export PLAYER_TOOL
-if [[ -z $PLAYER_TOOL ]]; then
+if [[ -x ./player ]]; then
     PLAYER_TOOL="./player"
+else
+    PLAYER_TOOL=$(type -P player)
 fi
+export PLAYER_TOOL
 #
-ROGUE_TOOL=$(type -P rogue)
-export ROGUE_TOOL
-if [[ -z $ROGUE_TOOL ]]; then
+if [[ -x ./rogue ]]; then
     ROGUE_TOOL="./rogue"
+elif [[ -x ../rogue5.4/rogue ]]; then
+    ROGUE_TOOL="../rogue5.4/rogue"
+else
+    ROGUE_TOOL=$(type -P rogue)
 fi
+export ROGUE_TOOL
 #
 export RGMDIR="/var/tmp/rogomatic"
 export IDLE_SEC="20"
@@ -73,28 +78,29 @@ export STOP_FILE=".stopfile"
 # usage
 #
 export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-R run-rogo]
-	[-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-i idlesec] [-s stopfile]
+        [-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-i idlesec] [-s stopfile]
 
     -h          print help message and exit
     -v level    set verbosity level (def level: $V_FLAG)
     -V          print version string and exit
 
-    -n		go thru the actions, but do not update any files (def: do the action)
+    -n          go thru the actions, but do not update any files (def: do the action)
     -N          do not process anything, just parse arguments (def: process something)
 
-    -R run-rogo		path to the run-rogo tool (def: $RUN_ROGO_TOOL)
-    -r rogomatic	path to rogomatic (def: $ROGOMATIC_TOOL)
-    -P player		path to player (def: $PLAYER_TOOL)
-    -f rogue		path to rogue (def: $ROGUE_TOOL)
-    -D rmdir		rogomatic directory (def: $RGMDIR)
-    -i idlesec		seconds to check for an idle rogomatic (def: $IDLE_SEC)
-    -s stopfile		stop the rerun cycle if stopfile exists (def: $STOP_FILE)
+    -R run-rogo         path to the run-rogo tool (def: $RUN_ROGO_TOOL)
+    -r rogomatic        path to rogomatic (def: $ROGOMATIC_TOOL)
+    -P player           path to player (def: $PLAYER_TOOL)
+    -f rogue            path to rogue (def: $ROGUE_TOOL)
+    -D rmdir            rogomatic directory (def: $RGMDIR)
+    -i idlesec          seconds to check for an idle rogomatic (def: $IDLE_SEC)
+    -s stopfile         stop the rerun cycle if stopfile exists (def: $STOP_FILE)
 
 Exit codes:
      0         all OK
+     1         player already running
      2         -h and help string printed or -V and version string printed
      3         command line error
-     5	       some internal tool is not found or not an executable file
+     5         some internal tool is not found or not an executable file
      6         problems found with or in the rogomatic directory
  >= 10         internal error
 
@@ -129,7 +135,7 @@ while getopts :hv:VnNR:r:P:f:D:i:s: flag; do
         ;;
     i) IDLE_SEC="$OPTARG"
         ;;
-    i) IDLE_SEC="$OPTARG"
+    s) STOP_FILE="$OPTARG"
         ;;
     \?) echo "$0: ERROR: invalid option: -$OPTARG" 1>&2
 	echo 1>&2
@@ -275,6 +281,20 @@ if [[ -n $DO_NOT_PROCESS ]]; then
     exit 0
 fi
 
+
+# verify that player isn't already running
+#
+flock -n -E 1 -o "$RGMDIR/player.lck" true
+status="$?"
+if [[ $status -eq 1 ]]; then
+    echo "$0: ERROR: player appears to be running, file is locked: $RGMDIR/player.lck" 1>&2
+    exit 1
+elif [[ $status -ne 0 ]]; then
+    echo "$0: ERROR: flock -n -E 1 -o $RGMDIR/player.lck failed, error: $status" 1>&2
+    exit 10
+fi
+
+
 # setup for process cycling
 #
 trap "tput reset; exit" 0 1 2 3 15
@@ -286,7 +306,7 @@ if [[ -e $STOP_FILE ]]; then
 fi
 if [[ -e $STOP_FILE ]]; then
     echo "$0: ERROR: unable to pre-remote stopfile: $STOP_FILE" 1>&2
-    exit 10
+    exit 11
 fi
 
 
@@ -299,6 +319,7 @@ if [[ -z $NOOP ]]; then
 	    if [[ $V_FLAG -ge 1 ]]; then
 		echo "$0: debug[1]: stopfile detected, exiting: $STOP_FILE" 1>&2
 	    fi
+	    rm -f "$STOP_FILE"
 	    trap "exit" 0 1 2 3 15
 	    exit 0
 	fi

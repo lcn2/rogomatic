@@ -388,6 +388,7 @@ main (int argc, char *argv[])
   pid_t pid = -1;		/* process id */
   char pidfilename[TY_BUF + 1]; /* +1 for paranoia */
   FILE *pidfp = NULL;		/* open pidfilename stream */
+  int player_lock_fd = -1;	/* player lock file descriptor */
   char ch;
   char *s;
   int i;
@@ -530,6 +531,16 @@ main (int argc, char *argv[])
    * determine the rogomatic directory path and rogomatic lock file path
    */
   set_rgmdir (false);
+
+  /*
+   * obtain player lock
+   */
+  player_lock_fd = test_lock_file (__func__, rgmdir, "player.lck");
+  if (player_lock_fd < 0) {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u failed to to lock %s/player.lck\n",
+		       __func__, __FILE__, __LINE__, dnum, rgmdir);
+      exit(1);
+  }
 
   /*
    * send stderr to an errlog file
