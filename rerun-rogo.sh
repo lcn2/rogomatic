@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.0.2 2026-06-24"
+export VERSION="1.1.0 2026-06-26"
 NAME=$(basename "$0")
 export NAME
 #
@@ -70,9 +70,15 @@ else
 fi
 export ROGUE_TOOL
 #
-export RGMDIR="/var/tmp/rogomatic"
 export IDLE_SEC="20"
 export STOP_FILE=".stopfile"
+
+
+# NOTE: The following RGMDIR is NOT the default for rogomatic (/var/tmp/rogomatic)
+#       This means you can run rogue(6) and rogomatic by hand
+#       while a rogomatic rerun loop is running without interference.
+#
+export RGMDIR="/var/tmp/rogo"
 
 
 # usage
@@ -237,6 +243,9 @@ fi
 
 # verify the rogomatic directory
 #
+if [[ ! -d $RGMDIR ]]; then
+    mkdir -p "$RGMDIR"
+fi
 if [[ ! -e $RGMDIR ]]; then
     echo "$0: ERROR: non-existent rogomatic directory path: $RGMDIR" 1>&2
     exit 6
