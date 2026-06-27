@@ -16,7 +16,7 @@ To run one instance of rogomatic, try:
 An easy way to "gently kill" a running rogomatic session is to run:
 
 ```sh
-./kill_player
+./end_player
 ```
 
 To have rogomatic continuously start another rogue game after the explorer dies:
@@ -99,12 +99,12 @@ tor score file.  In some cases, the rogue save file may be used to
 manually restart the rogue game.
 
 
-## kill_player
+## end_player
 
 You may find it challenging to terminate the running `rogue(6)` game as
 well as the `./player` process that was launched by `./rerun-rogo`.
 
-Use `./kill_player` to "gently terminate" the running `rogue(6)` game
+Use `./end_player` to "gently terminate" the running `rogue(6)` game
 as well as the `./player` process that was launched by `./rerun-rogo`.
 This has the added advantage of allowing `./player` to update (if needed),
 the genetic state, and to allow the `rogue(6)` game to update (if needed),
@@ -137,7 +137,7 @@ touch .stopfile
 session when the current session ends.  This is needed because interrupts
 (such as via ^C (control C)) are caught by the `rogue(6)` game, or by
 the `./player` process.  And if you are truly impatient, create the
-`.stopfile` and then run `./kill_player`.
+`.stopfile` and then run `./end_player`.
 
 When `./rerun-rogo` detects the `.stopfile` and ends the rerun loop,
 it will remove `.stopfile`.

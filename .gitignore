@@ -3,13 +3,13 @@
 asan.log.*
 [a-z]
 *.dSYM
+end_player
 gene
 have_stdbool.h
 have_strlcat.h
 have_strlcpy.h
 histplot
 index
-kill_player
 lex.yy.c
 .lldbinit
 Makefile.bak

@@ -155,7 +155,7 @@ endif
 
 OTHER_TARGES=
 
-TARGETS= rogomatic player rgmplot histplot gene run-rogo rerun-rogo unstuck_player kill_player
+TARGETS= rogomatic player rgmplot histplot gene run-rogo rerun-rogo unstuck_player end_player
 
 
 ################################
@@ -185,7 +185,7 @@ C_SRC= ${CFILES} ${MISC_C}
 
 SRC= ${C_SRC} ${H_SRC}
 
-SH_SRC= run-rogo.sh rerun-rogo.sh unstuck_player.sh kill_player.sh
+SH_SRC= run-rogo.sh rerun-rogo.sh unstuck_player.sh end_player.sh
 
 SH_TOOL= run-rogo
 
@@ -373,8 +373,8 @@ unstuck_player: unstuck_player.sh
 	${CP} -f unstuck_player.sh $@
 	${CHMOD} +x $@
 
-kill_player: kill_player.sh
-	${CP} -f kill_player.sh $@
+end_player: end_player.sh
+	${CP} -f end_player.sh $@
 	${CHMOD} +x $@
 
 ##################################################
@@ -630,6 +630,7 @@ clobber: legacy_clobber clean
 	${RM} -f ${TARGETS}
 	${RM} -f ${BUILD_H_SRC}
 	${RM} -rf *.dSYM
+	${RM} -f kill_player kill_player.sh ${BINDIR}/kill_player
 
 install: all ${MISC_DOC} ${ORIG_DOC} stddocs
 	${INSTALL} -d -m 0755 ${BINDIR}

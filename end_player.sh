@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# kill_player.sh - nicely kill rogue, and then nicely kill player
+# end_player.sh - nicely terminate rogue, and then nicely kill player
 #
 # Copyright (c) 2026 by Landon Curt Noll.  All Rights Reserved.
 #
@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.0.0 2026-06-24"
+export VERSION="1.0.1 2026-06-26"
 NAME=$(basename "$0")
 export NAME
 #
