@@ -120,7 +120,11 @@ S= >/dev/null 2>&1
 
 CSTD= -std=gnu17
 CCWARN=
-CPPFLAGS= -DRGMDIR='"${RGMDIR}"' -DROGUE='"${ROGUE}"'
+
+# -D_XOPEN_SOURCE=800		enable permission bits S_IRUSR et al.
+# -D_NETBSD_SOURCE		enable strlcpy, strlcat
+
+CPPFLAGS= -DRGMDIR='"${RGMDIR}"' -DROGUE='"${ROGUE}"' -D_XOPEN_SOURCE=800 -D_NETBSD_SOURCE
 COPT= -O3
 DEBUG= -ggdb3
 
