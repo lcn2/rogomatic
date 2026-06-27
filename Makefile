@@ -630,7 +630,7 @@ clobber: legacy_clobber clean
 	${RM} -f ${TARGETS}
 	${RM} -f ${BUILD_H_SRC}
 	${RM} -rf *.dSYM
-	${RM} -f kill_player kill_player.sh ${BINDIR}/kill_player
+	${RM} -f kill_player kill_player.sh
 
 install: all ${MISC_DOC} ${ORIG_DOC} stddocs
 	${INSTALL} -d -m 0755 ${BINDIR}
@@ -678,6 +678,7 @@ uninstall:
 	-@if [[ -d "${DESTDOC}" ]]; then \
 	    echo "You may wish to: rm -rf ${DESTDOC}"; \
 	fi
+	${RM} -f -v ${BINDIR}/kill_player
 
 index: ${CFILES}
 	${RM} -f index
