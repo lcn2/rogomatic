@@ -33,6 +33,7 @@
 
 # include <stdio.h>
 # include <stdlib.h>
+# include <stdarg.h>
 # include <unistd.h>
 # include <pwd.h>
 # include <signal.h>
@@ -51,8 +52,10 @@
 # include "types.h"
 # include "install.h"
 
+#ifndef TRUE
 # define TRUE 1
 # define FALSE 0
+#endif
 
 static void  (*hstat)(int) = NULL;
 static void  (*istat)(int) = NULL;
