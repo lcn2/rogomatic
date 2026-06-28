@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# end_player.sh - nicely terminate rogue, and then nicely kill player
+# end_player.sh - nicely terminate rogue, and then nicely terminate player
 #
 # Copyright (c) 2026 by Landon Curt Noll.  All Rights Reserved.
 #

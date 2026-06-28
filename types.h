@@ -44,7 +44,7 @@
  * The ANSI C committee needs to retire and leave the C language alone.
  *
  * Because we need the bool type in the external function declarations below we
- * must include "bool.h" here.
+ * must include the contents of what might have been put into "bool.h", below.
  */
 
 /*

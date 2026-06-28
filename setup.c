@@ -35,6 +35,7 @@
 # include <errno.h>
 # include <time.h>
 # include <sys/time.h>
+# include <strings.h>
 
 # include "have_strlcat.h"
 # include "have_strlcpy.h"
@@ -46,7 +47,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.12 2026-06-24"
+# define VERSION "14.1.13 2026-06-26"
 
 /*
  * static declarations
