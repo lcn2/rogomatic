@@ -175,7 +175,7 @@ useobj (char *string)
   int i = findentry (string);
 
   if (i != NOTFOUND) {
-    dbase[i].used = TRUE;
+    dbase[i].used = true;
   }
 }
 
@@ -226,7 +226,7 @@ used (char *codename)
   for (i = 0; i < datalen; i++)
     if (streq (dbase[i].fakename, codename))
       return (dbase[i].used);
-  return FALSE;
+  return false;
 }
 
 /*
@@ -240,9 +240,9 @@ know (char *name)
 
   for (i = 0; i < datalen; i++)
     if (*dbase[i].realname && streq (dbase[i].realname, name))
-      return (TRUE);
+      return (true);
 
-  return (FALSE);
+  return (false);
 }
 
 #if 0 /* unused code */

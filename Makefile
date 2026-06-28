@@ -121,10 +121,18 @@ S= >/dev/null 2>&1
 CSTD= -std=gnu17
 CCWARN=
 
-# -D_XOPEN_SOURCE=800		enable permission bits S_IRUSR et al.
-# -D_NETBSD_SOURCE		enable strlcpy, strlcat
 
+target=$(shell uname -s 2>/dev/null)
+ifeq ($(target),NetBSD)
+# The NetBSD maintainers don't define permission bits S_IRUSR et al. in <sys/stat.h>, so NetBSD needs to:
+# -D_XOPEN_SOURCE=800		enable permission bits S_IRUSR et al.
+# While other systems enable strlcpy, strlcat via <string.h>, NetBSD doesn't, so NetBSD needs to:
+# -D_NETBSD_SOURCE		enable strlcpy, strlcat
 CPPFLAGS= -DRGMDIR='"${RGMDIR}"' -DROGUE='"${ROGUE}"' -D_XOPEN_SOURCE=800 -D_NETBSD_SOURCE
+else
+CPPFLAGS= -DRGMDIR='"${RGMDIR}"' -DROGUE='"${ROGUE}"'
+endif
+
 COPT= -O3
 DEBUG= -ggdb3
 
@@ -150,7 +158,6 @@ AT= @
 # Alternatively NetBSD users can install the ncurses package for
 # NetBSD: https://cdn.netbsd.org/pub/pkgsrc/current/pkgsrc/devel/ncurses/README.html
 #
-target=$(shell uname -s 2>/dev/null)
 ifeq ($(target),NetBSD)
 LIBS= -lcurses
 else

@@ -26,9 +26,6 @@
  *
  * This file contains all of the miscellaneous system functions which
  * determine the baud rate, time of day, etc.
- *
- * If CMU is not defined, then various functions from libcmu.a are
- * defined here (otherwise the functions from -lcmu are used).
  */
 
 # include <stdio.h>
@@ -51,11 +48,6 @@
 # include "modern_curses.h"
 # include "types.h"
 # include "install.h"
-
-#ifndef TRUE
-# define TRUE 1
-# define FALSE 0
-#endif
 
 static void  (*hstat)(int) = NULL;
 static void  (*istat)(int) = NULL;
@@ -636,7 +628,6 @@ unlock_file (const char *caller, int lock_fd)
   return;
 }
 
-# ifndef CMU
 /*
  * quit: Defined for compatibility with Berkeley 4.2 system
  */
@@ -697,4 +688,3 @@ stlmatch (char *big, char *small)
 
   return (0);
 }
-# endif

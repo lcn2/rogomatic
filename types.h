@@ -44,7 +44,7 @@
  * The ANSI C committee needs to retire and leave the C language alone.
  *
  * Because we need the bool type in the external function declarations below we
- * must include "bool.h" here.
+ * must include the contents of what might have been put into "bool.h", below.
  */
 
 /*
@@ -66,6 +66,18 @@
 /* make up for the lack of a <stdbool.h> and pre-c23 bool type */
 typedef enum { false=0, true=1 } bool;
 
+#  endif
+
+/*
+ * for various reasons, NetBSD wants to define TRUE and FALSE
+ */
+#  if defined(_NETBSD_SOURCE)
+#    if !defined(TRUE)
+#      define TRUE 1
+#    endif
+#    if !defined(FALSE)
+#      define FALSE 0
+#    endif
 #  endif
 
 
