@@ -161,14 +161,14 @@ terpmes (void)
     /* :ANT: for debugging */
     if debug(D_MESSAGE) {
       at (R,0);
-      printw ("<%-*.*", C-1, C-1, (char *)screen);
+      printw ("<%-*.*s", C-1, C-1, (char *)screen);
       at (R+1,0);
       topline[MU_BUF] = 0; /* paranoia */
-      printw ("<%-*.*", C-1, C-1, (char *)topline);
+      printw ("<%-*.*s", C-1, C-1, (char *)topline);
       at (R+2,0);
       clrtoeol ();
       mess[MU_BUF] = 0; /* paranoia */
-      printw ("<%-*.*", C-1, C-1, (char *)mess);
+      printw ("<%-*.*s", C-1, C-1, (char *)mess);
       refresh ();
     }
 

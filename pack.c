@@ -637,10 +637,10 @@ inventory (char *msgstart, char *msgend)
   if (debug(D_MESSAGE)) {
     at (30,0);
     clrtoeol ();
-    printw("<%-*.*", C-1, C-1, mess);
+    printw("<%-*.*s", C-1, C-1, mess);
     at (31,0);
     clrtoeol ();
-    printw("<%-*.*", C-1, C-1, objname);
+    printw("<%-*.*s", C-1, C-1, objname);
     at (row, col);
     refresh ();
   }
