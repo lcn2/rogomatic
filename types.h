@@ -68,18 +68,6 @@ typedef enum { false=0, true=1 } bool;
 
 #  endif
 
-/*
- * for various reasons, NetBSD wants to define TRUE and FALSE
- */
-#  if defined(_NETBSD_SOURCE)
-#    if !defined(TRUE)
-#      define TRUE 1
-#    endif
-#    if !defined(FALSE)
-#      define FALSE 0
-#    endif
-#  endif
-
 
 /*
  * backward compatibility
