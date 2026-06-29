@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.0 2026-06-24"
+export VERSION="1.0.1 2026-06-28"
 NAME=$(basename "$0")
 export NAME
 #
@@ -232,9 +232,10 @@ while :; do
 	#
 	if [[ $STATUS -ne 0 ]]; then
 
-	    # report HUP failed
+	    # report HUP failed and sleep a wee bit
 	    #
 	    echo "$0: Warning: killall -v -q -u $USR -HUP rogue failed: error: $STATUS" 1>&2
+	    sleep 0.5
 
 	    # try to HUP player
 	    #
@@ -245,12 +246,14 @@ while :; do
 	    STATUS="$?"
 	    if [[ $STATUS -ne 0 ]]; then
 		echo "$0: Warning: killall -v -q -u $USR -HUP player failed: error: $STATUS" 1>&2
+	    elif [[ $V_FLAG -ge 3 ]]; then
+		echo "$0: debug[3]: player hit with HUP signal at $(date)" 1>&2
 	    fi
 
 	# case: HUP of rogue successful
 	#
 	elif [[ $V_FLAG -ge 3 ]]; then
-	    echo "$0: debug[3]: player hit with HUP signal at $(date)" 1>&2
+	    echo "$0: debug[3]: rogue hit with HUP signal at $(date)" 1>&2
 	fi
 
     # -n has disabled use of HUP

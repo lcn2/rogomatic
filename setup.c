@@ -47,7 +47,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.13 2026-06-26"
+# define VERSION "14.1.14 2026-06-28"
 
 /*
  * static declarations
@@ -480,8 +480,8 @@ main (int argc, char *argv[])
 
       if (rfile != NULL) {
 	rogue_savefile = form_path (rgmdir, "rogue.sav");
-	execl (rfile, "rogue", "-r", rogue_savefile, NULL);
-	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue default restore exec failed: %s -r %s: %s\n",
+	execl (rfile, "rogue", "-S", "-r", rogue_savefile, NULL);
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue default restore exec failed: %s -S -r %s: %s\n",
 			 __func__, __FILE__, __LINE__, dnum, rfile, rogue_savefile, strerror (errno));
       } else {
 	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u oldgame: true, rogue path is NULL\n",
@@ -491,8 +491,8 @@ main (int argc, char *argv[])
     } else if (argc > 0) {
 
       if (rfile != NULL) {
-	execl (rfile, "rogue", argv[0], NULL);
-	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue restore exec failed: %s %s: %s\n",
+	execl (rfile, "rogue", "-S", argv[0], NULL);
+	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue restore exec failed: %s -S %s: %s\n",
 			 __func__, __FILE__, __LINE__, dnum, rfile, argv[0], strerror (errno));
       } else {
 	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u argc: %d > 0, rogue path is NULL\n",
@@ -501,8 +501,8 @@ main (int argc, char *argv[])
 
     } else if (rfile != NULL) {
 
-      execl (rfile, "rogue", NULL);
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue exec failed: %s: %s\n",
+      execl (rfile, "rogue", "-S", NULL);
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue exec failed: %s -S: %s\n",
 		       __func__, __FILE__, __LINE__, dnum, rfile, strerror (errno));
 
     } else {

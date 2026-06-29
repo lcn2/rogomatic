@@ -665,9 +665,11 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
 
   if (!alert && !beingheld && !stepback && mdir != NONE &&
       turns == 0 && !on (DOOR | STAIRS)) {
-    int rdir = (mdir+4)%8;
+    int rdir = (mdir+4)%DNUM;
+    int new_r = atdrow (rdir);
+    int new_c = atdcol (rdir);
 
-    if (onrc (CANGO | TRAP, atdrow(rdir), atdcol(rdir)) == CANGO)
+    if (if_onrc (CANGO | TRAP, new_r, new_c)) == CANGO)
       { move1 (rdir); stepback = 7; return (1); }
   }
 

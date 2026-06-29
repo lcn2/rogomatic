@@ -43,7 +43,7 @@ will cause `./rerun-rogo` to stop restarting rogomatic when `rogue(6)` exits.
 ## IMPORTANT: Use with rogue 5.4.5
 
 This rogomatic code is designed to be used with **rogue version
-5.4.5 release 2026-06-22**, or any later release of version 5.4.5.
+5.4.5 release 2026-06-28**, or any later release of version 5.4.5.
 
 See [rogue version 5.4.5](https://github.com/lcn2/rogue5.4) for the
 latest version of rogue that is supported by rogomatic.
@@ -237,7 +237,7 @@ The [rogomatic repo](https://github.com/lcn2/rogomatic) started out as a clone o
 [rogueforge rogomatic14 repo](https://github.com/rogueforge/rogomatic14).
 
 **IMPORTANT NOTE**: This rogomatic code is designed to be used with **rogue version
-5.4.5 release 2026-06-22**, or any later release of version 5.4.5.
+5.4.5 release 2026-06-28**, or any later release of version 5.4.5.
 
 See [rogue version 5.4.5](https://github.com/lcn2/rogue5.4) for the
 latest version of rogue that is supported by rogomatic.
