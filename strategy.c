@@ -669,7 +669,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
     int new_r = atdrow (rdir);
     int new_c = atdcol (rdir);
 
-    if (if_onrc (CANGO | TRAP, new_r, new_c)) == CANGO)
+    if (if_onrc (CANGO | TRAP, new_r, new_c) == CANGO)
       { move1 (rdir); stepback = 7; return (1); }
   }
 
