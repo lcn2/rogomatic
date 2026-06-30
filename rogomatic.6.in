@@ -1,4 +1,4 @@
-.TH ROGOMATIC 6 "2026 Mar 19"
+.TH ROGOMATIC 6 "2026 Mar 30"
 .UC 4
 .SH NAME
 rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons of Doom
@@ -23,6 +23,9 @@ rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons 
 .B \-e
 ]
 [
+.B \-E
+]
+[
 .B \-f
 .I rogue
 ]
@@ -30,13 +33,19 @@ rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons 
 .B \-H
 ]
 [
-.BI \-p\  roguelog
+.B \-p
+]
+[
+.BI \-P\  player
 ]
 [
 .B \-r
 ]
 [
 .B \-s
+[
+.I rogue_ver
+]
 ]
 [
 .BI \-S\  ROGOSEED
@@ -49,9 +58,6 @@ rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons 
 ]
 [
 .B \-w
-]
-[
-.B \-E
 ]
 [
 .I file
@@ -174,6 +180,9 @@ See also the
 .B e
 command in transparent mode.
 .TP
+.B \-E
+Start up in emacs mode.
+.TP
 .BI \-f \ rogue
 Set the path of
 .BR rogue .
@@ -213,7 +222,9 @@ has been tested with this version of
 .B rogomatic
 While other versions of rogue may work, only
 .B rogue version 5.4.5
-is now supported.
+with a minimum date of
+.BR 2026-06-30 ,
+is supported.
 .TP
 .B \-H
 Disable the so-called rogomatic "\fIhalftime show\fP".
@@ -237,7 +248,7 @@ however recently that option became the "help option",
 and so it was named as
 .BR \-H .
 .TP
-.BI \-p \ roguelog
+.B \-p
 Replay the
 .I roguelog
 rogue log file.
@@ -247,6 +258,9 @@ The default rogue log file is:
 .in +0.5i
 .BI @RGMDIR@ /roguelog
 .in -0.5i
+.TP
+.BI \-P\  player
+Set the path to player.
 .TP
 .B \-r
 Restore a saved rogue game.
@@ -270,10 +284,15 @@ command line option to
 the rogue game stored
 .IR file .
 .TP
-.B \-s
+.BR \-s\  [\ rogue_ver\ ]
 Print the
 .B rogomatic
 scoreboard.
+.sp
+The default
+.B rogue_ver
+is
+.BR 5.4.5 .
 .sp
 The default rogomatic scoreboard is:
 .sp
@@ -319,9 +338,6 @@ starts exploring level 1.
 .TP
 .B \-w
 Start up in watched mode.
-.TP
-.B \-E
-Start up in emacs mode.
 .SH COMMANDS
 .PP
 The

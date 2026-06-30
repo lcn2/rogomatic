@@ -47,31 +47,34 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.14 2026-06-28"
+# define VERSION "14.1.15 2026-06-30"
 
 /*
  * static declarations
  */
 static const char * const usage =
-  "usage: %s [-h] [-V] [-c] [-e] [-f rogue] [-H] [-p] [-P player] [-r] [-s] [-S ROGOSEED] [-t] [-u] [-w] [-E]\n"
+  "usage: %s [-h] [-V] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-H]\n"
+  "                   [-p] [-P player] [-r] [-s [rogue_ver]] [-S ROGOSEED] [-t] [-u] [-w]\n"
   "\n"
   "    -h            print help message and exit\n"
   "    -V            print version string and exit\n"
   "\n"
   "    -c            use trap arrows\n"
   "    -d            use unique directory name\n"
+  "    -D rgmdir     set rogomatic directory path\n"
   "    -e            echo file to roguelog\n"
+  "    -E            set emacs mode\n"
   "    -f rogue      set path to rogue\n"
   "    -H            disable \"halftime\" show\n"
   "    -p            play back roguelog\n"
   "    -P player     set path to player\n"
   "    -r            use saved game\n"
-  "    -s            print scores only\n"
+  "    -s            print rogomatic scores from the default rogomatic score file\n"
+  "    -s rogue_ver  print scores the rogomatic score file for a given rogue version\n"
   "    -S ROGOSEED   set $ROGOSEED environment variable for rogue\n"
   "    -t            give status lines only\n"
   "    -u            start up in user mode\n"
   "    -w            set watched mode\n"
-  "    -E            set emacs mode\n"
   "\n"
   "Exit codes:\n"
   "    0         all OK\n"
@@ -114,6 +117,7 @@ main (int argc, char *argv[])
   char rogue_dir[MU_BUF + 1];	    /* directory for the rogue files, not impacted by -d */
   unsigned int dnum = 0;	    /* rogue dungeon number to set */
   int player_lock_fd = -1;	    /* player lock file descriptor */
+  char *rogue_ver = DEFVER;	    /* rogue version string */
   extern char *optarg;		    /* option argument */
   extern int optind;		    /* argv index of the next arg */
   int i;
@@ -147,7 +151,7 @@ main (int argc, char *argv[])
   /*
    * parse args
    */
-  while ((i = getopt (argc, argv, "hVcdD:ef:HpP:rsS:tuwE:")) != -1) {
+  while ((i = getopt (argc, argv, "hVcdD:ef:HpP:rs:S:tuwE:")) != -1) {
     switch (i) {
       case 'h':		/* -h ==> print usage message */
 	fprintf (stderr, usage, program, prog, VERSION);
@@ -200,6 +204,7 @@ main (int argc, char *argv[])
 
       case 's':		/* -s ==> Give scores only */
 	score = true;
+	rogue_ver = optarg;
 	break;
 
       case 'S':		/* -S SEED ==> set the rogomatic seed */
@@ -223,19 +228,31 @@ main (int argc, char *argv[])
 	break;
 
       case ':':
-	fprintf(stderr, "%s: requires an argument -- %c\n", program, optopt);
-	fprintf (stderr, usage, program, prog, VERSION);
-	exit (3);
+	/*
+	 * case: -s without an argument
+	 */
+	if (optopt == 's') {
+	    score = true;
+	    rogue_ver = DEFVER; /* use the default rogue version */
+
+	/*
+	 * otherwise report missing argument
+	 */
+	} else {
+	    fprintf (stderr, "%s: requires an argument -- %c\n", program, optopt);
+	    fprintf (stderr, usage, program, prog, VERSION);
+	    exit (3);
+	}
 	break;
 
       case '?':
-	fprintf(stderr, "%s: unknown option -- %c\n", program, optopt);
+	fprintf (stderr, "%s: unknown option -- %c\n", program, optopt);
 	fprintf (stderr, usage, program, prog, VERSION);
 	exit (3);
 	break;
 
       default:
-	fprintf(stderr, "%s: invalid -flag\n", program);
+	fprintf (stderr, "%s: invalid -flag\n", program);
 	fprintf (stderr, usage, program, prog, VERSION);
 	exit (3);
 	break;
@@ -291,6 +308,14 @@ main (int argc, char *argv[])
    * When player is execl()-ed, the modified rgmdir as the last arg.
    */
   set_rgmdir (time_subpath);
+
+  /*
+   * -s [version] dump score
+   */
+  if (score) {
+    dumpscore (rogue_ver);
+    exit (0);
+  }
 
   /*
    * verify that the player lock is not already locked
@@ -388,14 +413,6 @@ main (int argc, char *argv[])
 	    rogue_dir, "rogue.sav", rogue_dir, "rogue.scr", rogue_dir, "rogue.lck");
 
   /*
-   * special execution case: dumping rogomatic score
-   */
-  if (score)  {
-    dumpscore (argc==1 ? argv[0] : DEFVER);
-    exit (0);
-  }
-
-  /*
    * special execution case: replay log
    */
   if (replay) {
@@ -480,7 +497,7 @@ main (int argc, char *argv[])
 
       if (rfile != NULL) {
 	rogue_savefile = form_path (rgmdir, "rogue.sav");
-	execl (rfile, "rogue", "-S", "-r", rogue_savefile, NULL);
+	execl (rfile, "rogue", "-S", "--", rogue_savefile, NULL);
 	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue default restore exec failed: %s -S -r %s: %s\n",
 			 __func__, __FILE__, __LINE__, dnum, rfile, rogue_savefile, strerror (errno));
       } else {
@@ -491,7 +508,7 @@ main (int argc, char *argv[])
     } else if (argc > 0) {
 
       if (rfile != NULL) {
-	execl (rfile, "rogue", "-S", argv[0], NULL);
+	execl (rfile, "rogue", "-S", "--", argv[0], NULL);
 	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue restore exec failed: %s -S %s: %s\n",
 			 __func__, __FILE__, __LINE__, dnum, rfile, argv[0], strerror (errno));
       } else {
