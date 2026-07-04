@@ -113,6 +113,12 @@ Q=@
 S= >/dev/null 2>&1
 #S=
 
+# H=@:	do not report hsrc file formation progress
+# H=@	echo hsrc file formation progress
+#
+#H=@:
+H=@
+
 
 ############################
 # how to build and install #
