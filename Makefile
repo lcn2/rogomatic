@@ -189,12 +189,12 @@ H_SRC= ${BUILD_H_SRC} config.h getroguetoken.h globals.h install.h strl.h \
 OBJS= arms.o command.o config.o database.o debug.o debuglog.o explore.o fork_exec.o \
 	getroguetoken.o io.o learn.o ltm.o main.o mess.o monsters.o pack.o \
 	rand.o replay.o rooms.o terminal.o scorefile.o search.o stats.o strategy.o strl.o \
-	survival.o tactics.o things.o titlepage.o utility.o worth.o
+	survival.o tactics.o things.o timer.o titlepage.o utility.o worth.o
 
 CFILES= arms.c command.c config.c database.c debug.c debuglog.c explore.c fork_exec.c \
 	getroguetoken.c io.c learn.c ltm.c main.c mess.c monsters.c pack.c \
 	rand.c replay.c rooms.c terminal.c scorefile.c search.c stats.c strategy.c strl.c \
-	survival.c tactics.c things.c titlepage.c utility.c worth.c
+	survival.c tactics.c things.c timer.c titlepage.c utility.c worth.c
 
 MISC_C= setup.c histplot.c rgmplot.c gene.c
 
@@ -363,20 +363,20 @@ all: ${BUILD_H_SRC} ${TARGETS} rogomatic.6
 .c.o:
 	${CC} ${CFLAGS} -c $*.c
 
-gene: gene.o rand.o learn.o stats.o utility.o config.o strl.o terminal.o
-	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o utility.o config.o strl.o terminal.o -lm ${LIBS} -o $@
+gene: gene.o rand.o learn.o stats.o timer.o utility.o config.o strl.o terminal.o
+	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o timer.o utility.o config.o strl.o terminal.o -lm ${LIBS} -o $@
 
-histplot: histplot.o utility.o strl.o config.o terminal.o
-	${CC} ${LDFLAGS} histplot.o utility.o strl.o config.o terminal.o ${LIBS} -o $@
+histplot: histplot.o timer.o utility.o strl.o config.o terminal.o
+	${CC} ${LDFLAGS} histplot.o timer.o utility.o strl.o config.o terminal.o ${LIBS} -o $@
 
 player: ${OBJS}
 	${CC} ${LDFLAGS} ${OBJS} -lm ${LIBS} -o $@
 
-rgmplot: rgmplot.o utility.o strl.o config.o terminal.o
-	${CC} ${LDFLAGS} rgmplot.o utility.o strl.o config.o terminal.o ${LIBS} -o $@
+rgmplot: rgmplot.o timer.o utility.o strl.o config.o terminal.o
+	${CC} ${LDFLAGS} rgmplot.o timer.o utility.o strl.o config.o terminal.o ${LIBS} -o $@
 
-rogomatic: setup.o scorefile.o utility.o config.o strl.o terminal.o fork_exec.o
-	${CC} ${LDFLAGS} setup.o scorefile.o utility.o config.o strl.o terminal.o fork_exec.o ${LIBS} -o $@
+rogomatic: setup.o scorefile.o timer.o utility.o config.o strl.o terminal.o fork_exec.o
+	${CC} ${LDFLAGS} setup.o scorefile.o timer.o utility.o config.o strl.o terminal.o fork_exec.o ${LIBS} -o $@
 
 run-rogo: run-rogo.sh
 	${CP} -f run-rogo.sh $@
@@ -411,9 +411,9 @@ form_rogomatic_cat_in: rogomatic.6.in
 #
 gcc:
 ifeq ($(target),Linux)
-	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror -Wno-char-subscripts' COPT='-O0' DEBUG='-ggdb3'
 else
-	${MAKE} -f ${MAKE_FILE} all CC='gcc-16' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-g2'
+	${MAKE} -f ${MAKE_FILE} all CC='gcc-16' CCWARN='-Wall -pedantic -Werror -Wno-char-subscripts' COPT='-O0' DEBUG='-g2'
 endif
 
 # compile all with clang, full warnings, no optimizer, no ASAN
@@ -442,14 +442,14 @@ clang:
 #
 asan:
 ifeq ($(target),Darwin)
-	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -pedantic -Werror -Wno-char-subscripts' COPT='-O0' \
 				    DEBUG='-ggdb3 ${FSANITIZE} ${MACOS_FSANITIZE}'
 else
 ifeq ($(target),Linux)
-	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror -Wno-char-subscripts' COPT='-O0' \
 				    DEBUG='-ggdb3 ${FSANITIZE} ${LINUX_FSANITIZE}'
 else
-	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror -Wno-char-subscripts' COPT='-O0' \
 				    DEBUG='-ggdb3 ${FSANITIZE} ${OTHER_FSANITIZE}'
 endif
 endif
@@ -1000,6 +1000,10 @@ things.o: globals.h
 things.o: modern_curses.h
 things.o: things.c
 things.o: types.h
+timer.o: config.h
+timer.o: globals.h
+timer.o: timer.c
+timer.o: types.h
 titlepage.o: globals.h
 titlepage.o: modern_curses.h
 titlepage.o: titlepage.c
