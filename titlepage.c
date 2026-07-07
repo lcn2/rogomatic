@@ -33,6 +33,7 @@
 # include <stdlib.h>
 # include <time.h>
 # include <limits.h>
+# include <setjmp.h>
 
 # include "modern_curses.h"
 # include "types.h"

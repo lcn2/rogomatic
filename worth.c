@@ -33,6 +33,8 @@
  * which is the "worst" object in the pack.
  */
 
+# include <setjmp.h>
+
 # include "modern_curses.h"
 # include "types.h"
 # include "globals.h"

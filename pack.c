@@ -29,6 +29,7 @@
 
 # include <stdlib.h>
 # include <string.h>
+# include <setjmp.h>
 
 # include "have_strlcat.h"
 # include "have_strlcpy.h"

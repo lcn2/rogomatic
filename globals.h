@@ -179,6 +179,11 @@ extern stuff translate[128];	/* what Rogue characters represent */
 /* Time history */
 extern timerec timespent[50];
 
+/* Single shot timeout timer and timer jump point */
+extern struct itimerval timer;  /* single shot timeout timer in seconds if > 0.0 seconds */
+extern bool jmp_point_ready;	/* True if non-local jump point for SIGARLM signals has been setup */
+extern sigjmp_buf jmp_point;	/* non-local jump point for SIGARLM signals if jmp_point_ready is true */
+
 /* Objects in pack */
 extern char space[MAXINV][NAMSIZ + 1]; /* inventory string space, +1 for paranoia */
 extern invrec inven[MAXINV + 1]; /* +1 for paranoia */

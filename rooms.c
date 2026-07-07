@@ -30,6 +30,7 @@
 
 # include <ctype.h>
 # include <string.h>
+# include <setjmp.h>
 
 # include "modern_curses.h"
 # include "types.h"

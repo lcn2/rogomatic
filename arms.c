@@ -28,6 +28,8 @@
  * weapons and rings.
  */
 
+# include <setjmp.h>
+
 # include "modern_curses.h"
 # include "types.h"
 # include "globals.h"

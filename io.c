@@ -37,6 +37,7 @@
 # include <sys/wait.h>
 # include <errno.h>
 # include <signal.h>
+# include <setjmp.h>
 
 # include "have_strlcat.h"
 # include "have_strlcpy.h"

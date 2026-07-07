@@ -31,6 +31,10 @@
 # include <stdlib.h>
 # include <string.h>
 
+# include <sys/time.h>	/* for struct itimerval */
+# include <setjmp.h>	/* for sigjmp_buf */
+# include <errno.h>
+
 # include "types.h"
 # include "config.h"
 # include "install.h"
@@ -38,11 +42,13 @@
 /*
  * external declarations
  */
+
 extern void set_rgmdir (bool time_subpath);
 
 /*
  * global declarations
  */
+
 char genelock[TY_BUF + 1] = { '\0' };	/* Gene pool lock file, +1 for paranoia */
 char genepool[TY_BUF + 1] = { '\0' };	/* Gene pool, +1 for paranoia */
 char *knob_name[MAXKNOB] = {

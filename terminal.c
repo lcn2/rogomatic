@@ -28,6 +28,7 @@
 # include <termios.h>
 # include <errno.h>
 # include <sys/stat.h>
+# include <setjmp.h>
 
 # include "types.h"
 # include "config.h"

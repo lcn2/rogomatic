@@ -32,6 +32,10 @@
 # include <stdlib.h>
 # include <string.h>
 
+# include <sys/time.h>	/* for struct itimerval */
+# include <setjmp.h>	/* for sigjmp_buf */
+# include <errno.h>
+
 # include "have_strlcat.h"
 # include "have_strlcpy.h"
 # include "strl.h"
@@ -45,9 +49,16 @@
 # define isdigit(c) ((c) >= '0' && (c) <= '9')
 # define NOMON 29
 
+/*
+ * global declarations
+ */
+
 int cheat = false;
 
-/* static declarations */
+/*
+ * static declarations
+ */
+
 static int getscore (int *score, char *killer, int *level);
 
 int

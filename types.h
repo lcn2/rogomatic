@@ -1064,6 +1064,14 @@ extern int havefood (int n);
 /* titlepage.c */
 extern void halftimeshow (int level);
 
+/* timer.c */
+extern void note_jump_point (void);
+extern bool is_timer_active (void);
+extern void enable_alarm_use (void);
+extern void disable_alarm_use (void);
+extern void set_alarm (void);
+extern void clear_alarm (void);
+
 /* utility.c */
 extern int rogo_baudrate (void);
 extern char *getname (void);

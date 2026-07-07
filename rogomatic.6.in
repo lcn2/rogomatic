@@ -11,6 +11,9 @@ rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons 
 .B \-V
 ]
 [
+.BI \-a\  secs
+]
+[
 .B \-c
 ]
 [
@@ -96,8 +99,8 @@ launches
 via the
 .B player
 program, it sets the
-.B $ROGUEOPTS
-environment to a value such that the
+.B ROGUEOPTS
+environment variable to a value such that the
 rogue player name used will start with
 .BR rogo\- ,
 and set the rogue score path to
@@ -123,6 +126,28 @@ Print the
 version string
 and exit with a status of
 .BR 2 .
+.TP
+.BI \-a \ secs
+Set the timeout timer to
+.B secs
+seconds.
+.sp
+The
+.B secs
+must be a value >= 0,
+and it may an integer, or
+a real value (i.e., 1.5).
+.sp
+By default,
+.B secs
+is set to
+.BR 0.0 ,
+which has the effect of not setting a timeout timer.
+.sp
+The
+.I ROGOTIMER
+environment variable to
+.BR secs .
 .TP
 .B \-c
 Turns on cheat mode

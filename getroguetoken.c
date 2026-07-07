@@ -27,6 +27,7 @@
 # include <errno.h>
 # include <sys/stat.h>
 # include <fcntl.h>
+# include <setjmp.h>
 
 # include "types.h"
 # include "config.h"

@@ -32,6 +32,10 @@
 # include <stdio.h>
 # include <string.h>
 
+# include <sys/time.h>	/* for struct itimerval */
+# include <setjmp.h>	/* for sigjmp_buf */
+# include <errno.h>
+
 # include "have_strlcat.h"
 # include "have_strlcpy.h"
 # include "strl.h"
@@ -42,14 +46,20 @@
 # define SCALE(n) (((n)+100)/200)
 # define isdigit(c) ((c) >= '0' && (c) <= '9')
 
-int cheat = false;
+/*
+ * global declarations
+ */
 
-/* static declarations */
+int cheat = false;
 
 static char *month[] = {
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
+
+/*
+ * static declarations
+ */
 
 static int doavg = 0;
 static int minscore = -1;

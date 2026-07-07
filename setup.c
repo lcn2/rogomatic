@@ -37,6 +37,10 @@
 # include <sys/time.h>
 # include <strings.h>
 
+# include <sys/time.h>	/* for struct itimerval */
+# include <setjmp.h>	/* for sigjmp_buf */
+# include <errno.h>
+
 # include "have_strlcat.h"
 # include "have_strlcpy.h"
 # include "strl.h"
@@ -47,18 +51,20 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.1.15 2026-06-30"
+# define VERSION "14.2.0 2026-07-07"
 
 /*
  * static declarations
  */
+
 static const char * const usage =
-  "usage: %s [-h] [-V] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-H]\n"
+  "usage: %s [-h] [-V] [-a secs] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-H]\n"
   "                   [-p] [-P player] [-r] [-s [rogue_ver]] [-S ROGOSEED] [-t] [-u] [-w]\n"
   "\n"
   "    -h            print help message and exit\n"
   "    -V            print version string and exit\n"
   "\n"
+  "    -a secs	     set timeout alarm to secs seconds, may be a non-integer number (i.e., 1.5)\n"
   "    -c            use trap arrows\n"
   "    -d            use unique directory name\n"
   "    -D rgmdir     set rogomatic directory path\n"
@@ -118,6 +124,10 @@ main (int argc, char *argv[])
   unsigned int dnum = 0;	    /* rogue dungeon number to set */
   int player_lock_fd = -1;	    /* player lock file descriptor */
   char *rogue_ver = DEFVER;	    /* rogue version string */
+  bool a_flag = false;		    /* true ==> -a secs are given, and secs was parsed for a value > 0.0 */
+  char *timer_str = "0.0";	    /* number of seconds for ROGOTIMER environment variable */
+  char *endptr = NULL;		    /* end of strtod processing */
+  double secs = 0.0;		    /* timeout timer value */
   extern char *optarg;		    /* option argument */
   extern int optind;		    /* argv index of the next arg */
   int i;
@@ -151,16 +161,34 @@ main (int argc, char *argv[])
   /*
    * parse args
    */
-  while ((i = getopt (argc, argv, "hVcdD:ef:HpP:rs:S:tuwE:")) != -1) {
+  while ((i = getopt (argc, argv, "hVa:cdD:ef:HpP:rs:S:tuwE:")) != -1) {
     switch (i) {
       case 'h':		/* -h ==> print usage message */
 	fprintf (stderr, usage, program, prog, VERSION);
 	exit (2);
 	break;
 
-      case 'V':		/* -V -==> print version string and exit */
+      case 'V':		/* -V ==> print version string and exit */
 	printf ("%s\n", VERSION);
 	exit (2);
+	break;
+
+      case 'a':		/* -a secs ==> set timeout alarm to secs seconds */
+	/* try to parse secs */
+	errno = 0;
+	secs = strtod (optarg, &endptr);
+	if (optarg == endptr || *endptr != '\0' || errno == ERANGE || secs < 0.0) {
+	  fprintf (stderr, "%s: ERROR: -a %s value must be a number >= 0.0\n",
+			   program, optarg);
+	  fprintf (stderr, usage, program, prog, VERSION);
+	  exit (3);
+	}
+
+	/* ROGOTIMER environment variable to the secs string if > 0 */
+	if (secs > 0.0) {
+	  timer_str = optarg;
+	  a_flag = true;
+	}
 	break;
 
       case 'c':		/* -c ==> Will use trap arrows! */
@@ -299,6 +327,29 @@ main (int argc, char *argv[])
     fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGOSEED\", \"%s\", 1)\n",
 		     __func__, __FILE__, __LINE__, dnum, rogoseed);
     exit (1);
+  }
+
+  /*
+   * set ROGOTIMER environment variable
+   *
+   * For player, the ROGOTIMER environment variable will determine the number
+   * of seconds before player will timeout waiting for rogue to respond,
+   * when the value is > 0.0.
+   */
+  if (a_flag) {
+    if (timer_str == NULL) { /* paranoia */
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u timer_str is NULL\n",
+		       __func__, __FILE__, __LINE__, dnum);
+      exit (1);
+    } else if (timer_str[0] == '\0') {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u timer_str is an empty string\n",
+		       __func__, __FILE__, __LINE__, dnum);
+      exit (1);
+    } else if (setenv ("ROGOTIMER", timer_str, 1) != 0) {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGOTIMER\", \"%s\", 1)\n",
+		       __func__, __FILE__, __LINE__, dnum, timer_str);
+      exit (1);
+    }
   }
 
   /*

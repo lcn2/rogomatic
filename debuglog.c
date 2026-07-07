@@ -30,6 +30,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <setjmp.h>
 
 #include "types.h"
 #include "config.h"

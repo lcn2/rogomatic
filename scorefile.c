@@ -39,6 +39,7 @@
 # include <signal.h>
 # include <string.h>
 # include <errno.h>
+# include <setjmp.h>
 
 # include "types.h"
 # include "config.h"

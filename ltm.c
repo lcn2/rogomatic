@@ -32,6 +32,7 @@
 # include <math.h>
 # include <string.h>
 # include <time.h>
+# include <setjmp.h>
 
 # include "have_strlcat.h"
 # include "have_strlcpy.h"

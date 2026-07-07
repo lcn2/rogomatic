@@ -100,8 +100,11 @@
 # include <setjmp.h>
 # include <string.h>
 # include <sys/types.h>
-# include <errno.h>
 # include <sys/stat.h>
+
+# include <sys/time.h>	/* for struct itimerval */
+# include <setjmp.h>	/* for sigjmp_buf */
+# include <errno.h>
 
 # include "have_strlcat.h"
 # include "have_strlcpy.h"
@@ -142,7 +145,7 @@ char roguename[MU_BUF + 1];	/* "Rog-O-Matic XIV for" + Name we are playing under
 char playername[MU_BUF + 1];	/* Name we are playing under, +1 for paranoia */
 char *termination = "perditus";	/* Latin verb for how we died */
 
-/* Integers */
+/* Integers and Booleans */
 bool aggravated = false;	/* True if we have aggravated this level */
 int agoalc = NONE;		/* Goal square to arch from (row) */
 int agoalr = NONE;		/* Goal square to arch from (col) */
@@ -373,6 +376,11 @@ static void onintr (int sig);
 static void startlesson (void);
 static void endlesson (void);
 
+/* Single shot timeout timer and timer jump point */
+extern struct itimerval timer;  /* single shot timeout timer in seconds if > 0.0 seconds */
+extern bool jmp_point_ready;	/* True if non-local jump point for SIGARLM signals has been setup */
+extern sigjmp_buf jmp_point;	/* non-local jump point for SIGARLM signals if jmp_point_ready is true */
+
 /*
  * Main program
  */
@@ -389,6 +397,7 @@ main (int argc, char *argv[])
   char pidfilename[TY_BUF + 1]; /* +1 for paranoia */
   FILE *pidfp = NULL;		/* open pidfilename stream */
   int player_lock_fd = -1;	/* player lock file descriptor */
+  char *ROGOTIMER = NULL;	/* ROGOTIMER environment variable or NULL */
   char ch;
   char *s;
   int i;
@@ -525,6 +534,44 @@ main (int argc, char *argv[])
   if (argc > 5) {
     memset (rgmdir, 0, sizeof(rgmdir));
     strlcpy (rgmdir, argv[5], sizeof(rgmdir));
+  }
+
+  /*
+   * set the timeout timer value based on the $ROGOTIMER environment variable, if > 0.0 seconds
+   *
+   * If there is no $ROGOTIMER environment variable, or if the environment variable
+   * isn't a number > 0.0, then the timeout timer will be left disabled.
+   *
+   * Unless there is ROGOTIMER environment value that is > 0.0 seconds,
+   * the is_timer_active() call will continue to return false, and
+   * calling set_alarm() will continue to do nothing, and
+   * calling note_jump_point() will continue to do nothing.
+   *
+   * NOTE: One must call note_jump_point() to setup the timeout jmp_point first,
+   *	   and the call set_alarm() to enable the single-shot SIGALRM alarm that,
+   *	   if a timeout occurs, will perform a non-local jump to the jmp_point.
+   *	   Until all that happens, this is just a timeout timer setup mechanism.
+   */
+  ROGOTIMER = getenv ("ROGOTIMER");
+  if (ROGOTIMER != NULL) {
+    char *endptr = NULL;	/* end of strtod processing */
+    double secs = 0.0;		/* timeout timer */
+
+    /* try to parse secs */
+    errno = 0;
+    secs = strtod (optarg, &endptr);
+    if (optarg != endptr && endptr != NULL && *endptr == '\0' && errno != ERANGE && secs > 0.0) {
+
+      /* NOTE: Setting the timeout timer value now is only a setup mechanism for later */
+
+      /* convert the floating-point seconds into seconds and microseconds */
+      timer.it_value.tv_sec = (time_t)secs;
+      timer.it_value.tv_usec = (suseconds_t)((secs - timer.it_value.tv_sec) * 1000000.0);
+
+      /* timer is a single-shot timer */
+      timer.it_interval.tv_sec = 0;
+      timer.it_interval.tv_usec = 0;
+    }
   }
 
   /*
@@ -1009,12 +1056,12 @@ startlesson (void)
   snprintf (genelock, sizeof(genelock)-1, "%s/GeneLock%d", rgmdir, version);
 
   /* set up random number generation */
-  if (getenv("SEED") != NULL) {
+  if (getenv ("SEED") != NULL) {
     /* if we want repeatable results for testing set
        the environment variable SEED to some positive integer
        value and use a version of rogue that also uses a SEED
        environment variable.  this makes testing so much easier... */
-    tmpseed = atoi(getenv("SEED"));
+    tmpseed = atoi(getenv ("SEED"));
     rogo_srand(tmpseed);
   }
   else

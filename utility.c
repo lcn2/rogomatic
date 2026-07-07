@@ -39,8 +39,8 @@
 # include <sys/stat.h>
 # include <time.h>
 # include <fcntl.h>
-# include <errno.h>
 # include <sys/file.h>
+# include <errno.h>
 
 # include "have_strlcat.h"
 # include "have_strlcpy.h"
@@ -238,6 +238,7 @@ critical (void)
   istat = signal (SIGINT, SIG_IGN);
   pstat = signal (SIGPIPE, SIG_IGN);
   qstat = signal (SIGQUIT, SIG_IGN);
+  disable_alarm_use ();	/* ignore SIGALRM */
   tstat = signal (SIGTERM, SIG_IGN);
 }
 
@@ -253,21 +254,27 @@ uncritical (void)
   } else {
     signal (SIGHUP, SIG_DFL);
   }
+
   if (istat != NULL) {
     signal (SIGINT, istat);
   } else {
     signal (SIGINT, SIG_DFL);
   }
+
   if (pstat != NULL) {
     signal (SIGPIPE, pstat);
   } else {
     signal (SIGPIPE, SIG_DFL);
   }
+
   if (qstat != NULL) {
     signal (SIGQUIT, qstat);
   } else {
     signal (SIGQUIT, SIG_DFL);
   }
+
+  enable_alarm_use ();	/* enable SIGALRM if timeout timer is > 0.0 seconds */
+
   if (tstat != NULL) {
     signal (SIGTERM, tstat);
   } else {
@@ -286,6 +293,7 @@ reset_int (void)
   signal (SIGINT, SIG_DFL);
   signal (SIGPIPE, SIG_DFL);
   signal (SIGQUIT, SIG_DFL);
+  signal (SIGALRM, SIG_DFL);
   signal (SIGTERM, SIG_DFL);
 }
 
@@ -303,6 +311,8 @@ int_exit (void (*exitproc)(int))
   if (signal (SIGPIPE, SIG_IGN) != SIG_IGN) signal (SIGPIPE, exitproc);
 
   if (signal (SIGQUIT, SIG_IGN) != SIG_IGN) signal (SIGQUIT, exitproc);
+
+  if (signal (SIGALRM, SIG_IGN) != SIG_IGN) signal (SIGALRM, exitproc);
 
   if (signal (SIGTERM, SIG_IGN) != SIG_IGN) signal (SIGTERM, exitproc);
 }
