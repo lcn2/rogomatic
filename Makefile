@@ -411,9 +411,9 @@ form_rogomatic_cat_in: rogomatic.6.in
 #
 gcc:
 ifeq ($(target),Linux)
-	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -Wno-char-subscripts -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
 else
-	${MAKE} -f ${MAKE_FILE} all CC='gcc-16' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-g2'
+	${MAKE} -f ${MAKE_FILE} all CC='gcc-16' CCWARN='-Wall -Wno-char-subscripts -pedantic -Werror' COPT='-O0' DEBUG='-g2'
 endif
 
 # compile all with clang, full warnings, no optimizer, no ASAN
@@ -421,7 +421,7 @@ endif
 # NOTE: Consider doing a "make clobber" first, especially when switching from a previous "make all", "make gcc", etc.
 #
 clang:
-	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
+	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -Wno-char-subscripts -pedantic -Werror' COPT='-O0' DEBUG='-ggdb3'
 
 # compile all with Address Sanitizer (ASAN) enabled
 #
@@ -442,14 +442,14 @@ clang:
 #
 asan:
 ifeq ($(target),Darwin)
-	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+	${MAKE} -f ${MAKE_FILE} all CC='clang' CCWARN='-Wall -Wno-char-subscripts -pedantic -Werror' COPT='-O0' \
 				    DEBUG='-ggdb3 ${FSANITIZE} ${MACOS_FSANITIZE}'
 else
 ifeq ($(target),Linux)
-	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -Wno-char-subscripts -pedantic -Werror' COPT='-O0' \
 				    DEBUG='-ggdb3 ${FSANITIZE} ${LINUX_FSANITIZE}'
 else
-	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -pedantic -Werror' COPT='-O0' \
+	${MAKE} -f ${MAKE_FILE} all CC='gcc' CCWARN='-Wall -Wno-char-subscripts -pedantic -Werror' COPT='-O0' \
 				    DEBUG='-ggdb3 ${FSANITIZE} ${OTHER_FSANITIZE}'
 endif
 endif
