@@ -543,14 +543,7 @@ main (int argc, char *argv[])
    * isn't a number > 0.0, then the timeout timer will be left disabled.
    *
    * Unless there is ROGOTIMER environment value that is > 0.0 seconds,
-   * the is_timer_active() call will continue to return false, and
-   * calling set_alarm() will continue to do nothing, and
-   * calling note_jump_point() will continue to do nothing.
-   *
-   * NOTE: One must call note_jump_point() to setup the timeout jmp_point first,
-   *	   and the call set_alarm() to enable the single-shot SIGALRM alarm that,
-   *	   if a timeout occurs, will perform a non-local jump to the jmp_point.
-   *	   Until all that happens, this is just a timeout timer setup mechanism.
+   * the timeout timer mechanism will remain inactive.
    */
   ROGOTIMER = getenv ("ROGOTIMER");
   if (ROGOTIMER != NULL) {

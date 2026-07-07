@@ -64,54 +64,6 @@ static void alarm_handler (int sig __attribute__ ((__unused__)));
 
 
 /*
- * note_jump_point - setup the timeout jmp_point or return from timeout
- *
- * NOTE: If the timeout timer isn't > 0.0, this function does nothing.
- * NOTE: If the jmp_point is already ready, this function does nothing.
- *
- * returns:
- *
- *	true ==> SIGALRM timer timeout just did a non-local jump
- *	false ==> first time call, or call not needed
- */
-bool
-note_jump_point (void)
-{
-  int jump_ret;			    /* sigsetjmp return value */
-
-  /*
-   * do nothing unless timeout timer is > 0.0 seconds
-   */
-  if (! is_timer_active ()) {
-    return false;
-  }
-
-  /*
-   * do nothing if jmp_point is already ready
-   */
-  if (jmp_point_ready) {
-    return false;
-  }
-
-  /*
-   * establish the jmp_point for the SIGALRM timer timeout
-   *
-   * Set the jmp_point_ready to true on the 1st call.
-   */
-  jump_ret = sigsetjmp(jmp_point, 1);
-  if (jump_ret == 0) {
-
-    /* This is our first time here, note jmp_point is now ready */
-    jmp_point_ready = true;
-    return false;
-  }
-
-  /* note non-local jump to caller */
-  return true;
-}
-
-
-/*
  * is_timer_active - check if the timeout timer is > 0.0 seconds
  */
 bool
@@ -132,13 +84,14 @@ static void
 alarm_handler (int sig __attribute__ ((__unused__)))
 {
   /*
-   * non-local jump back if jmp_point_ready is true
+   * non-local jump back if the jmp_point is ready
    */
   if (jmp_point_ready) {
     /* jump back to the saved point in the processing loop, restoring signal mask */
     siglongjmp (jmp_point, 1);
   }
 
+  /* otherwise do nothing about the SIGALRM as the jmp_point is NOT ready */
   return;
 }
 
@@ -210,11 +163,20 @@ disable_alarm_use (void)
 
 /*
  * set_alarm - set single-shot SIGALRM alarm if timeout timer > 0.0 seconds, else clear SIGALRM alarm
+ *
+ * NOTE: We don't set an timeout timer if the jmp_point is NOT ready.
  */
 void
 set_alarm (void)
 {
   int ret;              /* setitimer return */
+
+  /*
+   * nothing do if the jmp_point is NOT ready
+   */
+  if (! jmp_point_ready) {
+    return;
+  }
 
   /*
    * set the single-shot SIGALRM alarm if timeout timer > 0.0 seconds

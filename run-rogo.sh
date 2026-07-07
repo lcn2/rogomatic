@@ -32,11 +32,12 @@
 
 # setup
 #
-export VERSION="1.2.0 2026-06-26"
+export VERSION="1.3.0 2026-07-07"
 NAME=$(basename "$0")
 export NAME
 #
 export V_FLAG=0
+export SECS=""
 #
 export NOOP=
 export DO_NOT_PROCESS=
@@ -84,6 +85,7 @@ export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-r rogomatic] [-P player
     -n		go thru the actions, but do not update any files (def: do the action)
     -N          do not process anything, just parse arguments (def: process something)
 
+    -a secs		set the timeout timer to secs seconds (def: no timeout timer)
     -r rogomatic	path to rogomatic (def: $ROGOMATIC_TOOL)
     -P player		path to player (def: $PLAYER_TOOL)
     -f rogue		path to rogue (def: $ROGUE_TOOL)
@@ -104,7 +106,7 @@ $NAME version: $VERSION"
 
 # parse command line
 #
-while getopts :hv:VnNr:P:f:D:S: flag; do
+while getopts :hv:Va:nNr:P:f:D:S: flag; do
   case "$flag" in
     h) echo "$USAGE"
 	exit 2
@@ -113,6 +115,8 @@ while getopts :hv:VnNr:P:f:D:S: flag; do
 	;;
     V) echo "$VERSION"
 	exit 2
+	;;
+    a) SECS="$OPTARG"
 	;;
     n) NOOP="-n"
 	;;
@@ -237,6 +241,7 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: VERSION=$VERSION" 1>&2
     echo "$0: debug[3]: NAME=$NAME" 1>&2
     echo "$0: debug[3]: V_FLAG=$V_FLAG" 1>&2
+    echo "$0: debug[3]: SECS=$SECS" 1>&2
     echo "$0: debug[3]: NOOP=$NOOP" 1>&2
     echo "$0: debug[3]: DO_NOT_PROCESS=$DO_NOT_PROCESS" 1>&2
     echo "$0: debug[3]: V_FLAG=$V_FLAG" 1>&2
@@ -274,18 +279,36 @@ fi
 # exec the rogomatic code
 #
 if [[ -z $SEED ]]; then
-    if [[ $V_FLAG -ge 1 ]]; then
-	echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR" 1>&2
-    fi
-    if [[ -z $NOOP ]]; then
-	exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR"
+    if [[ -z $SECS ]]; then
+	if [[ $V_FLAG -ge 1 ]]; then
+	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR" 1>&2
+	fi
+	if [[ -z $NOOP ]]; then
+	    exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR"
+	fi
+    else
+	if [[ $V_FLAG -ge 1 ]]; then
+	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -a $SECS" 1>&2
+	fi
+	if [[ -z $NOOP ]]; then
+	    exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -a "$SECS"
+	fi
     fi
 else
-    if [[ $V_FLAG -ge 1 ]]; then
-	echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED" 1>&2
-    fi
-    if [[ -z $NOOP ]]; then
-	exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED"
+    if [[ -z $SECS ]]; then
+	if [[ $V_FLAG -ge 1 ]]; then
+	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED" 1>&2
+	fi
+	if [[ -z $NOOP ]]; then
+	    exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED"
+	fi
+    else
+	if [[ $V_FLAG -ge 1 ]]; then
+	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED -a $SECS" 1>&2
+	fi
+	if [[ -z $NOOP ]]; then
+	    exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED" -a "$SECS"
+	fi
     fi
 fi
 

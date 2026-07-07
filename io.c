@@ -273,9 +273,11 @@ getrogue (char *waitstr, int onat)
   char *wait_msg = waitstr;		/* FSM to check for the wait msg */
 
   bool botprinted = false;
+  int jump_ret;				/* sigsetjmp return value */
   int wasmapped = didreadmap;
   int *doors;
   static bool moved = false;
+  static int jump_count = 0;            /* number of non-local jumps */
   int r;
   int c;
   int i, j;
@@ -313,8 +315,54 @@ getrogue (char *waitstr, int onat)
 	  onat && screen[row][col] != '@')) {
 
     /*
+     * jmp_point for the SIGALRM timer timeout if needed
+     */
+    if (is_timer_active ()) {
+
+      /* establish the jmp_point for the SIGALRM timer timeout */
+      jump_ret = sigsetjmp (jmp_point, 1);
+
+      /*
+       * case: this is our first time here, note jmp_point is now ready
+       */
+      if (jump_ret == 0) {
+	jmp_point_ready = true;
+
+      /*
+       * case: note non-local jump
+       */
+      } else {
+
+	/* report non-local jump */
+	++jump_count;		    /* HINT: breakpoint here to catch a timer timeout */
+	debuglog ("SIGALRM: timer timeout jump number: %d\n", jump_count);
+
+	/* try to reset the state */
+	scroll_state = s_unset;
+	potion_state = p_unset;
+	quaff_what = "Quaff what? ";
+	read_what = "Read what? ";
+	for_list = "(* for list): ";
+
+	/* force redraw by sending a redraw */
+	if (version < RV53A) {
+	  sendnow ("%c//;", ctrl('l'));
+	} else {
+	  sendnow ("%c;", ctrl('r'));
+	}
+
+	/* try to restore the screen to some sane state */
+	at (R,0);
+	clrtoeol ();
+	printw ("timeout!");
+	refresh ();
+      }
+    }
+
+    /*
      * get next rogue output character, or screen reading package token
      */
+    set_alarm ();	/* in case we hang reading from rogue, set a timeout timer */
     ch = getroguetoken ();
     if (debug(D_MESSAGE)) {
       at (28,col);
@@ -322,6 +370,7 @@ getrogue (char *waitstr, int onat)
       at (row, col);
       refresh ();
     }
+    clear_alarm ();	/* we did not hang, cancel the timeout timer */
 
     /*
      * Tokens used by the screen reading package are NOT processed
@@ -903,7 +952,6 @@ getrogue (char *waitstr, int onat)
 
       default:
         if (ch < ' ') {
-          saynow ("Unknown character '\\%o'--more--", ch);
           waitforspace ();
         }
         else if (row) {
@@ -1505,10 +1553,12 @@ waitfor (char *mess)
 {
   char *m = mess;
 
+  set_alarm ();	/* in case we hang reading from rogue, set a timeout timer */
   while (*m) {
     if (getroguetoken () == *m) m++;
     else m = mess;
   }
+  clear_alarm ();	/* we did not hang, cancel the timeout timer */
 }
 
 /*
@@ -1581,9 +1631,15 @@ waitforspace (void)
 
   refresh ();
 
-  if (!noterm)
-    while ((ch = fgetc (stdin)) != ' ')
-      if (ch == '/') dosnapshot ();
+  if (!noterm) {
+    set_alarm ();	/* in case we hang reading from rogue, set a timeout timer */
+    while ((ch = fgetc (stdin)) != ' ') {
+      if (ch == '/') {
+	dosnapshot ();
+      }
+    }
+    clear_alarm ();	/* we did not hang, cancel the timeout timer */
+  }
 
   at (row, col);
 }
@@ -1674,10 +1730,12 @@ getrogver (void)
     sendnow ("v");
     waitfor ("ersion ");
 
+    set_alarm ();	/* in case we hang reading from rogue, set a timeout timer */
     while ((ch = getroguetoken ()) != ' ') {
       *vstr = ch;
       vstr++;
     }
+    clear_alarm ();	/* we did not hang, cancel the timeout timer */
   }
 
   if (stlmatch (versionstr, "3.6"))		version = RV36B;

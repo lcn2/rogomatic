@@ -32,20 +32,22 @@
 
 # setup
 #
-export VERSION="1.1.0 2026-06-26"
+export VERSION="1.2.0 2026-07-07"
 NAME=$(basename "$0")
 export NAME
 #
 export V_FLAG=0
+export SECS=""
 #
 export NOOP=
 export DO_NOT_PROCESS=
 #
-RUN_ROGO_TOOL=$(type -P run-rogo)
-export RUN_ROGO_TOOL
-if [[ -z $RUN_ROGO_TOOL ]]; then
-    RUN_ROGO_TOOL="./run-rogo.sh"
+if [[ -x ./run-rogo ]]; then
+    RUN_ROGO_TOOL="./run-rogo"
+else
+    RUN_ROGO_TOOL=$(type -P run-rogo)
 fi
+export RUN_ROGO_TOOL
 #
 if [[ -x ./rogomatic ]]; then
     ROGOMATIC_TOOL="./rogomatic"
@@ -83,7 +85,7 @@ export RGMDIR="/var/tmp/rogo"
 
 # usage
 #
-export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-R run-rogo]
+export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-a secs] [-R run-rogo]
         [-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-i idlesec] [-s stopfile]
 
     -h          print help message and exit
@@ -93,6 +95,7 @@ export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-R run-rogo]
     -n          go thru the actions, but do not update any files (def: do the action)
     -N          do not process anything, just parse arguments (def: process something)
 
+    -a secs		set the timeout timer to secs seconds (def: no timeout timer)
     -R run-rogo         path to the run-rogo tool (def: $RUN_ROGO_TOOL)
     -r rogomatic        path to rogomatic (def: $ROGOMATIC_TOOL)
     -P player           path to player (def: $PLAYER_TOOL)
@@ -115,7 +118,7 @@ $NAME version: $VERSION"
 
 # parse command line
 #
-while getopts :hv:VnNR:r:P:f:D:i:s: flag; do
+while getopts :hv:Va:nNR:r:P:f:D:i:s: flag; do
   case "$flag" in
     h) echo "$USAGE"
 	exit 2
@@ -124,6 +127,8 @@ while getopts :hv:VnNR:r:P:f:D:i:s: flag; do
 	;;
     V) echo "$VERSION"
 	exit 2
+	;;
+    a) SECS="$OPTARG"
 	;;
     n) NOOP="-n"
 	;;
@@ -268,6 +273,7 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: VERSION=$VERSION" 1>&2
     echo "$0: debug[3]: NAME=$NAME" 1>&2
     echo "$0: debug[3]: V_FLAG=$V_FLAG" 1>&2
+    echo "$0: debug[3]: SECS=$SECS" 1>&2
     echo "$0: debug[3]: NOOP=$NOOP" 1>&2
     echo "$0: debug[3]: DO_NOT_PROCESS=$DO_NOT_PROCESS" 1>&2
     echo "$0: debug[3]: V_FLAG=$V_FLAG" 1>&2
@@ -332,11 +338,19 @@ if [[ -z $NOOP ]]; then
 	    trap "exit" 0 1 2 3 15
 	    exit 0
 	fi
-	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: $RUN_ROGO_TOOL -r $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR" 1>&2
+	if [[ -z $SECS ]]; then
+	    if [[ $V_FLAG -ge 1 ]]; then
+		echo "$0: debug[1]: about to run: $RUN_ROGO_TOOL -r $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR" 1>&2
+	    fi
+	    tput reset  # paranoia
+	    "$RUN_ROGO_TOOL" -r "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR"
+	else
+	    if [[ $V_FLAG -ge 1 ]]; then
+		echo "$0: debug[1]: about to run: $RUN_ROGO_TOOL -r $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -a $SECS" 1>&2
+	    fi
+	    tput reset  # paranoia
+	    "$RUN_ROGO_TOOL" -r "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -a "$SECS"
 	fi
-	tput reset  # paranoia
-	"$RUN_ROGO_TOOL" -r "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR"
     done
 elif [[ $V_FLAG -ge 1 ]]; then
     echo "$0: debug[1]: due to use of -n, there is nothing to do" 1>&2
