@@ -68,24 +68,29 @@ static void alarm_handler (int sig __attribute__ ((__unused__)));
  *
  * NOTE: If the timeout timer isn't > 0.0, this function does nothing.
  * NOTE: If the jmp_point is already ready, this function does nothing.
+ *
+ * returns:
+ *
+ *	true ==> SIGALRM timer timeout just did a non-local jump
+ *	false ==> first time call, or call not needed
  */
-void
+bool
 note_jump_point (void)
 {
-  int jump_ret;	    /* sigsetjmp return value */
+  int jump_ret;			    /* sigsetjmp return value */
 
   /*
    * do nothing unless timeout timer is > 0.0 seconds
    */
   if (! is_timer_active ()) {
-    return;
+    return false;
   }
 
   /*
    * do nothing if jmp_point is already ready
    */
   if (jmp_point_ready) {
-    return;
+    return false;
   }
 
   /*
@@ -95,10 +100,14 @@ note_jump_point (void)
    */
   jump_ret = sigsetjmp(jmp_point, 1);
   if (jump_ret == 0) {
+
+    /* This is our first time here, note jmp_point is now ready */
     jmp_point_ready = true;
+    return false;
   }
 
-  return;
+  /* note non-local jump to caller */
+  return true;
 }
 
 

@@ -91,7 +91,8 @@ static const char * const usage =
   "\n"
   "%s version: %s\n";
 
-static int   frogue, trogue;
+static int frogue = -1;		/* from rogue(6) read pipe file descriptor */
+static int trogue = -1;		/* to rogue(6) write pipe file descriptor */
 
 int
 main (int argc, char *argv[])

@@ -1065,7 +1065,7 @@ extern int havefood (int n);
 extern void halftimeshow (int level);
 
 /* timer.c */
-extern void note_jump_point (void);
+extern bool note_jump_point (void);
 extern bool is_timer_active (void);
 extern void enable_alarm_use (void);
 extern void disable_alarm_use (void);

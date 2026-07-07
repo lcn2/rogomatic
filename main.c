@@ -559,7 +559,7 @@ main (int argc, char *argv[])
 
     /* try to parse secs */
     errno = 0;
-    secs = strtod (optarg, &endptr);
+    secs = strtod (ROGOTIMER, &endptr);
     if (optarg != endptr && endptr != NULL && *endptr == '\0' && errno != ERANGE && secs > 0.0) {
 
       /* NOTE: Setting the timeout timer value now is only a setup mechanism for later */
