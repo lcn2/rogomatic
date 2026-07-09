@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# run-rogo.sh - run rogomatic
+# run_rogo.sh - run rogomatic
 #
 # Copyright (c) 2026 by Landon Curt Noll.  All Rights Reserved.
 #

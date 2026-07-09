@@ -1,7 +1,7 @@
-.TH ROGOMATIC 6 "2026 Mar 30"
+.TH ROGOMATIC 6 "2026 Jul 08"
 .UC 4
 .SH NAME
-rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons of Doom
+rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exploring The Dungeons of Doom
 .SH SYNOPSIS
 .I rogomatic
 [
@@ -29,8 +29,7 @@ rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons 
 .B \-E
 ]
 [
-.B \-f
-.I rogue
+.BI \-f\  rogue
 ]
 [
 .B \-H
@@ -45,12 +44,6 @@ rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons 
 .B \-r
 ]
 [
-.B \-s
-[
-.I rogue_ver
-]
-]
-[
 .BI \-S\  ROGOSEED
 ]
 [
@@ -63,7 +56,137 @@ rogomatic, rgmgene, rgmhist, rgmscatter \- Automatically Exploring The Dungeons 
 .B \-w
 ]
 [
-.I file
+.B \-s
+[
+.I rogue_ver
+]
+|
+.I r_file
+]
+.PP
+.I run_rogo
+[
+.B \-h
+]
+[
+.B \-V
+]
+[
+.BI \-v\  level
+]
+[
+.B \-n
+]
+[
+.B \-N
+]
+[
+.BI \-a\  secs
+]
+[
+.BI \-r\  rogomatic
+]
+[
+.BI \-P\  player
+]
+[
+.BI \-f\  rogue
+]
+[
+.BI \-D\  rgmdir
+]
+[
+.BI \-S\  ROGOSEED
+]
+.PP
+.I rerun_rogo
+[
+.B \-h
+]
+[
+.B \-V
+]
+[
+.BI \-v\  level
+]
+[
+.B \-n
+]
+[
+.B \-N
+]
+[
+.BI \-a\  secs
+]
+[
+.BI \-R\  run_rogo
+]
+[
+.BI \-r\  rogomatic
+]
+[
+.BI \-P\  player
+]
+[
+.BI \-f\  rogue
+]
+[
+.BI \-D\  rgmdir
+]
+[
+.BI \-i\  idlesec
+]
+[
+.BI \-s\  stopfile
+]
+.PP
+.I end_player
+[
+.B \-h
+]
+[
+.B \-V
+]
+[
+.BI \-v\  level
+]
+[
+.B \-n
+]
+[
+.B \-N
+]
+[
+.B \-u\ user
+]
+.PP
+.I unstuck_player
+[
+.B \-h
+]
+[
+.B \-V
+]
+[
+.BI \-v\  level
+]
+[
+.B \-n
+]
+[
+.B \-N
+]
+[
+.B \-r\  recheck_sec
+]
+[
+.B \-R\  restart_sec
+]
+[
+.B \-m\  missing_sec
+]
+[
+.B \-u\ user
 ]
 .SH DESCRIPTION
 .PP
@@ -130,24 +253,46 @@ and exit with a status of
 .BI \-a \ secs
 Set the timeout timer to
 .B secs
-seconds.
+seconds,
+and set the
+.I ROGOTIMER
+environment variable to
+.BR secs .
 .sp
 The
 .B secs
 must be a value >= 0,
 and it may an integer, or
-a real value (i.e., 1.5).
-.sp
+a real value (i.e., 2.5).
 By default,
 .B secs
 is set to
 .BR 0.0 ,
 which has the effect of not setting a timeout timer.
 .sp
+For example, using
+.BI \-a \ 2.5
+on the command line will cause the program attempt to resume normal
+operation after a hang while reading a message from
+.BR rogue (6).
+.sp
+Before
+.BR rogomatic (6)
+attempts to read from
+.BR rogue (6),
+a timeout alarm will be set.
+If the read hangs for more than \fIsecs\fP seconds, a
+.B SIGARLM
+signal will be delivered to the player process.
 The
-.I ROGOTIMER
-environment variable to
-.BR secs .
+.B SIGARLM
+is then caught and a
+.BR siglongjmp (3)
+performed a non-local jump to a control point where player process
+is much more likely to resume normal operation.
+Nevertheless, there are circumstances where non-local jump still hangs.
+.sp
+See the section on \fBBUGS\fP below for more information on hanging.
 .TP
 .B \-c
 Turns on cheat mode
@@ -164,15 +309,17 @@ to store files.
 .sp
 By default,
 .B rogomatic
-creates and uses files under:
+creates the rogomatic directory:
 .sp
 .in +0.5i
 .IR @RGMDIR@
 .in -0.5i
 .sp
-The
+With the
 .B \-d
-command line option will creates and uses files under:
+option,
+.B rogomatic
+creates a new rogomatic sub-directory, using a UTC date and time, of the form:
 .sp
 .in +0.5i
 .BI @RGMDIR@ /YYYYMMDD_HHMMSS
@@ -182,6 +329,15 @@ where
 .I YYYYMMDD_HHMMSS
 is the year, month, day, hour, minute and second, in the UTC timezone,
 of when player command started.
+.sp
+Because
+.B \-d
+creates a new rogomatic sub-directory, the environment starts out in an initial state.
+This will make is easier to use a debugger such as
+.BR lldb (1),
+especially when combined with
+.BI \-S\  ROGOSEED
+making the action much more deterministic from a debugging standpoint.
 .TP
 .BI \-D \ rgmdir
 Change the rogomatic directory path to
@@ -276,13 +432,19 @@ and so it was named as
 .B \-p
 Replay the
 .I roguelog
-rogue log file.
+file.
 .sp
 The default rogue log file is:
 .sp
 .in +0.5i
 .BI @RGMDIR@ /roguelog
 .in -0.5i
+.sp
+When combined with a final
+.I r_file
+command line argument,
+the replay file will be
+.IR r_file .
 .TP
 .BI \-P\  player
 Set the path to player.
@@ -291,7 +453,7 @@ Set the path to player.
 Restore a saved rogue game.
 .sp
 Without a final
-.I file
+.I r_file
 command line option, run
 .B rogue
 with the
@@ -300,52 +462,23 @@ command line option and restore
 the rogue game stored in that file.
 .sp
 If a final
-.I file
-command line option is given, run
-.B rogue
-with the
-.BI \-r \ file
-command line option to
-the rogue game stored
-.IR file .
+.I r_file
+command line argument is given, run
+.BR rogue (6)
+will be run with
+.BI \-r \ r_file
+so that rogue game will be restored from
+.IR r_file .
 .TP
-.BR \-s\  [\ rogue_ver\ ]
-Print the
-.B rogomatic
-scoreboard.
+.BI \-S\  ROGOSEED
+Seed the pseudo-random number generator to \fIROGOSEED\fP
+for both
+.BR rogue (6)
+and rogomatic.
 .sp
-The default
-.B rogue_ver
-is
-.BR 5.4.5 .
-.sp
-The default rogomatic scoreboard is:
-.sp
-.in +0.5i
-.BI @RGMDIR@/rgmscore version
-.in -0.5i
-.sp
-where
-.I version
-is the
-.B rogue
-version number, such as
-.IR 5.4.5 .
-.sp
-If a final
-.I file
-command line option is given, then the rogomatic scoreboard printed will be from:
-.sp
-.in +0.5i
-.BI file version
-.in -0.5i
-.sp
-where
-.I version
-is the
-.B rogue
-version number, such as
-.IR 5.4.5 .
+When combined with
+.B \-d
+this creates much more deterministic run from a debugging standpoint.
 .TP
 .B \-t
 Terse mode.
@@ -363,15 +496,284 @@ starts exploring level 1.
 .TP
 .B \-w
 Start up in watched mode.
-.SH COMMANDS
+.TP
+.BR \-s\  [\ rogue_ver\ ]
+Print the
+.B rogomatic
+scoreboard.
+.sp
+The default
+.B rogue_ver
+is
+.BR 5.4.5 .
+.sp
+The default rogomatic scoreboard is:
+.sp
+.in +0.5i
+.BI @RGMDIR@/rgmscore 5.4.5
+.in -0.5i
+.sp
+If
+.BR \-s\  rogue_ver
+is given, then the rogomatic scoreboard printed will be from:
+.sp
+.in +0.5i
+.BI @RGMDIR@/rgmscore rogue_ver
+.in -0.5i
+.sp
+where
+.I rogue_ver
+is the
+.B rogue
+version number, such as
+.IR 5.4.5 .
+.sp
+If just
+.B \-s
+is used, then
+.BR \-s\ MUST\ BE\ THE\ LAST\ OPTION\ ON\ THE\ COMMAND\ LINE ,
+and cannot be used in conjunction with a final
+.IR r_file .
+.TP
+[ \fIr_file\fP ]
+When used with
+.BR \-p ,
+.I r_file
+specifies the rogomatic game to replay from.
+.sp
+When used with
+.BR \-r ,
+.I r_file
+specifies the rogue game to restore from.
+.sp
+Use of
+.I r_file
+is \fBNOT\fP compatible with using
+.B \-s
+by itself.
+.SH USEFUL UTILITIES
+Several useful utilities are installed under the
+.B @BINDIR@
+directory,
+or may be run from top of the source code directory.
+.TP
+.B run_rogo
+The
+.B run_rogo
+command is a very useful way to run
+.BR rogomatic (6)
+and set the rogomatic directory to:
+.sp
+.in +0.5i
+.BI /var/tmp/rogo
+.in -0.5i
+.sp
+instead of the usual default rogomatic directory.
+By changing the rogomatic directory to a non-default value,
+manual runs of
+.BR rogomatic (6)
+will not interfere (such a lock file contention).
+.sp
+In addition, the
+.B run_rogo
+command will first look in the local directory for commands, and use them if found,
+otherwise it search and use commands along the \fB$PATH\fP environment variable path.
+.sp
+See \fBrun_rogo -h\fP for usage details.
+.TP
+.B rerun_rogo
+The
+.B rerun_rogo
+command is a very useful to run
+.BR rogomatic (6)
+multiple times in a row.
+Currently, when the rogue dies in the dungeon,
+.BR rogomatic (6)
+exits.
+When run with
+.B rerun_rogo
+a new
+.BR rogomatic (6)
+will be started after the previous
+.BR rogomatic (6)
+exits.
+.sp
+The
+.B rerun_rogo
+uses the
+.B run_rogo
+command to run
+.BR rogomatic (6).
+As such, the rogomatic directory will be set to:
+.sp
+.in +0.5i
+.BI /var/tmp/rogo
+.in -0.5i
+.sp
+If the file
+.B .stopfile
+is created while
+.B rerun_rogo
+is running, then the next time
+.BR rogomatic (6)
+exits, the
+.B .stopfile
+file is removed, and rerun cycle will be stopped.
+This is a graceful way to end the rerun cycle.
+.sp
+To deal with the possibility of
+.BR rogomatic (6)
+hanging, we recommend usinng a timeout timer, as in:
+.sp
+.in +0.5i
+.B rerun_rogo\ \-a\ 2.5
+.in -0.5i
+.sp
+To deal with the possibility of
+.BR rogomatic (6)
+hanging, we recommend running
+.B unstuck_player
+in a separate window while running this tool:
+.sp
+.in +0.5i
+.B unstuck_player\ \-v\ 1
+.in -0.5i
+.sp
+See the section on \fBBUGS\fP below for more information on hanging.
+.sp
+See \fBrerun_rogo -h\fP for usage details.
+.TP
+.B end_player
+The
+.B end_player
+command will attempt to end a
+.BR rogomatic (6)
+and
+.BR rogue (6)
+run.
+.sp
+It will first attempt to send a
+.B SIGHUP
+signal to
+.BR rogue (6)
+by way of the
+.BR killall (1)
+command.
+This allows
+.BR rogue (6)
+to gracefully exit, and potentially record a score
+in the rogue game file.
+The cause of death will be reported as "\fIby signal\fP".
+When the happens,
+.BR rogomatic (6)
+will consider the rogue as having undergone a normal death
+and will update the rogomatic state accordingly.
+.sp
+See \fBend_player -h\fP for usage details.
+.TP
+.B unstuck_player
+The
+.B unstuck_player
+command attempt to detect if a
+.BR rogue (6)
+process is stalled by observing that the process isn't accumulating CPU time
+by checking the output of a
+.BR ps (1)
+command.
+The common reason for a stalled
+.BR rogue (6)
+process is that
+.BR rogomatic (6)
+has hung.
+.sp
+See the section on \fBBUGS\fP below for more information on hanging.
+.sp
+We recommended that a minor level of verbosity be used with this tool, as in:
+.sp
+.in +0.5i
+.B unstuck_player\ \-v\ 1
+.in -0.5i
+.sp
+When a
+.BR rogue (6)
+process has not accumulated CPU time after a period of time
+(default: after 16 seconds), a
+.B SIGHUP
+signal is set to the
+.BR rogue (6)
+process.
+.sp
+See
+.B end_player
+above for what happens when a
+.B SIGHUP
+signal is set to the
+.BR rogue (6)
+process.
+.sp
+If a
+.B SIGHUP
+signal cannot be delivered to a
+.BR rogue (6)
+process, say because no such process is found, then a
+.B SIGHUP
+signal is set to the
+.B player
+process.
+.sp
+See \fBunstuck_player -h\fP for usage details.
 .PP
+The following tools are less well documented and less well supported:
+.TP
+.B rgmgene
+The
+.B rgmgene
+command summarizes the current population in the gene pool.
+.TP
+.B rgmscatter
+The
+.B rgmscatter
+command prints a scatter plot of all scores in the scorefile.
+.TP
+.B rgmhist
+The
+.B rgmhist
+command prints a histogram of score (or levels if the
+.B -l
+option is given).
+.SH COMMANDS
+The following commands may be entered from the keyboard while
+.BR rogomatic (6)
+is running.
+.PP
+Some useful keyboard commands are:
+.TP
+.B t
+.I Toggle,
+toggles the setting of the
+.I transparent
+mode flag.
+In transparent mode,
+.B rogomatic
+will not automatically attack monsters, pick up treasure, or explore
+around.
+Unfortunately, there is no way to enter complicated commands
+like
+.I quaff
+or
+.I read
+in transparent mode.
+Typing any
+.B rogue
+command, or single-step command also enables transparent mode.
+.sp
 The
 .B t
 command
 will cause
 .B rogomatic
 will enter transparent mode.
-.PP
+.sp
 In transparent mode, you can type several commands, the
 most useful of which is the
 .B ?
@@ -405,27 +807,6 @@ To return to
 mode, type the
 .B t
 command again.
-.PP
-Some useful commands are:
-.TP
-.B t
-.I Toggle,
-toggles the setting of the
-.I transparent
-mode flag.
-In transparent mode,
-.B rogomatic
-will not automatically attack monsters, pick up treasure, or explore
-around.
-Unfortunately, there is no way to enter complicated commands
-like
-.I quaff
-or
-.I read
-in transparent mode.
-Typing any
-.B rogue
-command, or single-step command also enables transparent mode.
 .TP
 .B Q
 .I Quit,
@@ -704,10 +1085,8 @@ command line option.
 .PP
 If the
 .B \-d
-command line option is used, various session related debugging files
-are stored in a
-.B UTC date and time
-sub-directory of the form:
+command line option is used, a new rogomatic directory
+is created and used in sub-directory of the form:
 .sp
 .in +0.5i
 .BI @RGMDIR@ /YYYYMMDD_HHMMSS
@@ -730,6 +1109,7 @@ is the
 .B rogue
 version number, such as
 .IR 5.4.5 .
+If this file does not exist, it is created as needed.
 .PP
 The rogomatic delta file is:
 .sp
@@ -743,7 +1123,7 @@ is the
 .B rogue
 version number, such as
 .IR 5.4.5 .
-If this file does not exist, it is created.
+If this file does not exist, it is created as needed.
 .PP
 The gene pool is kept in:
 .sp
@@ -757,7 +1137,7 @@ is the
 .B rogue
 version number, such as
 .IR 5.4.5 .
-If this file does not exist, it is created.
+If this file does not exist, it is created as needed.
 .PP
 A log of all mutations and crossovers is kept in:
 .sp
@@ -771,7 +1151,7 @@ is the
 .B rogue
 version number, such as
 .IR 5.4.5 .
-If this file does not exist, it is created.
+If this file does not exist, it is created as needed.
 .PP
 The long term memory of monster attributes is kept in:
 .sp
@@ -785,7 +1165,7 @@ is the
 .B rogue
 version number, such as
 .IR 5.4.5 .
-If this file does not exist, it is created.
+If this file does not exist, it is created as needed.
 .PP
 A log of internal errors and bugs is kept in:
 .sp
@@ -799,29 +1179,9 @@ is the
 .B rogue
 version number, such as
 .IR 5.4.5 .
-If this file does not exist, it is created.
-.SH OTHER PROGRAMS
-.PP
-Several programs are used to summarize and display
-.BR rogomatic 's
-performance.
-The are installed under the
-.B @BINDIR@
-directory.
-.PP
-The
-.I rgmgene
-command summarizes the current population in the gene pool.
-The
-.I rgmscatter
-command prints a scatter plot of all scores in the scorefile.
-The
-.I rgmhist
-command prints a histogram of score (or levels if the
-.B -l
-option is given).
+If this file does not exist, it is created as needed.
 .SH SEE ALSO
-rogue(6)
+.BR rogue (6)
 .SH SOURCE CODE
 The source code for
 .B rogomatic
@@ -838,27 +1198,92 @@ The above GitHub repo is maintained by:
 ( GitHub user
 .BR @lcn2 :
 .IR https://github.com/lcn2 \ )
-and
+with help from the
 GitHub user @jenoola ( \fIhttps://github.com/jenoola\fP ).
 .PP
 The port to ISO C 2017 with GNU extensions, the port to various platforms
 such as NetBSD, Linux, and Cygwin, and many rogue bug fixes applied
 by Landon Curt Noll user \fB@lcn2\fP, and the GitHub user \fB@jenoola\fP.
 .SH BUGS
+It’s easy to imagine that the original authors were more focused on crafting
+a scholarly paper than on writing code that wouldn’t be an embarrassment
+to most programmers.
+.sp
+A number of people have attempted to improve this code.
+Many, many bug fixes have been applied to this code.
+.B Landon\ Curt\ Noll
+alone has a change log of mostly bug fixes, that in mid 2026,
+exceeded 1200 lines of change description text!
+Even so, a \fBsignificant number of bugs\fP remain in this code.
+.sp
+Bug fixes in the form of GitHub pull requests are \fBvery welcome\fP at:
+.sp
+.in +0.5i
+.I https://github.com/lcn2/rogomatic/pulls
+.in -0.5i
+.sp
+You are likely to notice that
+.BR rogomatic (6)
+will occasionally hang.
+Often the code will hang when the state machine, expect a response from
+.BR rogue (6)
+encounters an unexpected message (e.g., announcing a new level,
+reporting hunger, coming under attack, removal of a temporary impairment, etc.)
+.sp
 Occasionally
 .B rogomatic
 will dead-lock waiting for input from
 .BR rogue .
-When this happens, type an interrupt and enter the
+When this happens, try to type
 .I t
-command again.
-This usually wakes it up enough to re-start the game.
-In completely unusual cases, try interrupting and then entering the
-.I S
-command to save the game, and then re-start with "rogomatic -r".
+in an effort to toggle
+.I transparent
+mode.
+If that is successful, type
+.I t
+again in the hopes of resuming the run.
+.sp
 Sometimes
 you will have to use transparent mode to get it down to the next level
 before turning it loose again.
+.sp
+In some hanging cases, try interrupting (usually by typing control C),
+and then entering the
+.I S
+command to save the game.
+Once saved, re-start with "rogomatic -r" and then \fBhope\fP that the restart will be OK.
+.sp
+One work-a-round to hanging is to use the
+.BI \-a\  secs
+command line option, such as using:
+.BI \-a\  2.5
+on the command line.
+.sp
+When the
+.BI \-a\  secs
+command line option is used, then before
+.BR rogomatic (6)
+attempts to read from
+.BR rogue (6),
+a timeout alarm will be set.
+If the read hangs for more than \fIsecs\fP seconds, a
+.B SIGARLM
+signal will be delivered to the player process.
+The
+.B SIGARLM
+is then caught and a
+.BR siglongjmp (3)
+performed a non-local jump to a control point where player process
+is much more likely to resume normal operation.
+Nevertheless, there are circumstances where non-local jump still hangs.
+.sp
+While less often,
+.BR rogomatic (6)
+will enter a loop, such as cycling between two positions, or
+cycling between pick up and dropping an item.
+The above mentioned use of keyboard intervention may help, if you catch the loop in time.
+Without some form of intervention, the rogue will eventually die of starvation.
+As with real life, death tends to interrupt the flow of things.  :-)
 .SH HISTORY
 For a historic history of some changes, see the
 .I ORIG_DOC/old.history.txt

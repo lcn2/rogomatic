@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# rerun-rogo.sh - run rogomatic over and over again
+# rerun_rogo.sh - run rogomatic over and over again
 #
 # Copyright (c) 2026 by Landon Curt Noll.  All Rights Reserved.
 #
@@ -42,10 +42,10 @@ export SECS=""
 export NOOP=
 export DO_NOT_PROCESS=
 #
-if [[ -x ./run-rogo ]]; then
-    RUN_ROGO_TOOL="./run-rogo"
+if [[ -x ./run_rogo ]]; then
+    RUN_ROGO_TOOL="./run_rogo"
 else
-    RUN_ROGO_TOOL=$(type -P run-rogo)
+    RUN_ROGO_TOOL=$(type -P run_rogo)
 fi
 export RUN_ROGO_TOOL
 #
@@ -85,7 +85,7 @@ export RGMDIR="/var/tmp/rogo"
 
 # usage
 #
-export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-a secs] [-R run-rogo]
+export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-a secs] [-R run_rogo]
         [-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-i idlesec] [-s stopfile]
 
     -h          print help message and exit
@@ -96,7 +96,7 @@ export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-a secs] [-R run-rogo]
     -N          do not process anything, just parse arguments (def: process something)
 
     -a secs		set the timeout timer to secs seconds (def: no timeout timer)
-    -R run-rogo         path to the run-rogo tool (def: $RUN_ROGO_TOOL)
+    -R run_rogo         path to the run_rogo tool (def: $RUN_ROGO_TOOL)
     -r rogomatic        path to rogomatic (def: $ROGOMATIC_TOOL)
     -P player           path to player (def: $PLAYER_TOOL)
     -f rogue            path to rogue (def: $ROGUE_TOOL)
@@ -182,18 +182,18 @@ if [[ $# -ne 0 ]]; then
 fi
 
 
-# verify that the run-rogo tool is executable
+# verify that the run_rogo tool is executable
 #
 if [[ ! -e $RUN_ROGO_TOOL ]]; then
-    echo  "$0: ERROR: run-rogo does not exist: $RUN_ROGO_TOOL" 1>&2
+    echo  "$0: ERROR: run_rogo does not exist: $RUN_ROGO_TOOL" 1>&2
     exit 5
 fi
 if [[ ! -f $RUN_ROGO_TOOL ]]; then
-    echo  "$0: ERROR: run-rogo is not a regular file: $RUN_ROGO_TOOL" 1>&2
+    echo  "$0: ERROR: run_rogo is not a regular file: $RUN_ROGO_TOOL" 1>&2
     exit 5
 fi
 if [[ ! -x $RUN_ROGO_TOOL ]]; then
-    echo  "$0: ERROR: run-rogo is not an executable file: $RUN_ROGO_TOOL" 1>&2
+    echo  "$0: ERROR: run_rogo is not an executable file: $RUN_ROGO_TOOL" 1>&2
     exit 5
 fi
 
@@ -325,7 +325,7 @@ if [[ -e $STOP_FILE ]]; then
 fi
 
 
-# run the run-rogo tool
+# run the run_rogo tool
 #
 if [[ -z $NOOP ]]; then
     while :; do

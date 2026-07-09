@@ -51,7 +51,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.2.2 2026-07-08"
+# define VERSION "14.2.3 2026-07-08"
 
 /*
  * static declarations
@@ -59,12 +59,13 @@
 
 static const char * const usage =
   "usage: %s [-h] [-V] [-a secs] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-H]\n"
-  "                   [-p] [-P player] [-r] [-s [rogue_ver]] [-S ROGOSEED] [-t] [-u] [-w]\n"
+  "                   [-p] [-P player] [-r] [-S ROGOSEED] [-t] [-u] [-w]\n"
+  "                   [-s [rogue_ver] | r_file]\n"
   "\n"
   "    -h            print help message and exit\n"
   "    -V            print version string and exit\n"
   "\n"
-  "    -a secs	     set timeout alarm to secs seconds, may be a non-integer number (i.e., 1.5)\n"
+  "    -a secs       set timeout alarm to secs seconds, may be a non-integer number (i.e., 1.5)\n"
   "    -c            use trap arrows\n"
   "    -d            use unique directory name\n"
   "    -D rgmdir     set rogomatic directory path\n"
@@ -74,13 +75,21 @@ static const char * const usage =
   "    -H            disable \"halftime\" show\n"
   "    -p            play back roguelog\n"
   "    -P player     set path to player\n"
-  "    -r            use saved game\n"
-  "    -s            print rogomatic scores from the default rogomatic score file\n"
-  "    -s rogue_ver  print scores the rogomatic score file for a given rogue version\n"
+  "    -r            restore saved rogue game (def: from rogue.sav)\n"
   "    -S ROGOSEED   set $ROGOSEED environment variable for rogue\n"
   "    -t            give status lines only\n"
   "    -u            start up in user mode\n"
   "    -w            set watched mode\n"
+  "\n"
+  "    -s rogue_ver  print rogomatic score file for a given rogue version (i.e., 5.4.5)\n"
+  "                      NOTE: for supported rogue version, use: -s 5.4.5\n"
+  "    -s            print rogomatic scores from the default rogomatic score file\n"
+  "                      NOTE: -s by itself must be the last option the on command line,\n"
+  "                            and is not compatible with use of the r_file arg\n"
+  "\n"
+  "     [ r_file ]   With -p, r_file is the rogomatic game to replay from\n"
+  "                  With -r, r_file is the rogue game to restore from\n"
+  "                      NOTE: use of r_file is not compatible with -s by itself\n"
   "\n"
   "Exit codes:\n"
   "    0         all OK\n"
@@ -261,6 +270,24 @@ main (int argc, char *argv[])
 	 * case: -s without an argument
 	 */
 	if (optopt == 's') {
+	  score = true;
+	  rogue_ver = DEFVER; /* use the default rogue version */
+
+	/*
+	 * otherwise report missing argument
+	 */
+	} else {
+	  fprintf (stderr, "%s: requires an argument -- %c\n", program, optopt);
+	  fprintf (stderr, usage, program, prog, VERSION);
+	  exit (3);
+	}
+	break;
+
+      case '?':
+	/*
+	 * case: -s without an argument
+	 */
+	if (optopt == 's') {
 	    score = true;
 	    rogue_ver = DEFVER; /* use the default rogue version */
 
@@ -268,16 +295,10 @@ main (int argc, char *argv[])
 	 * otherwise report missing argument
 	 */
 	} else {
-	    fprintf (stderr, "%s: requires an argument -- %c\n", program, optopt);
-	    fprintf (stderr, usage, program, prog, VERSION);
-	    exit (3);
+	  fprintf (stderr, "%s: unknown option -- %c\n", program, optopt);
+	  fprintf (stderr, usage, program, prog, VERSION);
+	  exit (3);
 	}
-	break;
-
-      case '?':
-	fprintf (stderr, "%s: unknown option -- %c\n", program, optopt);
-	fprintf (stderr, usage, program, prog, VERSION);
-	exit (3);
 	break;
 
       default:

@@ -172,7 +172,13 @@ endif
 
 OTHER_TARGES=
 
-TARGETS= rogomatic player rgmplot histplot gene run-rogo rerun-rogo unstuck_player end_player
+# targets and local files no longer supported
+#
+# These files were renamed, so the old name is now obsolete.
+#
+OBSOLETE_TARGETS= kill_player kill_player.sh run-rogo run-rogo.sh rerun-rogo rerun-rogo.sh
+
+TARGETS= rogomatic player rgmplot histplot gene run_rogo rerun_rogo unstuck_player end_player
 
 
 ################################
@@ -202,9 +208,9 @@ C_SRC= ${CFILES} ${MISC_C}
 
 SRC= ${C_SRC} ${H_SRC}
 
-SH_SRC= run-rogo.sh rerun-rogo.sh unstuck_player.sh end_player.sh
+SH_SRC= run_rogo.sh rerun_rogo.sh unstuck_player.sh end_player.sh
 
-SH_TOOL= run-rogo
+SH_TOOL= run_rogo
 
 MISC_OBJS= gene.o histplot.o rgmplot.o setup.o
 
@@ -378,12 +384,12 @@ rgmplot: rgmplot.o timer.o utility.o strl.o config.o terminal.o
 rogomatic: setup.o scorefile.o timer.o utility.o config.o strl.o terminal.o fork_exec.o
 	${CC} ${LDFLAGS} setup.o scorefile.o timer.o utility.o config.o strl.o terminal.o fork_exec.o ${LIBS} -o $@
 
-run-rogo: run-rogo.sh
-	${CP} -f run-rogo.sh $@
+run_rogo: run_rogo.sh
+	${CP} -f run_rogo.sh $@
 	${CHMOD} +x $@
 
-rerun-rogo: rerun-rogo.sh
-	${CP} -f rerun-rogo.sh $@
+rerun_rogo: rerun_rogo.sh
+	${CP} -f rerun_rogo.sh $@
 	${CHMOD} +x $@
 
 unstuck_player: unstuck_player.sh
@@ -647,12 +653,17 @@ clobber: legacy_clobber clean
 	${RM} -f ${TARGETS}
 	${RM} -f ${BUILD_H_SRC}
 	${RM} -rf *.dSYM
-	${RM} -f kill_player kill_player.sh
+	-@for i in ${OBSOLETE_TARGETS}; do \
+	    if [[ -e $$i ]]; then \
+	        echo "${RM} -f $$i" ; \
+	        ${RM} -f "$$i" ; \
+	    fi; \
+	done
 
 install: all ${MISC_DOC} ${ORIG_DOC} stddocs
 	${INSTALL} -d -m 0755 ${BINDIR}
 	${INSTALL} -m 0755 ${TARGETS} ${BINDIR}
-	${INSTALL} -m 0755 run-rogo.sh ${BINDIR}
+	${INSTALL} -m 0755 run_rogo.sh ${BINDIR}
 	${INSTALL} -d -m 1777 ${TMPDIR}
 	${INSTALL} -d -m 1777 ${RGMDIR}
 	${INSTALL} -d -m 0755 ${SHAREDIR}
@@ -663,6 +674,12 @@ install: all ${MISC_DOC} ${ORIG_DOC} stddocs
 	${INSTALL} -d -m 0755 ${MANDIR}
 	${INSTALL} -d -m 0755 ${MAN6DIR}
 	${INSTALL} -m 0444 rogomatic.6 ${MAN6DIR}
+	-@for i in ${OBSOLETE_TARGETS}; do \
+	    if [[ -e ${BINDIR}/$$i ]]; then \
+		echo "removing obsolete: ${BINDIR}/$$i" ; \
+	        ${RM} -f -v "${BINDIR}/$$i" ; \
+	    fi; \
+	done
 
 uninstall:
 	-@for i in ${TARGETS}; do \
@@ -695,7 +712,12 @@ uninstall:
 	-@if [[ -d "${DESTDOC}" ]]; then \
 	    echo "You may wish to: rm -rf ${DESTDOC}"; \
 	fi
-	${RM} -f -v ${BINDIR}/kill_player
+	-@for i in ${OBSOLETE_TARGETS}; do \
+	    if [[ -e ${BINDIR}/$$i ]]; then \
+		echo "removing obsolete: ${BINDIR}/$$i" ; \
+	        ${RM} -f -v "${BINDIR}/$$i" ; \
+	    fi; \
+	done
 
 index: ${CFILES}
 	${RM} -f index

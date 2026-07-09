@@ -156,12 +156,12 @@ dumpscore (char *vers)
 
       /* first sort command and args */
       char *args_0[] = {
-	"sort", "-k", "+4nr", "-o", newfil, delfil, NULL
+	"sort", "-k", "+6nr", "-o", newfil, delfil, NULL
       };
 
       /* second sort command and args */
       char *args_1[] = {
-	"sort", "-k", "+4nr", "-o", allfil, newfil, scrfil, NULL
+	"sort", "-k", "+6nr", "-o", allfil, newfil, scrfil, NULL
       };
 
 
@@ -173,7 +173,7 @@ dumpscore (char *vers)
        */
       code = fork_exec ("sort", args_0);
       if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +4nr -o %s %s failed, exit code: %d\n",
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s failed, exit code: %d\n",
 		 __func__, __FILE__, __LINE__, dnum, newfil, delfil, code);
 	not_reached ();
       }
@@ -183,7 +183,7 @@ dumpscore (char *vers)
        */
       code = fork_exec ("sort", args_1);
       if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +4nr -o %s %s %s failed, exit code: %d\n",
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s %s failed, exit code: %d\n",
 		 __func__, __FILE__, __LINE__, dnum, allfil, newfil, scrfil, code);
 	not_reached ();
       }
@@ -216,7 +216,7 @@ dumpscore (char *vers)
 
       /* first sort command and args */
       char *args[] = {
-	"sort", "-k", "+4nr", "-o", scrfil, delfil, NULL
+	"sort", "-k", "+6nr", "-o", scrfil, delfil, NULL
       };
 
       /*
@@ -224,7 +224,7 @@ dumpscore (char *vers)
        */
       code = fork_exec ("sort", args);
       if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +4nr -o %s %s failed, exit code: %d\n",
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s failed, exit code: %d\n",
 		 __func__, __FILE__, __LINE__, dnum, scrfil, delfil, code);
 	not_reached ();
       }

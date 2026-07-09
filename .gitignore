@@ -17,12 +17,12 @@ modern_curses.h
 NOTES
 *.o
 player
-rerun-rogo
+rerun_rogo
 rgmplot
 rogomatic
 rogomatic.6
 rogomatic.cat
-run-rogo
+run_rogo
 skel/
 .stopfile
 *.swn
