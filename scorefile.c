@@ -63,12 +63,12 @@ static void intrupscore (int sig __attribute__ ((__unused__)));
 void
 add_score (char *new_line, char *vers, int ntrm)
 {
-  char *newfil = NULL;	    /* rogomatic delta filename */
+  char *delfil = NULL;	    /* rogomatic delta filename */
   FILE *newlog;
   int lock_fd;
 
   /* form paths */
-  newfil = form_prefix_path ( rgmdir, "rgmdelta", vers);
+  delfil = form_prefix_path (rgmdir, "rgmdelta", vers);
 
   /* Defer interrupts while mucking with the score file */
   critical ();
@@ -77,9 +77,9 @@ add_score (char *new_line, char *vers, int ntrm)
   lock_fd = lock_file (__func__, NULL, lock_path);
 
   /* Now create a temporary to copy into */
-  if ((newlog = wopen (newfil, "a")) == NULL) {
+  if ((newlog = wopen (delfil, "a")) == NULL) {
     quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Unable to write: %s: %s\n",
-	     __func__, __FILE__, __LINE__, dnum, newfil, strerror (errno));
+	     __func__, __FILE__, __LINE__, dnum, delfil, strerror (errno));
     not_reached ();
   } else {
     fprintf (newlog, "%s\n", new_line);
@@ -89,15 +89,15 @@ add_score (char *new_line, char *vers, int ntrm)
 
   /* unlock */
   unlock_file (__func__, lock_fd);
-  if (newfil != NULL) {
-      free (newfil);
-      newfil = NULL;
+  if (delfil != NULL) {
+      free (delfil);
+      delfil = NULL;
   }
 
   /* free path */
-  if (newfil != NULL) {
-      free (newfil);
-      newfil = NULL;
+  if (delfil != NULL) {
+      free (delfil);
+      delfil = NULL;
   }
 
   uncritical ();
@@ -137,18 +137,8 @@ dumpscore (char *vers)
   /* lock */
   lock_fd = lock_file (__func__, NULL, lock_path);
 
-  deltaf = fopen (delfil, "r");
-  if (deltaf == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to open rogomatic delta file: %s error: %s\n",
-	     __func__, __FILE__, __LINE__, dnum, delfil, strerror (errno));
-    not_reached ();
-  }
-  scoref = fopen (scrfil, "r");
-  if (scoref == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to open rogomatic score file: %s error: %s\n",
-	     __func__, __FILE__, __LINE__, dnum, scrfil, strerror (errno));
-    not_reached ();
-  }
+  deltaf = fopen (delfil, "r");	/* OK if open fails because delfil doesn't exist */
+  scoref = fopen (scrfil, "r");	/* OK if open fails because scrfil doesn't exist */
 
   /* If there are new scores, sort and merge them into the score file */
   if (deltaf != NULL) {
@@ -166,12 +156,12 @@ dumpscore (char *vers)
 
       /* first sort command and args */
       char *args_0[] = {
-	"sort", "+4nr", "-o", newfil, delfil, NULL
+	"sort", "-k", "+4nr", "-o", newfil, delfil, NULL
       };
 
       /* second sort command and args */
       char *args_1[] = {
-	"sort", "+4nr", "-o", allfil, newfil, scrfil, NULL
+	"sort", "-k", "+4nr", "-o", allfil, newfil, scrfil, NULL
       };
 
 
@@ -183,7 +173,7 @@ dumpscore (char *vers)
        */
       code = fork_exec ("sort", args_0);
       if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort +4nr -o %s %s failed, exit code: %d\n",
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +4nr -o %s %s failed, exit code: %d\n",
 		 __func__, __FILE__, __LINE__, dnum, newfil, delfil, code);
 	not_reached ();
       }
@@ -193,7 +183,7 @@ dumpscore (char *vers)
        */
       code = fork_exec ("sort", args_1);
       if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort +4nr -o %s %s %s failed, exit code: %d\n",
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +4nr -o %s %s %s failed, exit code: %d\n",
 		 __func__, __FILE__, __LINE__, dnum, allfil, newfil, scrfil, code);
 	not_reached ();
       }
@@ -226,7 +216,7 @@ dumpscore (char *vers)
 
       /* first sort command and args */
       char *args[] = {
-	"sort", "+4nr", "-o", scrfil, delfil, NULL
+	"sort", "-k", "+4nr", "-o", scrfil, delfil, NULL
       };
 
       /*
@@ -234,7 +224,7 @@ dumpscore (char *vers)
        */
       code = fork_exec ("sort", args);
       if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort +4nr -o %s %s failed, exit code: %d\n",
+	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +4nr -o %s %s failed, exit code: %d\n",
 		 __func__, __FILE__, __LINE__, dnum, scrfil, delfil, code);
 	not_reached ();
       }
