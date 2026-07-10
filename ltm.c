@@ -134,7 +134,7 @@ saveltm (int score)
   critical ();
 
   /* lock */
-  lock_fd = lock_file(__func__, NULL, lock_path);
+  lock_fd = lock_file (__func__, NULL, lock_path);
 
   /* Only write out the new results if we can get write access */
   if ((ltmfil = wopen (ltmnam, "w")) == NULL)

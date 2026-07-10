@@ -116,6 +116,11 @@ newlevel (void)
   set (ROOM);
   setnewgoal ();
   timestosearch = k_door / 5;
+
+  /*
+   * record the new level to the end of the level log
+   */
+  levellog_append (NULL);
 }
 
 /* routine to find the rooms:

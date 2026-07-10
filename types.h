@@ -813,6 +813,8 @@ extern void debuglog_open (const char *dir, const char *log);
 extern void debuglog_close (void);
 extern void debuglog (const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 extern void append_pidlog (const char *dir, const char *file);
+extern void levellog_create (void);
+extern void levellog_append (char *reason);
 
 /* explore.c */
 extern int genericinit (void);

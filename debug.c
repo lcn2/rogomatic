@@ -174,6 +174,11 @@ dwait(int msgtype, const char *from, char *f, ...)
     saynow ("%s", msg);
     playing = false;
     quitrogue (msg, Gold, SAVED);
+
+    /*
+     * record the final state to the end of the level log
+     */
+    levellog_append (msg);
     longjmp (commandtop, 0);
   }
 

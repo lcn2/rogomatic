@@ -39,6 +39,7 @@
 /* static declarations */
 static FILE *debug = NULL;
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap);
+static FILE *level_log_stream = NULL;
 
 static void
 err_doit(int errnoflag, int error, const char *fmt, va_list ap)
@@ -202,13 +203,13 @@ append_pidlog (const char *dir, const char *file)
   /*
    * be sure that the pid log exists, writable at the end of file, and mode 0644 under umask
    *
-   * Even though we will freopen(3) next, we want to first open(2) the error log file
+   * Even though we will fdopen(3) next, we want to first open(2) the error log file
    * as this will give us better control over the file if needs to be created.
    */
   pidlog = open (path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (pidlog < 0) {
     fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't open pid log %s: %s\n",
-		      __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
+		     __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
     exit (1);
   }
 
@@ -217,7 +218,7 @@ append_pidlog (const char *dir, const char *file)
    */
   stream = fdopen (pidlog, "a");
   if (stream == NULL) {
-    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't freopen pid log: %s onto stderr: %s\n",
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't fdopen pid log: %s onto stderr: %s\n",
 		     __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
     exit (1);
   }
@@ -238,4 +239,95 @@ append_pidlog (const char *dir, const char *file)
     free(path);
     path = NULL;
   }
+}
+
+/*
+ * levellog_create - create a new level log file
+ */
+void
+levellog_create (void)
+{
+  int levellog_fd;	    /* level log open file descriptor, or <0 ==> not open */
+
+  /*
+   * be sure that the pid log exists, writable at the beginning of file, and mode 0644 under umask
+   *
+   * Even though we will fdopen(3) next, we want to first open(2) the error log file
+   * as this will give us better control over the file if needs to be created.
+   */
+  levellog_fd = open (level_path, O_WRONLY | O_APPEND | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (levellog_fd < 0) {
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't open level log %s: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, level_path, strerror(errno));
+    exit (1);
+  }
+
+  /*
+   * convert level log descriptor into a level log stream
+   */
+  level_log_stream = fdopen (levellog_fd, "a");
+  if (level_log_stream == NULL) {
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't fdopen level log: %s onto stderr: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, level_path, strerror(errno));
+    exit (1);
+  }
+  return;
+}
+
+/*
+ * levellog_append - append state to the open level log file
+ */
+void
+levellog_append (char *reason)
+{
+  struct timeval tp;	    /* now */
+  struct tm *now;	    /* now broken out into segments */
+  char timebuf[MU_BUF + 1]; /* now as a string */
+
+  /*
+   * firewall - level_log_stream must be open
+   */
+  if (level_log_stream == NULL) {
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u level log %s: level_log_stream is NULL\n",
+		     __func__, __FILE__, __LINE__, dnum, level_path);
+    exit (1);
+  }
+
+  /*
+   * form our time string
+   */
+  if (gettimeofday (&tp, NULL) < 0) {
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u gettimeofday failed: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, strerror(errno));
+    exit (1);
+  }
+  now = gmtime (&tp.tv_sec);
+  if (now == NULL) {
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u gmtime failed: %s\n",
+		      __func__, __FILE__, __LINE__, dnum, strerror(errno));
+    exit (1);
+  }
+  memset (timebuf, 0, sizeof(timebuf));
+  if (strftime (timebuf, MU_BUF, "%F %T", now) <= 0) {
+    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u strftime failed: %s\n",
+		     __func__, __FILE__, __LINE__, dnum, strerror(errno));
+    exit (1);
+  }
+
+  /*
+   * append line to level log
+   */
+  if (reason == NULL || reason[0]) {
+    fprintf (level_log_stream, "%ld.%06ld %s Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Ac: %d Exp: %d/%d Am: %c ...\n",
+			       (long) tp.tv_sec, (long) tp.tv_usec, timebuf,
+			       Level, Gold, Hp, Hpmax, Str/100, Strmax/100, Ac, Explev, Exp,
+			       ((have (amulet) != NONE) ? ',' : '-'));
+  } else {
+    fprintf (level_log_stream, "%ld.%06ld %s Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Ac: %d Exp: %d/%d Am: %c %s\n",
+			       (long) tp.tv_sec, (long) tp.tv_usec, timebuf,
+			       Level, Gold, Hp, Hpmax, Str/100, Strmax/100, Ac, Explev, Exp,
+			       ((have (amulet) != NONE) ? ',' : '-'), reason);
+  }
+  fflush(level_log_stream);
+  return;
 }

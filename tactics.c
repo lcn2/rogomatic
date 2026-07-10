@@ -700,6 +700,11 @@ goupstairs (int running)
 
       /* Note that quitrogue sends a '\n' to get the score */
       quitrogue ("total winner", Gold, 0);
+
+      /*
+       * record the final state to the end of the level log
+       */
+      levellog_append ("total winner");
       return (1);
     }
 

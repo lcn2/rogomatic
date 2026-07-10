@@ -1229,6 +1229,62 @@ version number, without dots, such as
 .sp
 If this file does not exist, it is created as needed.
 .TP
+.B lvllog
+.br
+Each time player detects that a new level has been reached,
+and when player exits (due to rogue death, player quit, or
+even total winner), this file:
+.sp
+.in +0.5i
+.BI @RGMDIR@/lvllog
+.in -0.5i
+.sp
+will be appended with a line containing the following space separated fields:
+.RS
+.nr step 0 1
+.nr PI 3n
+.IP \n+[step].\ timestamp 0.5i
+microseconds since the epoch
+.IP \n+[step].\ UTC\ date 0.5i
+YYYY-MM-DD format
+.IP \n+[step].\ UTC\ time 0.5i
+time of day in HH:MM:DD format
+.IP \n+[step].\ HEADER:\ Level: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ level\ number 0.5i
+dungeon level number
+.IP \n+[step].\ HEADER:\ Gold: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ gold\ collected 0.5i
+amount of Gold collected so far
+.IP \n+[step].\ HEADER:\ Hp: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ hit\ points 0.5i
+current hit points followed by ( maximum hit points )
+.IP \n+[step].\ HEADER:\ Str: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ strength 0.5i
+current strength followed by ( maximum strength )
+.IP \n+[step].\ HEADER:\ Ac: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ armor\ class 0.5i
+current armor class
+.IP \n+[step].\ HEADER:\ Exp: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ experience 0.5i
+experience level followed by / experience points
+.IP \n+[step].\ HEADER:\ Am: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ amulet\ status 0.5i
+- ==> amulet not found , ==> Amulet of Yendor found
+.IP \n+[step].\ end\ status 0.5i
+... ==> still in dungeon, else ==> end game status
+.RE
+.sp
+.RS
+If this file does not exist, it is created as needed.
+.RE
+.TP
 .B pidlog
 .br
 Early on in player, this file:
@@ -1251,11 +1307,11 @@ time of day in HH:MM:DD format
 a string ending in a colon \:
 .IP \n+[step].\ rogue\ PID
 rogue game process ID
-.IP \n+[step].\ player-pid: 0.5i
+.IP \n+[step].\ HEADER:\ player-pid: 0.5i
 a string ending in a colon \:
 .IP \n+[step].\ player\ PID
 player executable process ID
-.IP \n+[step].\ dungeon: 0.5i
+.IP \n+[step].\ HEADER:\ dungeon: 0.5i
 a string ending in a colon \:
 .IP \n+[step].\ dnum
 dungeon number

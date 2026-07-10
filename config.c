@@ -42,6 +42,7 @@
  */
 char rgmdir[MU_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
 char lock_path[TY_BUF + 1] = { '\0' };  /* rogomatic lock file path, +1 for paranoia */
+char level_path[TY_BUF + 1] = { '\0' }; /* rogomatic level file path, +1 for paranoia */
 unsigned int dnum = 0;			/* rogue dungeon number */
 
 /*
@@ -64,6 +65,7 @@ set_rgmdir (bool time_subpath)
   struct tm *utc_now;		/* tm in UTC */
   int rgmdirlen;		/* length of the rogomatic directory path plus trailing slash "/" */
   int lockpathlen;		/* length of the rogomatic lock file */
+  int levelpathlen;		/* length of the rogomatic level file */
   int datelen;			/* length of the UTC date string */
   struct stat rgmdir_stat;	/* stat of rgmdir */
   int ret;			/* stat(2) return */
@@ -201,6 +203,20 @@ set_rgmdir (bool time_subpath)
       exit (1);
     }
     snprintf (lock_path, lockpathlen + 1, "%s/Rgm.Lock", rgmdir); /* +1 for paranoia */
+  }
+
+  /*
+   * if needed, form the rogomatic level file path
+   */
+  if (level_path[0] == '\0') {
+    memset (level_path, 0, sizeof(level_path));
+    levelpathlen = rgmdirlen + strlen ("/lvllog");
+    if (levelpathlen >= sizeof(level_path)-1) {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u RGMDIR %s: too long to form level file path\n",
+		       __func__, __FILE__, __LINE__, dnum, rgmdir);
+      exit (1);
+    }
+    snprintf (level_path, levelpathlen + 1, "%s/lvllog", rgmdir); /* +1 for paranoia */
   }
   return;
 }

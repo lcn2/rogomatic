@@ -427,6 +427,7 @@ main (int argc, char *argv[])
   strlcpy (versionstr, DEFVER, sizeof(versionstr));
   memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
   memset (lock_path, 0, sizeof(lock_path)); /* paranoia */
+  memset (level_path, 0, sizeof(level_path)); /* paranoia */
   memset (roguename, 0, sizeof(roguename)); /* paranoia */
   memset (playername, 0, sizeof(playername)); /* paranoia */
   /**/
@@ -591,6 +592,11 @@ main (int argc, char *argv[])
    * append rogue pid and rogue dungeon number to pidlog
    */
   append_pidlog (rgmdir, "pidlog");
+
+  /*
+   * create a new level log file
+   */
+  levellog_create ();
 
   /*
    * The first argument to player is a two character string encoding
@@ -928,13 +934,31 @@ main (int argc, char *argv[])
           break;
 
         case 'S': quitrogue ("saved", Gold, SAVED);
-          playing = false; break;
+          playing = false;
+
+	  /*
+	   * record the final state to the end of the level log
+	   */
+	  levellog_append ("saved");
+	  break;
 
         case 'Q': quitrogue ("user typing quit", Gold, FINISHED);
-          playing = false; break;
+          playing = false;
+
+	  /*
+	   * record the final state to the end of the level log
+	   */
+	  levellog_append ("user typing quit");
+	  break;
 
         case ROGQUIT: dwait (D_ERROR, __func__, "Strategize failed: gave up");
-          quitrogue ("gave up", Gold, SAVED); break;
+          quitrogue ("gave up", Gold, SAVED);
+
+	  /*
+	   * record the final state to the end of the level log
+	   */
+	  levellog_append ("gave up");
+	  break;
       }
     }
     else {

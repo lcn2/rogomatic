@@ -344,11 +344,14 @@ getrogue (char *waitstr, int onat)
 	read_what = "Read what? ";
 	for_list = "(* for list): ";
 
-	/* force redraw by sending a redraw */
+	/* clear old commands in the send queue */
+	clearsendqueue ();
+
+	/* compel rogue to redraw the screen */
 	if (version < RV53A) {
-	  sendnow ("%c//;", ctrl('l'));
+	  sendnow ("%c;%c//;", ESC, ctrl('l'));
 	} else {
-	  sendnow ("%c;", ctrl('r'));
+	  sendnow ("%c;%c;", ESC, ctrl('r'));
 	}
 
 	/* try to restore the screen to some sane state */
@@ -1364,6 +1367,11 @@ deadrogue (void)
   }
 
   quitrogue (killer, Gold, DIED);
+
+  /*
+   * record the final state to the end of the level log
+   */
+  levellog_append (killer);
 }
 
 /*
