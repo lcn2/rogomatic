@@ -317,7 +317,7 @@ levellog_append (char *reason)
   /*
    * append line to level log
    */
-  if (reason == NULL || reason[0]) {
+  if (reason == NULL || reason[0] == '\0') {
     fprintf (level_log_stream, "%ld.%06ld %s Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Ac: %d Exp: %d/%d Am: %c ...\n",
 			       (long) tp.tv_sec, (long) tp.tv_usec, timebuf,
 			       Level, Gold, Hp, Hpmax, Str/100, Strmax/100, Ac, Explev, Exp,
