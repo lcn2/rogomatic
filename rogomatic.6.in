@@ -1,4 +1,4 @@
-.TH ROGOMATIC 6 "2026 Jul 08"
+.TH ROGOMATIC 6 "2026 Jul 09"
 .UC 4
 .SH NAME
 rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exploring The Dungeons of Doom
@@ -1096,77 +1096,52 @@ where
 .I YYYYMMDD_HHMMSS
 is the year, month, day, hour, minute and second, in the UTC timezone,
 of when player command started.
-.PP
-The rogomatic score file is kept in:
+.TP
+.B debuglog.frogue
+This file:
 .sp
 .in +0.5i
-.BI @RGMDIR@/rgmscore version
+.BI @RGMDIR@/debuglog.frogue
 .in -0.5i
 .sp
-where
-.I version
-is the
-.B rogue
-version number, such as
-.IR 5.4.5 .
+records the standard output (stdout) from the current
+.BR rogue (6)
+process.
+When
+.BR rogomatic (6)
+starts, this file is truncated to a zero size.
+.sp
 If this file does not exist, it is created as needed.
-.PP
-The rogomatic delta file is:
+.TP
+.B debuglog.player
+When
+.BR rogomatic (6)
+launches player, this file:
 .sp
 .in +0.5i
-.BI @RGMDIR@/rgmdelta version
+.BI @RGMDIR@/debuglog.player
 .in -0.5i
 .sp
-where
-.I version
-is the
-.B rogue
-version number, such as
-.IR 5.4.5 .
+records tokens (output) written to the current
+.BR rogue (6)
+process.
+When
+.BR rogomatic (6)
+starts, this file is truncated to a zero size.
+.sp
 If this file does not exist, it is created as needed.
-.PP
-The gene pool is kept in:
+.TP
+.B errlog
+.br
+Output written to standard error (stderr) is appended to:
 .sp
 .in +0.5i
-.BI @RGMDIR@/GenePool version
+.BI @RGMDIR@/errlog
 .in -0.5i
 .sp
-where
-.I version
-is the
-.B rogue
-version number, such as
-.IR 5.4.5 .
 If this file does not exist, it is created as needed.
-.PP
-A log of all mutations and crossovers is kept in:
-.sp
-.in +0.5i
-.BI @RGMDIR@/GeneLog version
-.in -0.5i
-.sp
-where
-.I version
-is the
-.B rogue
-version number, such as
-.IR 5.4.5 .
-If this file does not exist, it is created as needed.
-.PP
-The long term memory of monster attributes is kept in:
-.sp
-.in +0.5i
-.BI @RGMDIR@/ltm version
-.in -0.5i
-.sp
-where
-.I version
-is the
-.B rogue
-version number, such as
-.IR 5.4.5 .
-If this file does not exist, it is created as needed.
-.PP
+.TP
+.B error5.4.5
 A log of internal errors and bugs is kept in:
 .sp
 .in +0.5i
@@ -1179,8 +1154,250 @@ is the
 .B rogue
 version number, such as
 .IR 5.4.5 .
+.sp
 If this file does not exist, it is created as needed.
+.TP
+.B GeneLock545
+Before
+.BR rogomatic (6)
+and
+player writes a gene pool related file,
+this file is locked:
+.sp
+.in +0.5i
+.BI @RGMDIR@/GeneLoc version
+.in -0.5i
+.sp
+where
+.I version
+is the
+.B rogue
+version number, without dots, such as
+.IR 545 .
+This file is locked via the
+.BR flock (2)
+system call.
+.sp
+If this file does not exist, it is created as needed.
+.TP
+.B GeneLog545
+A log of all mutations and crossovers is kept in:
+.sp
+.in +0.5i
+.BI @RGMDIR@/GeneLog version
+.in -0.5i
+.sp
+where
+.I version
+is the
+.B rogue
+version number, without dots, such as
+.IR 545 .
+.sp
+If this file does not exist, it is created as needed.
+.TP
+.B GenePool545
+The gene pool is kept in:
+.sp
+.in +0.5i
+.BI @RGMDIR@/GenePool version
+.in -0.5i
+.sp
+where
+.I version
+is the
+.B rogue
+version number, without dots, such as
+.IR 545 .
+.sp
+If this file does not exist, it is created as needed.
+.TP
+.B ltm545
+.br
+The long term memory of monster attributes is kept in:
+.sp
+.in +0.5i
+.BI @RGMDIR@/ltm version
+.in -0.5i
+.sp
+where
+.I version
+is the
+.B rogue
+version number, without dots, such as
+.IR 545 .
+.sp
+If this file does not exist, it is created as needed.
+.TP
+.B pidlog
+.br
+Early on in player, this file:
+.sp
+.in +0.5i
+.BI @RGMDIR@/pidlog
+.in -0.5i
+.sp
+is appended with a line containing the following space separated fields:
+.RS
+.nr step 0 1
+.nr PI 3n
+.IP \n+[step].\ timestamp 0.5i
+microseconds since the epoch
+.IP \n+[step].\ UTC\ date 0.5i
+YYYY-MM-DD format
+.IP \n+[step].\ UTC\ time 0.5i
+time of day in HH:MM:DD format
+.IP \n+[step].\ rogue-pid: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ rogue\ PID
+rogue game process ID
+.IP \n+[step].\ player-pid: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ player\ PID
+player executable process ID
+.IP \n+[step].\ dungeon: 0.5i
+a string ending in a colon \:
+.IP \n+[step].\ dnum
+dungeon number
+.RE
+.sp
+.RS
+If this file does not exist, it is created as needed.
+.RE
+.TP
+.B player.lck
+When
+.BR rogomatic (6)
+launches, this file:
+.sp
+.in +0.5i
+.BI @RGMDIR@/player.lck
+.in -0.5i
+.sp
+is locked via
+.BR flock (2)
+and then it released.
+If the file cannot be locked, then
+.BR rogomatic (6)
+will exit.
+The purpose of this initial temporary lock is an attempt to detect if a player
+program has completed its initial setup and is running.
+.sp
+When
+.BR rogomatic (6)
+executes the player program, early on this file is locked via
+.BR flock (2)
+and is held until the program exits.
+This lock helps prevent more than one
+.BR rogomatic (6)
+from using the same rogomatic directory.
+.sp
+If this file does not exist, it is created as needed.
+.TP
+.B Rgm.Lock
+Before
+.BR rogomatic (6)
+writes to a critical file (e.g.,
+.I ltm545
+or
+.I rgmdelta5.4.5
+)
+this file:
+.sp
+.in +0.5i
+.BI @RGMDIR@/rgmdelta5.4.5
+.in -0.5i
+.sp
+is locked via the
+.BR flock (2)
+and then is released after the write is complete.
+.sp
+If this file does not exist, it is created as needed.
+.TP
+.B rgmdelta5.4.5
+The rogomatic delta file is:
+.sp
+.in +0.5i
+.BI @RGMDIR@/rgmdelta version
+.in -0.5i
+.sp
+where
+.I version
+is the
+.B rogue
+version number, such as
+.IR 5.4.5 .
+.sp
+If this file does not exist, it is created as needed.
+.TP
+.B rgmscore5.4.5
+The rogomatic score file is kept in:
+.sp
+.in +0.5i
+.BI @RGMDIR@/rgmscore version
+.in -0.5i
+.sp
+where
+.I version
+is the
+.B rogue
+version number, such as
+.IR 5.4.5 .
+.sp
+If this file does not exist, it is created as needed.
+.TP
+.B rogue.lck
+A lock file used by
+.BR rogue (6)
+to manage writing to its local files.
+.sp
+When
+.BR rogomatic (6)
+launches
+.BR rogue (6),
+it does so in such a way that the program's default path is changed to:
+.sp
+.in +0.5i
+.BI @RGMDIR@/rogue.lck
+.in -0.5i
+.TP
+.B rogue.scr
+A score file containing the top scores of
+.BR rogue (6)
+.sp
+When
+.BR rogomatic (6)
+launches
+.BR rogue (6),
+it does so in such a way that the program's default path is changed to:
+.sp
+.in +0.5i
+.BI @RGMDIR@/rogue.sav
+.in -0.5i
+.sp
+To view the rogue score file:
+.sp
+.in +0.5i
+\fBrogue -s @RGMDIR@/rogue.lck\fP
+.in -0.5i
+.TP
+.B saved_termattr
+Before
+.BR rogomatic (6)
+prepares the screen for
+.BR ncurses (3X)
+managed I/O (such as raw terminal mode), it saves the terminal state into the file:
+.sp
+.in +0.5i
+.BI @RGMDIR@/saved_termattr
+.in -0.5i
+.sp
+On exit,
+.BR rogomatic (6)
+will use the contents of this file to the previous (hopefully) sane terminal state.
 .SH SEE ALSO
+.BR flock (2),
+.BR ncurses (3X),
 .BR rogue (6)
 .SH SOURCE CODE
 The source code for
@@ -1206,8 +1423,7 @@ such as NetBSD, Linux, and Cygwin, and many rogue bug fixes applied
 by Landon Curt Noll user \fB@lcn2\fP, and the GitHub user \fB@jenoola\fP.
 .SH BUGS
 It’s easy to imagine that the original authors were more focused on crafting
-a scholarly paper than on writing code that wouldn’t be an embarrassment
-to most programmers.
+a scholarly paper rather than on well written code.
 .sp
 A number of people have attempted to improve this code.
 Many, many bug fixes have been applied to this code.
