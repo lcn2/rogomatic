@@ -909,7 +909,7 @@ getrogue (char *waitstr, int onat)
 	  return;
 	}
 
-        saynow ("End of game log, type 'Q' to exit.");
+        saynow ("End of rogomatic game log, type 'Q' to exit.");
         return;
         break;
 
@@ -1228,23 +1228,17 @@ sendcnow (char c)
   if (replaying)
     return;
 
-  /* i adjust the constants to fit my specific machine:
-      - so i can watch at higher levels (otherwise it's too fast) and
-      - so that at lower levels i want my fan speed to stay low.
+  /*
+   * slow down the display by waiting usleep_usec microseconds
+   *
+   * By default usleep_usec is USLEEP.  The -U usec command line option
+   * may change this value.
+   *
+   * If usleep_usec <= 0, then no sleeping is performed.
+   */
 
-     if you want to run full blast, make sure the USLEEP global
-     constant is 0. */
-
-  if ((USLEEP) && (!noterm)) {
-    if (Level > 20) {
-	usleep (USLEEP+(Level * 8000));
-    } else if (Level > 16) {
-	usleep (USLEEP+(Level * 4000));
-    } else if (Level > 12) {
-	usleep (USLEEP+(Level * 2000));
-    } else {
-	usleep (USLEEP);
-    }
+  if ((usleep_usec > 0) && (!noterm)) {
+    usleep (usleep_usec);
   }
 
   rogue_log_write_command (c);
@@ -1823,12 +1817,12 @@ toggleecho (void)
   logging = !logging;
 
   if (logging) {
-    if (! rogue_log_open (ROGUELOG)) {
-      logging = !logging;
-      saynow ("can't open %s", ROGUELOG);
+    if (! rogue_log_open (gamelog_path)) {
+      logging = false;
+      saynow ("can't open %s", gamelog_path);
     }
     else {
-      saynow ("Logging to file %s", ROGUELOG);
+      saynow ("Logging to file %s", gamelog_path);
 
       if (*versionstr) command (T_OTHER, "v");
     }
@@ -1836,7 +1830,7 @@ toggleecho (void)
   else {
     rogue_log_close ();
 
-    if (playing) saynow ("File %s closed", ROGUELOG);
+    if (playing) saynow ("File %s closed", gamelog_path);
   }
 
   if (playing)

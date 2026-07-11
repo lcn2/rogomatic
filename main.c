@@ -208,7 +208,7 @@ int lastobj = NONE;		/* What did we last try to use */
 int lastwand = NONE;		/* Index of last wand */
 int leftring = NONE;		/* Index of our left ring */
 bool logdigested = false;	/* True if log file has been read by replay */
-bool logging = false;		/* True if keeping record of game */
+bool logging = true;		/* True if record rogomatic commands and rogue messages in the rogomatic game log file */
 bool lyinginwait = false;	/* True if we waited for a monster */
 int maxobj = 22;		/* How much can we carry */
 bool missedstairs = false;	/* True if we searched everywhere */
@@ -390,7 +390,7 @@ main (int argc, char *argv[])
 {
   char msg[SM_BUF + 1];		/* message buffer, +1 for paranoia */
   bool singlestep = false;	/* True ==> go one turn */
-  bool startecho = false;	/* True ==> turn on echoing on startup */
+  bool startecho = true;	/* True ==> start writing to the rogomatic game log on startup */
   bool startingup = true;	/* True ==> startup started but not complete */
   char logfilename[100];	/* Name of log file */
   pid_t pid = -1;		/* process id */
@@ -490,11 +490,12 @@ main (int argc, char *argv[])
       int transparent_int;	/* integer form of transparent boolean */
 
       /* parse options in third argument */
-      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%u",
+      i = sscanf (argv[3], "%d,%d,%d,%d,%d,%d,%d,%u,%ld,%ld",
                             &cheat_int, &noterm_int, &startecho_int, &nohalf_int,
-                            &emacs_int, &terse_int, &transparent_int, &dnum);
-      if (i != 8) {
-	  fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u argv[3]: %s failed to scanf 8 flags or values, returned: %d\n",
+                            &emacs_int, &terse_int, &transparent_int, &dnum, &goodgame, &usleep_usec);
+      if (i != 10) {
+	  fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u argv[3]: %s "
+		           "failed to scanf 10 flags or values, returned: %d\n",
 			   __func__, __FILE__, __LINE__, dnum, argv[3], i);
 	  exit(1);
       }
@@ -656,7 +657,10 @@ main (int argc, char *argv[])
 
   initscr (); crmode (); noecho ();	/* Initialize the Curses package */
 
-  if (startecho) toggleecho ();		/* Start logging? */
+  /* if needed, start logging to the rogomatic game log */
+  if (startecho) {
+    rogue_log_open (gamelog_path);
+  }
 
   clear ();				/* Clear the screen */
   getrogver ();				/* Figure out Rogue version */
@@ -979,7 +983,7 @@ main (int argc, char *argv[])
   /*
    * Give the user a brief period of time to see the termination messages from rogue
    */
-  sleep (2);
+  usleep ((useconds_t) (2.5 * 1000000));
 
   /*
    * restore the normal (non-ncurses) terminal state
@@ -1008,28 +1012,77 @@ main (int argc, char *argv[])
   }
 
   /*
-   * Rename log file, if it is open
+   * If we had a good game:
+   *
+   * Rename the gamelog file, if it is open, to a good gamelog file under rgmdir
+   *
+   * A good game is where we reached at least the goodgame dungeon level, and/or
+   * we have the amulet.
    */
 
-  if (logging) {
-    char lognam[MU_BUF + 1];	/* log filename, +1 for paranoia */
+  if (logging && ((MaxLevel >= goodgame) || (have (amulet) != NONE))) {
+    struct timeval tp;			/* now in UTC */
+    struct tm *now;			/* UTC now broken out into segments */
+    char timebuf[MU_BUF + 1];		/* goodgame + . + YYYYMMDD.HHMMSS */
+    char suffix[MU_BUF + 1];		/* end of the renamed log filename, +1 for paranoia */
+    char *lognam = NULL;		/* name of log that will be saved under rgmdir */
 
     /* zeroize arrays */
-    memset (lognam, 0, sizeof(lognam)); /* paranoia */
+    memset (timebuf, 0, sizeof(timebuf)); /* paranoia */
+    memset (suffix, 0, sizeof(suffix)); /* paranoia */
 
-    /* Make up a new log file name */
-    snprintf (lognam, MU_BUF, "%.4s.%d.%d", ourkiller, MaxLevel, ourscore);
+    /*
+     * form our good game time string
+     */
+    if (gettimeofday (&tp, NULL) < 0) {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u gettimeofday failed: %s\n",
+		       __func__, __FILE__, __LINE__, dnum, strerror(errno));
+      exit (1);
+    }
+    now = gmtime (&tp.tv_sec);
+    if (now == NULL) {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u gmtime failed: %s\n",
+			__func__, __FILE__, __LINE__, dnum, strerror(errno));
+      exit (1);
+    }
+    if (strftime (timebuf, MU_BUF, "goodgame.%Y%m%d.%H%M%S", now) <= 0) {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u strftime failed: %s\n",
+		       __func__, __FILE__, __LINE__, dnum, strerror(errno));
+      exit (1);
+    }
 
-    /* Close the open file */
-    toggleecho ();
+    /*
+     * form a good good game file suffix
+     */
+    if (ourkiller[0] == '\0') {
+	snprintf (suffix, MU_BUF, ".%d.%d.none", MaxLevel, ourscore);
+    } else {
+	snprintf (suffix, MU_BUF, ".%d.%d.%.4s", MaxLevel, ourscore, ourkiller);
+    }
 
-    /* Rename the log file */
-    if (link (ROGUELOG, lognam) == 0) {
-      unlink (ROGUELOG);
+    /*
+     * form renamed good game path
+     */
+    lognam = form_prefix_path (rgmdir, timebuf, suffix);
+
+    /* close the logfile and turn off logging */
+    rogue_log_close ();
+
+    /* Rename the rogomatic game log file to a good game file */
+    if (link (gamelog_path, lognam) == 0) {
+      unlink (gamelog_path);
       printf ("Log file left on %s\n", lognam);
     }
     else
-      printf ("Log file left on %s\n", ROGUELOG);
+      printf ("Log file left on %s\n", gamelog_path);
+
+    /*
+     * free logname storage
+     */
+    if (lognam != NULL) {
+      free(lognam);
+      lognam = NULL;
+    }
   }
 
   close_frogue_debuglog ();

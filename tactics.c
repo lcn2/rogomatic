@@ -571,9 +571,6 @@ godownstairs (int running)
   if (on (STAIRS)) {
     halftimeshow (Level);
 
-    /* Start logging at Level GOODGAME, if we arent already */
-    if (Level > (GOODGAME-2) && !replaying && !logging) toggleecho ();
-
     /* Send the DOWN command and return */
     command (T_MOVING, ">");
     return (1);

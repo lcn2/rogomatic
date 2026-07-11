@@ -90,6 +90,17 @@ RGMDIR= ${TMPDIR}/rogomatic
 #
 ROGUE= /usr/local/bin/rogue
 
+# GOODGAME - level at which we always save the gamelog file
+#
+# NOTE: The -G goodlvl command line option may change the level value.
+#
+GOODGAME= 18
+
+# USLEEP - Set the default sleep time between actions to USLEEP microseconds
+#
+# NOTE: The -U usec command line option may change the level value.
+#
+USLEEP= 14000
 
 #####################
 # debug information #
@@ -134,9 +145,9 @@ ifeq ($(target),NetBSD)
 # -D_XOPEN_SOURCE=800		enable permission bits S_IRUSR et al.
 # While other systems enable strlcpy, strlcat via <string.h>, NetBSD doesn't, so NetBSD needs to:
 # -D_NETBSD_SOURCE		enable strlcpy, strlcat
-CPPFLAGS= -DRGMDIR='"${RGMDIR}"' -DROGUE='"${ROGUE}"' -D_XOPEN_SOURCE=800 -D_NETBSD_SOURCE
+CPPFLAGS= -D_XOPEN_SOURCE=800 -D_NETBSD_SOURCE
 else
-CPPFLAGS= -DRGMDIR='"${RGMDIR}"' -DROGUE='"${ROGUE}"'
+CPPFLAGS=
 endif
 
 COPT= -O3
@@ -362,12 +373,34 @@ OTHER_FSANITIZE+= -fstack-protector-all
 all: ${BUILD_H_SRC} ${TARGETS} rogomatic.6
 
 
-##################
-# compile C code #
-##################
+#####################################
+# object files with special defines #
+#####################################
+
+config.o: config.c
+	${CC} ${CFLAGS} -DUSLEEP=${USLEEP} -DGOODGAME=${GOODGAME} -DRGMDIR='"${RGMDIR}"' $< -c
+
+setup.o: setup.c
+	${CC} ${CFLAGS} -DUSLEEP=${USLEEP} -DGOODGAME=${GOODGAME} -DROGUE='"${ROGUE}"' -DRGMDIR='"${RGMDIR}"' $< -c
+
+terminal.o: terminal.c
+	${CC} ${CFLAGS} -DRGMDIR='"${RGMDIR}"' $< -c
+
+utility.o: utility.c
+	${CC} ${CFLAGS} -DRGMDIR='"${RGMDIR}"' $< -c
+
+
+########################
+# default object files #
+########################
 
 .c.o:
 	${CC} ${CFLAGS} -c $*.c
+
+
+##################
+# tools to build #
+##################
 
 gene: gene.o rand.o learn.o stats.o timer.o utility.o config.o strl.o terminal.o
 	${CC} ${CFLAGS} ${LDFLAGS} gene.o rand.o learn.o stats.o timer.o utility.o config.o strl.o terminal.o -lm ${LIBS} -o $@
@@ -399,6 +432,7 @@ unstuck_player: unstuck_player.sh
 end_player: end_player.sh
 	${CP} -f end_player.sh $@
 	${CHMOD} +x $@
+
 
 ##################################################
 # other targets that are not automatically built #
@@ -602,6 +636,8 @@ rogomatic.6: rogomatic.6.in
 	${RM} -f $@
 	LC_CTYPE=C ${SED} -e 's;${AT}RGMDIR${AT};${RGMDIR};' \
 			  -e 's;${AT}BINDIR${AT};${BINDIR};' \
+			  -e 's;${AT}GOODGAME${AT};${GOODGAME};' \
+			  -e 's;${AT}USLEEP${AT};${USLEEP};' \
 			  rogomatic.6.in > rogomatic.6
 
 rogomatic.cat: rogomatic.6 rogomatic.cat.in
@@ -616,10 +652,14 @@ rogomatic.cat: rogomatic.6 rogomatic.cat.in
 	    echo "LC_CTYPE=C ${SED} \
 			      -e 's;${AT}RGMDIR${AT};${RGMDIR};' \
 			      -e 's;${AT}BINDIR${AT};${BINDIR};' \
+			      -e 's;${AT}GOODGAME${AT};${GOODGAME};' \
+			      -e 's;${AT}USLEEP${AT};${USLEEP};' \
 			      rogomatic.cat.in > $@" ; \
 	    LC_CTYPE=C ${SED} \
 			      -e 's;${AT}RGMDIR${AT};${RGMDIR};' \
 			      -e 's;${AT}BINDIR${AT};${BINDIR};' \
+			      -e 's;${AT}GOODGAME${AT};${GOODGAME};' \
+			      -e 's;${AT}USLEEP${AT};${USLEEP};' \
 			      rogomatic.cat.in > $@ ; \
 	fi
 

@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.2.0 2026-07-07"
+export VERSION="1.2.1 2026-07-11"
 NAME=$(basename "$0")
 export NAME
 #
@@ -74,6 +74,8 @@ export ROGUE_TOOL
 #
 export IDLE_SEC="20"
 export STOP_FILE=".stopfile"
+export GOODLVL=18
+export USLEEP=14000
 
 
 # NOTE: The following RGMDIR is NOT the default for rogomatic (/var/tmp/rogomatic)
@@ -85,8 +87,8 @@ export RGMDIR="/var/tmp/rogo"
 
 # usage
 #
-export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-a secs] [-R run_rogo]
-        [-r rogomatic] [-P player] [-f rogue] [-D rgmdir] [-i idlesec] [-s stopfile]
+export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-a secs] [-R run_rogo] [-r rogomatic]
+        [-P player] [-f rogue] [-G goodlvl] [-D rgmdir] [-i idlesec] [-s stopfile] [-U usec]
 
     -h          print help message and exit
     -v level    set verbosity level (def level: $V_FLAG)
@@ -100,9 +102,11 @@ export USAGE="usage: $0 [-h] [-v level] [-V] [-n] [-N] [-a secs] [-R run_rogo]
     -r rogomatic        path to rogomatic (def: $ROGOMATIC_TOOL)
     -P player           path to player (def: $PLAYER_TOOL)
     -f rogue            path to rogue (def: $ROGUE_TOOL)
+    -G goodlvl          set the good game level to goodlvl (def: $GOODLVL)
     -D rmdir            rogomatic directory (def: $RGMDIR)
     -i idlesec          seconds to check for an idle rogomatic (def: $IDLE_SEC)
     -s stopfile         stop the rerun cycle if stopfile exists (def: $STOP_FILE)
+    -U usec             set the sleep time between actions to usec microseconds (def: $USLEEP)
 
 Exit codes:
      0         all OK
@@ -118,7 +122,7 @@ $NAME version: $VERSION"
 
 # parse command line
 #
-while getopts :hv:Va:nNR:r:P:f:D:i:s: flag; do
+while getopts :hv:Va:nNR:r:P:f:G:D:i:s:U: flag; do
   case "$flag" in
     h) echo "$USAGE"
 	exit 2
@@ -142,11 +146,15 @@ while getopts :hv:Va:nNR:r:P:f:D:i:s: flag; do
         ;;
     f) ROGUE_TOOL="$OPTARG"
         ;;
+    G) GOODLVL="$OPTARG"
+        ;;
     D) RGMDIR="$OPTARG"
         ;;
     i) IDLE_SEC="$OPTARG"
         ;;
     s) STOP_FILE="$OPTARG"
+        ;;
+    U) USLEEP="$OPTARG"
         ;;
     \?) echo "$0: ERROR: invalid option: -$OPTARG" 1>&2
 	echo 1>&2
@@ -280,10 +288,12 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: RUN_ROGO_TOOL=$RUN_ROGO_TOOL" 1>&2
     echo "$0: debug[3]: ROGOMATIC_TOOL=$ROGOMATIC_TOOL" 1>&2
     echo "$0: debug[3]: PLAYER_TOOL=$PLAYER_TOOL" 1>&2
+    echo "$0: debug[3]: GOODLVL=$GOODLVL" 1>&2
     echo "$0: debug[3]: ROGUE_TOOL=$ROGUE_TOOL" 1>&2
     echo "$0: debug[3]: RGMDIR=$RGMDIR" 1>&2
     echo "$0: debug[3]: IDLE_SEC=$IDLE_SEC" 1>&2
     echo "$0: debug[3]: STOP_FILE=$STOP_FILE" 1>&2
+    echo "$0: debug[3]: USLEEP=$USLEEP" 1>&2
 fi
 
 
@@ -340,16 +350,16 @@ if [[ -z $NOOP ]]; then
 	fi
 	if [[ -z $SECS ]]; then
 	    if [[ $V_FLAG -ge 1 ]]; then
-		echo "$0: debug[1]: about to run: $RUN_ROGO_TOOL -r $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR" 1>&2
+		echo "$0: debug[1]: about to run: $RUN_ROGO_TOOL -r $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -G $GOODLVL -U $USLEEP" 1>&2
 	    fi
 	    tput reset  # paranoia
-	    "$RUN_ROGO_TOOL" -r "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR"
+	    "$RUN_ROGO_TOOL" -r "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -G "$GOODLVL" -U "$USLEEP"
 	else
 	    if [[ $V_FLAG -ge 1 ]]; then
-		echo "$0: debug[1]: about to run: $RUN_ROGO_TOOL -r $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -a $SECS" 1>&2
+		echo "$0: debug[1]: about to run: $RUN_ROGO_TOOL -r $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -a $SECS -G $GOODLVL -U $USLEEP" 1>&2
 	    fi
 	    tput reset  # paranoia
-	    "$RUN_ROGO_TOOL" -r "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -a "$SECS"
+	    "$RUN_ROGO_TOOL" -r "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -a "$SECS" -G "$GOODLVL" -U "$USLEEP"
 	fi
     done
 elif [[ $V_FLAG -ge 1 ]]; then

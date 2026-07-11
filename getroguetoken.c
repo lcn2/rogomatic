@@ -47,7 +47,7 @@ static int number3 = 0;
 static bool cecho = false;
 
 /* Game record file 'echo' option */
-static FILE  *fecho=NULL;
+static FILE  *fecho = NULL;
 
 static void rogue_log_write_token (char ch);
 static FILE *froguelog;
@@ -71,9 +71,17 @@ static int match5 (char ch1, char ch2, char ch3, char ch4, char ch5);
 #endif
 static int getlogtoken(void);
 
+/*
+ * rogue_log_open - open the rogomatic game log
+ */
 int
 rogue_log_open (const char *filename)
 {
+  /* just return true if rogomatic game log is already open */
+  if (fecho != NULL) {
+    return true;
+  }
+
   fecho = fopen (filename, "w");
 
   if (fecho != NULL) {
@@ -84,22 +92,35 @@ rogue_log_open (const char *filename)
   return (fecho != NULL);
 }
 
+/*
+ * rogue_log_close - close the rogomatic game log
+ */
 void
 rogue_log_close (void)
 {
-  if (cecho)
-    fprintf (fecho, "\n");
-  else
-    fprintf (fecho, "\"\n");
+  if (fecho != NULL) {
+    if (logging) {
+      if (cecho) {
+	fprintf (fecho, "\n");
+      }
+      else {
+	fprintf (fecho, "\"\n");
+      }
+    }
 
-  fflush (fecho);
-  fclose (fecho);
+    fflush (fecho);
+    fclose (fecho);
+    fecho = NULL;
+  }
 }
 
+/*
+ * rogue_log_write_command - append a rogomatic command (to be send to rogue) to rogomatic game log
+ */
 void
 rogue_log_write_command (char c)
 {
-  if (logging) {
+  if (logging && fecho != NULL) {
     if (cecho) {
       fprintf (fecho, "\nC: \"%c", c);
       cecho = !cecho;
@@ -158,7 +179,7 @@ static void
 rogue_log_write_token (char ch)
 {
   /* Log the tokens */
-  if (logging) {
+  if (logging && fecho != NULL) {
     if (!cecho) {
       fprintf (fecho, "\"\nR: ");
       cecho = !cecho;

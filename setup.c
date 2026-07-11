@@ -51,15 +51,15 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.2.5 2026-07-10"
+# define VERSION "14.2.6 2026-07-11"
 
 /*
  * static declarations
  */
 
 static const char * const usage =
-  "usage: %s [-h] [-V] [-a secs] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-H]\n"
-  "                   [-p] [-P player] [-r] [-S ROGOSEED] [-t] [-u] [-w]\n"
+  "usage: %s [-h] [-V] [-a secs] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-G goodlvl]\n"
+  "                   [-H] [-p] [-P player] [-r] [-S ROGOSEED] [-t] [-u] [-U usec] [-w]\n"
   "                   [-s [rogue_ver] | r_file]\n"
   "\n"
   "    -h            print help message and exit\n"
@@ -69,16 +69,18 @@ static const char * const usage =
   "    -c            use trap arrows\n"
   "    -d            use unique directory name\n"
   "    -D rgmdir     set rogomatic directory path\n"
-  "    -e            echo file to roguelog\n"
+  "    -e            echo file to gamelog\n"
   "    -E            set emacs mode\n"
   "    -f rogue      set path to rogue\n"
+  "    -G goodlvl    set the good game level to goodlvl (def: %d)\n"
   "    -H            disable \"halftime\" show\n"
-  "    -p            play back roguelog\n"
+  "    -p            play back gamelog\n"
   "    -P player     set path to player\n"
   "    -r            restore saved rogue game (def: from rogue.sav)\n"
   "    -S ROGOSEED   set $ROGOSEED environment variable for rogue\n"
   "    -t            give status lines only\n"
   "    -u            start up in user mode\n"
+  "    -U usec       set the sleep time between actions to usec microseconds (def: %d)\n"
   "    -w            set watched mode\n"
   "\n"
   "    -s rogue_ver  print rogomatic score file for a given rogue version (i.e., 5.4.5)\n"
@@ -87,7 +89,7 @@ static const char * const usage =
   "                      NOTE: -s by itself must be the last option the on command line,\n"
   "                            and is not compatible with use of the r_file arg\n"
   "\n"
-  "     [ r_file ]   With -p, r_file is the rogomatic game to replay from\n"
+  "     [ r_file ]   With -p, r_file is the gamelog to replay from\n"
   "                  With -r, r_file is the rogue game to restore from\n"
   "                      NOTE: use of r_file is not compatible with -s by itself\n"
   "\n"
@@ -109,9 +111,9 @@ main (int argc, char *argv[])
   int ptc[2], ctp[2];
   bool cheat = false;		    /* true ==> Will use trap arrows */
   bool time_subpath = false;	    /* true ==> uses UTC date and time sub-directory */
-  bool echo = false;		    /* true ==> Echo file to roguelog */
+  bool echo = true;		    /* true ==> Echo file to gamelog */
   bool nohalf = false;		    /* true ==> No halftime show */
-  bool replay = false;		    /* true ==> Play back roguelog */
+  bool replay = false;		    /* true ==> Play back gamelog */
   bool oldgame = false;		    /* true ==> Use saved game */
   bool score = false;		    /* true ==> Give scores only */
   bool terse = false;		    /* true ==> Give status lines only */
@@ -171,10 +173,10 @@ main (int argc, char *argv[])
   /*
    * parse args
    */
-  while ((i = getopt (argc, argv, "hVa:cdD:ef:HpP:rs:S:tuwE:")) != -1) {
+  while ((i = getopt (argc, argv, "hVa:cdD:ef:G:HpP:rs:S:tuU:wE:")) != -1) {
     switch (i) {
       case 'h':		/* -h ==> print usage message */
-	fprintf (stderr, usage, program, prog, VERSION);
+	fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
 	exit (2);
 	break;
 
@@ -190,7 +192,7 @@ main (int argc, char *argv[])
 	if (optarg == endptr || *endptr != '\0' || errno == ERANGE || secs < 0.0) {
 	  fprintf (stderr, "%s: ERROR: -a %s value must be a number >= 0.0\n",
 			   program, optarg);
-	  fprintf (stderr, usage, program, prog, VERSION);
+	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
 	  exit (3);
 	}
 
@@ -216,19 +218,31 @@ main (int argc, char *argv[])
 	strlcpy (rogue_dir, optarg, sizeof(rogue_dir));
 	break;
 
-      case 'e':		/* -e ==> Echo file to roguelog */
-	echo = true;
+      case 'e':		/* -e ==> Echo file to gamelog */
+	echo = false;
 	break;
 
       case 'f':		/* -f rogue ==> set path to rogue */
 	rfilearg = optarg;
 	break;
 
+      case 'G':		/* -G goodlvl ==> level at which we always save the gamelog file */
+	/* try to parse goodlvl */
+	errno = 0;
+	goodgame = strtol (optarg, NULL, 0);
+	if (errno != 0) {
+	  fprintf (stderr, "%s: ERROR: -G %s value must be a integer >= 0\n",
+			   program, optarg);
+	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+	  exit (3);
+	}
+	break;
+
       case 'H':		/* -H ==> No halftime show */
 	nohalf = true;
 	break;
 
-      case 'p':		/* -p ==> Play back roguelog */
+      case 'p':		/* -p ==> Play back gamelog */
 	replay = true;
 	break;
 
@@ -257,6 +271,18 @@ main (int argc, char *argv[])
 	user = true;
 	break;
 
+      case 'U':		/* -U usec ==> sleep time between actions in microseconds */
+	/* try to parse usec */
+	errno = 0;
+	usleep_usec = strtol (optarg, NULL, 0);
+	if (errno != 0) {
+	  fprintf (stderr, "%s: ERROR: -U %s value must be a integer >= 0\n",
+			   program, optarg);
+	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+	  exit (3);
+	}
+	break;
+
       case 'w':		/* -w ==> Watched mode */
 	noterm = true;
 	break;
@@ -278,7 +304,7 @@ main (int argc, char *argv[])
 	 */
 	} else {
 	  fprintf (stderr, "%s: requires an argument -- %c\n", program, optopt);
-	  fprintf (stderr, usage, program, prog, VERSION);
+	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
 	  exit (3);
 	}
 	break;
@@ -296,14 +322,14 @@ main (int argc, char *argv[])
 	 */
 	} else {
 	  fprintf (stderr, "%s: unknown option -- %c\n", program, optopt);
-	  fprintf (stderr, usage, program, prog, VERSION);
+	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
 	  exit (3);
 	}
 	break;
 
       default:
 	fprintf (stderr, "%s: invalid -flag\n", program);
-	fprintf (stderr, usage, program, prog, VERSION);
+	fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
 	exit (3);
 	break;
     }
@@ -431,11 +457,6 @@ main (int argc, char *argv[])
   else if (access ("./rogue", R_OK|X_OK) == 0) {
       rfile = "./rogue";
   }
-# ifdef NEWROGUE
-  else if (access (NEWROGUE, R_OK|X_OK) == 0) {
-      rfile = NEWROGUE;
-  }
-# endif
 # ifdef ROGUE
   else if (access (ROGUE, R_OK|X_OK) == 0) {
       rfile = ROGUE;
@@ -477,8 +498,8 @@ main (int argc, char *argv[])
   /*
    * setup values that will be used as arguments to player
    */
-  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%u",
-           cheat, noterm, echo, nohalf, emacs, terse, user, dnum);
+  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%u,%ld,%ld",
+           cheat, noterm, echo, nohalf, emacs, terse, user, dnum, goodgame, usleep_usec);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
   /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir */
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
@@ -503,7 +524,7 @@ main (int argc, char *argv[])
       if (argc == 1) {
 	fname = argv[0];
       } else {
-	fname = ROGUELOG;
+	fname = form_prefix_path (rgmdir, "", GAMELOG_FILENAME);
       }
       execl (pfile, "player", "ZZ", "0", options, fname, rgmdir, NULL);
       fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Replay not available, player binary missing: %s\n",

@@ -1,4 +1,4 @@
-.TH ROGOMATIC 6 "2026 Jul 09"
+.TH ROGOMATIC 6 "2026 Jul 11"
 .UC 4
 .SH NAME
 rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exploring The Dungeons of Doom
@@ -32,6 +32,9 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 .BI \-f\  rogue
 ]
 [
+.BI \-G\  goodlvl
+]
+[
 .B \-H
 ]
 [
@@ -51,6 +54,9 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 ]
 [
 .B \-u
+]
+[
+.BI \-U\  usec
 ]
 [
 .B \-w
@@ -90,6 +96,9 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 .BI \-P\  player
 ]
 [
+.BI \-G\  goodlvl
+]
+[
 .BI \-f\  rogue
 ]
 [
@@ -97,6 +106,9 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 ]
 [
 .BI \-S\  ROGOSEED
+]
+[
+.BI \-U\  usec
 ]
 .PP
 .I rerun_rogo
@@ -128,6 +140,9 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 .BI \-P\  player
 ]
 [
+.BI \-G\  goodlvl
+]
+[
 .BI \-f\  rogue
 ]
 [
@@ -138,6 +153,9 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 ]
 [
 .BI \-s\  stopfile
+]
+[
+.BI \-U\  usec
 ]
 .PP
 .I end_player
@@ -356,7 +374,24 @@ to create and use files under:
 .in -0.5i
 .TP
 .B \-e
-Turns on logging.
+Turn
+.B OFF
+rogomatic game logging.
+.sp
+By default, rogomatic game logging is enabled, and the
+.I gamelog
+file is written to:
+.sp
+.in +0.5i
+.BI @RGMDIR@ /gamelog
+.in -0.5i
+.sp
+.BR NOTE :
+Prior to version 14.2.6, this command line option turned on rogomatic game logging.
+Now that rogomatic game logging is enabled by default, and the
+.B \-e
+disables rogomatic game logging.
+.sp
 See also the
 .B e
 command in transparent mode.
@@ -407,6 +442,37 @@ with a minimum date of
 .BR 2026-06-30 ,
 is supported.
 .TP
+.BI \-G\  goodlvl
+Set the good game level to
+.IR goodlvl .
+.sp
+When a rogue reaches a dungeon level of at least
+.IR goodlvl ,
+then the game is considered a good game.
+When a rogue has in their inventory, the \fIAmulet of Yendor\fP
+at the end of the game, then the game is considered a good game.
+.sp
+By default,
+.I goodlvl
+level is
+.BR @GOODGAME@ .
+.sp
+When a good game exits, the rogomatic game log file:
+.sp
+.in +0.5i
+.BI @RGMDIR@ /gamelog
+.in -0.5i
+.sp
+is preserved by renaming it to a file of the form:
+.sp
+.in +0.5i
+.BI @RGMDIR@ /goodgame.YYYYMMDD.HHMMSS.max_level.score.mnst
+.in -0.5i
+.sp
+See the
+.B FILES
+section below for details on the goodname file form.
+.TP
 .B \-H
 Disable the so-called rogomatic "\fIhalftime show\fP".
 .sp
@@ -430,14 +496,12 @@ and so it was named as
 .BR \-H .
 .TP
 .B \-p
-Replay the
-.I roguelog
-file.
+Replay the rogomatic game log file.
 .sp
-The default rogue log file is:
+The default rogomatic game log file is:
 .sp
 .in +0.5i
-.BI @RGMDIR@ /roguelog
+.BI @RGMDIR@ /gamelog
 .in -0.5i
 .sp
 When combined with a final
@@ -493,6 +557,26 @@ This tells
 to start up in transparent mode, so the user can type commands before
 .B rogomatic
 starts exploring level 1.
+.TP
+.BI \-U\  usec
+Set the sleep time between actions to
+.I usec
+microseconds.
+.sp
+Between writes to
+.BR rogue (6)
+the player process will sleep
+.I usec
+microseconds.
+This has the effect of slowing down the actions on the screen to be somewhat viewable by humans.
+.sp
+To have no such delays, use \fB\-U 0\fP on the command line.
+.sp
+By default,
+.I usec
+is set to
+.B @USLEEP@
+microseconds.
 .TP
 .B \-w
 Start up in watched mode.
@@ -623,10 +707,15 @@ This is a graceful way to end the rerun cycle.
 .sp
 To deal with the possibility of
 .BR rogomatic (6)
-hanging, we recommend usinng a timeout timer, as in:
+hanging, and to speed up the automated game play,
+we recommend
+.B NO
+relay between writes to
+.BR rogue (6),
+as well as a timeout timer:
 .sp
 .in +0.5i
-.B rerun_rogo\ \-a\ 2.5
+.B rerun_rogo\ \-U\ 0\ \-a\ 2.5
 .in -0.5i
 .sp
 To deal with the possibility of
@@ -853,19 +942,23 @@ toggles the debugging flag, which is useless to non-wizard
 players (although it is entertaining if your terminal has reverse video).
 .TP
 .B e
-.I Echoing,
-causes a copy of the game to be written to file
-.I roguelog
-in the current directory.
-Typing
+.I Toggle\ game\ logging.
+.sp
+By default rogomatic game logging is enabled (unless the
+.B \-e
+command line option was used).
+.sp
+When enable, the rogomatic game log file is:
+.sp
+.in +0.5i
+.BI @RGMDIR@ /gamelog
+.in -0.5i
+.sp
+If the rogomatic game logging was enabled the
 .B e
-a second time closes the log file.
-When the game is ended, the roguelog
-file is renamed to <killer>.<level>.<score> so if a troll killed poor
-.B rogomatic
-on level 14 leaving him with a score of 3088, the file would be named
-.I trol.14.3088.
-Note that only the first four characters of the killer are used.
+command will disable it; otherwise
+rogomatic game logging will be re-enabled.
+.sp
 The
 .B -p
 option will replay a saved game.
@@ -1157,6 +1250,48 @@ version number, such as
 .sp
 If this file does not exist, it is created as needed.
 .TP
+.B gamelog
+This file is the rogomatic game log file:
+.sp
+.in +0.5i
+.BI @RGMDIR@/gamelog
+.in -0.5i
+.sp
+Lines that begin with
+.I C:
+record commands sent to
+.BR rogue (6)
+by
+.BR rogomatic (6).
+Lines that begin with
+.I R:
+record the responses sent from
+.BR rogue (6)
+to
+.BR rogomatic (6).
+.sp
+By using the
+.B \-p
+command line option, one may replay such a rogomatic game log.
+When combined with a final
+.I r_file
+command line argument, the replay file will be
+.IR r_file .
+.sp
+When a good game exits, the rogomatic game log is renamed to a file of the form:
+.sp
+.in +0.5i
+.BI @RGMDIR@ /goodgame.YYYYMMDD.HHMMSS.max_level.score.mnst
+.in -0.5i
+.sp
+See below for details on form of this filename.
+.sp
+See
+.BI \-G\  goodlvl
+in the
+.B OPTIONS
+section for information on what constitutes a good game.
+.TP
 .B GeneLock545
 Before
 .BR rogomatic (6)
@@ -1211,6 +1346,35 @@ version number, without dots, such as
 .IR 545 .
 .sp
 If this file does not exist, it is created as needed.
+.TP
+.B goodgame.YYYYMMDD.HHMMSS.max_level.score.mnst
+When
+.BR rogomatic (6)
+completes a game where the maximum level reached is @GOODGAME@ or deeper
+(or if the \fIAmulet of Yendor\fP is in the inventory),
+and if a
+.B gamelog
+is being written to (see the file above),
+then the
+.B gamelog
+will be renamed under the rogomatic directory as
+.sp
+.in +0.5i
+.BI @RGMDIR@ /goodgame.YYYYMMDD.HHMMSS.max_level.score.mnst
+.in -0.5i
+.sp
+where
+.I YYYYMMDD_HHMMSS
+is the year, month, day, hour, minute and second, in the UTC timezone,
+and
+.I max_level
+is the maximum dungeon level that was reached,
+and
+.I score
+is the final rogue score,
+and
+.I mnst
+is the first 4 characters of how the rogue died, or "\fItota\fP" if the rouge was a total winner.
 .TP
 .B ltm545
 .br
@@ -1276,7 +1440,7 @@ experience level followed by / experience points
 .IP \n+[step].\ HEADER:\ Am: 0.5i
 a string ending in a colon \:
 .IP \n+[step].\ amulet\ status 0.5i
-- ==> amulet not found , ==> Amulet of Yendor found
+- ==> amulet not found , ==> \fIAmulet of Yendor\fP found
 .IP \n+[step].\ end\ status 0.5i
 ... ==> still in dungeon, else ==> end game status
 .RE

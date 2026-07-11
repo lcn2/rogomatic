@@ -119,7 +119,7 @@ extern int lastobj;		/* What did we last try to use */
 extern int lastwand;		/* Index of last wand */
 extern int leftring;		/* Index of our left ring */
 extern bool logdigested;	/* True if log file has been read by replay */
-extern bool logging;		/* True if keeping record of game */
+extern bool logging;		/* True if record rogomatic commands and rogue messages in the rogomatic game log file */
 extern bool lyinginwait;	/* True if we waited for a monster */
 extern int maxobj;		/* How much can we carry */
 extern bool missedstairs;	/* True if we missed the stairs */

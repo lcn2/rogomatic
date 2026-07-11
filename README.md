@@ -22,7 +22,7 @@ An easy way to "gently kill" a running rogomatic session is to run:
 To have rogomatic continuously start another rogue game after the explorer dies:
 
 ```sh
-./rerun_rogo -a 2.5
+./rerun_rogo -U 0 -a 2.5
 ```
 
 It is recommended that while `./rerun_rogo` is running, in another window run:
