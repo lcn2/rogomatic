@@ -104,6 +104,7 @@
 
 # include <sys/time.h>	/* for struct itimerval */
 # include <setjmp.h>	/* for sigjmp_buf */
+# include <time.h>	/* for gmtime */
 # include <errno.h>
 
 # include "have_strlcat.h"
