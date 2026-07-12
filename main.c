@@ -983,8 +983,15 @@ main (int argc, char *argv[])
 
   /*
    * Give the user a brief period of time to see the termination messages from rogue
+   *
+   * Use if -H disables the end of game termination messages delay, unless
+   * the game if considered a good game.
    */
-  usleep ((useconds_t) (2.5 * 1000000));
+  if (nohalf == false && MaxLevel < goodgame && have (amulet) == NONE) {
+      usleep ((useconds_t) (2.5 * 1000000));
+  } else if (MaxLevel > goodgame || have (amulet) != NONE) {
+      usleep ((useconds_t) (10 * 1000000));
+  }
 
   /*
    * restore the normal (non-ncurses) terminal state

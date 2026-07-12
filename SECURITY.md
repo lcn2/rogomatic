@@ -29,6 +29,6 @@ additional information or guidance.
 
 ## Supported Versions
 
-Only rogomatic version **14.2.6 2026-07-11** or later, when used with
+Only rogomatic version **14.2.7 2026-07-11** or later, when used with
 **rogue version 5.4.5 release 2026-06-30** or later
 (from the [rogue 5.4 repo](https://github.com/lcn2/rogue5.4)), are supported.

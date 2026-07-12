@@ -1361,11 +1361,6 @@ deadrogue (void)
   }
 
   quitrogue (killer, Gold, DIED);
-
-  /*
-   * record the final state to the end of the level log
-   */
-  levellog_append (killer);
 }
 
 /*
@@ -1436,6 +1431,11 @@ quitrogue (char *reason, int gld, int terminationtype)
     termination = "callidus";
   else if (stlmatch (reason, "saved"))
     termination = "suspendus";
+
+  /*
+   * record the final state to the end of the level log
+   */
+  levellog_append (reason);
 
   /* Send the requisite handshaking to Rogue */
   critical (); /* avoid SIGPIPE if rogue process as exited */

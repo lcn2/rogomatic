@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.3.1 2026-07-11"
+export VERSION="1.3.2 2026-07-11"
 NAME=$(basename "$0")
 export NAME
 #
