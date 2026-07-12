@@ -293,33 +293,33 @@ fi
 if [[ -z $SEED ]]; then
     if [[ -z $SECS ]]; then
 	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -G $GOODLVL -U $USLEEP" 1>&2
+	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -H -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -G $GOODLVL -U $USLEEP" 1>&2
 	fi
 	if [[ -z $NOOP ]]; then
-	    exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -G "$GOODLVL" -U "$USLEEP"
+	    exec "$ROGOMATIC_TOOL" -H -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -G "$GOODLVL" -U "$USLEEP"
 	fi
     else
 	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -a $SECS -G $GOODLVL -U $USLEEP" 1>&2
+	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -H -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -a $SECS -G $GOODLVL -U $USLEEP" 1>&2
 	fi
 	if [[ -z $NOOP ]]; then
-	    exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -a "$SECS" -G "$GOODLVL" -U "$USLEEP"
+	    exec "$ROGOMATIC_TOOL" -H -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -a "$SECS" -G "$GOODLVL" -U "$USLEEP"
 	fi
     fi
 else
     if [[ -z $SECS ]]; then
 	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED -G $GOODLVL -U $USLEEP" 1>&2
+	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -H -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED -G $GOODLVL -U $USLEEP" 1>&2
 	fi
 	if [[ -z $NOOP ]]; then
-	    exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED" -G "$GOODLVL" -U "$USLEEP"
+	    exec "$ROGOMATIC_TOOL" -H -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED" -G "$GOODLVL" -U "$USLEEP"
 	fi
     else
 	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED -a $SECS -G $GOODLVL -U $USLEEP" 1>&2
+	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -H -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED -a $SECS -G $GOODLVL -U $USLEEP" 1>&2
 	fi
 	if [[ -z $NOOP ]]; then
-	    exec "$ROGOMATIC_TOOL" -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED" -a "$SECS" -G "$GOODLVL" -U "$USLEEP"
+	    exec "$ROGOMATIC_TOOL" -H -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED" -a "$SECS" -G "$GOODLVL" -U "$USLEEP"
 	fi
     fi
 fi
