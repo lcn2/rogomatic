@@ -356,6 +356,9 @@ This will make is easier to use a debugger such as
 especially when combined with
 .BI \-S\  ROGOSEED
 making the action much more deterministic from a debugging standpoint.
+See the
+.B DEBUGGING
+section near the bottom of this man page for more details.
 .TP
 .BI \-D \ rgmdir
 Change the rogomatic directory path to
@@ -1643,13 +1646,13 @@ such as NetBSD, Linux, and Cygwin, and many rogue bug fixes applied
 by Landon Curt Noll user \fB@lcn2\fP, and the GitHub user \fB@jenoola\fP.
 .SH BUGS
 It’s easy to imagine that the original authors were more focused on crafting
-a scholarly paper rather than on well written code.
+a scholarly paper rather than on creating well written code.
 .sp
 A number of people have attempted to improve this code.
 Many, many bug fixes have been applied to this code.
 .B Landon\ Curt\ Noll
 alone has a change log of mostly bug fixes, that in mid 2026,
-exceeded 1200 lines of change description text!
+exceeded 1350 lines of change description text!
 Even so, a \fBsignificant number of bugs\fP remain in this code.
 .sp
 Bug fixes in the form of GitHub pull requests are \fBvery welcome\fP at:
@@ -1720,7 +1723,153 @@ cycling between pick up and dropping an item.
 The above mentioned use of keyboard intervention may help, if you catch the loop in time.
 Without some form of intervention, the rogue will eventually die of starvation.
 As with real life, death tends to interrupt the flow of things.  :-)
+.SH DEBUGGING
+See the
+.B BUGS
+section above for why you are welcome to debug
+.BR rogomatic (6).
+.sp
+See also any open GitHub issues by visiting:
+.sp
+.in +0.5i
+.I https://github.com/lcn2/rogomatic/issues
+.in -0.5i
+.sp
+If you wish to debug
+.BR rogomatic (6)
+we recommend compiling with the
+.BR clang (1)
+compiler, and debugging with the
+.BR lldb (1)
+debugger as these tools do well to handle to debugging across
+.B fork (2)
+system calls, and cross process executions such as making
+.B execl (2)
+system calls.
+.sp
+You should first recompile
+.BR rogomatic (6)
+with full debugging and C tags:
+.sp
+.in +0.5i
+.B make clobber clang tags
+.in -0.5i
+.sp
+When debugging, you should use the
+.B \-d
+command line option to always create a new rogomatic sub-directory
+so that the rogomatic the environment starts out in an initial state.
+Attempting to debug an observed problem in a previous run set
+(such as what will happen when using the
+.B rerun_rogo
+command)
+will be problematic because
+.BR rogomatic (6)
+is designed to evolve its game play.
+By using the
+.B \-d
+command line option an observed behaviour is more likely to be reproducible,
+and a more likely to be successfully debugged.
+.sp
+Using the
+.B \-d
+command line option will cause an accumulation of rogomatic sub-directories,
+so you might wish to clean out old rogomatic sub-directories
+from time to time by doing:
+.sp
+.in +0.5i
+.B rm -rf /var/tmp/rogomatic/20*
+.in -0.5i
+.sp
+Using the
+.BR \-S\  seed
+command line option will cause the
+.BR random (3)
+pseudo-random number generators to be seeded with a fixed value via a
+.BR srandom (3)
+call.
+By default, both
+.BR rogomatic (6)
+and
+.BR rogue (6)
+with a seed that changes on each new invocation.
+By using the
+.BR \-S\  seed
+command line option you force both programs to seed with the same value each time.
+This will make behaviour is more likely to be reproducible,
+and a more likely to be successfully debugged.
+.sp
+The
+.I seed
+value can be any integer between 0 and 2147483647.
+For example:
+.sp
+.in +0.5i
+.B ./rogomatic -d -S 1989014291
+.in -0.5i
+.sp
+Because
+.BR rogomatic (6)
+makes extensive use of ncurses, and because puts the terminal into raw mode,
+simply running the command from within the debugger will very problematic.
+Both
+.BR rogomatic (6)
+and your debugger will fight for control of the terminal, and you will
+.B NOT
+be the winner.
+Moreover, the use of ncurses by dueling programs will produce a mess on the screen.
+Fortunately
+.BR lldb (1)
+offers a clean way around this problem.
+.sp
+Start the debugger on
+.BR rogomatic (6)
+with both the
+.B \-d
+and the
+.BR \-S\  seed
+command line option.
+For example:
+.sp
+.in +0.5i
+.B lldb -- ./rogomatic -d -S 3
+.in -0.5i
+.sp
+Once the debugging has started, set a breakpoint somewhere with the player process:
+.sp
+.in +0.5i
+.B b getrogue
+.in -0.5i
+.sp
+Don't worry about the debugger complaining about not being able resolve breakpoint to any actual locations.
+That will resolve itself later on.
+.sp
+Next, launch the process in a separate terminal window.
+This will cause another terminal window to pop-up:
+.sp
+.in +0.5i
+.B process launch --tty
+.in -0.5i
+.sp
+.BR NOTE :
+Depending on your terminal manager, keyboard focus may shift to the new terminal window pop-up.
+You may have the click back on original terminal window so that your keyboard actions don't
+get consumed by the new terminal window.
+.sp
+Have the debugger continue the process:
+.sp
+.in +0.5i
+.B c
+.in -0.5i
+.sp
+Best wishes in debugging.
+If you find a bug fix, please consider submitting a GitHub pull requests are \fBvery welcome\fP at:
+.sp
+.in +0.5i
+.I https://github.com/lcn2/rogomatic/pulls
+.in -0.5i
+.sp
 .SH HISTORY
-For a historic history of some changes, see the
+For an outdated, and historic history of some changes, see the
 .I ORIG_DOC/old.history.txt
 file in the source directory.
