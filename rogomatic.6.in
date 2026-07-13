@@ -1,15 +1,17 @@
-.TH ROGOMATIC 6 "2026 Jul 11"
+.TH ROGOMATIC 6 "2026 Jul 12"
 .UC 4
 .SH NAME
 rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exploring The Dungeons of Doom
 .SH SYNOPSIS
 .I rogomatic
+.in +0.5i
 [
 .B \-h
 ]
 [
 .B \-V
 ]
+.br
 [
 .BI \-a\  secs
 ]
@@ -37,6 +39,7 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .B \-H
 ]
+.br
 [
 .B \-p
 ]
@@ -61,6 +64,7 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .B \-w
 ]
+.br
 [
 .B \-s
 [
@@ -69,8 +73,10 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 |
 .I r_file
 ]
+.in -0.5i
 .PP
 .I run_rogo
+.in +0.5i
 [
 .B \-h
 ]
@@ -86,23 +92,34 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .B \-N
 ]
+.br
 [
 .BI \-a\  secs
 ]
 [
-.BI \-r\  rogomatic
+.B \-d
 ]
 [
-.BI \-P\  player
+.BI \-D\  rgmdir
 ]
 [
-.BI \-G\  goodlvl
+.B \-e
 ]
 [
 .BI \-f\  rogue
 ]
 [
-.BI \-D\  rgmdir
+.BI \-G\  goodlvl
+]
+[
+.B \-H
+]
+.br
+[
+.BI \-P\  player
+]
+[
+.BI \-r\  rogomatic
 ]
 [
 .BI \-S\  ROGOSEED
@@ -110,8 +127,10 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .BI \-U\  usec
 ]
+.in -0.5i
 .PP
 .I rerun_rogo
+.in +0.5i
 [
 .B \-h
 ]
@@ -127,38 +146,58 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .B \-N
 ]
+.br
 [
-.BI \-a\  secs
+.BI \-i\  idlesec
 ]
 [
 .BI \-R\  run_rogo
 ]
 [
-.BI \-r\  rogomatic
+.BI \-s\  stopfile
 ]
 [
-.BI \-P\  player
+.B \-Z
+]
+.br
+[
+.BI \-a\  secs
 ]
 [
-.BI \-G\  goodlvl
-]
-[
-.BI \-f\  rogue
+.B \-d
 ]
 [
 .BI \-D\  rgmdir
 ]
 [
-.BI \-i\  idlesec
+.B \-e
 ]
 [
-.BI \-s\  stopfile
+.BI \-f\  rogue
+]
+[
+.BI \-G\  goodlvl
+]
+[
+.B \-H
+]
+.br
+[
+.BI \-P\  player
+]
+[
+.BI \-r\  rogomatic
+]
+[
+.BI \-S\  ROGOSEED
 ]
 [
 .BI \-U\  usec
 ]
+.in -0.5i
 .PP
 .I end_player
+.in +0.5i
 [
 .B \-h
 ]
@@ -174,11 +213,13 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .B \-N
 ]
+.br
 [
-.B \-u\ user
+.BI \-u\  user
 ]
 .PP
 .I unstuck_player
+.in +0.5i
 [
 .B \-h
 ]
@@ -194,18 +235,26 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .B \-N
 ]
+.br
 [
-.B \-r\  recheck_sec
+.B \-A
 ]
 [
-.B \-R\  restart_sec
+.BI \-m\  missing_sec
 ]
 [
-.B \-m\  missing_sec
+.BI \-r\  recheck_sec
 ]
 [
-.B \-u\ user
+.BI \-R\  restart_sec
 ]
+[
+.BI \-u\  user
+]
+[
+.BI \-z\  loop_sec
+]
+.in -0.5i
 .SH DESCRIPTION
 .PP
 .I Rog-O-Matic
@@ -281,7 +330,7 @@ The
 .B secs
 must be a value >= 0,
 and it may an integer, or
-a real value (i.e., 2.5).
+a real value (i.e., 4.5).
 By default,
 .B secs
 is set to
@@ -289,7 +338,7 @@ is set to
 which has the effect of not setting a timeout timer.
 .sp
 For example, using
-.BI \-a \ 2.5
+.BI \-a \ 4.5
 on the command line will cause the program attempt to resume normal
 operation after a hang while reading a message from
 .BR rogue (6).
@@ -584,7 +633,7 @@ microseconds.
 .B \-w
 Start up in watched mode.
 .TP
-.BR \-s\  [\ rogue_ver\ ]
+.B \-s\  [\ \fIrogue_ver\fP\ ]
 Print the
 .B rogomatic
 scoreboard.
@@ -601,7 +650,7 @@ The default rogomatic scoreboard is:
 .in -0.5i
 .sp
 If
-.BR \-s\  rogue_ver
+.BI \-s\  rogue_ver
 is given, then the rogomatic scoreboard printed will be from:
 .sp
 .in +0.5i
@@ -609,7 +658,7 @@ is given, then the rogomatic scoreboard printed will be from:
 .in -0.5i
 .sp
 where
-.I rogue_ver
+.B rogue_ver
 is the
 .B rogue
 version number, such as
@@ -718,7 +767,7 @@ relay between writes to
 as well as a timeout timer:
 .sp
 .in +0.5i
-.B rerun_rogo\ \-U\ 0\ \-a\ 2.5
+.B rerun_rogo\ \-U\ 0\ \-a\ 4.5
 .in -0.5i
 .sp
 To deal with the possibility of
@@ -1652,7 +1701,7 @@ A number of people have attempted to improve this code.
 Many, many bug fixes have been applied to this code.
 .B Landon\ Curt\ Noll
 alone has a change log of mostly bug fixes, that in mid 2026,
-exceeded 1350 lines of change description text!
+exceeded 1400 lines of change description text!
 Even so, a \fBsignificant number of bugs\fP remain in this code.
 .sp
 Bug fixes in the form of GitHub pull requests are \fBvery welcome\fP at:
@@ -1695,7 +1744,7 @@ Once saved, re-start with "rogomatic -r" and then \fBhope\fP that the restart wi
 One work-a-round to hanging is to use the
 .BI \-a\  secs
 command line option, such as using:
-.BI \-a\  2.5
+.BI \-a\  4.5
 on the command line.
 .sp
 When the

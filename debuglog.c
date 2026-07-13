@@ -247,7 +247,7 @@ append_pidlog (const char *dir, const char *file)
 void
 levellog_create (void)
 {
-  int levellog_fd;	    /* level log open file descriptor, or <0 ==> not open */
+  int levellog_fd;	            /* level log open file descriptor, or <0 ==> not open */
 
   /*
    * be sure that the pid log exists, writable at the beginning of file, and mode 0644 under umask
@@ -280,9 +280,11 @@ levellog_create (void)
 void
 levellog_append (char *reason)
 {
-  struct timeval tp;	    /* now */
-  struct tm *now;	    /* now broken out into segments */
-  char timebuf[MU_BUF + 1]; /* now as a string */
+  struct timeval tp;		    /* now */
+  struct tm *now;		    /* now broken out into segments */
+  char timebuf[MU_BUF + 1];	    /* now as a string */
+  static int prev_lvl_no_reason = -1;	    /* if >= 0, previously logged level in lvllog, "with no reason" */
+  static int prev_lvl_a_reason = -1;	    /* if >= 0, previously logged level in lvllog, "with a reason" */
 
   /*
    * firewall - level_log_stream must be open
@@ -315,19 +317,81 @@ levellog_append (char *reason)
   }
 
   /*
+   * prevent too many successive logs for the same dungeon level
+   *
+   * If this function is called more than once for the same dungeon level,
+   * we skip logging the same level.  The unstuck_player script watches the lvllog file
+   * in an effort to try and detect a CPU bound loop.  In rare(?) cases, a CPU loop
+   * might cause this function to be called multiple times for the same dungeon level.
+   * So we prevent writing to the level log in succession for the same dungeon level.
+   *
+   * However .. there is an allowed case for a successive logs for the same dungeon level:
+   * normally when exiting, the reason goes from NULL or an empty string ("with no reason")
+   * to having a reason string ("with a reason").
+   *
+   * Therefore:
+   *
+   * we prevent logging successive logs for the same dungeon level "with no reason",
+   * AND
+   * we prevent logging successive logs for the same dungeon level "with a reason".
+   */
+  if (reason == NULL || reason[0] == '\0') {
+    if (prev_lvl_no_reason < 0) {
+
+      /* first call to this function "with no reason" */
+      prev_lvl_no_reason = Level;
+
+    } else if (prev_lvl_no_reason == Level) {
+
+      /* don't log a successive call with same level "with no reason" */
+      return;
+
+    }
+  } else {
+    if (prev_lvl_a_reason < 0) {
+
+      /* first call to this function "with a reason" */
+      prev_lvl_a_reason = Level;
+
+    } else if (prev_lvl_a_reason == Level) {
+
+      /* don't log a successive call with same level "with a reason" */
+      return;
+
+    }
+  }
+
+  /*
    * append line to level log
    */
   if (reason == NULL || reason[0] == '\0') {
+    /* level log "with no reason" */
     fprintf (level_log_stream, "%ld.%06ld %s Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Ac: %d Exp: %d/%d Am: %c ...\n",
 			       (long) tp.tv_sec, (long) tp.tv_usec, timebuf,
 			       Level, Gold, Hp, Hpmax, Str/100, Strmax/100, Ac, Explev, Exp,
 			       ((have (amulet) != NONE) ? ',' : '-'));
   } else {
+    /* level log "with a reason" */
     fprintf (level_log_stream, "%ld.%06ld %s Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Ac: %d Exp: %d/%d Am: %c %s\n",
 			       (long) tp.tv_sec, (long) tp.tv_usec, timebuf,
 			       Level, Gold, Hp, Hpmax, Str/100, Strmax/100, Ac, Explev, Exp,
 			       ((have (amulet) != NONE) ? ',' : '-'), reason);
   }
   fflush(level_log_stream);
+
+  /*
+   * prep for the next log level call
+   */
+  if (reason == NULL || reason[0] == '\0') {
+
+    /* remember this level, "with no reason", for the next call */
+    prev_lvl_no_reason = Level;
+
+  } else {
+
+    /* remember this level, "with a reason", for the next call */
+    prev_lvl_a_reason = Level;
+
+  }
   return;
 }

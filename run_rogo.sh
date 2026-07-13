@@ -32,12 +32,12 @@
 
 # setup
 #
-export VERSION="1.3.2 2026-07-11"
+export VERSION="1.4.0 2026-07-12"
 NAME=$(basename "$0")
 export NAME
 #
 export V_FLAG=0
-export SECS=""
+export SECS=
 #
 export NOOP=
 export DO_NOT_PROCESS=
@@ -64,9 +64,14 @@ else
     ROGUE_TOOL=$(type -P rogue)
 fi
 export ROGUE_TOOL
-export SEED=""
+export SEED=
 export GOODLVL=18
 export USLEEP=14000
+export CAP_H_FLAG=
+export CAP_G_FLAG=
+export CAP_U_FLAG=
+export D_FLAG=
+export E_FLAG=
 
 
 # NOTE: The following RGMDIR is NOT the default for rogomatic (/var/tmp/rogomatic)
@@ -76,35 +81,48 @@ export USLEEP=14000
 export RGMDIR="/var/tmp/rogo"
 
 
+# options we will to the rogue(6) command line
+#
+unset OPTION
+declare -ag OPTION
+
+
 # usage
 #
 export USAGE="usage: $0
-        [-h] [-v level] [-V] [-n] [-N] [-r rogomatic] [-P player] [-f rogue]
-        [-G goodlvl] [-D rgmdir] [-S seed] [-U usec]
+        [-h] [-v level] [-V] [-n] [-N]
+        [-a secs] [-d] [-D rgmdir] [-e] [-f rogue] [-G goodlvl] [-H]
+        [-P player] [-r rogomatic] [-S seed] [-U usec]
 
     -h          print help message and exit
     -v level    set verbosity level (def level: $V_FLAG)
     -V          print version string and exit
-
-    -n		go thru the actions, but do not update any files (def: do the action)
+    -n          go thru the actions, but do not update any files (def: do the action)
     -N          do not process anything, just parse arguments (def: process something)
 
-    -a secs		set the timeout timer to secs seconds (def: no timeout timer)
-    -r rogomatic	path to rogomatic (def: $ROGOMATIC_TOOL)
-    -P player		path to player (def: $PLAYER_TOOL)
-    -f rogue		path to rogue (def: $ROGUE_TOOL)
+    -a secs             set the timeout timer to secs seconds (def: no timeout timer)
+    -d                  use a UTC date and time sub-directory under rogomatic directory path (def: don't)
+    -D rgmdir           rogomatic directory (def: $RGMDIR)
+                            NOTE: if rgmdir is /var/tmp/rogomatic unstuck_player won't unstick unless -A is used
+    -e                  turn off rogomatic game logging (def: rogomatic game log is $RGMDIR/gamelog)
+    -f rogue            path to rogue (def: $ROGUE_TOOL)
     -G goodlvl          set the good game level to goodlvl (def: $GOODLVL)
-    -D rmdir		rogomatic directory (def: $RGMDIR)
-    -S seed		set rogomatic seed (def: use a random seed)
+    -H                  disable the so-called rogomatic halftime show (def: show it)
+
+    -P player           path to player (def: $PLAYER_TOOL)
+    -r rogomatic        path to rogomatic (def: $ROGOMATIC_TOOL)
+    -S seed             set rogomatic seed (def: use a random seed)
     -U usec             set the sleep time between actions to usec microseconds (def: $USLEEP)
+                            NOTE: <=0 ==> no delay and implies -H
 
 Exit codes:
      0         all OK
      1         player already running
      2         -h and help string printed or -V and version string printed
      3         command line error
-     5	       some internal tool is not found or not an executable file
+     5         some internal tool is not found or not an executable file
      6         problems found with or in the rogomatic directory
+     7         rogomatic returned an error
  >= 10         internal error
 
 $NAME version: $VERSION"
@@ -112,7 +130,7 @@ $NAME version: $VERSION"
 
 # parse command line
 #
-while getopts :hv:Va:nNr:P:f:G:D:S:U: flag; do
+while getopts :hv:VnNa:dD:ef:G:HP:r:S:U: flag; do
   case "$flag" in
     h) echo "$USAGE"
 	exit 2
@@ -122,26 +140,37 @@ while getopts :hv:Va:nNr:P:f:G:D:S:U: flag; do
     V) echo "$VERSION"
 	exit 2
 	;;
-    a) SECS="$OPTARG"
-	;;
     n) NOOP="-n"
 	;;
     N) DO_NOT_PROCESS="-N"
 	;;
-    r) ROGOMATIC_TOOL="$OPTARG"
+
+    a) SECS="$OPTARG"
+	;;
+    d) D_FLAG="-d"
         ;;
-    P) PLAYER_TOOL="$OPTARG"
+    D) RGMDIR="$OPTARG"
+        ;;
+    e) E_FLAG="-e"
         ;;
     f) ROGUE_TOOL="$OPTARG"
         ;;
     G) GOODLVL="$OPTARG"
+	CAP_G_FLAG="-G"
         ;;
-    D) RGMDIR="$OPTARG"
+    H) CAP_H_FLAG="-H"
+        ;;
+
+    P) PLAYER_TOOL="$OPTARG"
+        ;;
+    r) ROGOMATIC_TOOL="$OPTARG"
         ;;
     S) SEED="$OPTARG"
         ;;
     U) USLEEP="$OPTARG"
+	CAP_U_FLAG="-U"
         ;;
+
     \?) echo "$0: ERROR: invalid option: -$OPTARG" 1>&2
 	echo 1>&2
 	echo "$USAGE" 1>&2
@@ -161,6 +190,11 @@ while getopts :hv:Va:nNr:P:f:G:D:S:U: flag; do
 done
 if [[ $V_FLAG -ge 1 ]]; then
     echo "$0: debug[1]: debug level: $V_FLAG" 1>&2
+fi
+if [[ $USLEEP -lt 0 ]]; then
+    echo "$0: ERROR: -U $USLEEP must be >= 0" 1>&2
+    echo "$USAGE" 1>&2
+    exit 3
 fi
 #
 # remove the options
@@ -243,6 +277,41 @@ if [[ ! -w $RGMDIR ]]; then
 fi
 
 
+# build rogue(6) command line options
+#
+if [[ -n $CAP_H_FLAG || $USLEEP -le 0 ]]; then
+    OPTION+=("-H")	# no half time show
+fi
+if [[ -n $CAP_U_FLAG ]]; then
+    OPTION+=("-U")		# usec delay (or none)
+    OPTION+=("$USLEEP")
+fi
+OPTION+=("-P")		# set player path
+OPTION+=("$PLAYER_TOOL")
+OPTION+=("-f")		# set rogue path
+OPTION+=("$ROGUE_TOOL")
+OPTION+=("-D")		# set rogomatic directory path
+OPTION+=("$RGMDIR")
+if [[ -n $CAP_G_FLAG ]]; then
+    OPTION+=("-G")		# set good game level
+    OPTION+=("$GOODLVL")
+fi
+if [[ -n $SECS ]]; then
+    OPTION+=("-a")		# set sleep time between actions
+    OPTION+=("$SECS")
+fi
+if [[ -n $SEED ]]; then
+    OPTION+=("-S")		# set seed for pseudo-random number generator
+    OPTION+=("$SEED")
+fi
+if [[ -n $D_FLAG ]]; then
+    OPTION+=("-d")		# use a UTC date and time sub-directory under rogomatic directory path
+fi
+if [[ -n $E_FLAG ]]; then
+    OPTION+=("-e")		# turn OFF rogomatic game logging
+fi
+
+
 # print running info if verbose
 #
 # If -v 3 or higher, print exported variables in order that they were exported.
@@ -262,6 +331,14 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: RGMDIR=$RGMDIR" 1>&2
     echo "$0: debug[3]: SEED=$SEED" 1>&2
     echo "$0: debug[3]: USLEEP=$USLEEP" 1>&2
+    echo "$0: debug[3]: CAP_H_FLAG=$CAP_H_FLAG" 1>&2
+    echo "$0: debug[3]: CAP_G_FLAG=$CAP_G_FLAG" 1>&2
+    echo "$0: debug[3]: CAP_U_FLAG=$CAP_U_FLAG" 1>&2
+    echo "$0: debug[3]: D_FLAG=$D_FLAG" 1>&2
+    echo "$0: debug[3]: E_FLAG=$E_FLAG" 1>&2
+    for index in "${!OPTION[@]}"; do
+        echo "$0: debug[$V_FLAG]: OPTION[$index]=${OPTION[$index]}" 1>&2
+    done
 fi
 
 
@@ -290,38 +367,23 @@ fi
 
 # exec the rogomatic code
 #
-if [[ -z $SEED ]]; then
-    if [[ -z $SECS ]]; then
-	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -H -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -G $GOODLVL -U $USLEEP" 1>&2
-	fi
-	if [[ -z $NOOP ]]; then
-	    exec "$ROGOMATIC_TOOL" -H -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -G "$GOODLVL" -U "$USLEEP"
-	fi
-    else
-	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -H -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -a $SECS -G $GOODLVL -U $USLEEP" 1>&2
-	fi
-	if [[ -z $NOOP ]]; then
-	    exec "$ROGOMATIC_TOOL" -H -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -a "$SECS" -G "$GOODLVL" -U "$USLEEP"
+if [[ -z $NOOP ]]; then
+    if [[ $V_FLAG -ge 1 ]]; then
+	echo "$0: debug[5]: about to execute: $ROGOMATIC_TOOL ${OPTION[*]} --" 1>&2
+    fi
+    "$ROGOMATIC_TOOL" "${OPTION[@]}" --
+    status="$?"
+    if [[ $status -ne 0 ]]; then
+	if [[ $status -eq 129 ]]; then
+	    echo "$0: notice SIGHUP: $ROGOMATIC_TOOL ${OPTION[*]} --" 1>&2
+	else
+	    echo "$0: Warning: $ROGOMATIC_TOOL ${OPTION[*]} -- failed," \
+		 "error code: $status" 1>&2
+	    exit 7
 	fi
     fi
-else
-    if [[ -z $SECS ]]; then
-	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -H -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED -G $GOODLVL -U $USLEEP" 1>&2
-	fi
-	if [[ -z $NOOP ]]; then
-	    exec "$ROGOMATIC_TOOL" -H -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED" -G "$GOODLVL" -U "$USLEEP"
-	fi
-    else
-	if [[ $V_FLAG -ge 1 ]]; then
-	    echo "$0: debug[1]: about to run: exec $ROGOMATIC_TOOL -H -P $PLAYER_TOOL -f $ROGUE_TOOL -D $RGMDIR -S $SEED -a $SECS -G $GOODLVL -U $USLEEP" 1>&2
-	fi
-	if [[ -z $NOOP ]]; then
-	    exec "$ROGOMATIC_TOOL" -H -P "$PLAYER_TOOL" -f "$ROGUE_TOOL" -D "$RGMDIR" -S "$SEED" -a "$SECS" -G "$GOODLVL" -U "$USLEEP"
-	fi
-    fi
+elif [[ $V_FLAG -ge 3 ]]; then
+    echo "$0: debug[3]: because of -n, execution of $ROGOMATIC_TOOL ${OPTION[*]} -- was disabled" 1>&2
 fi
 
 
