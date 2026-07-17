@@ -973,7 +973,7 @@ The game may be restarted later.
 .I Cheat,
 tells
 .B rogomatic
-to take advantage of idiosyncracies in the
+to take advantage of idiosyncrasies in the
 .B rogue
 game to get a higher score.
 This is unfortunately necessary to allow fair
@@ -1167,7 +1167,7 @@ How many times to search each square for traps (0 to 4, depending on
 amount of food and how far below level 7 he is).
 .TP
 .B Dr
-How many times to search each square for secret doors (0 to 19, more for
+How many times to search each square for secret doors (0 to 20, more for
 dead end passages not in mazes).
 .TP
 .B Re
@@ -1701,7 +1701,7 @@ A number of people have attempted to improve this code.
 Many, many bug fixes have been applied to this code.
 .B Landon\ Curt\ Noll
 alone has a change log of mostly bug fixes, that in mid 2026,
-exceeded 1400 lines of change description text!
+exceeded 1500 lines of change description text!
 Even so, a \fBsignificant number of bugs\fP remain in this code.
 .sp
 Bug fixes in the form of GitHub pull requests are \fBvery welcome\fP at:

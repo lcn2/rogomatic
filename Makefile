@@ -94,13 +94,30 @@ ROGUE= /usr/local/bin/rogue
 #
 # NOTE: The -G goodlvl command line option may change the level value.
 #
-GOODGAME= 18
+GOODGAME= 20
 
 # USLEEP - Set the default sleep time between actions to USLEEP microseconds
 #
 # NOTE: The -U usec command line option may change the level value.
 #
 USLEEP= 14000
+
+# PLUNGE_LVL - Starting level in which we plunge down immediately when we can
+#
+# NOTE: The plunge mode stops at level 26 because that is where the
+#       Amulet of Yendor is found.  DO NOT set PLUNGE larger than 25!
+#
+# See the plunge() function in tactics.c.
+#
+# NOTE: Historically PLUNGE_LVL was 18 and was a constant in an if statement:
+#
+# 	  if (Level > 17 && Level < 26 && godownstairs (NOTRUNNING)) {
+#
+#       By using a lower value, we start to plunge earlier.  We might nit
+#       obtain as much gold, but we increase the chance we survive to
+#       find the Amulet of Yendor.
+#
+PLUNGE_LVL= 13
 
 #####################
 # debug information #
@@ -383,6 +400,12 @@ config.o: config.c
 setup.o: setup.c
 	${CC} ${CFLAGS} -DUSLEEP=${USLEEP} -DGOODGAME=${GOODGAME} -DROGUE='"${ROGUE}"' -DRGMDIR='"${RGMDIR}"' $< -c
 
+strategy.o: strategy.c
+	${CC} ${CFLAGS} -DPLUNGE_LVL=${PLUNGE_LVL} $< -c
+
+tactics.o: tactics.c
+	${CC} ${CFLAGS} -DPLUNGE_LVL=${PLUNGE_LVL} $< -c
+
 terminal.o: terminal.c
 	${CC} ${CFLAGS} -DRGMDIR='"${RGMDIR}"' $< -c
 
@@ -519,11 +542,11 @@ modern_curses.h: ${MAKE_FILE}
 	-${Q} if echo '#include <ncurses.h>' | ${CC} -E - ${S}; then \
 	    echo '#include <ncurses.h> /* yes, using new curses */' >> $@; \
 	    echo >> $@; \
-	    echo '#define MODERN_CUESES NEW_CURSES' >> $@; \
+	    echo '#define MODERN_CURSES NEW_CURSES' >> $@; \
 	elif echo '#include <curses.h>' | ${CC} -E - ${S}; then \
 	    echo '#include <curses.h> /* no, you have old curses, or what NetBSD calls curses */' >> $@; \
 	    echo >> $@; \
-	    echo '#define MODERN_CUESES OLD_CURSES' >> $@; \
+	    echo '#define MODERN_CURSES OLD_CURSES' >> $@; \
 	else \
 	    echo 'Neither <ncurses.h> nor <curses.h> found' 1>&2; \
 	    echo 'Perhaps you need you install both ncurses and ncurses-devel ?' 1>&2; \

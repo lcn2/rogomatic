@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.4.0 2026-07-12"
+export VERSION="1.4.1 2026-07-14"
 NAME=$(basename "$0")
 export NAME
 #
@@ -65,7 +65,7 @@ else
 fi
 export ROGUE_TOOL
 export SEED=
-export GOODLVL=18
+export GOODGAME=20
 export USLEEP=14000
 export CAP_H_FLAG=
 export CAP_G_FLAG=
@@ -106,7 +106,7 @@ export USAGE="usage: $0
                             NOTE: if rgmdir is /var/tmp/rogomatic unstuck_player won't unstick unless -A is used
     -e                  turn off rogomatic game logging (def: rogomatic game log is $RGMDIR/gamelog)
     -f rogue            path to rogue (def: $ROGUE_TOOL)
-    -G goodlvl          set the good game level to goodlvl (def: $GOODLVL)
+    -G goodlvl          set the good game level to goodlvl (def: $GOODGAME)
     -H                  disable the so-called rogomatic halftime show (def: show it)
 
     -P player           path to player (def: $PLAYER_TOOL)
@@ -155,7 +155,7 @@ while getopts :hv:VnNa:dD:ef:G:HP:r:S:U: flag; do
         ;;
     f) ROGUE_TOOL="$OPTARG"
         ;;
-    G) GOODLVL="$OPTARG"
+    G) GOODGAME="$OPTARG"
 	CAP_G_FLAG="-G"
         ;;
     H) CAP_H_FLAG="-H"
@@ -294,7 +294,7 @@ OPTION+=("-D")		# set rogomatic directory path
 OPTION+=("$RGMDIR")
 if [[ -n $CAP_G_FLAG ]]; then
     OPTION+=("-G")		# set good game level
-    OPTION+=("$GOODLVL")
+    OPTION+=("$GOODGAME")
 fi
 if [[ -n $SECS ]]; then
     OPTION+=("-a")		# set sleep time between actions
@@ -326,7 +326,7 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: V_FLAG=$V_FLAG" 1>&2
     echo "$0: debug[3]: ROGOMATIC_TOOL=$ROGOMATIC_TOOL" 1>&2
     echo "$0: debug[3]: PLAYER_TOOL=$PLAYER_TOOL" 1>&2
-    echo "$0: debug[3]: GOODLVL=$GOODLVL" 1>&2
+    echo "$0: debug[3]: GOODGAME=$GOODGAME" 1>&2
     echo "$0: debug[3]: ROGUE_TOOL=$ROGUE_TOOL" 1>&2
     echo "$0: debug[3]: RGMDIR=$RGMDIR" 1>&2
     echo "$0: debug[3]: SEED=$SEED" 1>&2

@@ -39,6 +39,19 @@
 # include "install.h"
 
 /*
+ * sanity check on PLUNGE_LVL
+ */
+# if !defined(PLUNGE_LVL)
+#  error "PLUNGE_LVL must be defined - try defining it as 13"
+# endif
+# if PLUNGE_LVL < 1
+#  error "PLUNGE_LVL cannot be < 1 - try a more reasonable value such as 13"
+# endif
+# if PLUNGE_LVL > 25
+#  error "PLUNGE_LVL cannot be > 25 - try a more reasonable value such as 13"
+# endif
+
+/*
  * foughtmonster records whether we engaged in battle recently.  This
  * information is used to tell whether we should sit still, waiting for a
  * confused monster to come back, or to go on about our business.
@@ -613,7 +626,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
    * magic attack.  DR UTexas 25 Jan 84
    */
 
-  if (on(STAIRS) && ((Level>18 && Level<26) || exploredlevel) && !floating &&
+  if (on(STAIRS) && (lvl_below_plunge() || exploredlevel) && !floating &&
       (die_in(5) ||
        ((seeawakemonster ("rattlesnake") || seeawakemonster ("giant ant")) &&
         (havenamed (ring, "sustain strength") < 0)) ||
@@ -819,7 +832,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
   if (!cursedarmor && currentarmor != NONE &&
       (seeawakemonster ("rust monster") || seeawakemonster ("aquator")) &&
       live_for (1) &&
-      !(cosmic && Level < 8) &&               /* DR UTexas 25 Jan 84 */
+      !(cosmic && lvl_pre_aquator()) &&               /* DR UTexas 25 Jan 84 */
       willrust (currentarmor) &&
       wearing ("maintain armor") == NONE &&
       takeoff ())
@@ -837,7 +850,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
     return (point (obj, 0));
 
   if (mdir != NONE && die_in (2) &&
-      (!cosmic || Level > 18) &&          /* DR UTexas 31 Jan 84 */
+      (!cosmic || lvl_black_unicorn()) &&          /* DR UTexas 31 Jan 84 */
       (streq (monster, "dragon")     || streq (monster, "purple worm")   ||
        streq (monster, "jabberwock") || streq (monster, "medusa")        ||
        streq (monster, "xorn")       || streq (monster, "violet fungi")  ||

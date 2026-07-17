@@ -51,7 +51,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.2.8 2026-07-13"
+# define VERSION "14.2.8 2026-07-16"
 
 /*
  * static declarations
@@ -501,7 +501,7 @@ main (int argc, char *argv[])
   snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%u,%ld,%ld",
            cheat, noterm, echo, nohalf, emacs, terse, user, dnum, goodgame, usleep_usec);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
-  /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir */
+  /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir) */
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
 	    "terse", "noflush", "jump", "seefloor", "nopassgo", "tombstone", "slow", getname (), "apricot",
 	    rogue_dir, "rogue.sav", rogue_dir, "rogue.scr", rogue_dir, "rogue.lck");
