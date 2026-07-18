@@ -29,8 +29,8 @@ additional information or guidance.
 
 ## Supported Versions
 
-Only rogomatic version **14.2.8 2026-07-17** or later,
-when used with **rogue version 5.4.5 release 2026-07-17** or later,
-(from the [rogue 5.4 repo](https://github.com/lcn2/rogue5.4)), and
-when they are **NOT** run setuid, nor run setgid,
-are supported.
+The only supported version of rogomatic is version **14.2.9 2026-07-18** or later,
+and then only when used with rogue version **5.4.5 2026-07-18** or later
+from the [Rogue 5.4 repo](https://github.com/lcn2/rogue5.4).
+
+Running either Rogue, or Rogomatic as setuid or setgid is **NOT** supported.

@@ -352,6 +352,7 @@ typedef enum { false=0, true=1 } bool;
 # define SKIPTO(c,s) \
 	{ while (*(s) && *(s)!=(c)) (s)++; if (*(s)==(c)) (s)++; }
 
+
 /*
  * Dungeon level related macros
  */
@@ -362,66 +363,17 @@ typedef enum { false=0, true=1 } bool;
 /* first level that can have an Amulet of Yendor - historically defined by rogue */
 # define LVL_AMULET (26)
 
-/* level is down to and including the deep level */
-# define lvl_up_to_deep() (Level <= LVL_DEEP)
-
-/* level is deeper than the deep level */
-# define lvl_deeper() (Level > LVL_DEEP)
-
-/* level on which can have an Amulet of Yendor */
-# define lvl_amulet() (Level >= LVL_AMULET)
-
-/* level on which can have an Amulet of Yendor */
-# define lvl_pre_amulet() (Level < LVL_AMULET)
-
-/* level on which we should be plunging - we do NOT plunge on levels that can have an Amulet of Yendor */
-# define lvl_plunge() (supported_rogue() ? (Level >= PLUNGE_LVL && lvl_pre_amulet()) : (Level >= LVL_DEEP && lvl_pre_amulet()))
-
-/* level below which we are ready to plunge - one level below a lvl_plunge() level */
-# define lvl_below_plunge() (supported_rogue() ? (Level > PLUNGE_LVL && lvl_pre_amulet()) : (Level > LVL_DEEP && lvl_pre_amulet()))
-
-/* level before when we might plunge */
-# define lvl_pre_plunge() (supported_rogue() ? (Level < PLUNGE_LVL) : (Level < LVL_DEEP))
 
 /*
- * Monster dungeon related macros
+ * rogomatic game log
  */
-
-/* level on which can have an aquator (was rust monster) */
-# define lvl_aquator() (modern_rogue() ? (Level >= 5) : (Level >= 8 && Level <= 16))
-
-/* level before we can have an aquator (was rust monster) */
-# define lvl_pre_aquator() (modern_rogue() ? (Level < 5) : (Level < 8))
-
-/* level on which can have a troll */
-# define lvl_troll() (modern_rogue() ? (Level >= 6) : (Level >= 13 && Level <= 20))
-
-/* level before we can have a troll */
-# define lvl_pre_troll() (modern_rogue() ? (Level < 6) : (Level < 13))
-
-/* level on which can have a griffin (was gnome) */
-# define lvl_griffin() (modern_rogue() ? (Level >= 13) : (Level >= 18 && Level <= 26))
-
-/* level before we can have an griffin (was gnome) */
-# define lvl_pre_griffin() (modern_rogue() ? (Level < 13) : (Level < 18))
-
-/* level on which can have a dragon */
-# define lvl_dragon() (modern_rogue() ? (Level >= 10) : (Level >= 23))
-
-/* level before we can have an dragon */
-# define lvl_pre_dragon() (modern_rogue() ? (Level < 10) : (Level < 23))
-
-/* level on which can have a black unicorn (was xorn) */
-# define lvl_black_unicorn() (modern_rogue() ? (Level >= 13) : (Level >= 18 && Level <= 26))
-
-/* level before we can have an black unicorn (was xorn) */
-# define lvl_pre_black_unicorn() (modern_rogue() ? (Level < 13) : (Level < 18))
-
-/* rogomatic game log */
 
 # define GAMELOG_FILENAME "gamelog"	/* basename of rogomatic game log */
 
-/* Utility Macros */
+
+/*
+ * Utility Macros
+ */
 
 /*
  * valrc (r,c) - test of r and c are a valid row and column location - no ERROR

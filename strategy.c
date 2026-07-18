@@ -626,7 +626,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
    * magic attack.  DR UTexas 25 Jan 84
    */
 
-  if (on(STAIRS) && (lvl_below_plunge() || exploredlevel) && !floating &&
+  if (on(STAIRS) && ((Level>PLUNGE_LVL && Level<26) || exploredlevel) && !floating &&
       (die_in(5) ||
        ((seeawakemonster ("rattlesnake") || seeawakemonster ("giant ant")) &&
         (havenamed (ring, "sustain strength") < 0)) ||
@@ -832,7 +832,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
   if (!cursedarmor && currentarmor != NONE &&
       (seeawakemonster ("rust monster") || seeawakemonster ("aquator")) &&
       live_for (1) &&
-      !(cosmic && lvl_pre_aquator()) &&               /* DR UTexas 25 Jan 84 */
+      !(cosmic && Level < 8) &&               /* DR UTexas 25 Jan 84 */
       willrust (currentarmor) &&
       wearing ("maintain armor") == NONE &&
       takeoff ())
@@ -850,7 +850,7 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
     return (point (obj, 0));
 
   if (mdir != NONE && die_in (2) &&
-      (!cosmic || lvl_black_unicorn()) &&          /* DR UTexas 31 Jan 84 */
+      (!cosmic || Level > 18) &&          /* DR UTexas 31 Jan 84 */
       (streq (monster, "dragon")     || streq (monster, "purple worm")   ||
        streq (monster, "jabberwock") || streq (monster, "medusa")        ||
        streq (monster, "xorn")       || streq (monster, "violet fungi")  ||

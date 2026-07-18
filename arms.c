@@ -434,26 +434,11 @@ ringclass (int i)
   else if (stlmatch (inven[i].str, "maintain armor")) {
     int bestarm, nextarm, armdiff;
 
-    /*
-     * No rust monsters yet or cursed armor
-     *
-     * In both classic BSD rogue and modern rogue (5.2 and later),
-     * a "rust monster" are called an "aquator", AND they start to appear
-     * at level 5 (not 18).
-     *
-     * In rogue and later, an aquator can appear at dungeon level 5.
-     */
-    if (Level < ((version < RV52A) ? 9 : 5) || cursedarmor) return (900);
+    /* No rust monsters yet or cursed armor */
+    if (Level < 9 || cursedarmor) return (900);
 
-    /*
-     * Past the rust monsters
-     *
-     * In both classic BSD rogue and modern rogue (5.2 and later),
-     * a "rust monster" are called an "aquator", AND they start to appear
-     * at level 5 (not 18).  So this check to return 300 is no longer
-     * useful for rogue 5.2 and later.
-     */
-    else if (version < RV52A && Level > 18) return (300);
+    /* Past the rust monsters */
+    else if (Level > 18) return (300);
 
     /* A second ring of maintain armor is useless */
     else if (!itemis (i, INUSE) && wearing ("maintain armor") != NONE)

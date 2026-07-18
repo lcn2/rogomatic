@@ -77,7 +77,16 @@ static int waitaround (void);
 /*
  * handlearmor: This routine is called to determine whether we should
  * take off or put on armor.
+ *
+ * Current strategy:   Wear best armor on levels 1..7 or 19 on or
+ *                     if protected or have maintain armor.
+ *                     Wear 2nd best armor between levels 13..18.
+ *                     Wear best leather armor between levels 8..12
+ *                     or 2nd best if no leather armor.   DR UTexas 12/15/83
+ *
+ * Note that leather armor does not rust.
  */
+
 int
 handlearmor (void)
 {
@@ -86,64 +95,27 @@ handlearmor (void)
   /* Only check when armor status is different */
   if (!newarmor || cursedarmor) return (0);
 
+  /*
+   * Pick the armor we want to wear. If we are worried about rust monster
+   * we wear the second best armor, but if we wont see any rust monsters,
+   * if our armor is too good for a rust monster to hit it, or we have a
+   * ring of maintain armor, then we should wear our best armor.  On
+   * levels 13-18 we wear our second best no matter what.
+   */
+
   obj = havearmor (1, NOPRINT, ANY);		/* Get best armor */
 
-  /*
-   * Pick the armor we want to wear. If we are worried about aquators (or rust monsters)
-   * we wear the second best armor, but if we wont see any aquators (or rust monsters)
-   * if our armor is too good for a aquator (or rust monster) to hit it, or we have a
-   * ring of maintain armor, then we should wear our best armor.
-   *
-   * See the strategy discussion above.
-   */
+  if (Level > (version < RV52A ? 8 : 7) && Level < 19 &&
+      wearing ("maintain armor") == NONE &&
+      willrust (obj) &&
+      itemis (obj, KNOWN)) {
+    obj = NONE;
 
-  /* Updated strategy with historic rogue
-   *
-   * Updated strategy:   Wear best armor on levels 1..5 or 19 on or
-   *                       if protected or have maintain armor.
-   *                     Wear best leather armor between levels 8..12
-   *                     Wear 2nd best armor between levels 13..18 or 2nd best if no leather armor.
-   *
-   * Note that leather armor does not rust.
-   */
-  if (modern_rogue()) {
-    if (lvl_aquator() && lvl_up_to_deep() &&
-	wearing ("maintain armor") == NONE &&
-	willrust (obj) &&
-	itemis (obj, KNOWN)) {
+    if (Level<13)		obj = havearmor (1, NOPRINT, RUSTPROOF);
 
-      /* case: levels 5..18 */
+    if (Level<13 && obj==NONE)	obj = havearmor (3, NOPRINT, ANY);
 
-      obj = NONE;
-
-      if (lvl_pre_griffin())	obj = havearmor (1, NOPRINT, RUSTPROOF);
-
-      if (obj==NONE)		obj = havearmor (2, NOPRINT, ANY);
-    }
-
-  /*
-   * Outdated strategy:  Wear best armor on levels 1..7 or 19 on or
-   *                       if protected or have maintain armor.
-   *                     Wear best leather armor between levels 8..12 or 2nd best if no leather armor.
-   *                     Wear 2nd best armor between levels 13..18.
-   *                     DR UTexas 12/15/83
-   *
-   * Note that leather armor does not rust.
-   */
-  } else {
-    if (lvl_aquator() && lvl_up_to_deep() &&
-	wearing ("maintain armor") == NONE &&
-	willrust (obj) &&
-	itemis (obj, KNOWN)) {
-
-      /* case: levels 8..18 */
-
-      obj = NONE;
-
-      if (lvl_pre_troll())	obj = havearmor (1, NOPRINT, RUSTPROOF);
-
-      if (obj==NONE)		obj = havearmor (2, NOPRINT, ANY);
-    }
+    if (obj==NONE)		obj = havearmor (2, NOPRINT, ANY);
   }
 
   /* If  the new armor is really bad, then don't bother wearing any */
@@ -636,19 +608,11 @@ godownstairs (int running)
  * plunge: Should we head down immediately?
  *
  * If we are being teleported too much or
- *    we are on a bad level (PLUNGE_LVL..25) or
- *	or in non-modern rogue on a bad level (18..25)
+ *    we are on a bad level (19 to 25) or
+ *    we want to get past Rust Monsters (level 18) or
  *    we have aggravated all of the monsters then
  *
  * we head down immediately.
- *
- * We remove this from the above section:
- *
- *	we want to get past Rust Monsters (level 18
- *
- * because in both classic BSD rogue and modern rogue (5.2 and later),
- * a "rust monster" are called an "aquator", AND they start to appear
- * at level 5 (not 18), so we are "more free" to adjust the PLUNGE_LVL.
  */
 
 int
@@ -665,7 +629,7 @@ plunge (void)
     return (1);
   }
 
-  if (lvl_plunge() && godownstairs (NOTRUNNING)) {
+  if (Level >= PLUNGE_LVL && Level < 26 && godownstairs (NOTRUNNING)) {
     if (!on (STAIRS)) saynow ("Plunge mode!!!");
 
     return (1);
