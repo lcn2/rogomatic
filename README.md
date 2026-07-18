@@ -22,7 +22,7 @@ An easy way to "gently kill" a running rogomatic session is to run:
 To have rogomatic continuously start another rogue game after the explorer dies:
 
 ```sh
-./rerun_rogo -U 0 -a 4.5
+./rerun_rogo -H -U 0 -a 4.5
 ```
 
 It is recommended that while `./rerun_rogo` is running, in another window run:
@@ -43,7 +43,8 @@ will cause `./rerun_rogo` to stop restarting rogomatic when `rogue(6)` exits.
 ## IMPORTANT: Use with rogue 5.4.5
 
 This rogomatic code is designed to be used with **rogue version
-5.4.5 release 2026-06-30**, or any later release of version 5.4.5.
+5.4.5 release 2026-07-18**, or any later release
+from [rogue version 5.4.5](https://github.com/lcn2/rogue5.4).
 
 See [rogue version 5.4.5](https://github.com/lcn2/rogue5.4) for the
 latest version of rogue that is supported by rogomatic.
@@ -243,7 +244,8 @@ The [rogomatic repo](https://github.com/lcn2/rogomatic) started out as a clone o
 [rogueforge rogomatic14 repo](https://github.com/rogueforge/rogomatic14).
 
 **IMPORTANT NOTE**: This rogomatic code is designed to be used with **rogue version
-5.4.5 release 2026-06-30**, or any later release of version 5.4.5.
+5.4.5 release 2026-07-18**, or any later release
+from [rogue version 5.4.5](https://github.com/lcn2/rogue5.4).
 
 See [rogue version 5.4.5](https://github.com/lcn2/rogue5.4) for the
 latest version of rogue that is supported by rogomatic.
