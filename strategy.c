@@ -185,7 +185,7 @@ strategize (void)
   if (plunge ())		/* Plunge mode */
     return (1);
 
-  if (findarrow ())		/* Do we have an unitialized arrow? */
+  if (findarrow ())		/* Do we have an uninitialized arrow? */
     return (1);
 
   if (findroom ())		/* Look for another room */
@@ -195,7 +195,7 @@ strategize (void)
    * 'attempt' records the number of times we have completely searched
    * this level for secret doors.  If attempt is greater than 0, then we
    * have failed once to find the stairs and go down.  If this happens
-   * three times, there could be amonster sleeping on the stairs.  We set
+   * three times, there could be a monster sleeping on the stairs.  We set
    * the SLEEPER bit for each square with a sleeping monster.  Go find
    * such a monster and kill it to see whether (s)he was on the stairs).
    */
@@ -515,6 +515,7 @@ wanttowake(char c)
       streq (monster, "leprechaun") ||
       streq (monster, "nymph") ||
       streq (monster, "wraith") ||
+      streq (monster, "jabberwock") ||
       streq (monster, "purple worm") )
     return (0);
 

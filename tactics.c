@@ -608,8 +608,8 @@ godownstairs (int running)
  * plunge: Should we head down immediately?
  *
  * If we are being teleported too much or
- *    we are on a bad level (19 to 25) or
- *    we want to get past Rust Monsters (level 18) or
+ *    we are on a bad level (PLUNGE_LVL to 25) or
+ *    we want to get past Aquators (level 19) or
  *    we have aggravated all of the monsters then
  *
  * we head down immediately.
