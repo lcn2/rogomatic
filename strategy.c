@@ -137,6 +137,9 @@ strategize (void)
 
   /* ---- End of short term memory modification ---- */
 
+  if (goupstairs (NOTRUNNING))	/* Up we go! Make sure that we get */
+    return (1);			  /* a better rank on the board. */
+
   if (dropjunk ())		/* Send it back */
     return (1);
 
@@ -163,9 +166,6 @@ strategize (void)
 
   if (restup ())		/* Yawn! */
     return (1);
-
-  if (goupstairs (NOTRUNNING))	/* Up we go! Make sure that we get */
-    return (1);			  /* a better rank on the board. */
 
   if (trywand ())		/* Try to use a wand */
     return (1);
@@ -322,7 +322,7 @@ fightmonster (void)
         }
       }
 
-      /* If we havent yet a line of sight, check this guy out */
+      /* If we haven't yet a line of sight, check this guy out */
       else if (wanddir == NONE)
         { wanddir = direc (rr-atrow, cc-atcol); }
 
@@ -625,6 +625,9 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
    * If we were busy resting on the stairs and we see a monster, go down
    * Go on down if about to be attacked by a monster with an effective
    * magic attack.  DR UTexas 25 Jan 84
+   *
+   * or has a remote attack, or has a significant attack with a permanent
+   * effect on the player stats or inventory
    */
 
   if (on(STAIRS) && ((Level>PLUNGE_LVL && Level<26) || exploredlevel) && !floating &&
@@ -634,7 +637,10 @@ battlestations (int m, char *monster, int mbad, int danger, int mdir, int mdist,
        ((seeawakemonster ("aquator") || seeawakemonster ("rust monster")) &&
         turns < 2 && willrust (currentarmor) &&
         wearing ("maintain armor") == NONE) ||
-       seeawakemonster ("medusa") || seeawakemonster ("umber hulk"))) {
+       seeawakemonster ("medusa") || seeawakemonster ("umber hulk") ||
+       seeawakemonster ("dragon") || seeawakemonster ("wraith") ||
+       seeawakemonster ("vampire") || seeawakemonster ("nymph") ||
+       seeawakemonster ("ice monster") || seeawakemonster ("leprechaun"))) {
     if (goupstairs (RUNNING) || godownstairs (RUNNING))
       return (1);
   }

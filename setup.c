@@ -51,7 +51,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.2.10 2026-07-18"
+# define VERSION "14.2.11 2026-07-18"
 
 /*
  * static declarations
