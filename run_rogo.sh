@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.4.1 2026-07-14"
+export VERSION="1.4.2 2026-07-19"
 NAME=$(basename "$0")
 export NAME
 #
@@ -42,28 +42,26 @@ export SECS=
 export NOOP=
 export DO_NOT_PROCESS=
 #
+ROGOMATIC_TOOL=$(type -P rogomatic)
 if [[ -x ./rogomatic ]]; then
     ROGOMATIC_TOOL="./rogomatic"
-else
-    ROGOMATIC_TOOL=$(type -P rogomatic)
 fi
 export ROGOMATIC_TOOL
 #
+PLAYER_TOOL=$(type -P player)
 if [[ -x ./player ]]; then
     PLAYER_TOOL="./player"
-else
-    PLAYER_TOOL=$(type -P player)
 fi
 export PLAYER_TOOL
 #
-if [[ -x ./rogue ]]; then
-    ROGUE_TOOL="./rogue"
-elif [[ -x ../rogue5.4/rogue ]]; then
+ROGUE_TOOL=$(type -P rogue)
+if [[ -x ../rogue5.4/rogue ]]; then
     ROGUE_TOOL="../rogue5.4/rogue"
-else
-    ROGUE_TOOL=$(type -P rogue)
+elif [[ -x ./rogue ]]; then
+    ROGUE_TOOL="./rogue"
 fi
 export ROGUE_TOOL
+#
 export SEED=
 export GOODGAME=20
 export USLEEP=14000

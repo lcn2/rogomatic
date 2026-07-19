@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.3.1 2026-07-14"
+export VERSION="1.3.2 2026-07-19"
 NAME=$(basename "$0")
 export NAME
 #
@@ -42,35 +42,35 @@ export SECS=""
 export NOOP=
 export DO_NOT_PROCESS=
 #
+# This next setting is just for the usage message
+RUN_ROGO_TOOL=$(type -P run_rogo)
 if [[ -x ./run_rogo ]]; then
     RUN_ROGO_TOOL="./run_rogo"
 elif [[ -x ./run_rogo.sh ]]; then
     RUN_ROGO_TOOL="./run_rogo.sh"
-else
-    RUN_ROGO_TOOL=$(type -P run_rogo)
 fi
 export RUN_ROGO_TOOL
 #
+# This next setting is just for the usage message
+ROGOMATIC_TOOL=$(type -P rogomatic)
 if [[ -x ./rogomatic ]]; then
     ROGOMATIC_TOOL="./rogomatic"
-else
-    ROGOMATIC_TOOL=$(type -P rogomatic)
 fi
 export ROGOMATIC_TOOL
 #
+# This next setting is just for the usage message
+PLAYER_TOOL=$(type -P player)
 if [[ -x ./player ]]; then
     PLAYER_TOOL="./player"
-else
-    PLAYER_TOOL=$(type -P player)
 fi
 export PLAYER_TOOL
 #
-if [[ -x ./rogue ]]; then
-    ROGUE_TOOL="./rogue"
-elif [[ -x ../rogue5.4/rogue ]]; then
+# This next setting is just for the usage message
+ROGUE_TOOL=$(type -P rogue)
+if [[ -x ../rogue5.4/rogue ]]; then
     ROGUE_TOOL="../rogue5.4/rogue"
-else
-    ROGUE_TOOL=$(type -P rogue)
+elif [[ -x ./rogue ]]; then
+    ROGUE_TOOL="./rogue"
 fi
 export ROGUE_TOOL
 #
@@ -109,53 +109,40 @@ function find_progs
 {
     # find run_rogo
     #
-    if [[ -n $CAP_Z_FLAG ]]; then
-	RUN_ROGO_TOOL=$(type -P run_rogo)
-    else
+    RUN_ROGO_TOOL=$(type -P run_rogo)
+    if [[ -z $CAP_Z_FLAG ]]; then
 	if [[ -x ./run_rogo ]]; then
 	    RUN_ROGO_TOOL="./run_rogo"
 	elif [[ -x ./run_rogo.sh ]]; then
 	    RUN_ROGO_TOOL="./run_rogo.sh"
-	else
-	    RUN_ROGO_TOOL=$(type -P run_rogo)
 	fi
     fi
 
     # find rogomatic
     #
-    if [[ -n $CAP_Z_FLAG ]]; then
-	ROGOMATIC_TOOL=$(type -P rogomatic)
-    else
+    ROGOMATIC_TOOL=$(type -P rogomatic)
+    if [[ -z $CAP_Z_FLAG ]]; then
 	if [[ -x ./rogomatic ]]; then
 	    ROGOMATIC_TOOL="./rogomatic"
-	else
-	    ROGOMATIC_TOOL=$(type -P rogomatic)
 	fi
     fi
 
     # find player
     #
-    if [[ -n $CAP_Z_FLAG ]]; then
-	PLAYER_TOOL=$(type -P player)
-    else
+    PLAYER_TOOL=$(type -P player)
+    if [[ -z $CAP_Z_FLAG ]]; then
 	if [[ -x ./player ]]; then
 	    PLAYER_TOOL="./player"
-	else
-	    PLAYER_TOOL=$(type -P player)
 	fi
     fi
 
     # rogue
     #
-    if [[ -n $CAP_Z_FLAG ]]; then
-	ROGUE_TOOL=$(type -P rogue)
-    else
-	if [[ -x ./rogue ]]; then
-	    ROGUE_TOOL="./rogue"
-	elif [[ -x ../rogue5.4/rogue ]]; then
+    if [[ -z $CAP_Z_FLAG ]]; then
+	if [[ -x ../rogue5.4/rogue ]]; then
 	    ROGUE_TOOL="../rogue5.4/rogue"
-	else
-	    ROGUE_TOOL=$(type -P rogue)
+	elif [[ -x ./rogue ]]; then
+	    ROGUE_TOOL="./rogue"
 	fi
     fi
 
@@ -371,78 +358,12 @@ if [[ $# -ne 0 ]]; then
 fi
 
 
-# in case of -P, find the programs again
+# find the programs
 #
-if [[ -n $CAP_Z_FLAG ]]; then
-
-    # NOTE: No need to check on this return as we will verify all executables next
-    #
-    find_progs
-fi
-
-
-# verify that the run_rogo tool is executable
+# NOTE: This will reset the locations that were established before
+#       the command line was parsed by getopts.
 #
-if [[ ! -e $RUN_ROGO_TOOL ]]; then
-    echo  "$0: ERROR: run_rogo does not exist: $RUN_ROGO_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -f $RUN_ROGO_TOOL ]]; then
-    echo  "$0: ERROR: run_rogo is not a regular file: $RUN_ROGO_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -x $RUN_ROGO_TOOL ]]; then
-    echo  "$0: ERROR: run_rogo is not an executable file: $RUN_ROGO_TOOL" 1>&2
-    exit 5
-fi
-
-
-# verify that the rogomatic tool is executable
-#
-if [[ ! -e $ROGOMATIC_TOOL ]]; then
-    echo  "$0: ERROR: rogomatic does not exist: $ROGOMATIC_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -f $ROGOMATIC_TOOL ]]; then
-    echo  "$0: ERROR: rogomatic is not a regular file: $ROGOMATIC_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -x $ROGOMATIC_TOOL ]]; then
-    echo  "$0: ERROR: rogomatic is not an executable file: $ROGOMATIC_TOOL" 1>&2
-    exit 5
-fi
-
-
-# verify that the player tool is executable
-#
-if [[ ! -e $PLAYER_TOOL ]]; then
-    echo  "$0: ERROR: player does not exist: $PLAYER_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -f $PLAYER_TOOL ]]; then
-    echo  "$0: ERROR: player is not a regular file: $PLAYER_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -x $PLAYER_TOOL ]]; then
-    echo  "$0: ERROR: player is not an executable file: $PLAYER_TOOL" 1>&2
-    exit 5
-fi
-
-
-# verify that the rogomatic tool is executable
-#
-if [[ ! -e $ROGUE_TOOL ]]; then
-    echo  "$0: ERROR: rogue does not exist: $ROGUE_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -f $ROGUE_TOOL ]]; then
-    echo  "$0: ERROR: rogue is not a regular file: $ROGUE_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -x $ROGUE_TOOL ]]; then
-    echo  "$0: ERROR: rogue is not an executable file: $ROGUE_TOOL" 1>&2
-    exit 5
-fi
+find_progs
 
 
 # verify the rogomatic directory
