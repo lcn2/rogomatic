@@ -198,7 +198,7 @@ else
 LIBS= -lncurses
 endif
 
-OTHER_TARGES=
+OTHER_TARGES= titlepage
 
 # targets and local files no longer supported
 #
@@ -516,6 +516,11 @@ else
 				    DEBUG='-ggdb3 ${FSANITIZE} ${OTHER_FSANITIZE}'
 endif
 endif
+
+# titlepage - test the title page
+#
+titlepage: titlepage.c
+	${CC} titlepage.c -DTITLEPAGE_MAIN ${LIBS} -o titlepage
 
 
 #####################

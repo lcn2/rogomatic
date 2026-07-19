@@ -29,4 +29,5 @@ skel/
 *.swo
 *.swp
 tags
+titlepage
 unstuck_player

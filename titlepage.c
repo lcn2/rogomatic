@@ -39,6 +39,14 @@
 # include "types.h"
 # include "globals.h"
 
+# if defined(TITLEPAGE_MAIN)
+# include <unistd.h>
+
+bool terse = false;
+bool emacs = false;
+bool nohalf = false;
+# endif
+
 /* static declarations */
 
 static char *titlepage[]= {
@@ -53,14 +61,17 @@ static char *titlepage[]= {
   ",w*.A*/p*0p*1e*2l*3,*5L*6e*7o*8n*9a*:r*;d*=H*>a*?m*@e*Ay*B,*DG*Eu*Fy*HJ*",
   "Ia*Jc*Ko*Lb*Ms*No*On*P,*Ra*Sn*Td*VM*Wi*Xc*Yh*Za*[e*\\l*^M*_a*`u*al*bd*ci",
   "*dn,)@,*@,+@,,@,[D,\\D,]D,^D,_D-(@-+@--@-[D-`D.(@.*@.-@.[D.`D/(@/*@/+@/,",
-  "@/-@/[D/`D0)@0*@0+@0,@0[D0\\D0]D0^D0_D2 H2!o2\"n2#o2$r2%a2&b2'l2(e2*m2+e",
-  "2,m2-b2.e2/r21o22f24t25h26e28F29i2:g2;h2<t2=e2>r2?'2@s2BG2Cu2Di2El2Fd3 T",
-  "3!o3\"t3#a3$l3&w3'i3(n3)n3*e3+r3-a3.g3/a30i31n32s33t35R36o37g38u39e3;33<",
-  ".3=63>,3@S3Ae3Bp3Ct3De3Em3Fb3Ge3Hr3J23K63L,3N13O93P83Q24 T4!o4\"t4#a4$l4",
-  "&w4'i4(n4)n4*e4+r4-a4.g4/a40i41n42s43t45R46o47g48u49e4;54<.4=24>,4@O4Ac4",
-  "Bt4Co4Db4Ee4Fr4H14I04J,4L14M94N84O35 T5!o5\"t5#a5$l5&w5'i5(n5)n5*e5+r5-a",
-  "5.g5/a50i51n52s53t55R56o57g58u59e5;55<.5=35>,5@F5Ae5Bb5Cr5Du5Ea5Fr5Gy5I1",
-  "5J65K,5M15N95O85P46 c6!h6\"o6#n6$g6%o6& 6'<6(L6)a6*n6+d6,o6-n6. 6/C60u61",
+  "@/-@/[D/`D0)@0*@0+@0,@0[D0\\D0]D0^D0_D1 H1!o1\"n1#o1$r1%a1&b1'l1(e1*m1+e",
+  "1,m1-b1.e1/r11o12f14t15h16e18F19i1:g1;h1<t1=e1>r1?'1@s1BG1Cu1Di1El1Fd2 T",
+  "2!o2\"t2#a2$l2&w2'i2(n2)n2*e2+r2-a2.g2/a20i21n22s23t25R26o27g28u29e2;22<",
+  ".2=62>,2@S2Ae2Bp2Ct2De2Em2Fb2Ge2Hr2J22K62L,2N12O92P82Q23 T3!o3\"t3#a3$l3",
+  "&w3'i3(n3)n3*e3+r3-a3.g3/a30i31n32s33t35R36o37g38u39e3;53<.3=23>,3@O3Ac3",
+  "Bt3Co3Db3Ee3Fr3H13I03J,3L13M93N83O34 T4!o4\"t4#a4$l4&w4'i4(n4)n4*e4+r4-a",
+  "4.g4/a40i41n42s43t45R46o47g48u49e4;54<.4=34>,4@F4Ae4Bb4Cr4Du4Ea4Fr4Gy4I1",
+  "4J64K,4M14N94O84P45 T5!o5\"t5#a5$l5&w5'i5(n5)n5*e5+r5-a5.g5/a50i51n52s53",
+  "t55R56o57g58u59e5;55<.5=45>.5?55@,5BT5CB5DD",
+  /* add total winner date against 5.4.5 here when it happens */
+  "6 c6!h6\"o6#n6$g6%o6& 6'<6(L6)a6*n6+d6,o6-n6. 6/C60u61",
   "r62t63 64N65o66l67l68>69 6:/6;\\6<.6=.6>/6?\\~~~~~~~~~~~~~~~~~~~~~~~~~~~",
 
   /* The dynamic part of the display */
@@ -180,3 +191,36 @@ halftimeshow (int level)
   }
   return;
 }
+
+
+# if defined(TITLEPAGE_MAIN)
+
+int
+main (void)
+{
+  /* initialize the Curses package */
+  initscr ();
+  crmode ();
+  noecho ();
+
+  /* display the title page */
+  animate (titlepage);
+
+  /* move to corner of window */
+  mvcur (0, C-1, R-1, 0);
+  sleep (4);
+
+  /* turn on echo and turn off raw */
+  (void) echo ();
+  (void) noraw ();
+
+  /* clean up and delete curses */
+  (void) endwin ();
+  (void) delwin (stdscr);
+  (void) delwin (curscr);
+
+  /* All Done!!! -- Jessica Noll, Age 2 */
+  exit(0);
+}
+
+# endif
