@@ -495,21 +495,20 @@ with a minimum date of
 is supported.
 .TP
 .BI \-G\  goodlvl
-Set the good game level to
+Set the "\fBgood game\fP" level to
 .IR goodlvl .
 .sp
-When a rogue reaches a dungeon level of at least
-.IR goodlvl ,
-then the game is considered a good game.
-When a rogue has in their inventory, the \fIAmulet of Yendor\fP
-at the end of the game, then the game is considered a good game.
+A "\fBgood game\fP" is when the rogue reaches a dungeon level of at least
+.IR goodlvl .
+When a rogue has the \fIAmulet of Yendor\fP
+at the end of the game, then the game is also considered a "\fBgood game\fP".
 .sp
 By default,
 .I goodlvl
 level is
 .BR @GOODGAME@ .
 .sp
-When a good game exits, the rogomatic game log file:
+When a "\fBgood game\fP" exits, the rogomatic game log file:
 .sp
 .in +0.5i
 .BI @RGMDIR@ /gamelog
@@ -634,10 +633,48 @@ microseconds.
 Start up in watched mode.
 .TP
 .B \-s\  [\ \fIrogue_ver\fP\ ]
-Print the
-.B rogomatic
-scoreboard.
+Print the \fBrogomatic scoreboard\fP, reverse sorted by the ending gold amount,
+of the rogomatic game results.
 .sp
+The \fBrogomatic scoreboard\fP is printed with the following fields:
+.sp
+.RS
+.RS
+.nr step 0 1
+.nr PI 3n
+.IP \n+[step].\ Year 0.5i
+End of game 4-digit year (YYYY), in the local timezone
+.IP \n+[step].\ Month 0.5i
+End of game 3-letter month (Mon), in the local timezone
+.IP \n+[step].\ Day 0.5i
+End of game 2-digit day (01-31), in the local timezone
+.IP \n+[step].\ Time 0.5i
+End of game time of day (24-hour HH:MM:SS format, in the local timezone
+.IP \n+[step].\ User 0.5i
+rogue username that will start with \fRrogo-\fP.
+.IP \n+[step].\ Gold 0.5i
+End of game gold that will include the 10% penalty when killed,
+or payment for inventory items if a total winner
+.IP \n+[step].\ Killed\ by 0.5i
+Cause of death, or "\fRtotal winner\fP
+.IP \n+[step].\ Level 0.5i
+The deepest dungeon level reached
+.IP \n+[step].\ Hp 0.5i
+End of game points
+.IP \n+[step].\ Str 0.5i
+End of game strength
+.IP \n+[step].\ Ac 0.5i
+End of game armor class that was being worn
+.IP \n+[step].\ Level/Exp 0.5i
+End of game experience level followed by / experience points
+.IP \n+[step].\ Game\ number 0.5i
+The logged game number, starting with 0
+.IP \n+[step].\ Dungeon 0.5i
+The rogue dungeon number
+.RE
+.RE
+.sp
+.RS
 The default
 .B rogue_ver
 is
@@ -664,12 +701,24 @@ is the
 version number, such as
 .IR 5.4.5 .
 .sp
-If just
-.B \-s
-is used, then
-.BR \-s\ MUST\ BE\ THE\ LAST\ OPTION\ ON\ THE\ COMMAND\ LINE ,
+If a rogomatic delta file is found:
+.sp
+.in +0.5i
+.BI @RGMDIR@/rgmdelta rogue_ver
+.in -0.5i
+.sp
+The rogomatic delta is merged into the rogomatic scoreboard,
+and then the rogomatic delta file is removed.
+.sp
+If just the
+.BR \-s\  command
+line option is used, then the
+.BR \-s\  command
+line option
+.BR MUST\ BE\ THE\ LAST\ OPTION\ ON\ THE\ COMMAND\ LINE ,
 and cannot be used in conjunction with a final
 .IR r_file .
+.RE
 .TP
 [ \fIr_file\fP ]
 When used with
@@ -1256,7 +1305,9 @@ When
 .BR rogomatic (6)
 starts, this file is truncated to a zero size.
 .sp
-If this file does not exist, it is created as needed.
+The player process when starting, will create this file if it does not exist,
+or truncate it to zero size otherwise.
+Thus, this file only holds data about the most recent run.
 .TP
 .B debuglog.player
 When
@@ -1270,11 +1321,10 @@ launches player, this file:
 records tokens (output) written to the current
 .BR rogue (6)
 process.
-When
-.BR rogomatic (6)
-starts, this file is truncated to a zero size.
 .sp
-If this file does not exist, it is created as needed.
+The player process when starting, will create this file if it does not exist,
+or truncate it to zero size otherwise.
+Thus, this file only holds data about the most recent run.
 .TP
 .B errlog
 .br
@@ -1284,7 +1334,8 @@ Output written to standard error (stderr) is appended to:
 .BI @RGMDIR@/errlog
 .in -0.5i
 .sp
-If this file does not exist, it is created as needed.
+If this file does not exist, it is created, otherwise it is appended to by the player process.
+Thus, this file may contain data about previous runs.
 .TP
 .B error5.4.5
 A log of internal errors and bugs is kept in:
@@ -1300,7 +1351,8 @@ is the
 version number, such as
 .IR 5.4.5 .
 .sp
-If this file does not exist, it is created as needed.
+If this file does not exist, it is created, otherwise it is appended to by the player process.
+Thus, this file may contain data about previous runs.
 .TP
 .B gamelog
 This file is the rogomatic game log file:
@@ -1330,19 +1382,22 @@ When combined with a final
 command line argument, the replay file will be
 .IR r_file .
 .sp
-When a good game exits, the rogomatic game log is renamed to a file of the form:
+When a "\fBgood game\fP" exits, the rogomatic game log is renamed to a file of the form:
 .sp
 .in +0.5i
 .BI @RGMDIR@ /goodgame.YYYYMMDD.HHMMSS.max_level.score.mnst
 .in -0.5i
 .sp
-See below for details on form of this filename.
-.sp
 See
 .BI \-G\  goodlvl
 in the
 .B OPTIONS
-section for information on what constitutes a good game.
+section for information on what constitutes a "\fBgood game\fP".
+.sp
+The player process when starting, will create this file if it does not exist,
+or truncate it to zero size otherwise.
+Thus, if this file exists, only holds data about the most recent run
+if the run wasn't a "\fBgood game\fP".
 .TP
 .B GeneLock545
 Before
@@ -1365,7 +1420,8 @@ This file is locked via the
 .BR flock (2)
 system call.
 .sp
-If this file does not exist, it is created as needed.
+The player process when starting, will create this file if it does not exist.
+This is a zero length file.
 .TP
 .B GeneLog545
 A log of all mutations and crossovers is kept in:
@@ -1381,7 +1437,8 @@ is the
 version number, without dots, such as
 .IR 545 .
 .sp
-If this file does not exist, it is created as needed.
+If this file does not exist, it is created, otherwise it is appended to by the player process.
+Thus, this file may contain data about previous runs.
 .TP
 .B GenePool545
 The gene pool is kept in:
@@ -1397,16 +1454,13 @@ is the
 version number, without dots, such as
 .IR 545 .
 .sp
-If this file does not exist, it is created as needed.
+If this file does not exist, it is created, otherwise it is appended to by the player process.
+Thus, this file may contain data about previous runs.
 .TP
 .B goodgame.YYYYMMDD.HHMMSS.max_level.score.mnst
 When
 .BR rogomatic (6)
-completes a game where the maximum level reached is @GOODGAME@ or deeper
-(or if the \fIAmulet of Yendor\fP is in the inventory),
-and if a
-.B gamelog
-is being written to (see the file above),
+co
 then the
 .B gamelog
 will be renamed under the rogomatic directory as
@@ -1427,6 +1481,16 @@ is the final rogue score,
 and
 .I mnst
 is the first 4 characters of how the rogue died, or "\fItota\fP" if the rouge was a total winner.
+.sp
+This file is only created, by renaming
+.BR gamelog ,
+when a "\fBgood game\fP" ends.
+See
+.BI \-G\  goodlvl
+in the
+.B OPTIONS
+section for information on what constitutes a "\fBgood game\fP".
+.sp
 .TP
 .B ltm545
 .br
@@ -1443,7 +1507,8 @@ is the
 version number, without dots, such as
 .IR 545 .
 .sp
-If this file does not exist, it is created as needed.
+If this file does not exist, it is created, otherwise it is update by the player process.
+Thus, this file may contain data about previous runs.
 .TP
 .B lvllog
 .br
@@ -1456,6 +1521,7 @@ even total winner), this file:
 .in -0.5i
 .sp
 will be appended with a line containing the following space separated fields:
+.RS
 .RS
 .nr step 0 1
 .nr PI 3n
@@ -1496,9 +1562,13 @@ a string ending in a colon \:
 .IP \n+[step].\ end\ status 0.5i
 ... ==> still in dungeon, else ==> end game status
 .RE
+.RE
+.RE
 .sp
 .RS
-If this file does not exist, it is created as needed.
+The player process when starting, will create this file if it does not exist,
+or truncate it to zero size otherwise.
+Thus, this file only holds data about the most recent run.
 .RE
 .TP
 .B pidlog
@@ -1510,6 +1580,7 @@ Early on in player, this file:
 .in -0.5i
 .sp
 is appended with a line containing the following space separated fields:
+.RS
 .RS
 .nr step 0 1
 .nr PI 3n
@@ -1532,9 +1603,11 @@ a string ending in a colon \:
 .IP \n+[step].\ dnum
 dungeon number
 .RE
+.RE
 .sp
 .RS
-If this file does not exist, it is created as needed.
+If this file does not exist, it is created, otherwise it is appended to by the player process.
+Thus, this file may contain data about previous runs.
 .RE
 .TP
 .B player.lck
@@ -1564,7 +1637,8 @@ This lock helps prevent more than one
 .BR rogomatic (6)
 from using the same rogomatic directory.
 .sp
-If this file does not exist, it is created as needed.
+The player process when starting, will create this file if it does not exist.
+This is a zero length file.
 .TP
 .B Rgm.Lock
 Before
@@ -1584,7 +1658,8 @@ is locked via the
 .BR flock (2)
 and then is released after the write is complete.
 .sp
-If this file does not exist, it is created as needed.
+The player process when starting, will create this file if it does not exist.
+This is a zero length file.
 .TP
 .B rgmdelta5.4.5
 The rogomatic delta file is:
@@ -1600,7 +1675,15 @@ is the
 version number, such as
 .IR 5.4.5 .
 .sp
-If this file does not exist, it is created as needed.
+When the
+.B \-s
+command line option is used to print the rogomatic scoreboard,
+the rogomatic delta file is merged into the rogomatic score file
+(the rogomatic score file is created if needed), and then the
+rogomatic delta file is removed before printing the result.
+.sp
+If this file does not exist, it is created, otherwise it is appended to by the player process.
+Thus, this file may contain data about previous runs.
 .TP
 .B rgmscore5.4.5
 The rogomatic score file is kept in:
@@ -1616,7 +1699,10 @@ is the
 version number, such as
 .IR 5.4.5 .
 .sp
-If this file does not exist, it is created as needed.
+If this file does not exist, it is created when the
+.B \-s
+command line option is used.
+Thus, this file may contain data about previous runs.
 .TP
 .B rogue.lck
 A lock file used by
@@ -1632,10 +1718,14 @@ it does so in such a way that the program's default path is changed to:
 .in +0.5i
 .BI @RGMDIR@/rogue.lck
 .in -0.5i
+.sp
+If this file does not exist, it is created by
+.BR rogue (6).
+This is a zero length file.
 .TP
 .B rogue.scr
 A score file containing the top scores of
-.BR rogue (6)
+.BR rogue (6).
 .sp
 When
 .BR rogomatic (6)
@@ -1652,6 +1742,9 @@ To view the rogue score file:
 .in +0.5i
 \fBrogue -s @RGMDIR@/rogue.lck\fP
 .in -0.5i
+.sp
+If this file does not exist, it is created by
+.BR rogue (6).
 .TP
 .B saved_termattr
 Before
@@ -1667,6 +1760,10 @@ managed I/O (such as raw terminal mode), it saves the terminal state into the fi
 On exit,
 .BR rogomatic (6)
 will use the contents of this file to the previous (hopefully) sane terminal state.
+.sp
+While running
+.BR rogue (6)
+will create this file, and as it is exiting, the file will be removed.
 .SH SEE ALSO
 .BR flock (2),
 .BR ncurses (3X),
