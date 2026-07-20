@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.3.3 2026-07-19"
+export VERSION="1.3.4 2026-07-19"
 NAME=$(basename "$0")
 export NAME
 #
@@ -112,34 +112,6 @@ function find_progs
 	fi
     fi
 
-    # find rogomatic
-    #
-    ROGOMATIC_TOOL=$(type -P rogomatic)
-    if [[ -z $CAP_Z_FLAG ]]; then
-	if [[ -x ./rogomatic ]]; then
-	    ROGOMATIC_TOOL="./rogomatic"
-	fi
-    fi
-
-    # find player
-    #
-    PLAYER_TOOL=$(type -P player)
-    if [[ -z $CAP_Z_FLAG ]]; then
-	if [[ -x ./player ]]; then
-	    PLAYER_TOOL="./player"
-	fi
-    fi
-
-    # rogue
-    #
-    if [[ -z $CAP_Z_FLAG ]]; then
-	if [[ -x ../rogue5.4/rogue ]]; then
-	    ROGUE_TOOL="../rogue5.4/rogue"
-	elif [[ -x ./rogue ]]; then
-	    ROGUE_TOOL="./rogue"
-	fi
-    fi
-
     # verify that the run_rogo tool is executable
     #
     if [[ ! -e $RUN_ROGO_TOOL ]]; then
@@ -155,6 +127,14 @@ function find_progs
 	return 1
     fi
 
+    # find rogomatic
+    #
+    ROGOMATIC_TOOL=$(type -P rogomatic)
+    if [[ -z $CAP_Z_FLAG ]]; then
+	if [[ -x ./rogomatic ]]; then
+	    ROGOMATIC_TOOL="./rogomatic"
+	fi
+    fi
 
     # verify that the rogomatic tool is executable
     #
@@ -171,6 +151,14 @@ function find_progs
 	return 1
     fi
 
+    # find player
+    #
+    PLAYER_TOOL=$(type -P player)
+    if [[ -z $CAP_Z_FLAG ]]; then
+	if [[ -x ./player ]]; then
+	    PLAYER_TOOL="./player"
+	fi
+    fi
 
     # verify that the player tool is executable
     #
@@ -187,6 +175,16 @@ function find_progs
 	return 1
     fi
 
+    # find rogue
+    #
+    ROGUE_TOOL=$(type -P rogue)
+    if [[ -z $CAP_Z_FLAG ]]; then
+	if [[ -x ../rogue5.4/rogue ]]; then
+	    ROGUE_TOOL="../rogue5.4/rogue"
+	elif [[ -x ./rogue ]]; then
+	    ROGUE_TOOL="./rogue"
+	fi
+    fi
 
     # verify that the rogomatic tool is executable
     #
@@ -203,8 +201,7 @@ function find_progs
 	return 1
     fi
 
-
-    # build run_rogo command line options
+    # build the run_rogo command line options
     #
     unset OPTION
     declare -ag OPTION
