@@ -43,6 +43,7 @@
 char rgmdir[MU_BUF + 1] = { '\0' };	/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
 char lock_path[TY_BUF + 1] = { '\0' };  /* rogomatic lock path, +1 for paranoia */
 char level_path[TY_BUF + 1] = { '\0' }; /* rogomatic level path, +1 for paranoia */
+char total_level_path[TY_BUF + 1] = { '\0' }; /* rogomatic total level path, +1 for paranoia */
 char gamelog_path[TY_BUF + 1] = { '\0' }; /* rogomatic game log path, +1 for paranoia */
 unsigned int dnum = 0;			/* rogue dungeon number */
 long goodgame = GOODGAME;	        /* level at which we always save the rogomatic game log file */
@@ -239,6 +240,32 @@ set_rgmdir (bool time_subpath)
 
     /* save the path */
     memcpy (level_path, path, levelpathlen);
+
+    /* free the allocated path */
+    free (path);
+  }
+
+  /*
+   * if needed, form the rogomatic total level path
+   */
+  if (total_level_path[0] == '\0') {
+    int levelpathlen;	    /* length of the rogomatic level path */
+    char *path = NULL;	    /* allocated path */
+
+    /* allocate the path */
+    path = form_prefix_path (rgmdir, "", "total.lvllog");
+
+    /* form the path */
+    memset (total_level_path, 0, sizeof(total_level_path));
+    levelpathlen = strlen (path);
+    if (levelpathlen >= sizeof(total_level_path)-1) {
+      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u RGMDIR %s: too long to form total level path\n",
+		       __func__, __FILE__, __LINE__, dnum, rgmdir);
+      exit (1);
+    }
+
+    /* save the path */
+    memcpy (total_level_path, path, levelpathlen);
 
     /* free the allocated path */
     free (path);

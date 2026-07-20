@@ -1379,7 +1379,7 @@ quitrogue (char *reason, int gld, int terminationtype)
   char  *k, *r;
   int stat_loc = -1;	/* waitpid() information on rogpid */
   int options;		/* waitpid() options */
-  int seconds;		/* seconds spent waiting */
+  int quarter_seconds;	/* 1/4 seconds spent waiting */
   int ret;		/* waitpid() return */
 
   /* Save the killer and score */
@@ -1459,23 +1459,27 @@ quitrogue (char *reason, int gld, int terminationtype)
       not_reached ();
   }
   options = (WNOHANG | WUNTRACED);
-  seconds = 0;
+  quarter_seconds = 0;
+  usleep (250000); /* sleep 0.25 seconds to allow rogue(6) to exit before our 1st waitpid() call */
   do {
 
       /* look for a rogue process status */
+      ++quarter_seconds;
       errno = 0;
       ret = waitpid (rogpid, &stat_loc, options);
 
       /* if there is not yet rogue status, wait for a second */
       if (ret == 0) {
-	++seconds;
-	if (seconds > ROGUE_SECONDS) {
+	if (quarter_seconds > 4) {
+	  fprintf(stderr, "still waiting after %.2f seconds for rogue pid %d to exit\n",
+			  (double)quarter_seconds/4.0, rogpid);
+	}
+	if (quarter_seconds*4 > ROGUE_SECONDS) {
 	  break;
 	}
-	fprintf(stderr, "\nwaiting for rogue pid %d to exit...\n", rogpid);
-	sleep(1);
+        usleep (250000); /* sleep 0.25 seconds */
       }
-  } while ((ret == 0 && seconds <= ROGUE_SECONDS) || (ret < 0 && errno == EINTR));
+  } while ((ret == 0 && quarter_seconds*4 <= ROGUE_SECONDS) || (ret < 0 && errno == EINTR));
   if (ret < 0) {
     switch (errno) {
     case EINVAL:

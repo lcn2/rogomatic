@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.1.0 2026-07-12"
+export VERSION="1.1.1 2026-07-19"
 NAME=$(basename "$0")
 export NAME
 #
@@ -275,13 +275,13 @@ while :; do
 	    echo "$0: warning: RGMDIR_USED: not a directory: $RGMDIR_USED" 1>&2
 	    continue
 	fi
-	LVLLOG="$RGMDIR_USED/lvllog"
-	export LVLLOG
-	if [[ ! -f $LVLLOG ]]; then
-	    echo "$0: warning: LVLLOG: not a file: $LVLLOG" 1>&2
+	TOTAL_LVLLOG="$RGMDIR_USED/total.lvllog"
+	export TOTAL_LVLLOG
+	if [[ ! -f $TOTAL_LVLLOG ]]; then
+	    echo "$0: warning: TOTAL_LVLLOG: not a file: $TOTAL_LVLLOG" 1>&2
 	    continue
 	fi
-	MODTIME=$(stat -c '%Y' "$LVLLOG" 2>/dev/null)
+	MODTIME=$(stat -c '%Y' "$TOTAL_LVLLOG" 2>/dev/null)
 	export MODTIME
 	if [[ -z $MODTIME ]]; then
 	    echo "$0: warning: MODTIME: is empty" 1>&2

@@ -51,7 +51,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.2.11 2026-07-18"
+# define VERSION "14.2.12 2026-07-18"
 
 /*
  * static declarations
@@ -456,6 +456,9 @@ main (int argc, char *argv[])
   }
   else if (access ("./rogue", R_OK|X_OK) == 0) {
       rfile = "./rogue";
+  }
+  else if (access ("../rogue5.4/rogue", R_OK|X_OK) == 0) {
+      rfile = "../rogue5.4/rogue";
   }
 # ifdef ROGUE
   else if (access (ROGUE, R_OK|X_OK) == 0) {

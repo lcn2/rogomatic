@@ -1,4 +1,4 @@
-.TH ROGOMATIC 6 "2026 Jul 18"
+.TH ROGOMATIC 6 "2026 Jul 19"
 .UC 4
 .SH NAME
 rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exploring The Dungeons of Doom
@@ -269,7 +269,7 @@ required commands yourself.
 The
 .B rogomatic
 plays the game of
-.B rogue
+.BR rogue (6)
 on your behalf while you watch.
 .PP
 Once you have entered the world of
@@ -285,7 +285,7 @@ will enter transparent mode.
 When
 .B rogomatic
 launches
-.B rogue
+.BR rogue (6)
 via the
 .B player
 program, it sets the
@@ -453,19 +453,40 @@ Start up in emacs mode.
 .TP
 .BI \-f \ rogue
 Set the path of
-.BR rogue .
+.BR rogue ,
+overriding the default.
 .sp
 By default,
 .B rogomatic
-first looks for
+first looks for:
+.sp
+.in +0.5i
 .B ./rogue
-in the current directory before looking for
-.B rogue
+.in -0.5i
+.sp
+in the current directory, then it looks for:
+.sp
+.in +0.5i
+.B ../rogue5.4/rogue
+.in -0.5i
+.sp
+before looking for
+.B rogue (6)
 in the default installation location of:
 .BR @BINDIR@/rogue .
 .sp
+.BR IMPORTANT\ NOTE :
+The \fB$PATH\fP
+environment variable is
+.B NOT
+used to find
+.B rogue (6).
+Therefore, the
+.I rogue
+argument needs to be a path.
+.sp
 The
-.B rogomatic
+.BR rogomatic (6)
 command might be able to  play with versions 3.6, 5.2, 5.3, 5.4, 5.4.4, and 5.4.5.
 .sp
 You can run
@@ -1764,6 +1785,26 @@ will use the contents of this file to the previous (hopefully) sane terminal sta
 While running
 .BR rogue (6)
 will create this file, and as it is exiting, the file will be removed.
+.TP
+.B total.lvllog
+Each time player detects that a new level has been reached,
+and when player exits (due to rogue death, player quit, or
+even total winner), this file:
+.sp
+.in +0.5i
+.BI @RGMDIR@/total.lvllog
+.in -0.5i
+.sp
+See
+.B lvllog
+above for a description of the contents of this file.
+.sp
+Unlike
+.BR lvllog ,
+this file isn't truncated at the start of each run.
+.sp
+If this file does not exist, it is created, otherwise it is appended to by the player process.
+Thus, this file may contain data about previous runs.
 .SH SEE ALSO
 .BR flock (2),
 .BR ncurses (3X),
@@ -1945,13 +1986,20 @@ command line option you force both programs to seed with the same value each tim
 This will make behaviour is more likely to be reproducible,
 and a more likely to be successfully debugged.
 .sp
+By using the
+.B \-H
+and the
+.BI \-U\  0
+command line option, you won't slow down the rogomatic operations,
+allowing one to debug deeper dungeon conditions sooner.
+.sp
 The
 .I seed
 value can be any integer between 0 and 2147483647.
 For example:
 .sp
 .in +0.5i
-.B ./rogomatic -d -S 1989014291
+.B ./rogomatic \-H -U 0 \-d \-S 1989014291
 .in -0.5i
 .sp
 Because
@@ -1978,7 +2026,7 @@ command line option.
 For example:
 .sp
 .in +0.5i
-.B lldb -- ./rogomatic -d -S 3
+.B lldb -- ./rogomatic \-H -U 0 \-d \-S 3
 .in -0.5i
 .sp
 Once the debugging has started, set a breakpoint somewhere with the player process:
