@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.3.2 2026-07-19"
+export VERSION="1.3.3 2026-07-19"
 NAME=$(basename "$0")
 export NAME
 #
@@ -93,13 +93,7 @@ export CAP_Z_FLAG=
 export RGMDIR="/var/tmp/rogo"
 
 
-# options we will to the rogue(6) command line
-#
-unset OPTION
-declare -ag OPTION
-
-
-# find_progs - find executables
+# find_progs - find executables, and set run_rogo command line options
 #
 # We search the local directory, nearby directory in case of rogue,
 # and along the $PATH.  We do this in case we are building in the source
@@ -207,6 +201,43 @@ function find_progs
     if [[ ! -x $ROGUE_TOOL ]]; then
 	echo  "$0: Warning: rogue is not an executable file: $ROGUE_TOOL" 1>&2
 	return 1
+    fi
+
+
+    # build run_rogo command line options
+    #
+    unset OPTION
+    declare -ag OPTION
+    if [[ -n $CAP_H_FLAG || $USLEEP -le 0 ]]; then
+	OPTION+=("-H")	# no half time show
+    fi
+    if [[ -n $CAP_U_FLAG ]]; then
+	OPTION+=("-U")		# usec delay (or none)
+	OPTION+=("$USLEEP")
+    fi
+    OPTION+=("-P")		# set player path
+    OPTION+=("$PLAYER_TOOL")
+    OPTION+=("-f")		# set rogue path
+    OPTION+=("$ROGUE_TOOL")
+    OPTION+=("-D")		# set rogomatic directory path
+    OPTION+=("$RGMDIR")
+    if [[ -n $CAP_G_FLAG ]]; then
+	OPTION+=("-G")		# set good game level
+	OPTION+=("$GOODGAME")
+    fi
+    if [[ -n $SECS ]]; then
+	OPTION+=("-a")		# set sleep time between actions
+	OPTION+=("$SECS")
+    fi
+    if [[ -n $SEED ]]; then
+	OPTION+=("-S")		# set seed for pseudo-random number generator
+	OPTION+=("$SEED")
+    fi
+    if [[ -n $D_FLAG ]]; then
+	OPTION+=("-d")		# use a UTC date and time sub-directory under rogomatic directory path
+    fi
+    if [[ -n $E_FLAG ]]; then
+	OPTION+=("-e")		# turn OFF rogomatic game logging
     fi
 
     # found everything
@@ -382,41 +413,6 @@ fi
 if [[ ! -w $RGMDIR ]]; then
     echo "$0: ERROR: not a writable directory: $RGMDIR" 1>&2
     exit 6
-fi
-
-
-# build run_rogo command line options
-#
-if [[ -n $CAP_H_FLAG || $USLEEP -le 0 ]]; then
-    OPTION+=("-H")	# no half time show
-fi
-if [[ -n $CAP_U_FLAG ]]; then
-    OPTION+=("-U")		# usec delay (or none)
-    OPTION+=("$USLEEP")
-fi
-OPTION+=("-P")		# set player path
-OPTION+=("$PLAYER_TOOL")
-OPTION+=("-f")		# set rogue path
-OPTION+=("$ROGUE_TOOL")
-OPTION+=("-D")		# set rogomatic directory path
-OPTION+=("$RGMDIR")
-if [[ -n $CAP_G_FLAG ]]; then
-    OPTION+=("-G")		# set good game level
-    OPTION+=("$GOODGAME")
-fi
-if [[ -n $SECS ]]; then
-    OPTION+=("-a")		# set sleep time between actions
-    OPTION+=("$SECS")
-fi
-if [[ -n $SEED ]]; then
-    OPTION+=("-S")		# set seed for pseudo-random number generator
-    OPTION+=("$SEED")
-fi
-if [[ -n $D_FLAG ]]; then
-    OPTION+=("-d")		# use a UTC date and time sub-directory under rogomatic directory path
-fi
-if [[ -n $E_FLAG ]]; then
-    OPTION+=("-e")		# turn OFF rogomatic game logging
 fi
 
 

@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.4.2 2026-07-19"
+export VERSION="1.4.3 2026-07-19"
 NAME=$(basename "$0")
 export NAME
 #
@@ -79,10 +79,156 @@ export E_FLAG=
 export RGMDIR="/var/tmp/rogo"
 
 
-# options we will to the rogue(6) command line
+# find_progs - find executables, and set the rogomatic tool command line
 #
-unset OPTION
-declare -ag OPTION
+# We search the local directory, nearby directory in case of rogue,
+# and along the $PATH.  We do this in case we are building in the source
+# code directory and don't want to crash a long running rerun_rogo run.
+#
+function find_progs
+{
+    # find run_rogo
+    #
+    RUN_ROGO_TOOL=$(type -P run_rogo)
+    if [[ -z $CAP_Z_FLAG ]]; then
+	if [[ -x ./run_rogo ]]; then
+	    RUN_ROGO_TOOL="./run_rogo"
+	elif [[ -x ./run_rogo.sh ]]; then
+	    RUN_ROGO_TOOL="./run_rogo.sh"
+	fi
+    fi
+
+    # find rogomatic
+    #
+    ROGOMATIC_TOOL=$(type -P rogomatic)
+    if [[ -z $CAP_Z_FLAG ]]; then
+	if [[ -x ./rogomatic ]]; then
+	    ROGOMATIC_TOOL="./rogomatic"
+	fi
+    fi
+
+    # find player
+    #
+    PLAYER_TOOL=$(type -P player)
+    if [[ -z $CAP_Z_FLAG ]]; then
+	if [[ -x ./player ]]; then
+	    PLAYER_TOOL="./player"
+	fi
+    fi
+
+    # rogue
+    #
+    if [[ -z $CAP_Z_FLAG ]]; then
+	if [[ -x ../rogue5.4/rogue ]]; then
+	    ROGUE_TOOL="../rogue5.4/rogue"
+	elif [[ -x ./rogue ]]; then
+	    ROGUE_TOOL="./rogue"
+	fi
+    fi
+
+    # verify that the run_rogo tool is executable
+    #
+    if [[ ! -e $RUN_ROGO_TOOL ]]; then
+	echo  "$0: Warning: run_rogo does not exist: $RUN_ROGO_TOOL" 1>&2
+	return 1
+    fi
+    if [[ ! -f $RUN_ROGO_TOOL ]]; then
+	echo  "$0: Warning: run_rogo is not a regular file: $RUN_ROGO_TOOL" 1>&2
+	return 1
+    fi
+    if [[ ! -x $RUN_ROGO_TOOL ]]; then
+	echo  "$0: Warning: run_rogo is not an executable file: $RUN_ROGO_TOOL" 1>&2
+	return 1
+    fi
+
+
+    # verify that the rogomatic tool is executable
+    #
+    if [[ ! -e $ROGOMATIC_TOOL ]]; then
+	echo  "$0: Warning: rogomatic does not exist: $ROGOMATIC_TOOL" 1>&2
+	return 1
+    fi
+    if [[ ! -f $ROGOMATIC_TOOL ]]; then
+	echo  "$0: Warning: rogomatic is not a regular file: $ROGOMATIC_TOOL" 1>&2
+	return 1
+    fi
+    if [[ ! -x $ROGOMATIC_TOOL ]]; then
+	echo  "$0: Warning: rogomatic is not an executable file: $ROGOMATIC_TOOL" 1>&2
+	return 1
+    fi
+
+
+    # verify that the player tool is executable
+    #
+    if [[ ! -e $PLAYER_TOOL ]]; then
+	echo  "$0: Warning: player does not exist: $PLAYER_TOOL" 1>&2
+	return 1
+    fi
+    if [[ ! -f $PLAYER_TOOL ]]; then
+	echo  "$0: Warning: player is not a regular file: $PLAYER_TOOL" 1>&2
+	return 1
+    fi
+    if [[ ! -x $PLAYER_TOOL ]]; then
+	echo  "$0: Warning: player is not an executable file: $PLAYER_TOOL" 1>&2
+	return 1
+    fi
+
+
+    # verify that the rogomatic tool is executable
+    #
+    if [[ ! -e $ROGUE_TOOL ]]; then
+	echo  "$0: Warning: rogue does not exist: $ROGUE_TOOL" 1>&2
+	return 1
+    fi
+    if [[ ! -f $ROGUE_TOOL ]]; then
+	echo  "$0: Warning: rogue is not a regular file: $ROGUE_TOOL" 1>&2
+	return 1
+    fi
+    if [[ ! -x $ROGUE_TOOL ]]; then
+	echo  "$0: Warning: rogue is not an executable file: $ROGUE_TOOL" 1>&2
+	return 1
+    fi
+
+    # build rogomatic(6) command line options
+    #
+    unset OPTION
+    declare -ag OPTION
+    if [[ -n $CAP_H_FLAG || $USLEEP -le 0 ]]; then
+	OPTION+=("-H")	# no half time show
+    fi
+    if [[ -n $CAP_U_FLAG ]]; then
+	OPTION+=("-U")		# usec delay (or none)
+	OPTION+=("$USLEEP")
+    fi
+    OPTION+=("-P")		# set player path
+    OPTION+=("$PLAYER_TOOL")
+    OPTION+=("-f")		# set rogue path
+    OPTION+=("$ROGUE_TOOL")
+    OPTION+=("-D")		# set rogomatic directory path
+    OPTION+=("$RGMDIR")
+    if [[ -n $CAP_G_FLAG ]]; then
+	OPTION+=("-G")		# set good game level
+	OPTION+=("$GOODGAME")
+    fi
+    if [[ -n $SECS ]]; then
+	OPTION+=("-a")		# set sleep time between actions
+	OPTION+=("$SECS")
+    fi
+    if [[ -n $SEED ]]; then
+	OPTION+=("-S")		# set seed for pseudo-random number generator
+	OPTION+=("$SEED")
+    fi
+    if [[ -n $D_FLAG ]]; then
+	OPTION+=("-d")		# use a UTC date and time sub-directory under rogomatic directory path
+    fi
+    if [[ -n $E_FLAG ]]; then
+	OPTION+=("-e")		# turn OFF rogomatic game logging
+    fi
+
+    # found everything
+    #
+    return 0
+}
 
 
 # usage
@@ -208,52 +354,12 @@ if [[ $# -ne 0 ]]; then
 fi
 
 
-# verify that the rogomatic tool is executable
+# find the programs, and set the rogomatic tool command line
 #
-if [[ ! -e $ROGOMATIC_TOOL ]]; then
-    echo  "$0: ERROR: rogomatic does not exist: $ROGOMATIC_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -f $ROGOMATIC_TOOL ]]; then
-    echo  "$0: ERROR: rogomatic is not a regular file: $ROGOMATIC_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -x $ROGOMATIC_TOOL ]]; then
-    echo  "$0: ERROR: rogomatic is not an executable file: $ROGOMATIC_TOOL" 1>&2
-    exit 5
-fi
-
-
-# verify that the player tool is executable
+# NOTE: This will reset the locations that were established before
+#       the command line was parsed by getopts.
 #
-if [[ ! -e $PLAYER_TOOL ]]; then
-    echo  "$0: ERROR: player does not exist: $PLAYER_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -f $PLAYER_TOOL ]]; then
-    echo  "$0: ERROR: player is not a regular file: $PLAYER_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -x $PLAYER_TOOL ]]; then
-    echo  "$0: ERROR: player is not an executable file: $PLAYER_TOOL" 1>&2
-    exit 5
-fi
-
-
-# verify that the rogomatic tool is executable
-#
-if [[ ! -e $ROGUE_TOOL ]]; then
-    echo  "$0: ERROR: rogue does not exist: $ROGUE_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -f $ROGUE_TOOL ]]; then
-    echo  "$0: ERROR: rogue is not a regular file: $ROGUE_TOOL" 1>&2
-    exit 5
-fi
-if [[ ! -x $ROGUE_TOOL ]]; then
-    echo  "$0: ERROR: rogue is not an executable file: $ROGUE_TOOL" 1>&2
-    exit 5
-fi
+find_progs
 
 
 # verify the rogomatic directory
@@ -272,41 +378,6 @@ fi
 if [[ ! -w $RGMDIR ]]; then
     echo "$0: ERROR: not a writable directory: $RGMDIR" 1>&2
     exit 6
-fi
-
-
-# build rogue(6) command line options
-#
-if [[ -n $CAP_H_FLAG || $USLEEP -le 0 ]]; then
-    OPTION+=("-H")	# no half time show
-fi
-if [[ -n $CAP_U_FLAG ]]; then
-    OPTION+=("-U")		# usec delay (or none)
-    OPTION+=("$USLEEP")
-fi
-OPTION+=("-P")		# set player path
-OPTION+=("$PLAYER_TOOL")
-OPTION+=("-f")		# set rogue path
-OPTION+=("$ROGUE_TOOL")
-OPTION+=("-D")		# set rogomatic directory path
-OPTION+=("$RGMDIR")
-if [[ -n $CAP_G_FLAG ]]; then
-    OPTION+=("-G")		# set good game level
-    OPTION+=("$GOODGAME")
-fi
-if [[ -n $SECS ]]; then
-    OPTION+=("-a")		# set sleep time between actions
-    OPTION+=("$SECS")
-fi
-if [[ -n $SEED ]]; then
-    OPTION+=("-S")		# set seed for pseudo-random number generator
-    OPTION+=("$SEED")
-fi
-if [[ -n $D_FLAG ]]; then
-    OPTION+=("-d")		# use a UTC date and time sub-directory under rogomatic directory path
-fi
-if [[ -n $E_FLAG ]]; then
-    OPTION+=("-e")		# turn OFF rogomatic game logging
 fi
 
 
@@ -366,20 +437,35 @@ fi
 # exec the rogomatic code
 #
 if [[ -z $NOOP ]]; then
-    if [[ $V_FLAG -ge 1 ]]; then
-	echo "$0: debug[5]: about to execute: $ROGOMATIC_TOOL ${OPTION[*]} --" 1>&2
-    fi
-    "$ROGOMATIC_TOOL" "${OPTION[@]}" --
-    status="$?"
-    if [[ $status -ne 0 ]]; then
-	if [[ $status -eq 129 ]]; then
-	    echo "$0: notice SIGHUP: $ROGOMATIC_TOOL ${OPTION[*]} --" 1>&2
-	else
-	    echo "$0: Warning: $ROGOMATIC_TOOL ${OPTION[*]} -- failed," \
-		 "error code: $status" 1>&2
-	    exit 7
+    while :; do
+
+	# find the programs, and set the rogomatic tool command line
+	#
+	find_progs
+	status="$?"
+	if [[ $status -ne 0 ]]; then
+	    sleep 2
+	    continue
 	fi
-    fi
+
+	# run rogomatic
+	#
+	if [[ $V_FLAG -ge 1 ]]; then
+	    echo "$0: debug[5]: about to execute: $ROGOMATIC_TOOL ${OPTION[*]} --" 1>&2
+	fi
+	"$ROGOMATIC_TOOL" "${OPTION[@]}" --
+	status="$?"
+	if [[ $status -ne 0 ]]; then
+	    if [[ $status -eq 129 ]]; then
+		echo "$0: notice SIGHUP: $ROGOMATIC_TOOL ${OPTION[*]} --" 1>&2
+	    else
+		echo "$0: Warning: $ROGOMATIC_TOOL ${OPTION[*]} -- failed," \
+		     "error code: $status" 1>&2
+		exit 7
+	    fi
+	fi
+	break
+    done
 elif [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: because of -n, execution of $ROGOMATIC_TOOL ${OPTION[*]} -- was disabled" 1>&2
 fi
