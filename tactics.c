@@ -927,7 +927,7 @@ trywand (void)
   /* Look for a wall either 3 or 4 away */
   for (dir = 0; dir < 8; dir += 2) {
     for (count = 0, r=atrow, c=atcol;
-         onrc (CANGO | DOOR, r, c) == CANGO;
+         if_onrc (CANGO | DOOR, r, c) == CANGO;
          r += deltr[dir], c += deltc[dir])
       count++;
 
