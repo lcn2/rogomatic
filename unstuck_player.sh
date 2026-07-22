@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.1.1 2026-07-19"
+export VERSION="1.1.2 2026-07-21"
 NAME=$(basename "$0")
 export NAME
 #
@@ -49,11 +49,19 @@ export USR="$USER"
 export CAP_A_FLAG=
 
 
+# NOTE: The following RGMDIR is NOT the default for rogomatic (/var/tmp/rogomatic)
+#       This means you can run rogue(6) and rogomatic by hand
+#       while a rogomatic rerun loop is running without interference.
+#
+export RGMDIR="/var/tmp/rogo"
+
+
 # usage
 #
 export USAGE="usage: $0
         [-h] [-v level] [-V] [-n] [-N]
-        [-A] [-r recheck_sec] [-R restart_sec] [-u user]
+        [-A] [-D rgmdir] [-m missing_sec] [-r recheck_sec]
+        [-R restart_sec] [-u user] [-z loop_sec]
 
     -h          print help message and exit
     -v level    set verbosity level (def level: $V_FLAG)
@@ -61,9 +69,11 @@ export USAGE="usage: $0
     -n          go thru the actions, but do not update any files (def: do the action)
     -N          do not process anything, just parse arguments (def: process something)
 
-    -A                  kill player processes using /var/tmp/rogomatic (def: exclude /var/tmp/rogomatic)
+    -A                  kill player using the rogomatic directory (def: kill 1st player found)
+    -D rgmdir           rogomatic directory (def: $RGMDIR)
     -m missing_sec      seconds to re-check for missing player (def: $MISSING_RECHECK_SEC)
     -r recheck_sec      seconds to re-check running player (def: $RUNNING_RECHECK_SEC)
+
     -R restart_sec      seconds to wait while player restarts (def: $RESTART_SEC)
     -u user             only process player and rogue run by user (def: run by $USR)
     -z loop_sec         kill player when lvllog not updated for loop_sec (def: $CPULOOP_SEC)
@@ -81,7 +91,7 @@ $NAME version: $VERSION"
 
 # parse command line
 #
-while getopts :hv:VnNAr:R:m:u: flag; do
+while getopts :hv:VnNAD:r:R:m:u: flag; do
   case "$flag" in
     h) echo "$USAGE"
 	exit 2
@@ -97,6 +107,8 @@ while getopts :hv:VnNAr:R:m:u: flag; do
 	;;
 
     A) CAP_A_FLAG="-n"
+	;;
+    D) RGMDIR="$OPTARG"
 	;;
     r) RUNNING_RECHECK_SEC="$OPTARG"
         ;;
@@ -159,6 +171,7 @@ if [[ $V_FLAG -ge 3 ]]; then
     echo "$0: debug[3]: USER=$USER" 1>&2
     echo "$0: debug[3]: USR=$USR" 1>&2
     echo "$0: debug[3]: CAP_A_FLAG==$CAP_A_FLAG=" 1>&2
+    echo "$0: debug[3]: RGMDIR=$RGMDIR" 1>&2
 fi
 
 
@@ -198,7 +211,7 @@ while :; do
 	# shellcheck disable=SC2009
 	PS_OUTPUT=$(ps -U "$USR" -o pid,ppid,time,command |
 	            grep -E '[0-9] player [a-z][a-z] [1-9]' |
-		    grep -E -v ' /var/tmp/rogomatic$' |
+		    grep -E -v ' '"$RGMDIR"'$' |
 		    LC_ALL=C sort -n |
 		    head -1)
     else

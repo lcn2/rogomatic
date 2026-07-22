@@ -93,7 +93,7 @@ set_rgmdir (bool time_subpath)
       ret = mkdir(rgmdir, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* mkdir -m 0755 rgmdir */
       if (ret < 0) {
 	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u mkdir %s failed: %s\n",
-			  __func__, __FILE__, __LINE__, dnum, rgmdir, strerror (errno));
+			 __func__, __FILE__, __LINE__, dnum, rgmdir, strerror (errno));
 	exit (1);
       }
   }

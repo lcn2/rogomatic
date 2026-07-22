@@ -1,4 +1,4 @@
-.TH ROGOMATIC 6 "2026 Jul 19"
+.TH ROGOMATIC 6 "2026 Jul 22"
 .UC 4
 .SH NAME
 rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exploring The Dungeons of Doom
@@ -36,10 +36,10 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .BI \-G\  goodlvl
 ]
+.br
 [
 .B \-H
 ]
-.br
 [
 .B \-p
 ]
@@ -240,11 +240,15 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 .B \-A
 ]
 [
+.BI \-D\  rgmdir
+]
+[
 .BI \-m\  missing_sec
 ]
 [
 .BI \-r\  recheck_sec
 ]
+.br
 [
 .BI \-R\  restart_sec
 ]

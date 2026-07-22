@@ -51,7 +51,7 @@
 # define READ    0
 # define WRITE   1
 
-# define VERSION "14.2.13 2026-07-20"
+# define VERSION "14.2.14 2026-07-22"
 
 /*
  * static declarations
@@ -73,6 +73,7 @@ static const char * const usage =
   "    -E            set emacs mode\n"
   "    -f rogue      set path to rogue\n"
   "    -G goodlvl    set the good game level to goodlvl (def: %d)\n"
+  "\n"
   "    -H            disable \"halftime\" show\n"
   "    -p            play back gamelog\n"
   "    -P player     set path to player\n"
@@ -173,7 +174,7 @@ main (int argc, char *argv[])
   /*
    * parse args
    */
-  while ((i = getopt (argc, argv, "hVa:cdD:ef:G:HpP:rs:S:tuU:wE:")) != -1) {
+  while ((i = getopt (argc, argv, ":hVa:cdD:ef:G:HpP:rs:S:tuU:wE:")) != -1) {
     switch (i) {
       case 'h':		/* -h ==> print usage message */
 	fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
@@ -231,7 +232,7 @@ main (int argc, char *argv[])
 	errno = 0;
 	goodgame = strtol (optarg, NULL, 0);
 	if (errno != 0) {
-	  fprintf (stderr, "%s: ERROR: -G %s value must be a integer >= 0\n",
+	  fprintf (stderr, "%s: ERROR: -G %s value must be an integer >= 0\n",
 			   program, optarg);
 	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
 	  exit (3);
@@ -276,7 +277,7 @@ main (int argc, char *argv[])
 	errno = 0;
 	usleep_usec = strtol (optarg, NULL, 0);
 	if (errno != 0) {
-	  fprintf (stderr, "%s: ERROR: -U %s value must be a integer >= 0\n",
+	  fprintf (stderr, "%s: ERROR: -U %s value must be an integer >= 0\n",
 			   program, optarg);
 	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
 	  exit (3);
@@ -502,7 +503,7 @@ main (int argc, char *argv[])
    * setup values that will be used as arguments to player
    */
   snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%u,%ld,%ld",
-           cheat, noterm, echo, nohalf, emacs, terse, user, dnum, goodgame, usleep_usec);
+            cheat, noterm, echo, nohalf, emacs, terse, user, dnum, goodgame, usleep_usec);
   snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
   /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir) */
   snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",

@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.3.4 2026-07-19"
+export VERSION="1.3.5 2026-07-22"
 NAME=$(basename "$0")
 export NAME
 #
@@ -266,7 +266,6 @@ export USAGE="usage: $0
     -a secs             set the timeout timer to secs seconds (def: no timeout timer)
     -d                  use a UTC date and time sub-directory under rogomatic directory path (def: don't)
     -D rmdir            rogomatic directory (def: $RGMDIR)
-                            NOTE: if rgmdir is /var/tmp/rogomatic unstuck_player won't unstick unless -A is used
     -e                  turn off rogomatic game logging (def: rogomatic game log is $RGMDIR/gamelog)
     -f rogue            path to rogue (def: $ROGUE_TOOL)
     -G goodlvl          set the good game level to goodlvl (def: $GOODGAME)
