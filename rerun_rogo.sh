@@ -32,7 +32,7 @@
 
 # setup
 #
-export VERSION="1.3.5 2026-07-22"
+export VERSION="1.3.6 2026-07-22"
 NAME=$(basename "$0")
 export NAME
 #
@@ -236,6 +236,9 @@ function find_progs
     if [[ -n $E_FLAG ]]; then
 	OPTION+=("-e")		# turn OFF rogomatic game logging
     fi
+    if [[ -n $CAP_Z_FLAG ]]; then
+	OPTION+=("-Z")		# search for rogomatic, player, rogue only along $PATH
+    fi
 
     # found everything
     #
@@ -247,9 +250,9 @@ function find_progs
 #
 export USAGE="usage: $0
         [-h] [-v level] [-V] [-n] [-N]
-        [-i idlesec] [-R run_rogo] [-s stopfile] [-Z]
+        [-i idlesec] [-R run_rogo] [-s stopfile]
         [-a secs] [-d] [-D rgmdir] [-e] [-f rogue] [-G goodlvl] [-H]
-        [-P player] [-r rogomatic] [-S seed] [-U usec]
+        [-P player] [-r rogomatic] [-S seed] [-U usec] [-Z]
 
     -h          print help message and exit
     -v level    set verbosity level (def level: $V_FLAG)
@@ -261,7 +264,6 @@ export USAGE="usage: $0
                             NOTE: idlesec must be > 0
     -R run_rogo         path to the run_rogo tool (def: $RUN_ROGO_TOOL)
     -s stopfile         stop the rerun cycle if stopfile exists (def: $STOP_FILE)
-    -Z                  search for run_rogo, rogomatic, player, rogue only along \$PATH (def: try in . first)
 
     -a secs             set the timeout timer to secs seconds (def: no timeout timer)
     -d                  use a UTC date and time sub-directory under rogomatic directory path (def: don't)
@@ -276,6 +278,7 @@ export USAGE="usage: $0
     -S seed             set rogomatic seed (def: use a random seed)
     -U usec             set the sleep time between actions to usec microseconds (def: $USLEEP)
                             NOTE: 0 ==> no delay, and implies -H
+    -Z                  search for run_rogo, rogomatic, player, rogue only along \$PATH (def: try in . first)
 
 Exit codes:
      0         all OK
@@ -292,7 +295,7 @@ $NAME version: $VERSION"
 
 # parse command line
 #
-while getopts :hv:VnNi:R:s:Za:dD:ef:G:HP:r:S:U: flag; do
+while getopts :hv:VnNi:R:s:a:dD:ef:G:HP:r:S:U:Z flag; do
   case "$flag" in
     h) echo "$USAGE"
 	exit 2
@@ -312,8 +315,6 @@ while getopts :hv:VnNi:R:s:Za:dD:ef:G:HP:r:S:U: flag; do
     R) RUN_ROGO_TOOL="$OPTARG"
 	;;
     s) STOP_FILE="$OPTARG"
-	;;
-    Z) CAP_Z_FLAG="-Z"
 	;;
 
     a) SECS="$OPTARG"
@@ -339,6 +340,8 @@ while getopts :hv:VnNi:R:s:Za:dD:ef:G:HP:r:S:U: flag; do
         ;;
     U) USLEEP="$OPTARG"
 	CAP_U_FLAG="-U"
+	;;
+    Z) CAP_Z_FLAG="-Z"
 	;;
 
     \?) echo "$0: ERROR: invalid option: -$OPTARG" 1>&2

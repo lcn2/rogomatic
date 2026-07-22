@@ -127,6 +127,9 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 [
 .BI \-U\  usec
 ]
+[
+.B \-Z
+]
 .in -0.5i
 .PP
 .I rerun_rogo
@@ -155,9 +158,6 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 ]
 [
 .BI \-s\  stopfile
-]
-[
-.B \-Z
 ]
 .br
 [
@@ -193,6 +193,9 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 ]
 [
 .BI \-U\  usec
+]
+[
+.B \-Z
 ]
 .in -0.5i
 .PP
