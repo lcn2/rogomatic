@@ -237,9 +237,6 @@ rogomatic, run_rogo, rerun_rogo, end_player, unstuck_player \- Automatically Exp
 ]
 .br
 [
-.B \-A
-]
-[
 .BI \-D\  rgmdir
 ]
 [
