@@ -27,38 +27,37 @@
  * This file contains all of the monster specific functions.
  */
 
-# include <stdio.h>
-# include <ctype.h>
-# include <string.h>
-# include <setjmp.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include <setjmp.h>
 
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
 
-# define ADJACENT(m) (max (abs (mlist[m].mrow - atrow),\
-			   abs (mlist[m].mcol - atcol)) == 1)
+#define ADJACENT(m) (max(abs(mlist[m].mrow - atrow), abs(mlist[m].mcol - atcol)) == 1)
 
 /*
  * monname: Return a monster name given letter '@ABC..Z'
  */
 
 char *
-monname (char m)
+monname(char m)
 {
-  int indx;
-  char *ret;
+    int indx;
+    char *ret;
 
-  indx = m-'A'+1;
-  if (indx >= 0 && indx < MAXMONST) {
-      ret = monhist[monindex[indx]].m_name;
-  } else {
-      dwait (D_FATAL, __func__, "<%c>: %d", m, (int) m);
-      /* the above dwait call won't return, so we fake an monster name */
-      ret = "bat";
-  }
-  return ret;
+    indx = m - 'A' + 1;
+    if (indx >= 0 && indx < MAXMONST) {
+	ret = monhist[monindex[indx]].m_name;
+    } else {
+	dwait(D_FATAL, __func__, "<%c>: %d", m, (int)m);
+	/* the above dwait call won't return, so we fake an monster name */
+	ret = "bat";
+    }
+    return ret;
 }
 
 /*
@@ -67,29 +66,34 @@ monname (char m)
  */
 
 void
-addmonster (char ch, int r, int c, int quiescence)
+addmonster(char ch, int r, int c, int quiescence)
 {
-  char *monster = monname (ch);
+    char *monster = monname(ch);
 
-  if (r > 1 || c > 3) {
-    if (isholder (monster)) quiescence = AWAKE;
+    if (r > 1 || c > 3) {
+	if (isholder(monster)) {
+	    quiescence = AWAKE;
+	}
 
-    deletemonster (r, c);
-    mlist[mlistlen].chr = ch;
-    mlist[mlistlen].mrow = r;
-    mlist[mlistlen].mcol = c;
-    mlist[mlistlen].q = quiescence;
+	deletemonster(r, c);
+	mlist[mlistlen].chr = ch;
+	mlist[mlistlen].mrow = r;
+	mlist[mlistlen].mcol = c;
+	mlist[mlistlen].q = quiescence;
 
-    if (++mlistlen >= MAXMONST) dwait (D_FATAL, __func__, "Too many monsters");
+	if (++mlistlen >= MAXMONST) {
+	    dwait(D_FATAL, __func__, "Too many monsters");
+	}
 
-    setrc (MONSTER, r, c);
-    lyinginwait = false;
-    new_arch = true;
+	setrc(MONSTER, r, c);
+	lyinginwait = false;
+	new_arch = true;
 
-    /* If we can see it, it is not really invisible */
-    if (stlmatch (monster, "invisible") || streq (monster, "phantom"))
-      beingstalked = 0;
-  }
+	/* If we can see it, it is not really invisible */
+	if (stlmatch(monster, "invisible") || streq(monster, "phantom")) {
+	    beingstalked = 0;
+	}
+    }
 }
 
 /*
@@ -97,16 +101,19 @@ addmonster (char ch, int r, int c, int quiescence)
  */
 
 void
-deletemonster (int r, int c)
+deletemonster(int r, int c)
 {
-  int   i;
+    int i;
 
-  new_arch = true;
-  unsetrc (MONSTER, r, c);
+    new_arch = true;
+    unsetrc(MONSTER, r, c);
 
-  for (i = 0; i < mlistlen; ++i)
-    if (mlist[i].mcol == c && mlist[i].mrow == r)
-      { mlist[i] = mlist[--mlistlen]; i--; }
+    for (i = 0; i < mlistlen; ++i) {
+	if (mlist[i].mcol == c && mlist[i].mrow == r) {
+	    mlist[i] = mlist[--mlistlen];
+	    i--;
+	}
+    }
 }
 
 /*
@@ -114,21 +121,22 @@ deletemonster (int r, int c)
  */
 
 void
-dumpmonster (void)
+dumpmonster(void)
 {
-  int   i;
-  at (1, 0);
+    int i;
+    at(1, 0);
 
-  for (i = 0; i < mlistlen; ++i)
-    printw ("%s at %d,%d(%c) \n",
-            mlist[i].q == AWAKE ? "alert" :
-            mlist[i].q == ASLEEP ? "sleeping" :
-            mlist[i].q == HELD ? "held" : "unknown",
-            mlist[i].mrow, mlist[i].mcol,
-            mlist[i].chr);
+    for (i = 0; i < mlistlen; ++i) {
+	printw("%s at %d,%d(%c) \n",
+	       mlist[i].q == AWAKE    ? "alert"
+	       : mlist[i].q == ASLEEP ? "sleeping"
+	       : mlist[i].q == HELD   ? "held"
+				      : "unknown",
+	       mlist[i].mrow, mlist[i].mcol, mlist[i].chr);
+    }
 
-  printw ("You are at %d,%d.", atrow, atcol);
-  at (row, col);
+    printw("You are at %d,%d.", atrow, atcol);
+    at(row, col);
 }
 
 /*
@@ -139,18 +147,17 @@ dumpmonster (void)
  */
 
 void
-sleepmonster (void)
+sleepmonster(void)
 {
-  int m;
+    int m;
 
-  for (m = 0; m < mlistlen; ++m) {
-    if (mlist[m].q == 0 && ! ADJACENT (m)) {
-      dwait (D_MONSTER, __func__, "Found a sleeping %s at (%d,%d)",
-             monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+    for (m = 0; m < mlistlen; ++m) {
+	if (mlist[m].q == 0 && !ADJACENT(m)) {
+	    dwait(D_MONSTER, __func__, "Found a sleeping %s at (%d,%d)", monname(mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
-      mlist[m].q = ASLEEP;
+	    mlist[m].q = ASLEEP;
+	}
     }
-  }
 }
 
 /*
@@ -158,20 +165,17 @@ sleepmonster (void)
  */
 
 void
-holdmonsters (void)
+holdmonsters(void)
 {
-  int m;
+    int m;
 
-  for (m = 0; m < mlistlen; ++m) {
-    if (mlist[m].q == 0 &&
-        (max (abs (mlist[m].mrow - atrow),
-              abs (mlist[m].mcol - atcol)) < 3)) {
-      dwait (D_MONSTER, __func__, "Holding %s at (%d,%d)",
-             monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+    for (m = 0; m < mlistlen; ++m) {
+	if (mlist[m].q == 0 && (max(abs(mlist[m].mrow - atrow), abs(mlist[m].mcol - atcol)) < 3)) {
+	    dwait(D_MONSTER, __func__, "Holding %s at (%d,%d)", monname(mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
-      mlist[m].q = HELD;
+	    mlist[m].q = HELD;
+	}
     }
-  }
 }
 
 /*
@@ -184,23 +188,19 @@ holdmonsters (void)
  */
 
 void
-wakemonster (int dir)
+wakemonster(int dir)
 {
-  int m;
+    int m;
 
-  for (m = 0; m < mlistlen; ++m) {
-    if (mlist[m].q != AWAKE &&
-        (dir == ALL ||
-         (dir < 0 && ADJACENT(m) && mlist[m].chr == -dir + 'A' - 1) ||
-         (dir >= 0 && dir < 8 &&
-          mlist[m].mrow == atdrow(dir) && mlist[m].mcol == atdcol(dir)))) {
-      dwait (D_MONSTER, __func__, "Waking up %s at (%d,%d)",
-             monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+    for (m = 0; m < mlistlen; ++m) {
+	if (mlist[m].q != AWAKE && (dir == ALL || (dir < 0 && ADJACENT(m) && mlist[m].chr == -dir + 'A' - 1) ||
+				    (dir >= 0 && dir < 8 && mlist[m].mrow == atdrow(dir) && mlist[m].mcol == atdcol(dir)))) {
+	    dwait(D_MONSTER, __func__, "Waking up %s at (%d,%d)", monname(mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
 
-      mlist[m].q = AWAKE;
-      setrc (EVERCLR, mlist[m].mrow, mlist[m].mcol);
+	    mlist[m].q = AWAKE;
+	    setrc(EVERCLR, mlist[m].mrow, mlist[m].mcol);
+	}
     }
-  }
 }
 
 /*
@@ -208,15 +208,17 @@ wakemonster (int dir)
  */
 
 int
-seemonster (char *monster)
+seemonster(char *monster)
 {
-  int m;
+    int m;
 
-  for (m = 0; m < mlistlen; ++m)
-    if (streq (monname (mlist[m].chr), monster))
-      return (1);
+    for (m = 0; m < mlistlen; ++m) {
+	if (streq(monname(mlist[m].chr), monster)) {
+	    return (1);
+	}
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -225,15 +227,17 @@ seemonster (char *monster)
  */
 
 int
-seeawakemonster (char *monster)
+seeawakemonster(char *monster)
 {
-  int m;
+    int m;
 
-  for (m = 0; m < mlistlen; ++m)
-    if (streq (monname (mlist[m].chr), monster) && mlist[m].q == AWAKE)
-      return (1);
+    for (m = 0; m < mlistlen; ++m) {
+	if (streq(monname(mlist[m].chr), monster) && mlist[m].q == AWAKE) {
+	    return (1);
+	}
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -243,15 +247,19 @@ seeawakemonster (char *monster)
  */
 
 int
-monsternum (char *monster)
+monsternum(char *monster)
 {
-  int m, mh;
+    int m, mh;
 
-  if ((mh = findmonster (monster)) != NONE)
-    for (m=0; m<=26; m++)
-      if (monindex[m] == mh) return (m);
+    if ((mh = findmonster(monster)) != NONE) {
+	for (m = 0; m <= 26; m++) {
+	    if (monindex[m] == mh) {
+		return (m);
+	    }
+	}
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -260,22 +268,21 @@ monsternum (char *monster)
  */
 
 void
-newmonsterlevel (void)
+newmonsterlevel(void)
 {
-  int m;
-  char *monster;
+    int m;
+    char *monster;
 
-  for (m=0; m<mlistlen; m++) {
-    monster = monname (mlist[m].chr);
+    for (m = 0; m < mlistlen; m++) {
+	monster = monname(mlist[m].chr);
 
-    if (streq (monster, "floating eye")   ||
-        streq (monster, "leprechaun")     ||
-        streq (monster, "nymph")          ||
-        streq (monster, "ice monster"))
-      mlist[m].q = ASLEEP;
-    else
-      mlist[m].q = 0;
-  }
+	if (streq(monster, "floating eye") || streq(monster, "leprechaun") || streq(monster, "nymph") ||
+	    streq(monster, "ice monster")) {
+	    mlist[m].q = ASLEEP;
+	} else {
+	    mlist[m].q = 0;
+	}
+    }
 }
 
 /*
@@ -283,7 +290,7 @@ newmonsterlevel (void)
  */
 
 int
-isholder (char *monster)
+isholder(char *monster)
 {
-  return (streq (monster, "venus flytrap") || streq (monster, "violet fungi"));
+    return (streq(monster, "venus flytrap") || streq(monster, "violet fungi"));
 }

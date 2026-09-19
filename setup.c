@@ -27,666 +27,653 @@
  * This is the program which forks and execs the Rogue & the Player
  */
 
-# include <stdlib.h>
-# include <unistd.h>
-# include <stdio.h>
-# include <signal.h>
-# include <string.h>
-# include <errno.h>
-# include <time.h>
-# include <sys/time.h>
-# include <strings.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <signal.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
+#include <sys/time.h>
+#include <strings.h>
 
-# include <sys/time.h>	/* for struct itimerval */
-# include <setjmp.h>	/* for sigjmp_buf */
-# include <errno.h>
+#include <sys/time.h> /* for struct itimerval */
+#include <setjmp.h>   /* for sigjmp_buf */
+#include <errno.h>
 
-# include "have_strlcat.h"
-# include "have_strlcpy.h"
-# include "strl.h"
-# include "types.h"
-# include "config.h"
-# include "install.h"
+#include "have_strlcat.h"
+#include "have_strlcpy.h"
+#include "strl.h"
+#include "types.h"
+#include "config.h"
+#include "install.h"
 
-# define READ    0
-# define WRITE   1
+#define READ 0
+#define WRITE 1
 
-# define VERSION "14.2.18 2026-08-10"
+#define VERSION "14.3.0 2026-09-18"
 
 /*
  * global declarations
  */
 
-bool quiet = false;      /* true ==> quiet mode */
+bool quiet = false; /* true ==> quiet mode */
 
 /*
  * static declarations
  */
 
-static const char * const usage =
-  "usage: %s [-h] [-V] [-a secs] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-G goodlvl]\n"
-  "                   [-H] [-p] [-P player] [-q] [-r] [-S ROGOSEED] [-t] [-u] [-U usec] [-w]\n"
-  "                   [-s [rogue_ver] | r_file]\n"
-  "\n"
-  "    -h            print help message and exit\n"
-  "    -V            print version string and exit\n"
-  "\n"
-  "    -a secs       set timeout alarm to secs seconds, may be a non-integer number (i.e., 1.5)\n"
-  "    -c            use trap arrows\n"
-  "    -d            use unique directory name\n"
-  "    -D rgmdir     set rogomatic directory path\n"
-  "    -e            echo file to gamelog\n"
-  "    -E            set emacs mode\n"
-  "    -f rogue      set path to rogue\n"
-  "    -G goodlvl    set the good game level to goodlvl (def: %d)\n"
-  "\n"
-  "    -H            disable \"halftime\" show\n"
-  "    -p            play back gamelog\n"
-  "    -P player     set path to player\n"
-  "    -q            quiet mode: do not output rogue game play (def: do)\n"
-  "    -r            restore saved rogue game (def: from rogue.sav)\n"
-  "    -S ROGOSEED   set $ROGOSEED environment variable for rogue\n"
-  "    -t            give status lines only\n"
-  "    -u            start up in user mode\n"
-  "    -U usec       set the sleep time between actions to usec microseconds (def: %d)\n"
-  "    -w            set watched mode\n"
-  "\n"
-  "    -s rogue_ver  print rogomatic score file for a given rogue version (i.e., 5.4.5)\n"
-  "                      NOTE: for supported rogue version, use: -s 5.4.5\n"
-  "    -s            print rogomatic scores from the default rogomatic score file\n"
-  "                      NOTE: -s by itself must be the last option the on command line,\n"
-  "                            and is not compatible with use of the r_file arg\n"
-  "\n"
-  "     [ r_file ]   With -p, r_file is the gamelog to replay from\n"
-  "                  With -r, r_file is the rogue game to restore from\n"
-  "                      NOTE: use of r_file is not compatible with -s by itself\n"
-  "\n"
-  "Exit codes:\n"
-  "    0         all OK\n"
-  "    1         some error occurred, or player.lck is locked\n"
-  "    2         -h and help string printed or -V and version string printed\n"
-  "    3         command line error\n"
-  " >= 10        internal error\n"
-  "\n"
-  "%s version: %s\n";
+static const char *const usage =
+"usage: %s [-h] [-V] [-a secs] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-G goodlvl]\n"
+    "                   [-H] [-p] [-P player] [-q] [-r] [-S ROGOSEED] [-t] [-u] [-U usec] [-w]\n"
+    "                   [-s [rogue_ver] | r_file]\n"
+    "\n"
+    "    -h            print help message and exit\n"
+    "    -V            print version string and exit\n"
+    "\n"
+    "    -a secs       set timeout alarm to secs seconds, may be a non-integer number (i.e., 1.5)\n"
+    "    -c            use trap arrows\n"
+    "    -d            use unique directory name\n"
+    "    -D rgmdir     set rogomatic directory path\n"
+    "    -e            echo file to gamelog\n"
+    "    -E            set emacs mode\n"
+    "    -f rogue      set path to rogue\n"
+    "    -G goodlvl    set the good game level to goodlvl (def: %d)\n"
+    "\n"
+    "    -H            disable \"halftime\" show\n"
+    "    -p            play back gamelog\n"
+    "    -P player     set path to player\n"
+    "    -q            quiet mode: do not output rogue game play (def: do)\n"
+    "    -r            restore saved rogue game (def: from rogue.sav)\n"
+    "    -S ROGOSEED   set $ROGOSEED environment variable for rogue\n"
+    "    -t            give status lines only\n"
+    "    -u            start up in user mode\n"
+    "    -U usec       set the sleep time between actions to usec microseconds (def: %d)\n"
+    "    -w            set watched mode\n"
+    "\n"
+    "    -s rogue_ver  print rogomatic score file for a given rogue version (i.e., 5.4.5)\n"
+    "                      NOTE: for supported rogue version, use: -s 5.4.5\n"
+    "    -s            print rogomatic scores from the default rogomatic score file\n"
+    "                      NOTE: -s by itself must be the last option the on command line,\n"
+    "                            and is not compatible with use of the r_file arg\n"
+    "\n"
+    "     [ r_file ]   With -p, r_file is the gamelog to replay from\n"
+    "                  With -r, r_file is the rogue game to restore from\n"
+    "                      NOTE: use of r_file is not compatible with -s by itself\n"
+    "\n"
+    "Exit codes:\n"
+    "    0         all OK\n"
+    "    1         some error occurred, or player.lck is locked\n"
+    "    2         -h and help string printed or -V and version string printed\n"
+    "    3         command line error\n"
+    " >= 10        internal error\n"
+    "\n"
+    "%s version: %s\n";
 
-static int frogue = -1;		/* from rogue(6) read pipe file descriptor */
-static int trogue = -1;		/* to rogue(6) write pipe file descriptor */
+static int frogue = -1; /* from rogue(6) read pipe file descriptor */
+static int trogue = -1; /* to rogue(6) write pipe file descriptor */
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
-  int ptc[2], ctp[2];
-  bool creative = false;	    /* true ==> Will use trap arrows */
-  bool time_subpath = false;	    /* true ==> uses UTC date and time sub-directory */
-  bool echo = true;		    /* true ==> Echo file to gamelog */
-  bool nohalf = false;		    /* true ==> No halftime show */
-  bool replay = false;		    /* true ==> Play back gamelog */
-  bool oldgame = false;		    /* true ==> Use saved game */
-  bool score = false;		    /* true ==> Give scores only */
-  bool terse = false;		    /* true ==> Give status lines only */
-  bool user = false;		    /* true ==> Start up in user mode */
-  bool noterm = false;		    /* true ==> Watched mode */
-  bool emacs = false;		    /* true ==> Emacs mode */
-  int child;			    /* fork return: child process id (parent), or 0 (child) */
-  char *rfile = NULL;		    /* rogue executable path, or NULL */
-  char *rfilearg = NULL;	    /* rogue executable path as specified by -f rogue, or NULL*/
-  char options[MU_BUF + 1];	    /* rogomatic options, +1 for paranoia */
-  char ropts[SM_BUF + 1];	    /* rogue options, +1 for paranoia */
-  char roguename[MU_BUF + 1];	    /* rogue player name, +1 for paranoia */
-  char *pfile = NULL;		    /* player path, or NULL */
-  char *pfilearg = NULL;	    /* player executable path as specified by -P player, or NULL*/
-  char *program = "";		    /* our name */
-  char *prog = "";		    /* basename of our name */
-  char *rogue_savefile = NULL;	    /* the rogue save file to restore */
-  char rogoseed[MU_BUF + 1];	    /* dungeon number to set as a unsigned seed */
-  char rogue_dir[MU_BUF + 1];	    /* directory for the rogue files, not impacted by -d */
-  unsigned int dnum = 0;	    /* rogue dungeon number to set */
-  int player_lock_fd = -1;	    /* player lock file descriptor */
-  char *rogue_ver = DEFVER;	    /* rogue version string */
-  bool a_flag = false;		    /* true ==> -a secs are given, and secs was parsed for a value > 0.0 */
-  char *timer_str = "0.0";	    /* number of seconds for ROGOTIMER environment variable */
-  char *endptr = NULL;		    /* end of strtod processing */
-  double secs = 0.0;		    /* timeout timer value */
-  extern char *optarg;		    /* option argument */
-  extern int optind;		    /* argv index of the next arg */
-  int i;
-
-  /*
-   * set our program and prog basename
-   */
-  program = argv[0];
-  prog = rindex(program, '/');
-  if (prog == NULL) {
-    prog = program;
-  } else {
-    ++prog;
-  }
-
-  /* zeroize arrays */
-  memset (options, 0, sizeof(options)); /* paranoia */
-  memset (ropts, 0, sizeof(ropts)); /* paranoia */
-  memset (roguename, 0, sizeof(roguename)); /* paranoia */
-  memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
-  memset (lock_path, 0, sizeof(lock_path)); /* paranoia */
-  memset (rogoseed, 0, sizeof(rogoseed)); /* paranoia */
-  memset (rogue_dir, 0, sizeof(rogue_dir)); /* paranoia */
-
-  /* initialize rogomatic directory path to default */
-  strlcpy (rgmdir, RGMDIR, sizeof(rgmdir));
-
-  /* initialize rogue directory path to default */
-  strlcpy (rogue_dir, RGMDIR, sizeof(rogue_dir));
-
-  /*
-   * parse args
-   */
-  while ((i = getopt (argc, argv, ":hVa:cdD:ef:G:HpP:qrs:S:tuU:wE:")) != -1) {
-    switch (i) {
-      case 'h':		/* -h ==> print usage message */
-	fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
-	exit (2);
-	break;
-
-      case 'V':		/* -V ==> print version string and exit */
-	printf ("%s\n", VERSION);
-	exit (2);
-	break;
-
-      case 'a':		/* -a secs ==> set timeout alarm to secs seconds */
-	/* try to parse secs */
-	errno = 0;
-	secs = strtod (optarg, &endptr);
-	if (optarg == endptr || *endptr != '\0' || errno == ERANGE || secs < 0.0) {
-	  fprintf (stderr, "%s: ERROR: -a %s value must be a number >= 0.0\n",
-			   program, optarg);
-	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
-	  exit (3);
-	}
-
-	/* ROGOTIMER environment variable to the secs string if > 0 */
-	if (secs > 0.0) {
-	  timer_str = optarg;
-	  a_flag = true;
-	}
-	break;
-
-      case 'c':		/* -c ==> Will use trap arrows! */
-	creative = true;
-	break;
-
-      case 'd':		/* -d ==> player uses UTC date and time sub-directory under rogomatic directory path */
-	time_subpath = true;
-	break;
-
-      case 'D':		/* -D path ==> set the rogomatic directory path */
-	memset (rgmdir, 0, sizeof(rgmdir)); /* paranoia */
-	strlcpy (rgmdir, optarg, sizeof(rgmdir));
-	memset (rogue_dir, 0, sizeof(rogue_dir)); /* paranoia */
-	strlcpy (rogue_dir, optarg, sizeof(rogue_dir));
-	break;
-
-      case 'e':		/* -e ==> Echo file to gamelog */
-	echo = false;
-	break;
-
-      case 'f':		/* -f rogue ==> set path to rogue */
-	rfilearg = optarg;
-	break;
-
-      case 'G':		/* -G goodlvl ==> level at which we always save the gamelog file */
-	/* try to parse goodlvl */
-	errno = 0;
-	goodgame = strtol (optarg, NULL, 0);
-	if (errno != 0) {
-	  fprintf (stderr, "%s: ERROR: -G %s value must be an integer >= 0\n",
-			   program, optarg);
-	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
-	  exit (3);
-	}
-	break;
-
-      case 'H':		/* -H ==> No halftime show */
-	nohalf = true;
-	break;
-
-      case 'p':		/* -p ==> Play back gamelog */
-	replay = true;
-	break;
-
-      case 'P':		/* -P player ==> change the path of player */
-	pfilearg = optarg;
-	break;
-
-      case 'q':		/* -q ==> quiet mode */
-	quiet = true;
-	break;
-
-      case 'r':		/* -r ==> Use saved game */
-	oldgame = true;
-	break;
-
-      case 's':		/* -s ==> Give scores only */
-	score = true;
-	rogue_ver = optarg;
-	break;
-
-      case 'S':		/* -S SEED ==> set the rogomatic seed */
-	strlcpy(rogoseed, optarg, sizeof(rogoseed));
-	break;
-
-      case 't':		/* -t ==> Give status lines only */
-	terse = true;
-	break;
-
-      case 'u':		/* -u ==> Start up in user mode */
-	user = true;
-	break;
-
-      case 'U':		/* -U usec ==> sleep time between actions in microseconds */
-	/* try to parse usec */
-	errno = 0;
-	usleep_usec = strtol (optarg, NULL, 0);
-	if (errno != 0) {
-	  fprintf (stderr, "%s: ERROR: -U %s value must be an integer >= 0\n",
-			   program, optarg);
-	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
-	  exit (3);
-	}
-	break;
-
-      case 'w':		/* -w ==> Watched mode */
-	noterm = true;
-	break;
-
-      case 'E':		/* -E ==> Emacs mode */
-	emacs = true;
-	break;
-
-      case ':':
-	/*
-	 * case: -s without an argument
-	 */
-	if (optopt == 's') {
-	  score = true;
-	  rogue_ver = DEFVER; /* use the default rogue version */
-
-	/*
-	 * otherwise report missing argument
-	 */
-	} else {
-	  fprintf (stderr, "%s: requires an argument -- %c\n", program, optopt);
-	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
-	  exit (3);
-	}
-	break;
-
-      case '?':
-	/*
-	 * case: -s without an argument
-	 */
-	if (optopt == 's') {
-	    score = true;
-	    rogue_ver = DEFVER; /* use the default rogue version */
-
-	/*
-	 * otherwise report missing argument
-	 */
-	} else {
-	  fprintf (stderr, "%s: unknown option -- %c\n", program, optopt);
-	  fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
-	  exit (3);
-	}
-	break;
-
-      default:
-	fprintf (stderr, "%s: invalid -flag\n", program);
-	fprintf (stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
-	exit (3);
-	break;
-    }
-  }
-  /* skip over command line options */
-  argv += optind;
-  argc -= optind;
-
-  /*
-   * quiet mode implies no human user is watching, nor interacting with rogomatic
-   */
-  if (quiet) {
-    noterm = true;
-    user = false;
-  }
-
-  /*
-   * set ROGOSEED environment variable
-   *
-   * For rogue, because we will prefix the rogue player name with "rogo-", the
-   * $ROGOSEED environment variable will determine the rogue dungeon number.
-   * For player, the value of the $ROGOSEED environment variable will be recorded
-   * in the "pidlog" file under the rogomatic directory.
-   */
-  if (rogoseed[0] == '\0') {
-    struct timeval tp;	/* now */
+    int ptc[2], ctp[2];
+    bool creative = false;	 /* true ==> Will use trap arrows */
+    bool time_subpath = false;	 /* true ==> uses UTC date and time sub-directory */
+    bool echo = true;		 /* true ==> Echo file to gamelog */
+    bool nohalf = false;	 /* true ==> No halftime show */
+    bool replay = false;	 /* true ==> Play back gamelog */
+    bool oldgame = false;	 /* true ==> Use saved game */
+    bool score = false;		 /* true ==> Give scores only */
+    bool terse = false;		 /* true ==> Give status lines only */
+    bool user = false;		 /* true ==> Start up in user mode */
+    bool noterm = false;	 /* true ==> Watched mode */
+    bool emacs = false;		 /* true ==> Emacs mode */
+    int child;			 /* fork return: child process id (parent), or 0 (child) */
+    char *rfile = NULL;		 /* rogue executable path, or NULL */
+    char *rfilearg = NULL;	 /* rogue executable path as specified by -f rogue, or NULL*/
+    char options[MU_BUF + 1];	 /* rogomatic options, +1 for paranoia */
+    char ropts[SM_BUF + 1];	 /* rogue options, +1 for paranoia */
+    char roguename[MU_BUF + 1];	 /* rogue player name, +1 for paranoia */
+    char *pfile = NULL;		 /* player path, or NULL */
+    char *pfilearg = NULL;	 /* player executable path as specified by -P player, or NULL*/
+    char *program = "";		 /* our name */
+    char *prog = "";		 /* basename of our name */
+    char *rogue_savefile = NULL; /* the rogue save file to restore */
+    char rogoseed[MU_BUF + 1];	 /* dungeon number to set as a unsigned seed */
+    char rogue_dir[MU_BUF + 1];	 /* directory for the rogue files, not impacted by -d */
+    unsigned int dnum = 0;	 /* rogue dungeon number to set */
+    int player_lock_fd = -1;	 /* player lock file descriptor */
+    char *rogue_ver = DEFVER;	 /* rogue version string */
+    bool a_flag = false;	 /* true ==> -a secs are given, and secs was parsed for a value > 0.0 */
+    char *timer_str = "0.0";	 /* number of seconds for ROGOTIMER environment variable */
+    char *endptr = NULL;	 /* end of strtod processing */
+    double secs = 0.0;		 /* timeout timer value */
+    extern char *optarg;	 /* option argument */
+    extern int optind;		 /* argv index of the next arg */
+    int i;
 
     /*
-     * determine dungeon number
+     * set our program and prog basename
      */
-    if (gettimeofday (&tp, NULL) < 0) {
-      dnum = time(NULL);
+    program = argv[0];
+    prog = rindex(program, '/');
+    if (prog == NULL) {
+	prog = program;
     } else {
-      dnum = ((unsigned int)(tp.tv_sec) ^ (((unsigned int)tp.tv_usec) << 12));
+	++prog;
     }
-    dnum += (unsigned int) getpid();
-    dnum += (unsigned int) getuid();
-
-    /*
-     * convert dungeon number into a string
-     */
-    memset (rogoseed, 0, sizeof(rogoseed)); /* paranoia */
-    snprintf (rogoseed, sizeof (rogoseed)-1, "%u", dnum);
-  }
-  if (rogoseed[0] == '\0') {	/* paranoia */
-    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogoseed is an empty string\n",
-		     __func__, __FILE__, __LINE__, dnum);
-    exit (1);
-  }
-  if (setenv ("ROGOSEED", rogoseed, 1) != 0) {
-    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGOSEED\", \"%s\", 1)\n",
-		     __func__, __FILE__, __LINE__, dnum, rogoseed);
-    exit (1);
-  }
-
-  /*
-   * set ROGOTIMER environment variable
-   *
-   * For player, the ROGOTIMER environment variable will determine the number
-   * of seconds before player will timeout waiting for rogue to respond,
-   * when the value is > 0.0.
-   */
-  if (a_flag) {
-    if (timer_str == NULL) { /* paranoia */
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u timer_str is NULL\n",
-		       __func__, __FILE__, __LINE__, dnum);
-      exit (1);
-    } else if (timer_str[0] == '\0') {
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u timer_str is an empty string\n",
-		       __func__, __FILE__, __LINE__, dnum);
-      exit (1);
-    } else if (setenv ("ROGOTIMER", timer_str, 1) != 0) {
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGOTIMER\", \"%s\", 1)\n",
-		       __func__, __FILE__, __LINE__, dnum, timer_str);
-      exit (1);
-    }
-  }
-
-  /*
-   * determine the rogomatic directory path and rogomatic lock file path
-   *
-   * We will form the UTC date and time sub-directory, modifying rgmdir.
-   * When player is execl()-ed, the modified rgmdir as the last arg.
-   */
-  set_rgmdir (time_subpath);
-
-  /*
-   * -s [version] dump score
-   */
-  if (score) {
-    dumpscore (rogue_ver);
-    exit (0);
-  }
-
-  /*
-   * verify that the player lock is not already locked
-   *
-   * We temporally obtain player lock, and then release it if we obtain it.
-   * We know there is a "race condition between releasing it and when player
-   * run are locks the file.  That is OK.  We just want to minimize the chance
-   * that we will try to launch player when another player is running.
-   */
-  player_lock_fd = test_lock_file (__func__, rgmdir, "player.lck");
-  if (player_lock_fd < 0) {
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u failed to to lock %s/player.lck\n",
-		       __func__, __FILE__, __LINE__, dnum, rgmdir);
-      exit(1);
-  }
-  /* release the player lock */
-  unlock_file (__func__, player_lock_fd);
-  player_lock_fd = -1;
-
-  /*
-   * save stdin, stdout, and stderr terminal state into saved_termattr file
-   */
-  if (! save_termattr (rgmdir)) {
-    fprintf (stderr, "Warning: terminal attributes will NOT be restored later on\n");
-  }
-
-  /*
-   * Find which rogue executable to use
-   */
-  if (rfilearg != NULL) {
-    if (access (rfilearg, R_OK|X_OK) == 0) {
-	rfile = rfilearg;
-    }
-    else {
-	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue arg not executable: %s - %s\n",
-			 __func__, __FILE__, __LINE__, dnum, rfilearg, strerror (errno));
-	exit (1);
-    }
-  }
-  else if (access ("./rogue", R_OK|X_OK) == 0) {
-      rfile = "./rogue";
-  }
-  else if (access ("../rogue5.4/rogue", R_OK|X_OK) == 0) {
-      rfile = "../rogue5.4/rogue";
-# ifdef ROGUE
-  } else if (access (ROGUE, R_OK|X_OK) == 0) {
-      rfile = ROGUE;
-# endif
-  } else {
-    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue not found\n",
-		      __func__, __FILE__, __LINE__, dnum);
-    exit (1);
-  }
-
-  /*
-   * Find which player executable to use
-   */
-  if (pfilearg != NULL) {
-    if (access (pfilearg, R_OK|X_OK) == 0) {
-	pfile = pfilearg;
-    } else {
-	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u player arg not executable: %s - %s\n",
-			 __func__, __FILE__, __LINE__, dnum, pfilearg, strerror (errno));
-	exit (1);
-    }
-  } else if (access ("./player", R_OK|X_OK) == 0) {
-      pfile = "./player";
-# ifdef PLAYER
-  } else if (access (PLAYER, R_OK|X_OK) == 0) {
-      pfile = PLAYER;
-# endif
-  } else {
-    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u player not found\n",
-		      __func__, __FILE__, __LINE__, dnum);
-    exit (1);
-  }
-
-  /*
-   * setup values that will be used as arguments to player
-   */
-  snprintf (options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%u,%ld,%ld,%d",
-            creative, noterm, echo, nohalf, emacs, terse, user, dnum, goodgame, usleep_usec,
-	    (quiet ? 1 : 0));
-  snprintf (roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname ());
-  /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir) */
-  snprintf (ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s",
-	    "terse", "noflush", "jump", "seefloor", "nopassgo", "tombstone", "slow", getname (), "apricot",
-	    rogue_dir, "rogue.sav", rogue_dir, "rogue.scr", rogue_dir, "rogue.lck");
-
-  /*
-   * special execution case: replay log
-   */
-  if (replay) {
-    if (pfile != NULL) {
-      char *fname;	/* log file name */
-
-      /*
-       * replaylog: Given a log file name and an options string, exec the player
-       * process to replay the game.  No Rogue process is needed (since we are
-       * replaying an old game), so the frogue and trogue file descriptors are
-       * given the fake value 'Z'.
-       *
-       * ZZ is the an indicator that player does NOT have a pipe pair to use
-       */
-      if (argc == 1) {
-	fname = argv[0];
-      } else {
-	fname = form_prefix_path (rgmdir, "", GAMELOG_FILENAME);
-      }
-      execl (pfile, "player", "ZZ", "0", options, fname, rgmdir, NULL);
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Replay not available, player binary missing: %s\n",
-		       __func__, __FILE__, __LINE__, dnum, pfile);
-    } else {
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u replay: true, pfile == NULL\n",
-		       __func__, __FILE__, __LINE__, dnum);
-    }
-    exit(1);
-
-  }
-
-  /*
-   * setup pipes between rogue and player
-   */
-  if ((pipe (ptc) < 0) || (pipe (ctp) < 0)) {
-    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Cannot get pipes!\n",
-		     __func__, __FILE__, __LINE__, dnum);
-    exit (1);
-  }
-  trogue = ptc[WRITE];
-  frogue = ctp[READ];
-
-  /*
-   * fork rogue child
-   */
-  child = fork ();
-  if (child == 0) {
-
-    /*
-     * child process that will become rogue
-     */
-
-    /* dup child pipe side into stdin and stdout */
-    dup2 (ptc[READ], STDIN_FILENO);
-    dup2 (ctp[WRITE], STDOUT_FILENO);
-
-    /*
-     * set vt100 terminal as player can parse vt100 terminal output
-     */
-    if (setenv ("TERM", "vt100", 1) != 0) {
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"TERM\", \"vt100\", 1)\n",
-		       __func__, __FILE__, __LINE__, dnum);
-      exit (1);
-    }
-
-    /*
-     * set rogomatic options for player to use
-     */
-    if (setenv ("ROGUEOPTS", ropts, 1) != 0) {
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n",
-		       __func__, __FILE__, __LINE__, dnum, ropts);
-      exit (1);
-    }
-
-    /* close down pipe sides used by parent process */
-    close (ptc[WRITE]);
-    close (ctp[READ]);
-
-    /*
-     * exec a rogue game with the args as needed
-     */
-    if (oldgame) {
-
-      if (rfile != NULL) {
-	rogue_savefile = form_path (rgmdir, "rogue.sav");
-	execl (rfile, "rogue", "-S", "--", rogue_savefile, NULL);
-	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue default restore exec failed: %s -S -r %s: %s\n",
-			 __func__, __FILE__, __LINE__, dnum, rfile, rogue_savefile, strerror (errno));
-      } else {
-	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u oldgame: true, rogue path is NULL\n",
-		         __func__, __FILE__, __LINE__, dnum);
-      }
-
-    } else if (argc > 0) {
-
-      if (rfile != NULL) {
-	execl (rfile, "rogue", "-S", "--", argv[0], NULL);
-	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue restore exec failed: %s -S %s: %s\n",
-			 __func__, __FILE__, __LINE__, dnum, rfile, argv[0], strerror (errno));
-      } else {
-	fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u argc: %d > 0, rogue path is NULL\n",
-			 __func__, __FILE__, __LINE__, dnum, argc);
-      }
-
-    } else if (rfile != NULL) {
-
-      execl (rfile, "rogue", "-S", NULL);
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue exec failed: %s -S: %s\n",
-		       __func__, __FILE__, __LINE__, dnum, rfile, strerror (errno));
-
-    } else {
-
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue path never set, rogue path is NULL\n",
-		       __func__, __FILE__, __LINE__, dnum);
-
-    }
-    exit (1);
-
-  /*
-   * execute player as parent process
-   *
-   * XXX - Instead of execl(2) of player, we should start off running code along the lines of main.c,
-   *	   and fork a child (with pipes) to run rogue.  The global variables that are used in main.c
-   *	   should instead of a function that re-initializes those global variables that need to be
-   *	   re-initialized.  The SIGCHLD received should trigger whatever "end of rogue" game that
-   *	   is needed, and when have the option re-spawning a new rogue game.  We don't need a separate
-   *	   player executable, just a rogomatic executable that does the proper job of parsing
-   *	   command line arg, initializing (or re-initializing those global variables as needed),
-   *	   forking a rogue(6) game with pipes, and handling the case where the rogue(6) game exits.
-   */
-  } else {
-    /* Encode the open files into a two character string */
-    char ft[3];
-    char rp[MU_BUF + 1]; /* rogue pid, +1 for paranoia */
-
-    /*
-     * parent process that will become player
-     */
 
     /* zeroize arrays */
-    memset (rp, 0, sizeof(rp)); /* paranoia */
+    memset(options, 0, sizeof(options));     /* paranoia */
+    memset(ropts, 0, sizeof(ropts));	     /* paranoia */
+    memset(roguename, 0, sizeof(roguename)); /* paranoia */
+    memset(rgmdir, 0, sizeof(rgmdir));	     /* paranoia */
+    memset(lock_path, 0, sizeof(lock_path)); /* paranoia */
+    memset(rogoseed, 0, sizeof(rogoseed));   /* paranoia */
+    memset(rogue_dir, 0, sizeof(rogue_dir)); /* paranoia */
 
-    /* let player know the file descriptors that contain the pipes to the rogue program */
-    ft[0] = 'a' + frogue;
-    ft[1] = 'a' + trogue;
-    ft[2] = '\0';
+    /* initialize rogomatic directory path to default */
+    strlcpy(rgmdir, RGMDIR, sizeof(rgmdir));
 
-    /* Pass the process ID of the Rogue process as an ASCII string */
-    snprintf (rp, MU_BUF, "%d", child);
+    /* initialize rogue directory path to default */
+    strlcpy(rogue_dir, RGMDIR, sizeof(rogue_dir));
 
-    /* close down pipe sides used by child rogue process */
-    close (ptc[READ]);
-    close (ctp[WRITE]);
+    /*
+     * parse args
+     */
+    while ((i = getopt(argc, argv, ":hVa:cdD:ef:G:HpP:qrs:S:tuU:wE:")) != -1) {
+	switch (i) {
+	case 'h': /* -h ==> print usage message */
+	    fprintf(stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+	    exit(2);
+	    break;
 
-    if (pfile != NULL) {
-      execl (pfile, "player", ft, rp, options, roguename, rgmdir, NULL);
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Rogomatic not available, player binary missing: %s\n",
-		       __func__, __FILE__, __LINE__, dnum, pfile);
-      kill (child, SIGKILL);
-    } else {
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u player path never set, pfile is NULL\n",
-		       __func__, __FILE__, __LINE__, dnum);
-      exit (1);
+	case 'V': /* -V ==> print version string and exit */
+	    printf("%s\n", VERSION);
+	    exit(2);
+	    break;
+
+	case 'a': /* -a secs ==> set timeout alarm to secs seconds */
+	    /* try to parse secs */
+	    errno = 0;
+	    secs = strtod(optarg, &endptr);
+	    if (optarg == endptr || *endptr != '\0' || errno == ERANGE || secs < 0.0) {
+		fprintf(stderr, "%s: ERROR: -a %s value must be a number >= 0.0\n", program, optarg);
+		fprintf(stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+		exit(3);
+	    }
+
+	    /* ROGOTIMER environment variable to the secs string if > 0 */
+	    if (secs > 0.0) {
+		timer_str = optarg;
+		a_flag = true;
+	    }
+	    break;
+
+	case 'c': /* -c ==> Will use trap arrows! */
+	    creative = true;
+	    break;
+
+	case 'd': /* -d ==> player uses UTC date and time sub-directory under rogomatic directory path */
+	    time_subpath = true;
+	    break;
+
+	case 'D':			       /* -D path ==> set the rogomatic directory path */
+	    memset(rgmdir, 0, sizeof(rgmdir)); /* paranoia */
+	    strlcpy(rgmdir, optarg, sizeof(rgmdir));
+	    memset(rogue_dir, 0, sizeof(rogue_dir)); /* paranoia */
+	    strlcpy(rogue_dir, optarg, sizeof(rogue_dir));
+	    break;
+
+	case 'e': /* -e ==> Echo file to gamelog */
+	    echo = false;
+	    break;
+
+	case 'f': /* -f rogue ==> set path to rogue */
+	    rfilearg = optarg;
+	    break;
+
+	case 'G': /* -G goodlvl ==> level at which we always save the gamelog file */
+	    /* try to parse goodlvl */
+	    errno = 0;
+	    goodgame = strtol(optarg, NULL, 0);
+	    if (errno != 0) {
+		fprintf(stderr, "%s: ERROR: -G %s value must be an integer >= 0\n", program, optarg);
+		fprintf(stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+		exit(3);
+	    }
+	    break;
+
+	case 'H': /* -H ==> No halftime show */
+	    nohalf = true;
+	    break;
+
+	case 'p': /* -p ==> Play back gamelog */
+	    replay = true;
+	    break;
+
+	case 'P': /* -P player ==> change the path of player */
+	    pfilearg = optarg;
+	    break;
+
+	case 'q': /* -q ==> quiet mode */
+	    quiet = true;
+	    break;
+
+	case 'r': /* -r ==> Use saved game */
+	    oldgame = true;
+	    break;
+
+	case 's': /* -s ==> Give scores only */
+	    score = true;
+	    rogue_ver = optarg;
+	    break;
+
+	case 'S': /* -S SEED ==> set the rogomatic seed */
+	    strlcpy(rogoseed, optarg, sizeof(rogoseed));
+	    break;
+
+	case 't': /* -t ==> Give status lines only */
+	    terse = true;
+	    break;
+
+	case 'u': /* -u ==> Start up in user mode */
+	    user = true;
+	    break;
+
+	case 'U': /* -U usec ==> sleep time between actions in microseconds */
+	    /* try to parse usec */
+	    errno = 0;
+	    usleep_usec = strtol(optarg, NULL, 0);
+	    if (errno != 0) {
+		fprintf(stderr, "%s: ERROR: -U %s value must be an integer >= 0\n", program, optarg);
+		fprintf(stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+		exit(3);
+	    }
+	    break;
+
+	case 'w': /* -w ==> Watched mode */
+	    noterm = true;
+	    break;
+
+	case 'E': /* -E ==> Emacs mode */
+	    emacs = true;
+	    break;
+
+	case ':':
+	    /*
+	     * case: -s without an argument
+	     */
+	    if (optopt == 's') {
+		score = true;
+		rogue_ver = DEFVER; /* use the default rogue version */
+
+		/*
+		 * otherwise report missing argument
+		 */
+	    } else {
+		fprintf(stderr, "%s: requires an argument -- %c\n", program, optopt);
+		fprintf(stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+		exit(3);
+	    }
+	    break;
+
+	case '?':
+	    /*
+	     * case: -s without an argument
+	     */
+	    if (optopt == 's') {
+		score = true;
+		rogue_ver = DEFVER; /* use the default rogue version */
+
+		/*
+		 * otherwise report missing argument
+		 */
+	    } else {
+		fprintf(stderr, "%s: unknown option -- %c\n", program, optopt);
+		fprintf(stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+		exit(3);
+	    }
+	    break;
+
+	default:
+	    fprintf(stderr, "%s: invalid -flag\n", program);
+	    fprintf(stderr, usage, program, GOODGAME, USLEEP, prog, VERSION);
+	    exit(3);
+	    break;
+	}
     }
-  }
+    /* skip over command line options */
+    argv += optind;
+    argc -= optind;
+
+    /*
+     * quiet mode implies no human user is watching, nor interacting with rogomatic
+     */
+    if (quiet) {
+	noterm = true;
+	user = false;
+    }
+
+    /*
+     * set ROGOSEED environment variable
+     *
+     * For rogue, because we will prefix the rogue player name with "rogo-", the
+     * $ROGOSEED environment variable will determine the rogue dungeon number.
+     * For player, the value of the $ROGOSEED environment variable will be recorded
+     * in the "pidlog" file under the rogomatic directory.
+     */
+    if (rogoseed[0] == '\0') {
+	struct timeval tp; /* now */
+
+	/*
+	 * determine dungeon number
+	 */
+	if (gettimeofday(&tp, NULL) < 0) {
+	    dnum = time(NULL);
+	} else {
+	    dnum = ((unsigned int)(tp.tv_sec) ^ (((unsigned int)tp.tv_usec) << 12));
+	}
+	dnum += (unsigned int)getpid();
+	dnum += (unsigned int)getuid();
+
+	/*
+	 * convert dungeon number into a string
+	 */
+	memset(rogoseed, 0, sizeof(rogoseed)); /* paranoia */
+	snprintf(rogoseed, sizeof(rogoseed) - 1, "%u", dnum);
+    }
+    if (rogoseed[0] == '\0') { /* paranoia */
+	fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogoseed is an empty string\n", __func__, __FILE__, __LINE__,
+		dnum);
+	exit(1);
+    }
+    if (setenv("ROGOSEED", rogoseed, 1) != 0) {
+	fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGOSEED\", \"%s\", 1)\n", __func__, __FILE__,
+		__LINE__, dnum, rogoseed);
+	exit(1);
+    }
+
+    /*
+     * set ROGOTIMER environment variable
+     *
+     * For player, the ROGOTIMER environment variable will determine the number
+     * of seconds before player will timeout waiting for rogue to respond,
+     * when the value is > 0.0.
+     */
+    if (a_flag) {
+	if (timer_str == NULL) { /* paranoia */
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u timer_str is NULL\n", __func__, __FILE__, __LINE__, dnum);
+	    exit(1);
+	} else if (timer_str[0] == '\0') {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u timer_str is an empty string\n", __func__, __FILE__,
+		    __LINE__, dnum);
+	    exit(1);
+	} else if (setenv("ROGOTIMER", timer_str, 1) != 0) {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGOTIMER\", \"%s\", 1)\n", __func__,
+		    __FILE__, __LINE__, dnum, timer_str);
+	    exit(1);
+	}
+    }
+
+    /*
+     * determine the rogomatic directory path and rogomatic lock file path
+     *
+     * We will form the UTC date and time sub-directory, modifying rgmdir.
+     * When player is execl()-ed, the modified rgmdir as the last arg.
+     */
+    set_rgmdir(time_subpath);
+
+    /*
+     * -s [version] dump score
+     */
+    if (score) {
+	dumpscore(rogue_ver);
+	exit(0);
+    }
+
+    /*
+     * verify that the player lock is not already locked
+     *
+     * We temporally obtain player lock, and then release it if we obtain it.
+     * We know there is a "race condition between releasing it and when player
+     * run are locks the file.  That is OK.  We just want to minimize the chance
+     * that we will try to launch player when another player is running.
+     */
+    player_lock_fd = test_lock_file(__func__, rgmdir, "player.lck");
+    if (player_lock_fd < 0) {
+	fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u failed to to lock %s/player.lck\n", __func__, __FILE__, __LINE__,
+		dnum, rgmdir);
+	exit(1);
+    }
+    /* release the player lock */
+    unlock_file(__func__, player_lock_fd);
+    player_lock_fd = -1;
+
+    /*
+     * save stdin, stdout, and stderr terminal state into saved_termattr file
+     */
+    if (!save_termattr(rgmdir)) {
+	fprintf(stderr, "Warning: terminal attributes will NOT be restored later on\n");
+    }
+
+    /*
+     * Find which rogue executable to use
+     */
+    if (rfilearg != NULL) {
+	if (access(rfilearg, R_OK | X_OK) == 0) {
+	    rfile = rfilearg;
+	} else {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue arg not executable: %s - %s\n", __func__, __FILE__,
+		    __LINE__, dnum, rfilearg, strerror(errno));
+	    exit(1);
+	}
+    } else if (access("./rogue", R_OK | X_OK) == 0) {
+	rfile = "./rogue";
+    } else if (access("../rogue5.4/rogue", R_OK | X_OK) == 0) {
+	rfile = "../rogue5.4/rogue";
+#ifdef ROGUE
+    } else if (access(ROGUE, R_OK | X_OK) == 0) {
+	rfile = ROGUE;
+#endif
+    } else {
+	fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue not found\n", __func__, __FILE__, __LINE__, dnum);
+	exit(1);
+    }
+
+    /*
+     * Find which player executable to use
+     */
+    if (pfilearg != NULL) {
+	if (access(pfilearg, R_OK | X_OK) == 0) {
+	    pfile = pfilearg;
+	} else {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u player arg not executable: %s - %s\n", __func__, __FILE__,
+		    __LINE__, dnum, pfilearg, strerror(errno));
+	    exit(1);
+	}
+    } else if (access("./player", R_OK | X_OK) == 0) {
+	pfile = "./player";
+#ifdef PLAYER
+    } else if (access(PLAYER, R_OK | X_OK) == 0) {
+	pfile = PLAYER;
+#endif
+    } else {
+	fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u player not found\n", __func__, __FILE__, __LINE__, dnum);
+	exit(1);
+    }
+
+    /*
+     * setup values that will be used as arguments to player
+     */
+    snprintf(options, MU_BUF, "%d,%d,%d,%d,%d,%d,%d,%u,%ld,%ld,%d", creative, noterm, echo, nohalf, emacs, terse, user, dnum,
+	     goodgame, usleep_usec, (quiet ? 1 : 0));
+    snprintf(roguename, MU_BUF, "Rog-O-Matic %s for %s", RGMVER, getname());
+    /* NOTE: The rogue save, rogue score, and rogue lock files are NOT subject to the -d (UTC date and time sub-dir) */
+    snprintf(ropts, SM_BUF, "%s,%s,%s,%s,%s,%s,inven=%s,name=%s,fruit=%s,file=%s/%s,score=%s/%s,lock=%s/%s", "terse", "noflush",
+	     "jump", "seefloor", "nopassgo", "tombstone", "slow", getname(), "apricot", rogue_dir, "rogue.sav", rogue_dir,
+	     "rogue.scr", rogue_dir, "rogue.lck");
+
+    /*
+     * special execution case: replay log
+     */
+    if (replay) {
+	if (pfile != NULL) {
+	    char *fname; /* log file name */
+
+	    /*
+	     * replaylog: Given a log file name and an options string, exec the player
+	     * process to replay the game.  No Rogue process is needed (since we are
+	     * replaying an old game), so the frogue and trogue file descriptors are
+	     * given the fake value 'Z'.
+	     *
+	     * ZZ is the an indicator that player does NOT have a pipe pair to use
+	     */
+	    if (argc == 1) {
+		fname = argv[0];
+	    } else {
+		fname = form_prefix_path(rgmdir, "", GAMELOG_FILENAME);
+	    }
+	    execl(pfile, "player", "ZZ", "0", options, fname, rgmdir, NULL);
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u Replay not available, player binary missing: %s\n", __func__,
+		    __FILE__, __LINE__, dnum, pfile);
+	} else {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u replay: true, pfile == NULL\n", __func__, __FILE__, __LINE__,
+		    dnum);
+	}
+	exit(1);
+    }
+
+    /*
+     * setup pipes between rogue and player
+     */
+    if ((pipe(ptc) < 0) || (pipe(ctp) < 0)) {
+	fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u Cannot get pipes!\n", __func__, __FILE__, __LINE__, dnum);
+	exit(1);
+    }
+    trogue = ptc[WRITE];
+    frogue = ctp[READ];
+
+    /*
+     * fork rogue child
+     */
+    child = fork();
+    if (child == 0) {
+
+	/*
+	 * child process that will become rogue
+	 */
+
+	/* dup child pipe side into stdin and stdout */
+	dup2(ptc[READ], STDIN_FILENO);
+	dup2(ctp[WRITE], STDOUT_FILENO);
+
+	/*
+	 * set vt100 terminal as player can parse vt100 terminal output
+	 */
+	if (setenv("TERM", "vt100", 1) != 0) {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"TERM\", \"vt100\", 1)\n", __func__, __FILE__,
+		    __LINE__, dnum);
+	    exit(1);
+	}
+
+	/*
+	 * set rogomatic options for player to use
+	 */
+	if (setenv("ROGUEOPTS", ropts, 1) != 0) {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u can't setenv (\"ROGUEOPTS\", \"%s\", 1)\n", __func__,
+		    __FILE__, __LINE__, dnum, ropts);
+	    exit(1);
+	}
+
+	/* close down pipe sides used by parent process */
+	close(ptc[WRITE]);
+	close(ctp[READ]);
+
+	/*
+	 * exec a rogue game with the args as needed
+	 */
+	if (oldgame) {
+
+	    if (rfile != NULL) {
+		rogue_savefile = form_path(rgmdir, "rogue.sav");
+		execl(rfile, "rogue", "-S", "--", rogue_savefile, NULL);
+		fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue default restore exec failed: %s -S -r %s: %s\n",
+			__func__, __FILE__, __LINE__, dnum, rfile, rogue_savefile, strerror(errno));
+	    } else {
+		fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u oldgame: true, rogue path is NULL\n", __func__, __FILE__,
+			__LINE__, dnum);
+	    }
+
+	} else if (argc > 0) {
+
+	    if (rfile != NULL) {
+		execl(rfile, "rogue", "-S", "--", argv[0], NULL);
+		fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue restore exec failed: %s -S %s: %s\n", __func__,
+			__FILE__, __LINE__, dnum, rfile, argv[0], strerror(errno));
+	    } else {
+		fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u argc: %d > 0, rogue path is NULL\n", __func__, __FILE__,
+			__LINE__, dnum, argc);
+	    }
+
+	} else if (rfile != NULL) {
+
+	    execl(rfile, "rogue", "-S", NULL);
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue exec failed: %s -S: %s\n", __func__, __FILE__,
+		    __LINE__, dnum, rfile, strerror(errno));
+
+	} else {
+
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u rogue path never set, rogue path is NULL\n", __func__,
+		    __FILE__, __LINE__, dnum);
+	}
+	exit(1);
+
+	/*
+	 * execute player as parent process
+	 *
+	 * XXX - Instead of execl(2) of player, we should start off running code along the lines of main.c,
+	 *	   and fork a child (with pipes) to run rogue.  The global variables that are used in main.c
+	 *	   should instead of a function that re-initializes those global variables that need to be
+	 *	   re-initialized.  The SIGCHLD received should trigger whatever "end of rogue" game that
+	 *	   is needed, and when have the option re-spawning a new rogue game.  We don't need a separate
+	 *	   player executable, just a rogomatic executable that does the proper job of parsing
+	 *	   command line arg, initializing (or re-initializing those global variables as needed),
+	 *	   forking a rogue(6) game with pipes, and handling the case where the rogue(6) game exits.
+	 */
+    } else {
+	/* Encode the open files into a two character string */
+	char ft[3];
+	char rp[MU_BUF + 1]; /* rogue pid, +1 for paranoia */
+
+	/*
+	 * parent process that will become player
+	 */
+
+	/* zeroize arrays */
+	memset(rp, 0, sizeof(rp)); /* paranoia */
+
+	/* let player know the file descriptors that contain the pipes to the rogue program */
+	ft[0] = 'a' + frogue;
+	ft[1] = 'a' + trogue;
+	ft[2] = '\0';
+
+	/* Pass the process ID of the Rogue process as an ASCII string */
+	snprintf(rp, MU_BUF, "%d", child);
+
+	/* close down pipe sides used by child rogue process */
+	close(ptc[READ]);
+	close(ctp[WRITE]);
+
+	if (pfile != NULL) {
+	    execl(pfile, "player", ft, rp, options, roguename, rgmdir, NULL);
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u Rogomatic not available, player binary missing: %s\n",
+		    __func__, __FILE__, __LINE__, dnum, pfile);
+	    kill(child, SIGKILL);
+	} else {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u player path never set, pfile is NULL\n", __func__, __FILE__,
+		    __LINE__, dnum);
+	    exit(1);
+	}
+    }
 }

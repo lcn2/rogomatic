@@ -30,24 +30,24 @@
  * (because Rogue uses a different dungeon each time).
  */
 
-# include <stdlib.h>
-# include <setjmp.h>
-# include <string.h>
-# include <stdarg.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <string.h>
+#include <stdarg.h>
 
-# include "have_strlcat.h"
-# include "have_strlcpy.h"
-# include "strl.h"
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
-# include "install.h"
+#include "have_strlcat.h"
+#include "have_strlcpy.h"
+#include "strl.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
+#include "install.h"
 
 /* static declarations */
-static void dumpflags (int r, int c);
-static int getscrpos (char *msg, int *r, int *c);
-static const char *msgtype_str (int msgtype);
+static void dumpflags(int r, int c);
+static int getscrpos(char *msg, int *r, int *c);
+static const char *msgtype_str(int msgtype);
 
 /*
  * msgtype_str: message type as a string
@@ -123,109 +123,148 @@ msgtype_str(int msgtype)
 int
 dwait(int msgtype, const char *from, char *f, ...)
 {
-  char msg[MU_BUF + 1];	/* message buffer, +1 for paranoia */
-  int from_len;		/* length of function name by colon (:) space */
-  int r, c;
-  va_list ap;
+    char msg[MU_BUF + 1]; /* message buffer, +1 for paranoia */
+    int from_len;	  /* length of function name by colon (:) space */
+    int r, c;
+    va_list ap;
 
-  /* zeroize arrays */
-  memset (msg, 0, sizeof(msg)); /* paranoia */
+    /* zeroize arrays */
+    memset(msg, 0, sizeof(msg)); /* paranoia */
 
-  /* pre-load calling function name followed by colon (:) space */
-  from_len = strlen(from) + 1 + 1;
-  snprintf(msg, from_len+1, "%s: ", from);
+    /* pre-load calling function name followed by colon (:) space */
+    from_len = strlen(from) + 1 + 1;
+    snprintf(msg, from_len + 1, "%s: ", from);
 
-  /* Build the actual message */
-  va_start (ap, f);
-  vsnprintf (msg+from_len, MU_BUF-from_len, f, ap);
-  va_end(ap);
+    /* Build the actual message */
+    va_start(ap, f);
+    vsnprintf(msg + from_len, MU_BUF - from_len, f, ap);
+    va_end(ap);
 
-  /* Log the message if the error is severe enough */
-  if (!replaying && (msgtype & (D_FATAL | D_ERROR | D_WARNING))) {
-    char *path;	    /* error filename */
-    FILE *errfil;
+    /* Log the message if the error is severe enough */
+    if (!replaying && (msgtype & (D_FATAL | D_ERROR | D_WARNING))) {
+	char *path; /* error filename */
+	FILE *errfil;
 
-    /* form error filename */
-    path = form_prefix_path (rgmdir, "error",  versionstr);
+	/* form error filename */
+	path = form_prefix_path(rgmdir, "error", versionstr);
 
-    /* append an error message to the error filename */
-    if ((errfil = wopen (path, "a")) != NULL) {
-      fprintf (errfil, "User %s: error type %d (%s): %s\n\n",
-               getname(), msgtype, msgtype_str(msgtype), msg);
+	/* append an error message to the error filename */
+	if ((errfil = wopen(path, "a")) != NULL) {
+	    fprintf(errfil, "User %s: error type %d (%s): %s\n\n", getname(), msgtype, msgtype_str(msgtype), msg);
 
-      if (msgtype & (D_FATAL | D_ERROR)) {
-        printsnap (errfil);
-        summary (errfil, NEWLINE);
-        fprintf (errfil, "\f\n");
-      }
+	    if (msgtype & (D_FATAL | D_ERROR)) {
+		printsnap(errfil);
+		summary(errfil, NEWLINE);
+		fprintf(errfil, "\f\n");
+	    }
 
-      fclose (errfil);
-    }
-
-    /* free error filename */
-    if (path != NULL) {
-	free(path);
-	path = NULL;
-    }
-  }
-
-  if (msgtype & D_FATAL) {
-    extern jmp_buf commandtop;			/* From play */
-    saynow ("%s", msg);
-    playing = false;
-    quitrogue (msg, Gold, SAVED);
-
-    /*
-     * record the final state to the end of the level log
-     */
-    levellog_append (msg);
-    longjmp (commandtop, 0);
-  }
-
-  if (! debug (msgtype | D_INFORM)) {	/* If debugoff */
-    if (msgtype & D_SAY)			  /* Echo? */
-      { saynow ("%s", msg); va_end (ap); return (1); }  /* Yes => win */
-
-    return (0);					  /* No => lose */
-  }
-
-  if (*msg) { mvaddstr (0, 0, msg); clrtoeol (); }	/* Write msg */
-
-  if (noterm) { va_end (ap); return (1); }		/* Exit if no user */
-
-  /* Debugging loop, accept debugging commands from user */
-  while (1) {
-    if (!quiet) {
-      refresh ();
-    }
-
-    switch (fgetc (stdin)) {
-      case '?':
-        say ("i=inv, d=debug !=stf, @=mon, #=wls, $=id, ^=flg, &=chr");
-        break;
-      case 'i': at (1,0); dumpinv ((FILE *) NULL); at (row, col); break;
-      case 'd': toggledebug ();		break;
-      case 't': transparent = true;     break;
-      case '!': dumpstuff ();           break;
-      case '@': dumpmonster ();         break;
-      case '#': dumpwalls ();           break;
-      case '^': promptforflags ();	break;
-      case '&':
-
-        if (getscrpos ("char", &r, &c)) {
-	  if (valrc (r,c)) {
-	    saynow ("Char at %d,%d '%c'", r, c, screen[r][c]);
-	  }
+	    fclose(errfil);
 	}
 
-        break;
-      case '(': dumpdatabase (); at (row, col); break;
-      case ')': new_mark = true; markcycles (DOPRINT); at (row, col); break;
-      case '~': saynow ("Version %d", version); break;
-      case '/': dosnapshot (); break;
-      default: at (row, col); va_end (ap); return (1);
+	/* free error filename */
+	if (path != NULL) {
+	    free(path);
+	    path = NULL;
+	}
     }
-  }
+
+    if (msgtype & D_FATAL) {
+	extern jmp_buf commandtop; /* From play */
+	saynow("%s", msg);
+	playing = false;
+	quitrogue(msg, Gold, SAVED);
+
+	/*
+	 * record the final state to the end of the level log
+	 */
+	levellog_append(msg);
+	longjmp(commandtop, 0);
+    }
+
+    if (!debug(msgtype | D_INFORM)) { /* If debugoff */
+	if (msgtype & D_SAY)	      /* Echo? */
+	{
+	    saynow("%s", msg);
+	    va_end(ap);
+	    return (1);
+	} /* Yes => win */
+
+	return (0); /* No => lose */
+    }
+
+    if (*msg) {
+	mvaddstr(0, 0, msg);
+	clrtoeol();
+    } /* Write msg */
+
+    if (noterm) {
+	va_end(ap);
+	return (1);
+    } /* Exit if no user */
+
+    /* Debugging loop, accept debugging commands from user */
+    while (1) {
+	if (!quiet) {
+	    refresh();
+	}
+
+	switch (fgetc(stdin)) {
+	case '?':
+	    say("i=inv, d=debug !=stf, @=mon, #=wls, $=id, ^=flg, &=chr");
+	    break;
+	case 'i':
+	    at(1, 0);
+	    dumpinv((FILE *)NULL);
+	    at(row, col);
+	    break;
+	case 'd':
+	    toggledebug();
+	    break;
+	case 't':
+	    transparent = true;
+	    break;
+	case '!':
+	    dumpstuff();
+	    break;
+	case '@':
+	    dumpmonster();
+	    break;
+	case '#':
+	    dumpwalls();
+	    break;
+	case '^':
+	    promptforflags();
+	    break;
+	case '&':
+
+	    if (getscrpos("char", &r, &c)) {
+		if (valrc(r, c)) {
+		    saynow("Char at %d,%d '%c'", r, c, screen[r][c]);
+		}
+	    }
+
+	    break;
+	case '(':
+	    dumpdatabase();
+	    at(row, col);
+	    break;
+	case ')':
+	    new_mark = true;
+	    markcycles(DOPRINT);
+	    at(row, col);
+	    break;
+	case '~':
+	    saynow("Version %d", version);
+	    break;
+	case '/':
+	    dosnapshot();
+	    break;
+	default:
+	    at(row, col);
+	    va_end(ap);
+	    return (1);
+	}
+    }
 }
 
 /*
@@ -233,16 +272,16 @@ dwait(int msgtype, const char *from, char *f, ...)
  */
 
 void
-promptforflags (void)
+promptforflags(void)
 {
-  int r, c;
+    int r, c;
 
-  if (getscrpos ("flags", &r, &c)) {
-    mvprintw (0, 0, "Flags for %d,%d ", r, c);
-    dumpflags (r, c);
-    clrtoeol ();
-    at (row, col);
-  }
+    if (getscrpos("flags", &r, &c)) {
+	mvprintw(0, 0, "Flags for %d,%d ", r, c);
+	dumpflags(r, c);
+	clrtoeol();
+	at(row, col);
+    }
 }
 
 /*
@@ -251,24 +290,23 @@ promptforflags (void)
  *            various flags defined in "types.h".
  */
 
-static char *fnames[] = {
-  "been",    "cango",    "door",     "hall",     "psd",     "room",
-  "safe",    "seen",     "deadend",  "stuff",    "trap",    "arrow",
-  "trapdor", "teltrap",  "gastrap",  "beartrap", "dartrap", "waterap",
-  "monster", "wall",     "useless",  "scarem",   "stairs",  "runok",
-  "boundry", "sleeper",  "everclr"
-};
+static char *fnames[] = {"been",    "cango", "door",	"hall",	   "psd",     "room",	 "safe",     "seen",	"deadend",
+			 "stuff",   "trap",  "arrow",	"trapdor", "teltrap", "gastrap", "beartrap", "dartrap", "waterap",
+			 "monster", "wall",  "useless", "scarem",  "stairs",  "runok",	 "boundry",  "sleeper", "everclr"};
 
 static void
-dumpflags (int r, int c)
+dumpflags(int r, int c)
 {
-  char **f; int b;
+    char **f;
+    int b;
 
-  printw (":");
+    printw(":");
 
-  for (f=fnames, b=1;   b<=EVERCLR;   b = b * 2, f++)
-    if (scrmap[r][c] & b)
-      printw ("%s:", *f);
+    for (f = fnames, b = 1; b <= EVERCLR; b = b * 2, f++) {
+	if (scrmap[r][c] & b) {
+	    printw("%s:", *f);
+	}
+    }
 }
 
 /*
@@ -276,38 +314,36 @@ dumpflags (int r, int c)
  */
 
 void
-timehistory (FILE *f, char sep)
+timehistory(FILE *f, char sep)
 {
-  int i, j;
-  char s[BUFSIZ + 1];	/* time history message, +1 for paranoia */
-  char s2[MU_BUF + 1];	/* level message, +1 for paranoia */
+    int i, j;
+    char s[BUFSIZ + 1];	 /* time history message, +1 for paranoia */
+    char s2[MU_BUF + 1]; /* level message, +1 for paranoia */
 
-  /* zeroize arrays */
-  memset (s, 0, sizeof(s)); /* paranoia */
+    /* zeroize arrays */
+    memset(s, 0, sizeof(s)); /* paranoia */
 
-  timespent[0].timestamp = 0;
+    timespent[0].timestamp = 0;
 
-  snprintf (s, BUFSIZ, "Time Analysis: %s%c%c",
-           "othr hand fght rest move expl rung grop srch door total",
-           sep, sep);
+    snprintf(s, BUFSIZ, "Time Analysis: %s%c%c", "othr hand fght rest move expl rung grop srch door total", sep, sep);
 
-  for (i=1; i<=MaxLevel; i++) {
-    memset (s2, 0, sizeof(s2)); /* paranoia */
-    snprintf (s2, MU_BUF, "level %2d:     ", i);
-    strlcat (s, s2, sizeof(s));
-    for (j = T_OTHER; j < T_LISTLEN; j++) {
-      snprintf (s2, MU_BUF, "%5d", timespent[i].activity[j]);
-      strlcat (s, s2, sizeof(s));
+    for (i = 1; i <= MaxLevel; i++) {
+	memset(s2, 0, sizeof(s2)); /* paranoia */
+	snprintf(s2, MU_BUF, "level %2d:     ", i);
+	strlcat(s, s2, sizeof(s));
+	for (j = T_OTHER; j < T_LISTLEN; j++) {
+	    snprintf(s2, MU_BUF, "%5d", timespent[i].activity[j]);
+	    strlcat(s, s2, sizeof(s));
+	}
+	snprintf(s2, MU_BUF, "%6d%c", timespent[i].timestamp - timespent[i - 1].timestamp, sep);
+	strlcat(s, s2, sizeof(s));
     }
-    snprintf (s2, MU_BUF, "%6d%c",
-             timespent[i].timestamp - timespent[i-1].timestamp, sep);
-    strlcat (s, s2, sizeof(s));
-  }
 
-  if (f == NULL)
-    addstr (s);
-  else
-    fprintf (f, "%s", s);
+    if (f == NULL) {
+	addstr(s);
+    } else {
+	fprintf(f, "%s", s);
+    }
 }
 
 /*
@@ -315,51 +351,85 @@ timehistory (FILE *f, char sep)
  */
 
 void
-toggledebug (void)
+toggledebug(void)
 {
-  char debugstr[MU_BUF + 1];
-  int type = debugging & ~(D_FATAL | D_ERROR | D_WARNING);
+    char debugstr[MU_BUF + 1];
+    int type = debugging & ~(D_FATAL | D_ERROR | D_WARNING);
 
-  /* zeroize arrays */
-  memset (debugstr, 0, sizeof(debugstr));
+    /* zeroize arrays */
+    memset(debugstr, 0, sizeof(debugstr));
 
-  if (debugging == D_ALL)         debugging = D_NORMAL;
-  else if (debugging == D_NORMAL) debugging = D_NORMAL | D_SEARCH;
-  else if (type == D_SEARCH)      debugging = D_NORMAL | D_BATTLE;
-  else if (type == D_BATTLE)      debugging = D_NORMAL | D_MESSAGE;
-  else if (type == D_MESSAGE)     debugging = D_NORMAL | D_PACK;
-  else if (type == D_PACK)        debugging = D_NORMAL | D_MONSTER;
-  else if (type == D_MONSTER)     debugging = D_NORMAL | D_CONTROL;
-  else if (type == D_CONTROL)     debugging = D_NORMAL | D_SCREEN;
-  else if (type == D_SCREEN)      debugging = D_NORMAL | D_WARNING;
-  else if (!debug (D_INFORM))     debugging = D_NORMAL | D_WARNING | D_INFORM;
-  else                            debugging = D_ALL;
+    if (debugging == D_ALL) {
+	debugging = D_NORMAL;
+    } else if (debugging == D_NORMAL) {
+	debugging = D_NORMAL | D_SEARCH;
+    } else if (type == D_SEARCH) {
+	debugging = D_NORMAL | D_BATTLE;
+    } else if (type == D_BATTLE) {
+	debugging = D_NORMAL | D_MESSAGE;
+    } else if (type == D_MESSAGE) {
+	debugging = D_NORMAL | D_PACK;
+    } else if (type == D_PACK) {
+	debugging = D_NORMAL | D_MONSTER;
+    } else if (type == D_MONSTER) {
+	debugging = D_NORMAL | D_CONTROL;
+    } else if (type == D_CONTROL) {
+	debugging = D_NORMAL | D_SCREEN;
+    } else if (type == D_SCREEN) {
+	debugging = D_NORMAL | D_WARNING;
+    } else if (!debug(D_INFORM)) {
+	debugging = D_NORMAL | D_WARNING | D_INFORM;
+    } else {
+	debugging = D_ALL;
+    }
 
-  strlcpy (debugstr, "Debugging :", sizeof(debugstr));
+    strlcpy(debugstr, "Debugging :", sizeof(debugstr));
 
-  if (debug(D_FATAL))     strlcat (debugstr, "fatal:", sizeof(debugstr));
+    if (debug(D_FATAL)) {
+	strlcat(debugstr, "fatal:", sizeof(debugstr));
+    }
 
-  if (debug(D_ERROR))     strlcat (debugstr, "error:", sizeof(debugstr));
+    if (debug(D_ERROR)) {
+	strlcat(debugstr, "error:", sizeof(debugstr));
+    }
 
-  if (debug(D_WARNING))   strlcat (debugstr, "warn:", sizeof(debugstr));
+    if (debug(D_WARNING)) {
+	strlcat(debugstr, "warn:", sizeof(debugstr));
+    }
 
-  if (debug(D_INFORM))    strlcat (debugstr, "info:", sizeof(debugstr));
+    if (debug(D_INFORM)) {
+	strlcat(debugstr, "info:", sizeof(debugstr));
+    }
 
-  if (debug(D_SEARCH))    strlcat (debugstr, "search:", sizeof(debugstr));
+    if (debug(D_SEARCH)) {
+	strlcat(debugstr, "search:", sizeof(debugstr));
+    }
 
-  if (debug(D_BATTLE))    strlcat (debugstr, "battle:", sizeof(debugstr));
+    if (debug(D_BATTLE)) {
+	strlcat(debugstr, "battle:", sizeof(debugstr));
+    }
 
-  if (debug(D_MESSAGE))   strlcat (debugstr, "msg:", sizeof(debugstr));
+    if (debug(D_MESSAGE)) {
+	strlcat(debugstr, "msg:", sizeof(debugstr));
+    }
 
-  if (debug(D_PACK))      strlcat (debugstr, "pack:", sizeof(debugstr));
+    if (debug(D_PACK)) {
+	strlcat(debugstr, "pack:", sizeof(debugstr));
+    }
 
-  if (debug(D_CONTROL))   strlcat (debugstr, "ctrl:", sizeof(debugstr));
+    if (debug(D_CONTROL)) {
+	strlcat(debugstr, "ctrl:", sizeof(debugstr));
+    }
 
-  if (debug(D_SCREEN))    strlcat (debugstr, "screen:", sizeof(debugstr));
+    if (debug(D_SCREEN)) {
+	strlcat(debugstr, "screen:", sizeof(debugstr));
+    }
 
-  if (debug(D_MONSTER))   strlcat (debugstr, "monster:", sizeof(debugstr));
+    if (debug(D_MONSTER)) {
+	strlcat(debugstr, "monster:", sizeof(debugstr));
+    }
 
-  saynow ("%s", debugstr);
+    saynow("%s", debugstr);
 }
 
 /*
@@ -367,21 +437,22 @@ toggledebug (void)
  */
 
 static int
-getscrpos (char *msg, int *r, int *c)
+getscrpos(char *msg, int *r, int *c)
 {
-  char buf[256];
+    char buf[256];
 
-  saynow ("At %d,%d: enter 'row,col' for %s: ", atrow, atcol, msg);
+    saynow("At %d,%d: enter 'row,col' for %s: ", atrow, atcol, msg);
 
-  if (fgets (buf, 256, stdin)) {
-    sscanf (buf, "%d,%d", r, c);
+    if (fgets(buf, 256, stdin)) {
+	sscanf(buf, "%d,%d", r, c);
 
-    if (*r>=1 && *r<23 && *c>=0 && *c<=79)
-      return (1);
-    else
-      say ("%d,%d is not on the screen!", *r, *c);
-  }
+	if (*r >= 1 && *r < 23 && *c >= 0 && *c <= 79) {
+	    return (1);
+	} else {
+	    say("%d,%d is not on the screen!", *r, *c);
+	}
+    }
 
-  at (row, col);
-  return (0);
+    at(row, col);
+    return (0);
 }

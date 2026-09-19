@@ -20,22 +20,19 @@
  * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #if !defined(INCLUDE_CONFIG_H)
-#define INCLUDE_CONFIG_H
-
+#  define INCLUDE_CONFIG_H
 
 /*
  * global declarations
  */
-extern char rgmdir[MU_BUF + 1];		/* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
-extern char lock_path[TY_BUF + 1];	/* rogomatic lock file path, +1 for paranoia */
-extern char level_path[TY_BUF + 1];	/* rogomatic level file path, +1 for paranoia */
+extern char rgmdir[MU_BUF + 1];		  /* rogomatic directory - may include UTC date and time sub-dir, +1 for paranoia */
+extern char lock_path[TY_BUF + 1];	  /* rogomatic lock file path, +1 for paranoia */
+extern char level_path[TY_BUF + 1];	  /* rogomatic level file path, +1 for paranoia */
 extern char total_level_path[TY_BUF + 1]; /* rogomatic total level path, +1 for paranoia */
-extern char gamelog_path[TY_BUF + 1];   /* rogomatic game log path, +1 for paranoia */
-extern unsigned int dnum;		/* rogue dungeon number */
-extern long goodgame;			/* level at which we always save the rogomatic game log file */
-extern long usleep_usec;	        /* sleep time between actions in microseconds */
-
+extern char gamelog_path[TY_BUF + 1];	  /* rogomatic game log path, +1 for paranoia */
+extern unsigned int dnum;		  /* rogue dungeon number */
+extern long goodgame;			  /* level at which we always save the rogomatic game log file */
+extern long usleep_usec;		  /* sleep time between actions in microseconds */
 
 #endif

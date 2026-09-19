@@ -29,77 +29,74 @@
  * the screen.
  */
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <time.h>
-# include <limits.h>
-# include <setjmp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <limits.h>
+#include <setjmp.h>
 
-# include "modern_curses.h"
-# include "types.h"
-# include "globals.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "globals.h"
 
-# if defined(TITLEPAGE_MAIN)
-# include <unistd.h>
+#if defined(TITLEPAGE_MAIN)
+#  include <unistd.h>
 
 bool terse = false;
 bool emacs = false;
 bool nohalf = false;
-# endif
+#endif
 
 /* static declarations */
 
-static char *titlepage[]= {
-  /* The static part of the display */
-  "  @ !@ \"@ #@ K@! @!$@!K@!P@\" @\"$@\"(@\")@\"*@\"/@\"0@\"1@\"6@\"7@\"8@",
-  "\"=@\"?@\"C@\"D@\"E@\"I@\"J@\"K@\"L@\"M@\"U@\"V@\"W@\"X@\"]@\"a@\"c@\"e@",
-  "\"i@# @#!@#\"@##@#'@#+@#.@#2@#5@#9@#<@#>@#@@#F@#K@#P@#T@#^@#`@#c@#e@#i@$",
-  " @$$@$'@$+@$.@$2@$5@$9@$<@$@@$C@$D@$E@$F@$K@$P@$T@$_@$c@$e@$i@% @%$@%'@%",
-  "+@%.@%2@%5@%9@%<@%@@%C@%F@%K@%P@%T@%^@%`@%c@%f@%h@& @&%@&(@&)@&*@&/@&0@&",
-  "1@&2@&6@&7@&8@&<@&@@&D@&E@&G@&L@&Q@&U@&V@&W@&X@&]@&a@&c@&g@'2@(.@(/@(0@(",
-  "1@);C)<o)=p)>y)?r)@i)Ag)Bh)Ct)E()Fc)G))I1)J9)K8)L5)Nb)Oy*'A*(n*)d**r*+e*",
-  ",w*.A*/p*0p*1e*2l*3,*5L*6e*7o*8n*9a*:r*;d*=H*>a*?m*@e*Ay*B,*DG*Eu*Fy*HJ*",
-  "Ia*Jc*Ko*Lb*Ms*No*On*P,*Ra*Sn*Td*VM*Wi*Xc*Yh*Za*[e*\\l*^M*_a*`u*al*bd*ci",
-  "*dn,)@,*@,+@,,@,[D,\\D,]D,^D,_D-(@-+@--@-[D-`D.(@.*@.-@.[D.`D/(@/*@/+@/,",
-  "@/-@/[D/`D0)@0*@0+@0,@0[D0\\D0]D0^D0_D1 H1!o1\"n1#o1$r1%a1&b1'l1(e1*m1+e",
-  "1,m1-b1.e1/r11o12f14t15h16e18F19i1:g1;h1<t1=e1>r1?'1@s1BG1Cu1Di1El1Fd2 T",
-  "2!o2\"t2#a2$l2&w2'i2(n2)n2*e2+r2-a2.g2/a20i21n22s23t25R26o27g28u29e2;22<",
-  ".2=62>,2@S2Ae2Bp2Ct2De2Em2Fb2Ge2Hr2J22K62L,2N12O92P82Q23 T3!o3\"t3#a3$l3",
-  "&w3'i3(n3)n3*e3+r3-a3.g3/a30i31n32s33t35R36o37g38u39e3;53<.3=23>,3@O3Ac3",
-  "Bt3Co3Db3Ee3Fr3H13I03J,3L13M93N83O34 T4!o4\"t4#a4$l4&w4'i4(n4)n4*e4+r4-a",
-  "4.g4/a40i41n42s43t45R46o47g48u49e4;54<.4=34>,4@F4Ae4Bb4Cr4Du4Ea4Fr4Gy4I1",
-  "4J64K,4M14N94O84P45 T5!o5\"t5#a5$l5&w5'i5(n5)n5*e5+r5-a5.g5/a50i51n52s53",
-  "t55R56o57g58u59e5;55<.5=45>.5?55@,5BT5CB5DD", /* wrap string to fill lines */
-  /* add total winner date against 5.4.5 here when it happens */
-  "6 c6!h6\"o6#n6$g6%o6& 6'<6(L6)a6*n6+d6,o6-n6. 6/C60u61",
-  "r62t63 64N65o66l67l68>69 6:/6;\\6<.6=.6>/6?\\~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+static char *titlepage[] = {/* The static part of the display */
+			    "  @ !@ \"@ #@ K@! @!$@!K@!P@\" @\"$@\"(@\")@\"*@\"/@\"0@\"1@\"6@\"7@\"8@",
+			    "\"=@\"?@\"C@\"D@\"E@\"I@\"J@\"K@\"L@\"M@\"U@\"V@\"W@\"X@\"]@\"a@\"c@\"e@",
+			    "\"i@# @#!@#\"@##@#'@#+@#.@#2@#5@#9@#<@#>@#@@#F@#K@#P@#T@#^@#`@#c@#e@#i@$",
+			    " @$$@$'@$+@$.@$2@$5@$9@$<@$@@$C@$D@$E@$F@$K@$P@$T@$_@$c@$e@$i@% @%$@%'@%",
+			    "+@%.@%2@%5@%9@%<@%@@%C@%F@%K@%P@%T@%^@%`@%c@%f@%h@& @&%@&(@&)@&*@&/@&0@&",
+			    "1@&2@&6@&7@&8@&<@&@@&D@&E@&G@&L@&Q@&U@&V@&W@&X@&]@&a@&c@&g@'2@(.@(/@(0@(",
+			    "1@);C)<o)=p)>y)?r)@i)Ag)Bh)Ct)E()Fc)G))I1)J9)K8)L5)Nb)Oy*'A*(n*)d**r*+e*",
+			    ",w*.A*/p*0p*1e*2l*3,*5L*6e*7o*8n*9a*:r*;d*=H*>a*?m*@e*Ay*B,*DG*Eu*Fy*HJ*",
+			    "Ia*Jc*Ko*Lb*Ms*No*On*P,*Ra*Sn*Td*VM*Wi*Xc*Yh*Za*[e*\\l*^M*_a*`u*al*bd*ci",
+			    "*dn,)@,*@,+@,,@,[D,\\D,]D,^D,_D-(@-+@--@-[D-`D.(@.*@.-@.[D.`D/(@/*@/+@/,",
+			    "@/-@/[D/`D0)@0*@0+@0,@0[D0\\D0]D0^D0_D1 H1!o1\"n1#o1$r1%a1&b1'l1(e1*m1+e",
+			    "1,m1-b1.e1/r11o12f14t15h16e18F19i1:g1;h1<t1=e1>r1?'1@s1BG1Cu1Di1El1Fd2 T",
+			    "2!o2\"t2#a2$l2&w2'i2(n2)n2*e2+r2-a2.g2/a20i21n22s23t25R26o27g28u29e2;22<",
+			    ".2=62>,2@S2Ae2Bp2Ct2De2Em2Fb2Ge2Hr2J22K62L,2N12O92P82Q23 T3!o3\"t3#a3$l3",
+			    "&w3'i3(n3)n3*e3+r3-a3.g3/a30i31n32s33t35R36o37g38u39e3;53<.3=23>,3@O3Ac3",
+			    "Bt3Co3Db3Ee3Fr3H13I03J,3L13M93N83O34 T4!o4\"t4#a4$l4&w4'i4(n4)n4*e4+r4-a",
+			    "4.g4/a40i41n42s43t45R46o47g48u49e4;54<.4=34>,4@F4Ae4Bb4Cr4Du4Ea4Fr4Gy4I1",
+			    "4J64K,4M14N94O84P45 T5!o5\"t5#a5$l5&w5'i5(n5)n5*e5+r5-a5.g5/a50i51n52s53",
+			    "t55R56o57g58u59e5;55<.5=45>.5?55@,5BT5CB5DD", /* wrap string to fill lines */
+			    /* add total winner date against 5.4.5 here when it happens */
+			    "6 c6!h6\"o6#n6$g6%o6& 6'<6(L6)a6*n6+d6,o6-n6. 6/C60u61",
+			    "r62t63 64N65o66l67l68>69 6:/6;\\6<.6=.6>/6?\\~~~~~~~~~~~~~~~~~~~~~~~~~~~",
 
-  /* The dynamic part of the display */
-  "~~~~~~~~~~00/~/1/~.2)~-1\\~,0\\~~~.3>~.4=~.5=~.6=~.7=~.8=~.9>~~~.2>.3=.8",
-  ">.9 ~~~.1>.2=.7>.8 ~~~.0>.1=.6>.7 ~~~./>.0=.5>.6 ~~~..>./=.4>.5 ~~~~~~~~",
-  "~~~~~.. ./>.4 .4=.5>~./ .0>.5=.6>~.0 .1>.6=.7>~.1 .2>.7=.8>~.2).3>.8=.9>",
-  "~.3 .4>.9=.:>~.4 .5>.:=.;>~.5 .6>.;=.<>~.6 .7>.<=.=>~.7 .8>.==.>>~.8 .9>",
-  ".>=.?>~.9 .:>.?=.@>~.: .;>.@=.A>~.; .<>.A=.B>~.< .=>.B=.C>~.= .>>.C=.D>~",
-  ".> .?>.D=.E>~.? .@>.E=.F>~.@ .A>.F=.G>~.A .B>.G=.H>~.B .C>.H=.I>~.C .D>.",
-  "I=.J>~.D .E>.J=.K>~.E .F>.K=.L>~.F .G>.L=.M>~.G .H>.M=.N>~.H .I>.N=.O>~.",
-  "I .J>.O=.P>~.J .K>.P=.Q>~.K .L>.Q=.R>~.L .M>.R=.S>~.M .N>.S=.T>~.N .O>.T",
-  "=.U>~.O .P>.U=.V>~.P .Q>.V=.W>~.Q .R>.W=.X>~.R .S>.X=.Y>~.S .T>.Y=.Z>~.T",
-  " .U>.Z=.[>~.U .V>.[=.\\>~.V .W>.\\=.]>~.W .X>.]=.^>~.X .Y>.^=._>~.Y .Z>.",
-  "_=.`>~.Z .[>.`=.a>~.[ .\\>.a=.b>~.\\ .]>.b=.c>~.] .^>.c=.d>~.^ ._>.d=.e>",
-  "~._ .`>.e=.f>~.` .a>.f=.g>~.a .b>.g=.h>~.b .c>.h=.i>~.c .d>.i ~.d .e>~.e",
-  " .f>~.f .g>~.g .h>~.h ~~~~~.[D,[ ,\\j,\\ -\\D-]d-]D-^D-_D,_ ,^ ,] ,]j,] ",
-  "~-[ .ZD/ZD.[ .[L.[ .\\D.]S.]D.^D._D.`D/aD-\\ -\\L-\\ -] -^ -_ -` ~/YD.Z ",
-  "/\\D/]D/^D/_D.\\ .] .^ ._ .` 0`D0aD/a ~0XD0YD0ZD/Y /Z /` ~0VD0WD/[ /\\ /",
-  "^ /_ 0bD0cD/] 0UD0dD~~~~~~~~~~,0 ~~-1 ~~.2 ~~/1 ~~00 ~~~~~~~~~~~~~~~~~~~",
-  "~~.5S~.6i~.7l~.8l~.9y~.;D~.<r~.=a~.>g~.?o~.@n~.B:~.C-~.D)~.E ~~~~~~~~~~~",
-  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
-  ".5 .6 .7 .8 .9 .: .; .< .= .> .? .@ .A .B .C .D .E ~~~~~~~~~~~~~~~~~~~~~",
-  NULL
-};
+			    /* The dynamic part of the display */
+			    "~~~~~~~~~~00/~/1/~.2)~-1\\~,0\\~~~.3>~.4=~.5=~.6=~.7=~.8=~.9>~~~.2>.3=.8",
+			    ">.9 ~~~.1>.2=.7>.8 ~~~.0>.1=.6>.7 ~~~./>.0=.5>.6 ~~~..>./=.4>.5 ~~~~~~~~",
+			    "~~~~~.. ./>.4 .4=.5>~./ .0>.5=.6>~.0 .1>.6=.7>~.1 .2>.7=.8>~.2).3>.8=.9>",
+			    "~.3 .4>.9=.:>~.4 .5>.:=.;>~.5 .6>.;=.<>~.6 .7>.<=.=>~.7 .8>.==.>>~.8 .9>",
+			    ".>=.?>~.9 .:>.?=.@>~.: .;>.@=.A>~.; .<>.A=.B>~.< .=>.B=.C>~.= .>>.C=.D>~",
+			    ".> .?>.D=.E>~.? .@>.E=.F>~.@ .A>.F=.G>~.A .B>.G=.H>~.B .C>.H=.I>~.C .D>.",
+			    "I=.J>~.D .E>.J=.K>~.E .F>.K=.L>~.F .G>.L=.M>~.G .H>.M=.N>~.H .I>.N=.O>~.",
+			    "I .J>.O=.P>~.J .K>.P=.Q>~.K .L>.Q=.R>~.L .M>.R=.S>~.M .N>.S=.T>~.N .O>.T",
+			    "=.U>~.O .P>.U=.V>~.P .Q>.V=.W>~.Q .R>.W=.X>~.R .S>.X=.Y>~.S .T>.Y=.Z>~.T",
+			    " .U>.Z=.[>~.U .V>.[=.\\>~.V .W>.\\=.]>~.W .X>.]=.^>~.X .Y>.^=._>~.Y .Z>.",
+			    "_=.`>~.Z .[>.`=.a>~.[ .\\>.a=.b>~.\\ .]>.b=.c>~.] .^>.c=.d>~.^ ._>.d=.e>",
+			    "~._ .`>.e=.f>~.` .a>.f=.g>~.a .b>.g=.h>~.b .c>.h=.i>~.c .d>.i ~.d .e>~.e",
+			    " .f>~.f .g>~.g .h>~.h ~~~~~.[D,[ ,\\j,\\ -\\D-]d-]D-^D-_D,_ ,^ ,] ,]j,] ",
+			    "~-[ .ZD/ZD.[ .[L.[ .\\D.]S.]D.^D._D.`D/aD-\\ -\\L-\\ -] -^ -_ -` ~/YD.Z ",
+			    "/\\D/]D/^D/_D.\\ .] .^ ._ .` 0`D0aD/a ~0XD0YD0ZD/Y /Z /` ~0VD0WD/[ /\\ /",
+			    "^ /_ 0bD0cD/] 0UD0dD~~~~~~~~~~,0 ~~-1 ~~.2 ~~/1 ~~00 ~~~~~~~~~~~~~~~~~~~",
+			    "~~.5S~.6i~.7l~.8l~.9y~.;D~.<r~.=a~.>g~.?o~.@n~.B:~.C-~.D)~.E ~~~~~~~~~~~",
+			    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+			    ".5 .6 .7 .8 .9 .: .; .< .= .> .? .@ .A .B .C .D .E ~~~~~~~~~~~~~~~~~~~~~", NULL};
 
-static void animate (char *movie[]);
+static void animate(char *movie[]);
 
-# define NEXTCHAR (*cbf?*cbf++:(cbf=1+ *movie++)[-1])
+#define NEXTCHAR (*cbf ? *cbf++ : (cbf = 1 + *movie++)[-1])
 
 /*
  * animate: Display a movie on the screen.  A movie is a list of strings
@@ -111,22 +108,24 @@ static void animate (char *movie[]);
  */
 
 static void
-animate (char *movie[])
+animate(char *movie[])
 {
-  int r, c;
-  char *cbf = "";
-  struct timespec rqt = { 0, 1e7 };		/* short 0.01 seconds */
-  struct timespec rqt2 = { 0, 5e8 };		/* longer 0.5 seconds */
+    int r, c;
+    char *cbf = "";
+    struct timespec rqt = {0, 1e7};  /* short 0.01 seconds */
+    struct timespec rqt2 = {0, 5e8}; /* longer 0.5 seconds */
 
-  if (emacs || terse) return;			/* No screen ==> no movie */
+    if (emacs || terse) {
+	return; /* No screen ==> no movie */
+    }
 
-  clear ();					/* Clear the screen */
+    clear(); /* Clear the screen */
 
-  while (*movie || *cbf) {			/* While more animate commands */
-    r = NEXTCHAR;				/* Get command character */
+    while (*movie || *cbf) { /* While more animate commands */
+	r = NEXTCHAR;	     /* Get command character */
 
-    /* Do NOT Ring the Bell */
-    if (r == '}') {
+	/* Do NOT Ring the Bell */
+	if (r == '}') {
 #if 0 /* no beep */
       beep();
       flash();
@@ -135,21 +134,21 @@ animate (char *movie[])
       }
 #endif
 
-    /* Update the screen and delay until one timestep is gone */
-    } else if (r == '~') {
-      if (!quiet) {
-	refresh ();				/* Write out screen */
-      }
-      (void) nanosleep(&rqt, NULL);
+	    /* Update the screen and delay until one timestep is gone */
+	} else if (r == '~') {
+	    if (!quiet) {
+		refresh(); /* Write out screen */
+	    }
+	    (void)nanosleep(&rqt, NULL);
 
-    /* Write out a single character */
-    } else {
-      r -= 32;					/* Get screen row */
-      c = NEXTCHAR - 32;			/* Get screen col */
-      mvaddch (r, c, NEXTCHAR);			/* Write out character */
+	    /* Write out a single character */
+	} else {
+	    r -= 32;		     /* Get screen row */
+	    c = NEXTCHAR - 32;	     /* Get screen col */
+	    mvaddch(r, c, NEXTCHAR); /* Write out character */
+	}
     }
-  }
-  (void) nanosleep(&rqt2, NULL);
+    (void)nanosleep(&rqt2, NULL);
 }
 
 /*
@@ -158,73 +157,72 @@ animate (char *movie[])
  */
 
 void
-halftimeshow (int level)
+halftimeshow(int level)
 {
-  static int nextshow = 1;
+    static int nextshow = 1;
 
-  /* do nothing is halftime shows are disabled */
-  if (nohalf) {
-    return;
-  }
-
-  /* determine if the level is deep enough */
-  if (level >= nextshow) {
-
-    /* we are deep enough, display the title page */
-    animate (titlepage);
-
-    /* determine the next halftime show level */
-    switch (nextshow) {
-    case 1:
-	nextshow = 12;
-	break;
-    case 12:
-	nextshow = 25;
-	break;
-    case 25:
-	nextshow = 31;
-	break;
-    case 31:
-	nextshow = INT_MAX;
-	break;
-    default:
-	break;
+    /* do nothing is halftime shows are disabled */
+    if (nohalf) {
+	return;
     }
-  }
-  return;
+
+    /* determine if the level is deep enough */
+    if (level >= nextshow) {
+
+	/* we are deep enough, display the title page */
+	animate(titlepage);
+
+	/* determine the next halftime show level */
+	switch (nextshow) {
+	case 1:
+	    nextshow = 12;
+	    break;
+	case 12:
+	    nextshow = 25;
+	    break;
+	case 25:
+	    nextshow = 31;
+	    break;
+	case 31:
+	    nextshow = INT_MAX;
+	    break;
+	default:
+	    break;
+	}
+    }
+    return;
 }
 
+#if defined(TITLEPAGE_MAIN)
 
-# if defined(TITLEPAGE_MAIN)
-
-bool quiet = false;      /* true ==> quiet mode */
+bool quiet = false; /* true ==> quiet mode */
 
 int
-main (void)
+main(void)
 {
-  /* initialize the Curses package */
-  initscr ();
-  cbreak ();
-  noecho ();
+    /* initialize the Curses package */
+    initscr();
+    cbreak();
+    noecho();
 
-  /* display the title page */
-  animate (titlepage);
+    /* display the title page */
+    animate(titlepage);
 
-  /* move to corner of window */
-  mvcur (0, C-1, R-1, 0);
-  sleep (4);
+    /* move to corner of window */
+    mvcur(0, C - 1, R - 1, 0);
+    sleep(4);
 
-  /* turn on echo and turn off raw */
-  (void) echo ();
-  (void) nocbreak ();
+    /* turn on echo and turn off raw */
+    (void)echo();
+    (void)nocbreak();
 
-  /* clean up and delete curses */
-  (void) endwin ();
-  (void) delwin (stdscr);
-  (void) delwin (curscr);
+    /* clean up and delete curses */
+    (void)endwin();
+    (void)delwin(stdscr);
+    (void)delwin(curscr);
 
-  /* All Done!!! -- Jessica Noll, Age 2 */
-  exit(0);
+    /* All Done!!! -- Jessica Noll, Age 2 */
+    exit(0);
 }
 
-# endif
+#endif

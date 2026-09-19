@@ -31,27 +31,27 @@
  * file is sorted and merged into the rgmscore file.
  */
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <unistd.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <signal.h>
-# include <string.h>
-# include <errno.h>
-# include <setjmp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <signal.h>
+#include <string.h>
+#include <errno.h>
+#include <setjmp.h>
 
-# include "types.h"
-# include "config.h"
-# include "globals.h"
-# include "install.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
+#include "install.h"
 
-# define LINESIZE	2048
-# define SCORE(s,p)     (atoi (s+p))
+#define LINESIZE 2048
+#define SCORE(s, p) (atoi(s + p))
 
 /* static declarations */
 
-static void intrupscore (int sig __attribute__ ((__unused__)));
+static void intrupscore(int sig __attribute__((__unused__)));
 
 /*
  * add_score: Write a new score line out to the correct rogomatic score
@@ -61,46 +61,46 @@ static void intrupscore (int sig __attribute__ ((__unused__)));
  */
 
 void
-add_score (char *new_line, char *vers, int ntrm)
+add_score(char *new_line, char *vers, int ntrm)
 {
-  char *delfil = NULL;	    /* rogomatic delta filename */
-  FILE *newlog;
-  int lock_fd;
+    char *delfil = NULL; /* rogomatic delta filename */
+    FILE *newlog;
+    int lock_fd;
 
-  /* form paths */
-  delfil = form_prefix_path (rgmdir, "rgmdelta", vers);
+    /* form paths */
+    delfil = form_prefix_path(rgmdir, "rgmdelta", vers);
 
-  /* Defer interrupts while mucking with the score file */
-  critical ();
+    /* Defer interrupts while mucking with the score file */
+    critical();
 
-  /* lock */
-  lock_fd = lock_file (__func__, NULL, lock_path);
+    /* lock */
+    lock_fd = lock_file(__func__, NULL, lock_path);
 
-  /* Now create a temporary to copy into */
-  if ((newlog = wopen (delfil, "a")) == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Unable to write: %s: %s\n",
-	     __func__, __FILE__, __LINE__, dnum, delfil, strerror (errno));
-    not_reached ();
-  } else {
-    fprintf (newlog, "%s\n", new_line);
-    fflush (newlog);
-    fclose (newlog);
-  }
+    /* Now create a temporary to copy into */
+    if ((newlog = wopen(delfil, "a")) == NULL) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u Unable to write: %s: %s\n", __func__, __FILE__, __LINE__, dnum, delfil,
+	     strerror(errno));
+	not_reached();
+    } else {
+	fprintf(newlog, "%s\n", new_line);
+	fflush(newlog);
+	fclose(newlog);
+    }
 
-  /* unlock */
-  unlock_file (__func__, lock_fd);
-  if (delfil != NULL) {
-      free (delfil);
-      delfil = NULL;
-  }
+    /* unlock */
+    unlock_file(__func__, lock_fd);
+    if (delfil != NULL) {
+	free(delfil);
+	delfil = NULL;
+    }
 
-  /* free path */
-  if (delfil != NULL) {
-      free (delfil);
-      delfil = NULL;
-  }
+    /* free path */
+    if (delfil != NULL) {
+	free(delfil);
+	delfil = NULL;
+    }
 
-  uncritical ();
+    uncritical();
 }
 
 /*
@@ -108,184 +108,174 @@ add_score (char *new_line, char *vers, int ntrm)
  */
 
 void
-dumpscore (char *vers)
+dumpscore(char *vers)
 {
-  char  *scrfil = NULL;	    /* rogomatic score file path */
-  char  *delfil = NULL;	    /* rogomatic delta file path */
-  char  *newfil = NULL;	    /* rogomatic new file path */
-  char  *allfil = NULL;	    /* rogomatic all scores file path */
-  char  cmd[BIGBUF + 1];    /* shell command buffer, +1 for paranoia */
-  FILE *scoref;		    /* score file stream */
-  FILE *deltaf;		    /* delta file stream */
-  int   oldmask;	    /* original umask */
-  int   lock_fd;	    /* lock file descriptor */
-  int   code = 0;	    /* command exit code */
-  char  ch;
+    char *scrfil = NULL;  /* rogomatic score file path */
+    char *delfil = NULL;  /* rogomatic delta file path */
+    char *newfil = NULL;  /* rogomatic new file path */
+    char *allfil = NULL;  /* rogomatic all scores file path */
+    char cmd[BIGBUF + 1]; /* shell command buffer, +1 for paranoia */
+    FILE *scoref;	  /* score file stream */
+    FILE *deltaf;	  /* delta file stream */
+    int oldmask;	  /* original umask */
+    int lock_fd;	  /* lock file descriptor */
+    int code = 0;	  /* command exit code */
+    char ch;
 
-  /* zeroize arrays */
-  memset (cmd, 0, sizeof(cmd)); /* paranoia */
+    /* zeroize arrays */
+    memset(cmd, 0, sizeof(cmd)); /* paranoia */
 
-  /* form paths */
-  scrfil = form_prefix_path (rgmdir, "rgmscore", vers);
-  delfil = form_prefix_path (rgmdir, "rgmdelta", vers);
-  newfil = form_prefix_path (rgmdir, "NewScore", vers);
-  allfil = form_prefix_path (rgmdir, "AllScore", vers);
+    /* form paths */
+    scrfil = form_prefix_path(rgmdir, "rgmscore", vers);
+    delfil = form_prefix_path(rgmdir, "rgmdelta", vers);
+    newfil = form_prefix_path(rgmdir, "NewScore", vers);
+    allfil = form_prefix_path(rgmdir, "AllScore", vers);
 
-  /* On interrupts we must relinquish control of the score file */
-  int_exit (intrupscore);
+    /* On interrupts we must relinquish control of the score file */
+    int_exit(intrupscore);
 
-  /* lock */
-  lock_fd = lock_file (__func__, NULL, lock_path);
+    /* lock */
+    lock_fd = lock_file(__func__, NULL, lock_path);
 
-  deltaf = fopen (delfil, "r");	/* OK if open fails because delfil doesn't exist */
-  scoref = fopen (scrfil, "r");	/* OK if open fails because scrfil doesn't exist */
+    deltaf = fopen(delfil, "r"); /* OK if open fails because delfil doesn't exist */
+    scoref = fopen(scrfil, "r"); /* OK if open fails because scrfil doesn't exist */
 
-  /* If there are new scores, sort and merge them into the score file */
-  if (deltaf != NULL) {
+    /* If there are new scores, sort and merge them into the score file */
+    if (deltaf != NULL) {
 
-    fclose (deltaf);
+	fclose(deltaf);
 
-    /* Defer interrupts while mucking with the score file */
-    critical ();
+	/* Defer interrupts while mucking with the score file */
+	critical();
 
-    /* Make certain any new files are world writable */
-    oldmask = umask (0);
+	/* Make certain any new files are world writable */
+	oldmask = umask(0);
 
-    /* If we have an old file and a delta file, merge them */
-    if (scoref != NULL) {
+	/* If we have an old file and a delta file, merge them */
+	if (scoref != NULL) {
 
-      /* first sort command and args */
-      char *args_0[] = {
-	"sort", "-k", "+6nr", "-o", newfil, delfil, NULL
-      };
+	    /* first sort command and args */
+	    char *args_0[] = {"sort", "-k", "+6nr", "-o", newfil, delfil, NULL};
 
-      /* second sort command and args */
-      char *args_1[] = {
-	"sort", "-k", "+6nr", "-o", allfil, newfil, scrfil, NULL
-      };
+	    /* second sort command and args */
+	    char *args_1[] = {"sort", "-k", "+6nr", "-o", allfil, newfil, scrfil, NULL};
 
+	    /* close out the score file */
+	    fclose(scoref);
 
-      /* close out the score file */
-      fclose (scoref);
+	    /*
+	     * sort delta score file into a new rogomatic score file
+	     */
+	    code = fork_exec("sort", args_0);
+	    if (code != 0) {
+		quit(1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s failed, exit code: %d\n", __func__,
+		     __FILE__, __LINE__, dnum, newfil, delfil, code);
+		not_reached();
+	    }
 
-      /*
-       * sort delta score file into a new rogomatic score file
-       */
-      code = fork_exec ("sort", args_0);
-      if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s failed, exit code: %d\n",
-		 __func__, __FILE__, __LINE__, dnum, newfil, delfil, code);
-	not_reached ();
-      }
+	    /*
+	     * sort merge the new rogomatic score file, and existing rogomatic score file into rogomatic all score file
+	     */
+	    code = fork_exec("sort", args_1);
+	    if (code != 0) {
+		quit(1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s %s failed, exit code: %d\n", __func__,
+		     __FILE__, __LINE__, dnum, allfil, newfil, scrfil, code);
+		not_reached();
+	    }
 
-      /*
-       * sort merge the new rogomatic score file, and existing rogomatic score file into rogomatic all score file
-       */
-      code = fork_exec ("sort", args_1);
-      if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s %s failed, exit code: %d\n",
-		 __func__, __FILE__, __LINE__, dnum, allfil, newfil, scrfil, code);
-	not_reached ();
-      }
+	    if (filelength(allfil) != filelength(delfil) + filelength(scrfil)) {
+		/* unlink */
+		unlink(newfil);
+		unlink(allfil);
 
-      if (filelength (allfil) != filelength (delfil) + filelength (scrfil)) {
-	/* unlink */
-	unlink (newfil);
-	unlink (allfil);
+		/* unlock */
+		unlock_file(__func__, lock_fd);
+		quit(1, "ERROR: %s: file: %s line: %d dungeon: %u new file is wrong length!\n", __func__, __FILE__, __LINE__,
+		     dnum);
+		not_reached();
+	    } else {
+		/* New file is okay, unlink old files and pointer swap score file */
+		unlink(delfil);
+		unlink(newfil);
+		unlink(scrfil);
+		link(allfil, scrfil);
+		unlink(allfil);
+	    }
+
+	    scoref = fopen(scrfil, "r");
+	} else
+	/* Only have delta file, sort into scorefile and unlink delta */
+	{
+
+	    /* first sort command and args */
+	    char *args[] = {"sort", "-k", "+6nr", "-o", scrfil, delfil, NULL};
+
+	    /*
+	     * sort delta score file into a rogomatic score file
+	     */
+	    code = fork_exec("sort", args);
+	    if (code != 0) {
+		quit(1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s failed, exit code: %d\n", __func__,
+		     __FILE__, __LINE__, dnum, scrfil, delfil, code);
+		not_reached();
+	    }
+
+	    unlink(delfil);
+	    scoref = fopen(scrfil, "r");
+	}
+
+	/* Restore umask */
+	umask(oldmask);
+
+	/* Restore interrupt status after score file stable */
+	uncritical();
+    }
+
+    /* Now any new scores have been put into scrfil, read it */
+    if (scoref == NULL) {
 
 	/* unlock */
-	unlock_file (__func__, lock_fd);
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u new file is wrong length!\n",
-		 __func__, __FILE__, __LINE__, dnum);
-	not_reached ();
-      }
-      else {
-        /* New file is okay, unlink old files and pointer swap score file */
-        unlink (delfil);
-	unlink (newfil);
-        unlink (scrfil);
-	link (allfil, scrfil);
-	unlink (allfil);
-      }
-
-      scoref = fopen (scrfil, "r");
-    }
-    else
-      /* Only have delta file, sort into scorefile and unlink delta */
-    {
-
-      /* first sort command and args */
-      char *args[] = {
-	"sort", "-k", "+6nr", "-o", scrfil, delfil, NULL
-      };
-
-      /*
-       * sort delta score file into a rogomatic score file
-       */
-      code = fork_exec ("sort", args);
-      if (code != 0) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u sort -k +6nr -o %s %s failed, exit code: %d\n",
-		 __func__, __FILE__, __LINE__, dnum, scrfil, delfil, code);
-	not_reached ();
-      }
-
-      unlink (delfil);
-      scoref = fopen (scrfil, "r");
+	unlock_file(__func__, lock_fd);
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u Can't find: %s\n", __func__, __FILE__, __LINE__, dnum, scrfil);
+	not_reached();
     }
 
-    /* Restore umask */
-    umask (oldmask);
+    if (!quiet) {
+	printf("Rog-O-Matic Scores against version %s:\n\n", vers);
+	printf("%s%s", "Date        Time     User           Gold Killed by",
+	       "         Lvl  Hp  Str  Ac  Exp        Game Dungeon\n");
+    }
 
-    /* Restore interrupt status after score file stable */
-    uncritical ();
-  }
+    while ((int)(ch = fgetc(scoref)) != EOF) {
+	if (!quiet) {
+	    putchar(ch);
+	}
+    }
 
-  /* Now any new scores have been put into scrfil, read it */
-  if (scoref == NULL) {
+    fclose(scoref);
 
     /* unlock */
-    unlock_file (__func__, lock_fd);
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Can't find: %s\n",
-	      __func__, __FILE__, __LINE__, dnum, scrfil);
-    not_reached ();
-  }
+    unlock_file(__func__, lock_fd);
 
-  if (!quiet) {
-    printf ("Rog-O-Matic Scores against version %s:\n\n", vers);
-    printf ("%s%s", "Date        Time     User           Gold Killed by",
-	    "         Lvl  Hp  Str  Ac  Exp        Game Dungeon\n");
-  }
-
-  while ((int) (ch = fgetc (scoref)) != EOF) {
-    if (!quiet) {
-      putchar (ch);
+    /* free paths */
+    if (scrfil != NULL) {
+	free(scrfil);
+	scrfil = NULL;
     }
-  }
+    if (delfil != NULL) {
+	free(delfil);
+	scrfil = NULL;
+    }
+    if (newfil != NULL) {
+	free(newfil);
+	scrfil = NULL;
+    }
+    if (allfil != NULL) {
+	free(allfil);
+	scrfil = NULL;
+    }
 
-  fclose (scoref);
-
-  /* unlock */
-  unlock_file (__func__, lock_fd);
-
-  /* free paths */
-  if (scrfil != NULL) {
-      free (scrfil);
-      scrfil = NULL;
-  }
-  if (delfil != NULL) {
-      free (delfil);
-      scrfil = NULL;
-  }
-  if (newfil != NULL) {
-      free (newfil);
-      scrfil = NULL;
-  }
-  if (allfil != NULL) {
-      free (allfil);
-      scrfil = NULL;
-  }
-
-  exit (0);
+    exit(0);
 }
 
 /*
@@ -293,7 +283,7 @@ dumpscore (char *vers)
  */
 
 static void
-intrupscore (int sig __attribute__ ((__unused__)))
+intrupscore(int sig __attribute__((__unused__)))
 {
-  exit (1);
+    exit(1);
 }

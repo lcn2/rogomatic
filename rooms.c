@@ -28,99 +28,100 @@
  * the dungeon levels, rooms, and passages.
  */
 
-# include <ctype.h>
-# include <string.h>
-# include <setjmp.h>
+#include <ctype.h>
+#include <string.h>
+#include <setjmp.h>
 
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
 
-# define sign(x) ((x)?(x)>0?1:-1:0)
-# define EXPLORED 01
-# define HASROOM  02
+#define sign(x) ((x) ? (x) > 0 ? 1 : -1 : 0)
+#define EXPLORED 01
+#define HASROOM 02
 
 /* static declarations */
 
-static int levelmap[RGRID + 1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};	/* +1 for paranoia */
+static int levelmap[RGRID + 1] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; /* +1 for paranoia */
 
 static void clearcurrect(void);
-static void teleport (void);
-static void unmarkexplored (int row, int col);
-static void connectdoors (int r1, int c1, int r2, int c2);
+static void teleport(void);
+static void unmarkexplored(int row, int col);
+static void connectdoors(int r1, int c1, int r2, int c2);
 
 /*
  * newlevel: Clear old data structures and set up for a new level.
  */
 
 void
-newlevel (void)
+newlevel(void)
 {
-  int   i, j;
+    int i, j;
 
-  initstufflist ();			/* Delete the list of items */
-  diddrop = false;			/* Clear dropped item flag */
-  droppedscare = 0;			/* Old stuff gone */
-  maxobj = 22;				/* Reset maximum # of objs */
-  newmonsterlevel ();			/* Do new monster stuff */
-  exploredlevel = false;		/* New level */
-  aggravated = false;			/* Old monsters gone */
-  beingstalked = 0;			/* Old monsters gone */
-  darkdir = NONE;			/* Not arching old monster */
-  darkturns = 0;			/* Not arching old monster */
-  stairrow = NONE;			/* Get rid of old stairs */
-  staircol = 0;				/* Get rid of old stairs */
-  missedstairs = false;
-  newdoors = doorlist;			/* Clear door list */
-  goalr = NONE;				/* Old goal invalid */
-  goalc = NONE;				/* Old goal invalid */
-  trapr = NONE;				/* Old traps are gone */
-  trapc = NONE;				/* Old traps are gone */
-  foundarrowtrap = false;		/* Old traps are gone */
-  foundtrapdoor = false;		/* Old traps are gone */
-  teleported = 0;			/* Not teleported yet */
-  attempt = 0;				/* Haven't search for doors yet */
-  usesynch = false;			/* Force a new inventory */
-  compression = (Level < 13);		/* Set move compression */
-  newarmor = true;			/* Reevaluate our items */
-  newweapon = true;			/* Reevaluate our items */
-  newring = true;			/* Reevaluate our items */
-  foundnew ();				/* Reactivate all rules */
-  clearsendqueue ();			/* Clear old commands */
+    initstufflist();	   /* Delete the list of items */
+    diddrop = false;	   /* Clear dropped item flag */
+    droppedscare = 0;	   /* Old stuff gone */
+    maxobj = 22;	   /* Reset maximum # of objs */
+    newmonsterlevel();	   /* Do new monster stuff */
+    exploredlevel = false; /* New level */
+    aggravated = false;	   /* Old monsters gone */
+    beingstalked = 0;	   /* Old monsters gone */
+    darkdir = NONE;	   /* Not arching old monster */
+    darkturns = 0;	   /* Not arching old monster */
+    stairrow = NONE;	   /* Get rid of old stairs */
+    staircol = 0;	   /* Get rid of old stairs */
+    missedstairs = false;
+    newdoors = doorlist;	/* Clear door list */
+    goalr = NONE;		/* Old goal invalid */
+    goalc = NONE;		/* Old goal invalid */
+    trapr = NONE;		/* Old traps are gone */
+    trapc = NONE;		/* Old traps are gone */
+    foundarrowtrap = false;	/* Old traps are gone */
+    foundtrapdoor = false;	/* Old traps are gone */
+    teleported = 0;		/* Not teleported yet */
+    attempt = 0;		/* Haven't search for doors yet */
+    usesynch = false;		/* Force a new inventory */
+    compression = (Level < 13); /* Set move compression */
+    newarmor = true;		/* Reevaluate our items */
+    newweapon = true;		/* Reevaluate our items */
+    newring = true;		/* Reevaluate our items */
+    foundnew();			/* Reactivate all rules */
+    clearsendqueue();		/* Clear old commands */
 
-  /*
-   * Clear the highlevel map
-   */
+    /*
+     * Clear the highlevel map
+     */
 
-  memset (levelmap, 0, sizeof(levelmap));
-  memset (zonemap, 0, sizeof(zonemap));
-  for (i = 0; i < RGRID; ++i) {
-    zonemap[i][i] = 1;
-  }
-  zone = NONE;
+    memset(levelmap, 0, sizeof(levelmap));
+    memset(zonemap, 0, sizeof(zonemap));
+    for (i = 0; i < RGRID; ++i) {
+	zonemap[i][i] = 1;
+    }
+    zone = NONE;
 
-  /*
-   * Clear the lowlevel map
-   */
+    /*
+     * Clear the lowlevel map
+     */
 
-  for (i = 1; i < R-1; i++)
-    for (j = 0; j < C; j++) {  /* Forall screen positions */
-      scrmap[i][j] = SCRMINIT;
-      timessearched[i][j] = 0;
-      updatepos (screen[i][j], i, j);
+    for (i = 1; i < R - 1; i++) {
+	for (j = 0; j < C; j++) { /* Forall screen positions */
+	    scrmap[i][j] = SCRMINIT;
+	    timessearched[i][j] = 0;
+	    updatepos(screen[i][j], i, j);
+	}
     }
 
-  atrow0 = atrow;
-  atcol0 = atcol;
-  set (ROOM);
-  setnewgoal ();
-  timestosearch = k_door / 5;
+    atrow0 = atrow;
+    atcol0 = atcol;
+    set(ROOM);
+    setnewgoal();
+    timestosearch = k_door / 5;
 
-  /*
-   * record the new level to the end of the level log
-   */
-  levellog_append (NULL);
+    /*
+     * record the new level to the end of the level log
+     */
+    levellog_append(NULL);
 }
 
 /* routine to find the rooms:
@@ -130,40 +131,46 @@ newlevel (void)
  */
 
 static struct {
-  int top;
-  int bot;
-  int left;
-  int right;
-} bounds[RGRID + 1] = {	/* +1 for paranoia */
+    int top;
+    int bot;
+    int left;
+    int right;
+} bounds[RGRID + 1] = {/* +1 for paranoia */
 
-       /* top bot left right */
-  /*0*/	 { 1,  6,   0,  25},
-  /*1*/	 { 1,  6,  27,  51},
-  /*2*/	 { 1,  6,  53,  79},
-  /*3*/	 { 8, 14,   0,  25},
-  /*4*/	 { 8, 14,  27,  51},
-  /*5*/	 { 8, 14,  53,  79},
-  /*6*/	 {16, 22,   0,  25},
-  /*7*/	 {16, 22,  27,  51},
-  /*8*/	 {16, 22,  53,  79},
-  /*paranoia*/{ 0, 0, 0, 0}
-};
+		       /* top bot left right */
+		       /*0*/ {1, 6, 0, 25},
+		       /*1*/ {1, 6, 27, 51},
+		       /*2*/ {1, 6, 53, 79},
+		       /*3*/ {8, 14, 0, 25},
+		       /*4*/ {8, 14, 27, 51},
+		       /*5*/ {8, 14, 53, 79},
+		       /*6*/ {16, 22, 0, 25},
+		       /*7*/ {16, 22, 27, 51},
+		       /*8*/ {16, 22, 53, 79},
+		       /*paranoia*/ {0, 0, 0, 0}};
 
 void
-markmissingrooms (void)
+markmissingrooms(void)
 {
-  int rm, i, j;
+    int rm, i, j;
 
-  for (rm=0; rm<RGRID; ++rm) {
-    room[rm]=0;
+    for (rm = 0; rm < RGRID; ++rm) {
+	room[rm] = 0;
 
-    for (i=bounds[rm].top; i<=bounds[rm].bot; ++i)
-      for (j=bounds[rm].left; j<=bounds[rm].right; ++j)
-        if (onrc(ROOM,i,j)) { room[rm]=ROOM; goto nextroom; }
-        else if (onrc(BEEN,i,j)) { room[rm]=BEEN; goto nextroom; }
+	for (i = bounds[rm].top; i <= bounds[rm].bot; ++i) {
+	    for (j = bounds[rm].left; j <= bounds[rm].right; ++j) {
+		if (onrc(ROOM, i, j)) {
+		    room[rm] = ROOM;
+		    goto nextroom;
+		} else if (onrc(BEEN, i, j)) {
+		    room[rm] = BEEN;
+		    goto nextroom;
+		}
+	    }
+	}
 
-nextroom: ;
-  }
+    nextroom:;
+    }
 }
 
 /*
@@ -177,16 +184,17 @@ nextroom: ;
  */
 
 int
-whichroom (int r, int c)
+whichroom(int r, int c)
 {
-  int rm;
+    int rm;
 
-  for (rm=0; rm<RGRID; ++rm)
-    if (r >= bounds[rm].top  && r <= bounds[rm].bot &&
-        c >= bounds[rm].left && c <= bounds[rm].right)
-      return(rm);
+    for (rm = 0; rm < RGRID; ++rm) {
+	if (r >= bounds[rm].top && r <= bounds[rm].bot && c >= bounds[rm].left && c <= bounds[rm].right) {
+	    return (rm);
+	}
+    }
 
-  return (-1);
+    return (-1);
 }
 
 /*
@@ -194,61 +202,75 @@ whichroom (int r, int c)
  */
 
 void
-nametrap (int traptype, int standingonit)
+nametrap(int traptype, int standingonit)
 {
-  int i, r, c, tdir = NONE, monsteradj = 0;
+    int i, r, c, tdir = NONE, monsteradj = 0;
 
-  if (standingonit) {
-    r=atrow; c=atcol;
+    if (standingonit) {
+	r = atrow;
+	c = atcol;
 
-  } else if (blinded) {		/* Cant see, dont bother */
-    return;
+    } else if (blinded) { /* Cant see, dont bother */
+	return;
 
-  } else {
-    /* Look all around and see what there is next to us */
-    for (i = 0; i < DNUM; i++) {
-      r = atdrow(i); c = atdcol(i);
-
-      if (valrc (r,c)) {
-	if (seerc ('^', r, c)) {	/* Aha, a trap! */
-	  if (tdir != NONE) return;        /* Second trap, ambigous case */
-	  else tdir = i;                    /* First trap,  record direction */
-	}
-	else if (isupper(screen[r][c]))   /* Trap could be under monster */
-	  monsteradj++;
-      }
-    }
-
-    /* See one trap, set (r,c) to the trap location */
-    if (tdir != NONE) {
-      r = atdrow(tdir); c =  atdcol(tdir);
-
-    /* See no traps, if there is a monster adjacent, he could be on it */
-    } else if (monsteradj) {
-      return;
-
-    /* Cant ever sit on a trap door or a teleport trap */
-    } else if (traptype == TRAPDOR || traptype == TELTRAP) {
-      return;
-
-    /* Cant see trap anywhere else, we must be sitting on it */
     } else {
-      r = atrow; c = atcol;
+	/* Look all around and see what there is next to us */
+	for (i = 0; i < DNUM; i++) {
+	    r = atdrow(i);
+	    c = atdcol(i);
+
+	    if (valrc(r, c)) {
+		if (seerc('^', r, c)) { /* Aha, a trap! */
+		    if (tdir != NONE) {
+			return; /* Second trap, ambigous case */
+		    } else {
+			tdir = i; /* First trap,  record direction */
+		    }
+		} else if (isupper(screen[r][c])) { /* Trap could be under monster */
+		    monsteradj++;
+		}
+	    }
+	}
+
+	/* See one trap, set (r,c) to the trap location */
+	if (tdir != NONE) {
+	    r = atdrow(tdir);
+	    c = atdcol(tdir);
+
+	    /* See no traps, if there is a monster adjacent, he could be on it */
+	} else if (monsteradj) {
+	    return;
+
+	    /* Cant ever sit on a trap door or a teleport trap */
+	} else if (traptype == TRAPDOR || traptype == TELTRAP) {
+	    return;
+
+	    /* Cant see trap anywhere else, we must be sitting on it */
+	} else {
+	    r = atrow;
+	    c = atcol;
+	}
     }
-  }
 
-  if (valrc (r,c)) {
-    /* Record last arror trap found (for being creative against 3.6) */
-    if (traptype == ARROW) { foundarrowtrap = true; trapr = r; trapc = c; }
-    else if (traptype == TRAPDOR) { foundtrapdoor = true; }
+    if (valrc(r, c)) {
+	/* Record last arror trap found (for being creative against 3.6) */
+	if (traptype == ARROW) {
+	    foundarrowtrap = true;
+	    trapr = r;
+	    trapc = c;
+	} else if (traptype == TRAPDOR) {
+	    foundtrapdoor = true;
+	}
 
-    /* If a trapdor, reactivate rules */
-    if (traptype == TRAPDOR) foundnew ();
+	/* If a trapdor, reactivate rules */
+	if (traptype == TRAPDOR) {
+	    foundnew();
+	}
 
-    /* Set the trap type */
-    unsetrc (TELTRAP|TRAPDOR|BEARTRP|GASTRAP|ARROW|DARTRAP, r, c);
-    setrc (TRAP | traptype, r, c);
-  }
+	/* Set the trap type */
+	unsetrc(TELTRAP | TRAPDOR | BEARTRP | GASTRAP | ARROW | DARTRAP, r, c);
+	setrc(TRAP | traptype, r, c);
+    }
 }
 
 /*
@@ -256,17 +278,21 @@ nametrap (int traptype, int standingonit)
  */
 
 void
-findstairs (int notr, int notc)
+findstairs(int notr, int notc)
 {
-  int r, c;
+    int r, c;
 
-  stairrow = staircol = NONE;
+    stairrow = staircol = NONE;
 
-  for (r = 2; r < R-2; r++)
-    for (c = 1; c < C-1; c++)
-      if ((seerc ('%', r, c) || onrc (STAIRS, r, c)) &&
-          r != notr && c != notc)
-        { setrc (STAIRS, r, c); stairrow = r; staircol = c; }
+    for (r = 2; r < R - 2; r++) {
+	for (c = 1; c < C - 1; c++) {
+	    if ((seerc('%', r, c) || onrc(STAIRS, r, c)) && r != notr && c != notc) {
+		setrc(STAIRS, r, c);
+		stairrow = r;
+		staircol = c;
+	    }
+	}
+    }
 }
 
 /*
@@ -274,17 +300,23 @@ findstairs (int notr, int notc)
  */
 
 int
-downright (int *drow, int *dcol)
+downright(int *drow, int *dcol)
 {
-  int i=atrow, j=atcol;
+    int i = atrow, j = atcol;
 
-  while (i < R-1 && j < C-1) {
-    if (onrc (CANGO, i, j+1)) j++;
-    else if (onrc (CANGO, i+1, j)) i++;
-    else { *drow = i; *dcol = j; return (1); }
-  }
+    while (i < R - 1 && j < C - 1) {
+	if (onrc(CANGO, i, j + 1)) {
+	    j++;
+	} else if (onrc(CANGO, i + 1, j)) {
+	    i++;
+	} else {
+	    *drow = i;
+	    *dcol = j;
+	    return (1);
+	}
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -292,23 +324,26 @@ downright (int *drow, int *dcol)
  */
 
 int
-lightroom (void)
+lightroom(void)
 {
-  int obj;
+    int obj;
 
-  /* not in a room nor on door, blinded or room lit?? */
-  if ((!on (DOOR | ROOM)) || blinded || !darkroom ())
+    /* not in a room nor on door, blinded or room lit?? */
+    if ((!on(DOOR | ROOM)) || blinded || !darkroom()) {
+	return (0);
+    }
+
+    if ((obj = havenamed(Scroll, "light")) && (obj >= 0) && reads(obj)) {
+	return (1);
+    }
+
+    if ((obj = havewand("light")) && (obj >= 0) && (itemis(obj, WORTHLESS))) {
+	return (0);
+    } else if ((obj = havewand("light")) && (obj >= 0) && (!itemis(obj, WORTHLESS))) {
+	return (point(obj, 0));
+    }
+
     return (0);
-
-  if ((obj = havenamed (Scroll, "light")) && (obj >= 0) && reads (obj))
-    return (1);
-
-  if ((obj = havewand ("light")) && (obj >= 0) && (itemis (obj, WORTHLESS)))
-    return (0);
-  else if ((obj = havewand ("light")) && (obj >= 0) && (!itemis (obj, WORTHLESS)))
-    return (point (obj, 0));
-
-  return (0);
 }
 
 /*
@@ -316,26 +351,29 @@ lightroom (void)
  */
 
 int
-darkroom (void)
+darkroom(void)
 {
-  int dir, dir2, drow, dcol;
+    int dir, dir2, drow, dcol;
 
-  if (!on (DOOR | ROOM))
-    return (0);
-
-  for (dir=0; dir<DNUM; dir++) {
-    drow = atdrow(dir);
-    dcol = atdcol(dir);
-    if (valrc (drow, dcol)) {
-      if (seerc ('.', drow, dcol))
-	for (dir2=0; dir2<DNUM; dir2++)
-	  if (valrc (drow+deltr[dir2], dcol+deltc[dir2]) &&
-	      seerc (' ', drow+deltr[dir2], dcol+deltc[dir2]))
-	    return (1);
+    if (!on(DOOR | ROOM)) {
+	return (0);
     }
-  }
 
-  return (0);
+    for (dir = 0; dir < DNUM; dir++) {
+	drow = atdrow(dir);
+	dcol = atdcol(dir);
+	if (valrc(drow, dcol)) {
+	    if (seerc('.', drow, dcol)) {
+		for (dir2 = 0; dir2 < DNUM; dir2++) {
+		    if (valrc(drow + deltr[dir2], dcol + deltc[dir2]) && seerc(' ', drow + deltr[dir2], dcol + deltc[dir2])) {
+			return (1);
+		    }
+		}
+	    }
+	}
+    }
+
+    return (0);
 }
 
 /*
@@ -344,118 +382,161 @@ darkroom (void)
  * should be re-initialised.				LGCH
  */
 
-# define fT 1
-# define fB 2
-# define fL 4
-# define fR 8
+#define fT 1
+#define fB 2
+#define fL 4
+#define fR 8
 
 static int curt, curb, curl, curr;
 
 void
-currentrectangle (void)
+currentrectangle(void)
 {
-  int   flags = fT + fB + fL + fR, r, c, any = 1;
+    int flags = fT + fB + fL + fR, r, c, any = 1;
 
-  /*
-   * DEFINITION: curt is the current top of the room.  This is the
-   * topmost row which is known to be a room square.  The wall location
-   * is therefore curt-1.  curb: bottom.  curl: left. curr: right
-   * Since we discover new info when we step on a square on the
-   * extremity of the known room area, the following statement was
-   * modified by LGCH to use >=, <= instead of >, <
-   */
+    /*
+     * DEFINITION: curt is the current top of the room.  This is the
+     * topmost row which is known to be a room square.  The wall location
+     * is therefore curt-1.  curb: bottom.  curl: left. curr: right
+     * Since we discover new info when we step on a square on the
+     * extremity of the known room area, the following statement was
+     * modified by LGCH to use >=, <= instead of >, <
+     */
 
-  if ((atrow >= curb || atrow <= curt || atcol <= curl || atcol >= curr)
-      && on (ROOM)) {
-    curt = curb = atrow;
-    curl = curr = atcol;
+    if ((atrow >= curb || atrow <= curt || atcol <= curl || atcol >= curr) && on(ROOM)) {
+	curt = curb = atrow;
+	curl = curr = atcol;
 
-    while (any) {
-      any = 0;
+	while (any) {
+	    any = 0;
 
-      if (flags & fT) {
-        for (r = curt - 1, c = curl - 1; r > 0 && c > 0 && c <= curr + 1; c++)
-          if (valrc (r, c) && onrc (ROOM, r, c))      { curt--; any = 1; break; }
-          else if (valrc (r, c) && seerc ('-', r, c)) { flags &= ~fT; break; }
-      }
+	    if (flags & fT) {
+		for (r = curt - 1, c = curl - 1; r > 0 && c > 0 && c <= curr + 1; c++) {
+		    if (valrc(r, c) && onrc(ROOM, r, c)) {
+			curt--;
+			any = 1;
+			break;
+		    } else if (valrc(r, c) && seerc('-', r, c)) {
+			flags &= ~fT;
+			break;
+		    }
+		}
+	    }
 
-      if (flags & fB) {
-        for (r = curb + 1, c = curl - 1; r > 0 && c > 0 && c <= curr + 1; c++)
-          if (valrc (r, c) && onrc (ROOM, r, c))      { curb++; any = 1; break; }
-          else if (valrc (r, c) && seerc ('-', r, c)) { flags &= ~fB; break; }
-      }
+	    if (flags & fB) {
+		for (r = curb + 1, c = curl - 1; r > 0 && c > 0 && c <= curr + 1; c++) {
+		    if (valrc(r, c) && onrc(ROOM, r, c)) {
+			curb++;
+			any = 1;
+			break;
+		    } else if (valrc(r, c) && seerc('-', r, c)) {
+			flags &= ~fB;
+			break;
+		    }
+		}
+	    }
 
-      if (flags & fL) {
-        for (r = curt, c = curl - 1; r > 0 && c > 0 && r <= curb; r++)
-          if (valrc (r, c) && onrc (ROOM, r, c))      { curl--; any = 1; break; }
-          else if (valrc (r, c) && seerc ('|', r, c)) { flags &= ~fL; break; }
-      }
+	    if (flags & fL) {
+		for (r = curt, c = curl - 1; r > 0 && c > 0 && r <= curb; r++) {
+		    if (valrc(r, c) && onrc(ROOM, r, c)) {
+			curl--;
+			any = 1;
+			break;
+		    } else if (valrc(r, c) && seerc('|', r, c)) {
+			flags &= ~fL;
+			break;
+		    }
+		}
+	    }
 
-      if (flags & fR) {
-        for (r = curt, c = curr + 1; r <= curb; r++)
-          if (valrc (r, c) && onrc (ROOM, r, c))      { curr++; any = 1; break; }
-          else if (valrc (r, c) && seerc ('|', r, c)) { flags &= ~fR; break; }
-      }
-
-    }
-
-    for (r = curt; r <= curb; r++)
-      for (c = curl; c <= curr; c++) {
-	if (valrc (r, c)) {
-	  setrc (ROOM + CANGO, r, c);
-	  unsetrc	(HALL, r, c);
+	    if (flags & fR) {
+		for (r = curt, c = curr + 1; r <= curb; r++) {
+		    if (valrc(r, c) && onrc(ROOM, r, c)) {
+			curr++;
+			any = 1;
+			break;
+		    } else if (valrc(r, c) && seerc('|', r, c)) {
+			flags &= ~fR;
+			break;
+		    }
+		}
+	    }
 	}
-      }
 
-# define ckdoor(FLAG, NODOOR, STATIC, INC, S1, S2, I1, I2) \
-    if (valrc (r, c) && (0 == (flags & FLAG))) \
-    { any = 0; \
-      if (NODOOR) { \
-	any = 1; \
-      } else \
-	for (STATIC = S2, INC = I1; INC <= I2; INC++) \
-	  if (onrc (DOOR, r, c)) { any = 1; break; } \
-      if (any) \
-      { for (STATIC = S2, INC = I1; INC <= I2; INC++) \
-	  setrc (SEEN+WALL, r, c); \
-	for (STATIC = S1, INC = I1; INC <= I2; INC++) \
-	  setrc (BOUNDARY, r, c);   /* Room boundary   LGCH */ \
-      } \
-      else \
-      { for (STATIC = S2, INC = I1; INC <= I2; INC++) \
-	  setrc (BOUNDARY, r, c);  /* Unseen wall or door LGCH */ \
-      } \
+	for (r = curt; r <= curb; r++) {
+	    for (c = curl; c <= curr; c++) {
+		if (valrc(r, c)) {
+		    setrc(ROOM + CANGO, r, c);
+		    unsetrc(HALL, r, c);
+		}
+	    }
+	}
+
+#define ckdoor(FLAG, NODOOR, STATIC, INC, S1, S2, I1, I2)             \
+    if (valrc(r, c) && (0 == (flags & FLAG))) {                       \
+	any = 0;                                                      \
+	if (NODOOR) {                                                 \
+	    any = 1;                                                  \
+	} else                                                        \
+	    for (STATIC = S2, INC = I1; INC <= I2; INC++)             \
+		if (onrc(DOOR, r, c)) {                               \
+		    any = 1;                                          \
+		    break;                                            \
+		}                                                     \
+	if (any) {                                                    \
+	    for (STATIC = S2, INC = I1; INC <= I2; INC++)             \
+		setrc(SEEN + WALL, r, c);                             \
+	    for (STATIC = S1, INC = I1; INC <= I2; INC++)             \
+		setrc(BOUNDARY, r, c); /* Room boundary   LGCH */     \
+	} else {                                                      \
+	    for (STATIC = S2, INC = I1; INC <= I2; INC++)             \
+		setrc(BOUNDARY, r, c); /* Unseen wall or door LGCH */ \
+	}                                                             \
     }
 
-    if (curt <= 2) flags &= ~fT;    /* Wall must be on screen edge */
+	if (curt <= 2) {
+	    flags &= ~fT; /* Wall must be on screen edge */
+	}
 
-    if (curb >= 21) flags &= ~fB;
+	if (curb >= 21) {
+	    flags &= ~fB;
+	}
 
-    if (curl <= 1) flags &= ~fL;
+	if (curl <= 1) {
+	    flags &= ~fL;
+	}
 
-    if (curr >= 78) flags &= ~fR;
+	if (curr >= 78) {
+	    flags &= ~fR;
+	}
 
-    ckdoor (fT, curt<6,  r, c, curt, curt-1, curl-1, curr+1)
-    ckdoor (fB, curb>17, r, c, curb, curb+1, curl-1, curr+1)
-    ckdoor (fL, curl<24, c, r, curl, curl-1, curt-1, curb+1)
-    ckdoor (fR, curr>56, c, r, curr, curr+1, curt-1, curb+1)
+	ckdoor(fT, curt < 6, r, c, curt, curt - 1, curl - 1, curr + 1)
+	    ckdoor(fB, curb > 17, r, c, curb, curb + 1, curl - 1, curr + 1)
+		ckdoor(fL, curl < 24, c, r, curl, curl - 1, curt - 1, curb + 1)
+		    ckdoor(fR, curr > 56, c, r, curr, curr + 1, curt - 1, curb + 1)
 
-    /* Fill in the corners of the room without seeing them */
-    /* Prevents looking at corners to find missing doors */
-    if (valrc (curt-1, curt-1) && ((flags & (fT+fR)) == 0))  setrc (SEEN + WALL, curt-1, curr+1);
+	    /* Fill in the corners of the room without seeing them */
+	    /* Prevents looking at corners to find missing doors */
+	    if (valrc(curt - 1, curt - 1) && ((flags & (fT + fR)) == 0)) setrc(SEEN + WALL, curt - 1, curr + 1);
 
-    if (valrc (curt-1, curt-1) && ((flags & (fT+fL)) == 0))  setrc (SEEN + WALL, curt-1, curl-1);
+	if (valrc(curt - 1, curt - 1) && ((flags & (fT + fL)) == 0)) {
+	    setrc(SEEN + WALL, curt - 1, curl - 1);
+	}
 
-    if (valrc (curb+1, curr+1) && ((flags & (fB+fR)) == 0))  setrc (SEEN + WALL, curb+1, curr+1);
+	if (valrc(curb + 1, curr + 1) && ((flags & (fB + fR)) == 0)) {
+	    setrc(SEEN + WALL, curb + 1, curr + 1);
+	}
 
-    if (valrc (curb+1, curr+1) && ((flags & (fB+fL)) == 0))  setrc (SEEN + WALL, curb+1, curl-1);
-  }
+	if (valrc(curb + 1, curr + 1) && ((flags & (fB + fL)) == 0)) {
+	    setrc(SEEN + WALL, curb + 1, curl - 1);
+	}
+    }
 }
 
 static void
 clearcurrect(void)
 {
-  curl = curr = curt = curb = 0;
+    curl = curr = curt = curb = 0;
 }
 
 /*
@@ -466,91 +547,103 @@ clearcurrect(void)
  */
 
 void
-updateat (void)
+updateat(void)
 {
-  int dr = atrow - atrow0, dc = atcol - atcol0;
-  int i, r, c;
-  int   dist, newzone, sum;
+    int dr = atrow - atrow0, dc = atcol - atcol0;
+    int i, r, c;
+    int dist, newzone, sum;
 
-  /*
-   * Record passage from one zone to the next
-   */
+    /*
+     * Record passage from one zone to the next
+     */
 
-  newzone = whichroom (atrow, atcol);
+    newzone = whichroom(atrow, atcol);
 
-  if (newzone != NONE && zone != NONE && newzone != zone) {
-    new_arch = true;
-    zonemap[zone][newzone] = zonemap[newzone][zone] = 1;
+    if (newzone != NONE && zone != NONE && newzone != zone) {
+	new_arch = true;
+	zonemap[zone][newzone] = zonemap[newzone][zone] = 1;
 
-    if ((levelmap[zone] & (EXPLORED | HASROOM)) == 0) {
-      for (i = 0, sum = 0; i < 9; i++) sum += zonemap[zone][i];
+	if ((levelmap[zone] & (EXPLORED | HASROOM)) == 0) {
+	    for (i = 0, sum = 0; i < 9; i++) {
+		sum += zonemap[zone][i];
+	    }
 
-      if (sum >= 3) markexplored (atrow0, atcol0);
-    }
-  }
-
-  if (newzone != NONE)
-    zone = newzone;
-
-
-  /*
-   * Check for teleport, else if we moved multiple squares, mark them as BEEN
-   */
-
-  if ((direc (dr, dc) != movedir) || (dr && dc && (abs(dr) != abs(dc))))
-    teleport ();
-  else {
-    dist = (abs(dr)>abs(dc)) ? abs(dr) : abs(dc);
-    dr = (dr > 0) ? 1 : (dr < 0) ? -1 : 0;
-    dc = (dc > 0) ? 1 : (dc < 0) ? -1 : 0;
-
-    for (r = atrow0, c = atcol0;
-         dist >= 0 && valrc (r,c) && (onrc(DOOR,r,c) || !onrc(WALL,r,c));
-         r += dr, c += dc, dist--) {
-      setrc (BEEN | SEEN | CANGO, r, c);
-
-      if (!onrc (TRAP, r, c)) setrc (SAFE, r, c);
-    }
-  }
-
-  /* Mark surrounding area according to what we see */
-
-  if (!on (HALL | DOOR | ROOM) && !blinded) {
-    int rr, cc;
-    int halls = 0, rooms = 0, rm;
-    char *terrain = "nothing";
-
-    for (i=0; i<DNUM; i += 2) {
-      rr = atdrow(i); cc = atdcol(i);
-
-      if (valrc (rr, cc)) {
-	if (onrc (HALL, rr, cc))
-	  halls++;
-	else if (onrc (ROOM, rr, cc))
-	  rooms++;
-      }
+	    if (sum >= 3) {
+		markexplored(atrow0, atcol0);
+	    }
+	}
     }
 
-    if ((valrc (atrow-1, atcol) && seerc ('|', atrow-1, atcol) &&
-	 valrc (atrow+1, atcol) && seerc ('|', atrow+1, atcol)) ||
-        (valrc (atrow, atcol-1) && seerc ('-', atrow, atcol-1) &&
-	 valrc (atrow, atcol+1) && seerc ('-', atrow, atcol+1))) {
-      set (DOOR | SAFE); unset (HALL | ROOM); terrain = "door";
-
-      if ((rm = whichroom (atrow, atcol)) != NONE) levelmap[rm] |= HASROOM;
+    if (newzone != NONE) {
+	zone = newzone;
     }
-    else if (halls > 0)
-      { set (HALL | SAFE); unset (DOOR | ROOM); terrain = "hall"; }
-    else if (rooms > 0)
-      { set (ROOM); unset (HALL | DOOR); terrain = "room"; }
-    else
-      return;
 
-    dwait (D_INFORM, __func__, "Inferring %s at (%d,%d)", terrain, atrow, atcol);
-  }
-  else if (on (DOOR | ROOM) && !isexplored (atrow, atcol) && !darkroom ()) {
-    markexplored (atrow, atcol);
-  }
+    /*
+     * Check for teleport, else if we moved multiple squares, mark them as BEEN
+     */
+
+    if ((direc(dr, dc) != movedir) || (dr && dc && (abs(dr) != abs(dc)))) {
+	teleport();
+    } else {
+	dist = (abs(dr) > abs(dc)) ? abs(dr) : abs(dc);
+	dr = (dr > 0) ? 1 : (dr < 0) ? -1 : 0;
+	dc = (dc > 0) ? 1 : (dc < 0) ? -1 : 0;
+
+	for (r = atrow0, c = atcol0; dist >= 0 && valrc(r, c) && (onrc(DOOR, r, c) || !onrc(WALL, r, c));
+	     r += dr, c += dc, dist--) {
+	    setrc(BEEN | SEEN | CANGO, r, c);
+
+	    if (!onrc(TRAP, r, c)) {
+		setrc(SAFE, r, c);
+	    }
+	}
+    }
+
+    /* Mark surrounding area according to what we see */
+
+    if (!on(HALL | DOOR | ROOM) && !blinded) {
+	int rr, cc;
+	int halls = 0, rooms = 0, rm;
+	char *terrain = "nothing";
+
+	for (i = 0; i < DNUM; i += 2) {
+	    rr = atdrow(i);
+	    cc = atdcol(i);
+
+	    if (valrc(rr, cc)) {
+		if (onrc(HALL, rr, cc)) {
+		    halls++;
+		} else if (onrc(ROOM, rr, cc)) {
+		    rooms++;
+		}
+	    }
+	}
+
+	if ((valrc(atrow - 1, atcol) && seerc('|', atrow - 1, atcol) && valrc(atrow + 1, atcol) && seerc('|', atrow + 1, atcol)) ||
+	    (valrc(atrow, atcol - 1) && seerc('-', atrow, atcol - 1) && valrc(atrow, atcol + 1) && seerc('-', atrow, atcol + 1))) {
+	    set(DOOR | SAFE);
+	    unset(HALL | ROOM);
+	    terrain = "door";
+
+	    if ((rm = whichroom(atrow, atcol)) != NONE) {
+		levelmap[rm] |= HASROOM;
+	    }
+	} else if (halls > 0) {
+	    set(HALL | SAFE);
+	    unset(DOOR | ROOM);
+	    terrain = "hall";
+	} else if (rooms > 0) {
+	    set(ROOM);
+	    unset(HALL | DOOR);
+	    terrain = "room";
+	} else {
+	    return;
+	}
+
+	dwait(D_INFORM, __func__, "Inferring %s at (%d,%d)", terrain, atrow, atcol);
+    } else if (on(DOOR | ROOM) && !isexplored(atrow, atcol) && !darkroom()) {
+	markexplored(atrow, atcol);
+    }
 }
 
 /*
@@ -558,117 +651,132 @@ updateat (void)
  */
 
 void
-updatepos (char ch, int row, int col)
+updatepos(char ch, int row, int col)
 {
-  char  oldch;
-  char  *monster;
-  int   seenbefore;
-  int   couldgo;
-  int   unseen;
-  int   rm;
+    char oldch;
+    char *monster;
+    int seenbefore;
+    int couldgo;
+    int unseen;
+    int rm;
 
-  /* firewall */
-  if (!valrc (row, col)) {
-    return;
-  }
+    /* firewall */
+    if (!valrc(row, col)) {
+	return;
+    }
 
-  oldch = screen[row][col];
-  seenbefore = onrc (EVERCLR, row, col);
-  couldgo = onrc (CANGO, row, col);
-  unseen = !onrc (SEEN, row, col);
-  rm = whichroom (row, col);
+    oldch = screen[row][col];
+    seenbefore = onrc(EVERCLR, row, col);
+    couldgo = onrc(CANGO, row, col);
+    unseen = !onrc(SEEN, row, col);
+    rm = whichroom(row, col);
 
-  debuglog ("rooms : updatepos (%c, %d, %d)\n",ch, row, col);
+    debuglog("rooms : updatepos (%c, %d, %d)\n", ch, row, col);
 
-  if (mlistlen && ch != oldch) deletemonster (row, col);
+    if (mlistlen && ch != oldch) {
+	deletemonster(row, col);
+    }
 
-  if (unseen) { foundnew (); }
+    if (unseen) {
+	foundnew();
+    }
 
-  switch (ch) {
+    switch (ch) {
     case '@':
-      setrc (SEEN | CANGO | BEEN | EVERCLR, row, col);
-      unsetrc (MONSTER | SLEEPER, row, col);
-      atrow = row;
-      atcol = col;
-      break;
+	setrc(SEEN | CANGO | BEEN | EVERCLR, row, col);
+	unsetrc(MONSTER | SLEEPER, row, col);
+	atrow = row;
+	atcol = col;
+	break;
 
     case '#':
 
-      if (!onrc (HALL, row, col)) {
-        foundnew ();
-        timestosearch = k_door / 5;
-      }
+	if (!onrc(HALL, row, col)) {
+	    foundnew();
+	    timestosearch = k_door / 5;
+	}
 
-      if (onrc (STUFF, row, col)) deletestuff (row, col);
+	if (onrc(STUFF, row, col)) {
+	    deletestuff(row, col);
+	}
 
-      setrc (SEEN | CANGO | SAFE | HALL | EVERCLR, row, col);
-      unsetrc (DOOR | ROOM | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP |
-               BEARTRP | DARTRAP | MONSTER | SCAREM | WALL | SLEEPER | STAIRS,
-               row, col);
-      break;
+	setrc(SEEN | CANGO | SAFE | HALL | EVERCLR, row, col);
+	unsetrc(DOOR | ROOM | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP | BEARTRP | DARTRAP | MONSTER | SCAREM | WALL | SLEEPER |
+		    STAIRS,
+		row, col);
+	break;
 
     case '+':
 
-      if (!onrc (DOOR, row, col)) {
-        foundnew ();
-        timestosearch = k_door / 5;
-        teleported = 0; /* Dont give up on this level yet */
-        *newdoors++ = row;  *newdoors++ = col;
-      }
+	if (!onrc(DOOR, row, col)) {
+	    foundnew();
+	    timestosearch = k_door / 5;
+	    teleported = 0; /* Dont give up on this level yet */
+	    *newdoors++ = row;
+	    *newdoors++ = col;
+	}
 
-      if (onrc (STUFF, row, col)) deletestuff (row, col);
+	if (onrc(STUFF, row, col)) {
+	    deletestuff(row, col);
+	}
 
-      setrc (SEEN | CANGO | SAFE | DOOR | WALL | EVERCLR, row, col);
-      unsetrc (ROOM | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP | BEARTRP |
-               DARTRAP | MONSTER | SCAREM | SLEEPER, row, col);
-      clearcurrect();  /* LGCH: redo currentrectangle */
-      break;
+	setrc(SEEN | CANGO | SAFE | DOOR | WALL | EVERCLR, row, col);
+	unsetrc(ROOM | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP | BEARTRP | DARTRAP | MONSTER | SCAREM | SLEEPER, row, col);
+	clearcurrect(); /* LGCH: redo currentrectangle */
+	break;
 
-      /*
-       * Room floor:  there are many cases of what a room floor means,
-       * depending on the version of Rogue, whether the room is lit, whether
-       * we are in the room or not, and whether or not we were shooting
-       * missiles last turn.
-       */
+	/*
+	 * Room floor:  there are many cases of what a room floor means,
+	 * depending on the version of Rogue, whether the room is lit, whether
+	 * we are in the room or not, and whether or not we were shooting
+	 * missiles last turn.
+	 */
 
     case '.':
-      /* The square cant be any of these */
-      unsetrc (HALL | DOOR | MONSTER | SCAREM | WALL | TRAP | ARROW |
-               TRAPDOR | TELTRAP | GASTRAP | BEARTRP | DARTRAP, row, col);
+	/* The square cant be any of these */
+	unsetrc(HALL | DOOR | MONSTER | SCAREM | WALL | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP | BEARTRP | DARTRAP, row, col);
 
-      if (!onrc (ROOM, row, col))		/* New room? */
-        unmarkexplored (row, col);
+	if (!onrc(ROOM, row, col)) { /* New room? */
+	    unmarkexplored(row, col);
+	}
 
-      if (rm != NONE) levelmap[rm] |= HASROOM;	/* Room here */
+	if (rm != NONE) {
+	    levelmap[rm] |= HASROOM; /* Room here */
+	}
 
-      /* If older Rogue, or our last position or a moving missile or */
-      /* in the same room, then a floor '.' means no stuff there     */
-      if ((version < RV52A ||
-           oldch == '@' ||
-           (oldch == ')' && functionchar (lastcmd) == 't') ||
-           (on (ROOM) && whichroom (row, col) == whichroom (atrow, atcol))) &&
-          onrc (STUFF, row, col))
-        { deletestuff (row, col); }
+	/* If older Rogue, or our last position or a moving missile or */
+	/* in the same room, then a floor '.' means no stuff there     */
+	if ((version < RV52A || oldch == '@' || (oldch == ')' && functionchar(lastcmd) == 't') ||
+	     (on(ROOM) && whichroom(row, col) == whichroom(atrow, atcol))) &&
+	    onrc(STUFF, row, col)) {
+	    deletestuff(row, col);
+	}
 
-      /* If the stairs moved, look for them */
-      if (oldch == '@' && onrc (STAIRS, row, col)) findstairs (row, col);
+	/* If the stairs moved, look for them */
+	if (oldch == '@' && onrc(STAIRS, row, col)) {
+	    findstairs(row, col);
+	}
 
-      /* Record whether this square has been clear of monsters */
-      if (!isupper (oldch)) setrc (EVERCLR, row, col);
+	/* Record whether this square has been clear of monsters */
+	if (!isupper(oldch)) {
+	    setrc(EVERCLR, row, col);
+	}
 
-      /* Safe if we have been there, but not if the stuff was an arrow */
-      if (onrc (BEEN, row, col)) setrc (SAFE, row, col);
-      else if (oldch == ')' && functionchar (lastcmd) == 't')
-        unsetrc (SAFE, row, col);
+	/* Safe if we have been there, but not if the stuff was an arrow */
+	if (onrc(BEEN, row, col)) {
+	    setrc(SAFE, row, col);
+	} else if (oldch == ')' && functionchar(lastcmd) == 't') {
+	    unsetrc(SAFE, row, col);
+	}
 
-      setrc (SEEN | CANGO | ROOM, row, col);	/* Square must be these */
-      break;
+	setrc(SEEN | CANGO | ROOM, row, col); /* Square must be these */
+	break;
 
     case '-':
     case '|':
-      setrc (SEEN | WALL | EVERCLR, row, col);
-      unsetrc (CANGO | HALL | DOOR | ROOM | SLEEPER, row, col);
-      break;
+	setrc(SEEN | WALL | EVERCLR, row, col);
+	unsetrc(CANGO | HALL | DOOR | ROOM | SLEEPER, row, col);
+	break;
 
     case ':':
     case '?':
@@ -677,98 +785,102 @@ updatepos (char ch, int row, int col)
     case ']':
     case '/':
     case '=':
-    case ',':           /* HAH! *//* HAH HAH! *//* HAH HAH HAH! */
+    case ',': /* HAH! */ /* HAH HAH! */ /* HAH HAH HAH! */
     case '*':
-      setrc (SEEN | CANGO | SAFE | EVERCLR, row, col);
-      unsetrc (DOOR | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP | BEARTRP |
-               DARTRAP | MONSTER | WALL | SLEEPER, row, col);
+	setrc(SEEN | CANGO | SAFE | EVERCLR, row, col);
+	unsetrc(DOOR | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP | BEARTRP | DARTRAP | MONSTER | WALL | SLEEPER, row, col);
 
-      if (ch != '?') unsetrc (SCAREM, row, col);
+	if (ch != '?') {
+	    unsetrc(SCAREM, row, col);
+	}
 
-      if (!onrc (BEEN, row, col) || !onrc(STAIRS, row, col) || !cosmic)
-        { addstuff (ch, row, col); unsetrc (STAIRS, row, col); }
+	if (!onrc(BEEN, row, col) || !onrc(STAIRS, row, col) || !cosmic) {
+	    addstuff(ch, row, col);
+	    unsetrc(STAIRS, row, col);
+	}
 
-      setnewgoal ();
-      break;
+	setnewgoal();
+	break;
 
     case '%':
 
-      if (!onrc (STAIRS, row, col)) foundnew ();
+	if (!onrc(STAIRS, row, col)) {
+	    foundnew();
+	}
 
-      if ((!cosmic || onrc (BEEN, row, col)) && onrc (STUFF, row, col))
-        deletestuff (row, col);
+	if ((!cosmic || onrc(BEEN, row, col)) && onrc(STUFF, row, col)) {
+	    deletestuff(row, col);
+	}
 
-      setrc (SEEN | CANGO | SAFE | ROOM | STAIRS | EVERCLR, row, col);
-      unsetrc (DOOR | HALL | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP |
-               BEARTRP | DARTRAP | MONSTER | SCAREM | SLEEPER,
-               row, col);
-      stairrow = row;
-      staircol = col;
-      setnewgoal ();
-      break;
+	setrc(SEEN | CANGO | SAFE | ROOM | STAIRS | EVERCLR, row, col);
+	unsetrc(DOOR | HALL | TRAP | ARROW | TRAPDOR | TELTRAP | GASTRAP | BEARTRP | DARTRAP | MONSTER | SCAREM | SLEEPER, row,
+		col);
+	stairrow = row;
+	staircol = col;
+	setnewgoal();
+	break;
 
     case '^':
-      setrc (SEEN | CANGO | ROOM | TRAP | EVERCLR, row, col);
+	setrc(SEEN | CANGO | ROOM | TRAP | EVERCLR, row, col);
 
-      if (onrc (STUFF, row, col)) deletestuff (row, col);
+	if (onrc(STUFF, row, col)) {
+	    deletestuff(row, col);
+	}
 
-      unsetrc (SAFE | HALL | DOOR | MONSTER | SCAREM | WALL | SLEEPER,
-               row, col);
-      break;
+	unsetrc(SAFE | HALL | DOOR | MONSTER | SCAREM | WALL | SLEEPER, row, col);
+	break;
 
     case ' ':
-      unsetrc (MONSTER | WALL, row, col);
-      break;
+	unsetrc(MONSTER | WALL, row, col);
+	break;
 
     default:
 
-      if (isupper (ch)) {
-        monster = monname (ch);
-        setrc (SEEN | CANGO | MONSTER, row, col);
-        unsetrc (SCAREM, row, col);
+	if (isupper(ch)) {
+	    monster = monname(ch);
+	    setrc(SEEN | CANGO | MONSTER, row, col);
+	    unsetrc(SCAREM, row, col);
 
-        if (onrc (WALL, row, col)) {	/* Infer DOOR here */
-          if (!onrc (DOOR, row, col)) {
-            foundnew ();
-            timestosearch = k_door / 5;
-            setrc (DOOR, row, col); /* MLM */
-            unsetrc (WALL, row, col); /* MLM */
-          }
-        }
+	    if (onrc(WALL, row, col)) { /* Infer DOOR here */
+		if (!onrc(DOOR, row, col)) {
+		    foundnew();
+		    timestosearch = k_door / 5;
+		    setrc(DOOR, row, col);   /* MLM */
+		    unsetrc(WALL, row, col); /* MLM */
+		}
+	    }
 
-        if (!revvideo && ch != oldch) { /* R5.2 MLM */
-          blinded = false;
+	    if (!revvideo && ch != oldch) { /* R5.2 MLM */
+		blinded = false;
 
-          if (seenbefore)
-            addmonster (ch, row, col, AWAKE);
-          else if (!onrc (HALL | DOOR, row, col) && !aggravated &&
-                   (streq (monster, "floating eye") ||
-                    streq (monster, "ice monster") ||
-                    streq (monster, "leprechaun") ||
-                    streq (monster, "nymph") ||
-                    (version < RV52A && (ch == 'T' || ch == 'P')))) {
-            addmonster (ch, row, col, ASLEEP);
-            setrc (SLEEPER, row, col);
-          }
-          else if (onrc (HALL | DOOR, row, col) || aggravated) {
-            addmonster (ch, row, col, AWAKE);
-            setrc (EVERCLR, row, col);
-          }
-          else
-            addmonster (ch, row, col, 0);
-        }
-      }
+		if (seenbefore) {
+		    addmonster(ch, row, col, AWAKE);
+		} else if (!onrc(HALL | DOOR, row, col) && !aggravated &&
+			   (streq(monster, "floating eye") || streq(monster, "ice monster") || streq(monster, "leprechaun") ||
+			    streq(monster, "nymph") || (version < RV52A && (ch == 'T' || ch == 'P')))) {
+		    addmonster(ch, row, col, ASLEEP);
+		    setrc(SLEEPER, row, col);
+		} else if (onrc(HALL | DOOR, row, col) || aggravated) {
+		    addmonster(ch, row, col, AWAKE);
+		    setrc(EVERCLR, row, col);
+		} else {
+		    addmonster(ch, row, col, 0);
+		}
+	    }
+	}
 
-      break;
-  }
+	break;
+    }
 
-  /* If the stairs moved, look for the real stairs */
-  if ((!onrc (STAIRS, row, col) && (row==stairrow && col==staircol)) ||
-      (stairrow != NONE && !onrc (STAIRS, stairrow, staircol)))
-    findstairs (row, col);
+    /* If the stairs moved, look for the real stairs */
+    if ((!onrc(STAIRS, row, col) && (row == stairrow && col == staircol)) ||
+	(stairrow != NONE && !onrc(STAIRS, stairrow, staircol))) {
+	findstairs(row, col);
+    }
 
-  if (!couldgo && onrc (CANGO, row, col))
-    setnewgoal ();
+    if (!couldgo && onrc(CANGO, row, col)) {
+	setnewgoal();
+    }
 }
 
 /*
@@ -777,30 +889,37 @@ updatepos (char ch, int row, int col)
  */
 
 static void
-teleport (void)
+teleport(void)
 {
-  int r = atrow0, c = atcol0;
+    int r = atrow0, c = atcol0;
 
-  goalr = goalc = NONE; setnewgoal ();
+    goalr = goalc = NONE;
+    setnewgoal();
 
-  hitstokill = 0; darkdir = NONE; darkturns = 0;
+    hitstokill = 0;
+    darkdir = NONE;
+    darkturns = 0;
 
-  if (movedir >= 0 && movedir < DNUM && !confused) {
-    teleported++;
+    if (movedir >= 0 && movedir < DNUM && !confused) {
+	teleported++;
 
-    while (r > 1 && r < R-1 && c > 0 && c < C-1) {
-      if (onrc (WALL | DOOR | HALL, r, c)) break;
+	while (r > 1 && r < R - 1 && c > 0 && c < C - 1) {
+	    if (onrc(WALL | DOOR | HALL, r, c)) {
+		break;
+	    }
 
-      if (onrc (TRAP, r, c)) {
-        if (!onrc (ARROW|DARTRAP|GASTRAP|BEARTRP|TRAPDOR|TELTRAP, r, c))
-          saynow ("Assuming teleport trap at %d, %d", r, c);
+	    if (onrc(TRAP, r, c)) {
+		if (!onrc(ARROW | DARTRAP | GASTRAP | BEARTRP | TRAPDOR | TELTRAP, r, c)) {
+		    saynow("Assuming teleport trap at %d, %d", r, c);
+		}
 
-        break;
-      }
+		break;
+	    }
 
-      r += deltr[movedir]; c += deltc[movedir];
+	    r += deltr[movedir];
+	    c += deltc[movedir];
+	}
     }
-  }
 }
 
 /*
@@ -815,22 +934,23 @@ teleport (void)
 void
 mapinfer(void)
 {
-  int r, c, inroom;
+    int r, c, inroom;
 
-  dwait (D_CONTROL, __func__, "Map read: inferring rooms");
+    dwait(D_CONTROL, __func__, "Map read: inferring rooms");
 
-  for (r=1; r < R-1; r++) {
-    inroom = 0;
+    for (r = 1; r < R - 1; r++) {
+	inroom = 0;
 
-    for (c=0; c < C; c++) {
-      if (seerc ('|', r, c) || (seerc ('+', r, c) && !seerc('-', r, c-1)))
-        { inroom = !inroom; }
-      else if (inroom)
-        { setrc (ROOM | CANGO, r, c); }
-      else
-        { setrc (SEEN, r, c); }
+	for (c = 0; c < C; c++) {
+	    if (seerc('|', r, c) || (seerc('+', r, c) && !seerc('-', r, c - 1))) {
+		inroom = !inroom;
+	    } else if (inroom) {
+		setrc(ROOM | CANGO, r, c);
+	    } else {
+		setrc(SEEN, r, c);
+	    }
+	}
     }
-  }
 }
 
 /*
@@ -838,16 +958,17 @@ mapinfer(void)
  */
 
 void
-markexplored (int row, int col)
+markexplored(int row, int col)
 {
-  int rm = whichroom (row, col);
+    int rm = whichroom(row, col);
 
-  if (rm != NONE && !(levelmap[rm] & EXPLORED)) {
-    levelmap[rm] |= EXPLORED;
+    if (rm != NONE && !(levelmap[rm] & EXPLORED)) {
+	levelmap[rm] |= EXPLORED;
 
-    if (!(levelmap[rm] & HASROOM))
-      saynow ("Assuming room %d is gone.", zone);
-  }
+	if (!(levelmap[rm] & HASROOM)) {
+	    saynow("Assuming room %d is gone.", zone);
+	}
+    }
 }
 
 /*
@@ -855,11 +976,13 @@ markexplored (int row, int col)
  */
 
 static void
-unmarkexplored (int row, int col)
+unmarkexplored(int row, int col)
 {
-  int rm = whichroom (row, col);
+    int rm = whichroom(row, col);
 
-  if (rm != NONE) levelmap[rm] &= ~EXPLORED;
+    if (rm != NONE) {
+	levelmap[rm] &= ~EXPLORED;
+    }
 }
 
 /*
@@ -867,11 +990,11 @@ unmarkexplored (int row, int col)
  */
 
 int
-isexplored (int row, int col)
+isexplored(int row, int col)
 {
-  int rm = whichroom (row, col);
+    int rm = whichroom(row, col);
 
-  return (rm != NONE ? levelmap[rm] & EXPLORED : 0);
+    return (rm != NONE ? levelmap[rm] & EXPLORED : 0);
 }
 
 /*
@@ -879,15 +1002,17 @@ isexplored (int row, int col)
  */
 
 int
-haveexplored (int n)
+haveexplored(int n)
 {
-  int rm, count = 0;
+    int rm, count = 0;
 
-  for (rm = 0; rm < 9; rm++)
-    if (levelmap[rm] & EXPLORED)
-      count++;
+    for (rm = 0; rm < 9; rm++) {
+	if (levelmap[rm] & EXPLORED) {
+	    count++;
+	}
+    }
 
-  return (count >= n);
+    return (count >= n);
 }
 
 /*
@@ -895,24 +1020,24 @@ haveexplored (int n)
  */
 
 void
-printexplored (void)
+printexplored(void)
 {
-  int rm;
+    int rm;
 
-  at (0,0);
-  printw ("Rooms explored: ");
+    at(0, 0);
+    printw("Rooms explored: ");
 
-  for (rm = 0; rm < 9; rm++) {
-    if (levelmap[rm] & EXPLORED) {
-      printw (" %d", rm);
+    for (rm = 0; rm < 9; rm++) {
+	if (levelmap[rm] & EXPLORED) {
+	    printw(" %d", rm);
+	}
     }
-  }
 
-  clrtoeol ();
-  at (row, col);
-  if (!quiet) {
-    refresh ();
-  }
+    clrtoeol();
+    at(row, col);
+    if (!quiet) {
+	refresh();
+    }
 }
 
 /*
@@ -929,139 +1054,165 @@ printexplored (void)
  */
 
 void
-inferhall (int r, int c)
+inferhall(int r, int c)
 {
-  int i, j, k;
+    int i, j, k;
 
-  int inc, rm, end1, end2, end, dropout = 0, dir = NONE;
+    int inc, rm, end1, end2, end, dropout = 0, dir = NONE;
 
-  char dirch = ' ';
+    char dirch = ' ';
 
-  /* firewall */
-  if (!valrc (r, c)) {
-    return;
-  }
-
-  for (k = 0; k < DNUM; k += 2) {
-    if (valrc (r + deltr[k], c + deltc[k]) && onrc (HALL, r + deltr[k], c + deltc[k]))      /* Hall has been seen */
-      return;
-    else if (valrc (r + deltr[k], c + deltc[k]) && onrc (ROOM, r + deltr[k], c + deltc[k])) /* Room is over here */
-      dir = k;
-  }
-
-  dwait (D_SEARCH, __func__, "Room direction: %d", dir);
-
-  if (dir < 0) return;
-
-  if (dir % 4 == 0) {		     /* If horizontal dir */
-
-    if (dir == 0)
-      dirch = 'l';
-    else
-      dirch = 'r';
-
-    inc = -deltc[dir]; rm = whichroom (r, c);
-    end1 = bounds[rm].top; end2 = bounds[rm].bot;
-
-    if (inc < 0) end = bounds[rm-1].left;
-    else         end = bounds[rm+1].right;
-
-    end = end * inc;
-
-    for (j = c+inc; j*inc < end; j += inc) {
-      for (i = end1; i <= end2; i++) {
-        if (debug (D_SCREEN | D_SEARCH | D_INFORM)) mvaddch (i, j, dirch);
-
-	if (valrc (i,j)) {
-	  if (onrc (DOOR | WALL | ROOM | HALL, i, j)) {
-	    /* Modified only to find doors on vertical walls */
-	    if (onrc (DOOR,i,j) &&
-		((valrc (i-1,j) && onrc (WALL,i-1,j)) ||
-		 (valrc (i+1,j) && onrc (WALL,i+1,j))))
-	      connectdoors (r, c+inc, i, j-inc);
-
-	    dropout = 1;
-	  }
-        }
-      }
-
-      if (dropout)
-        break;
+    /* firewall */
+    if (!valrc(r, c)) {
+	return;
     }
 
-  } else {
-
-    if (dir == 2)
-      dirch = 'd';
-    else
-      dirch = 'u';
-
-    inc = -deltr[dir]; rm = whichroom (r, c);
-    end1 = bounds[rm].left; end2 = bounds[rm].right;
-
-    if (inc < 0) end = bounds[rm-3].top;
-    else         end = bounds[rm+3].bot;
-
-    end = end * inc;
-
-    for (i = r+inc; i*inc < end; i += inc) {
-      for (j = end1; j <= end2; j++) {
-        if (debug (D_SCREEN | D_SEARCH | D_INFORM)) mvaddch (i, j, dirch);
-
-	if (valrc (i,j)) {
-	  if (onrc (DOOR | WALL | ROOM | HALL, i, j)) {
-	    /* Modified only to find doors on horizontal walls */
-	    if (onrc (DOOR,i,j) &&
-		((valrc (i,j-1) && onrc (WALL,i,j-1)) ||
-		 (valrc (i,j+1) && onrc (WALL,i,j+1))))
-	      connectdoors (r+inc, c, i-inc, j);
-
-	    dropout = 1;
-	  }
-        }
-      }
-
-      if (dropout) break;
+    for (k = 0; k < DNUM; k += 2) {
+	if (valrc(r + deltr[k], c + deltc[k]) && onrc(HALL, r + deltr[k], c + deltc[k])) { /* Hall has been seen */
+	    return;
+	} else if (valrc(r + deltr[k], c + deltc[k]) && onrc(ROOM, r + deltr[k], c + deltc[k])) { /* Room is over here */
+	    dir = k;
+	}
     }
-  }
 
-  /* NOTE: If we set SEEN here on the three squares beyond the door, then
-   * we can prevent Rogomatic's persistence in searching out every
-   * corridor that leads to a secret door at the other end. Or, we could set
-   * a bit on the door to make it a preferred exploration target so that
-   * Rogomatic would ALWAYS search out every corridor leading to a secret
-   * door at the other end. The latter alternative is probably better
-   * unless we implement the inferred corridors so that we can infer a
-   * corridor which has a secret door and therefore we can traverse it
-   * more easily one way than the other. NOTE that we must have a flag to
-   * indicate why the search for a corridor failed: if it found a wall
-   * then we know there is a secret door; if it stopped for another reason
-   * then we don't know what we may find - maybe a room, maybe a path to a
-   * corridor.
-   */
+    dwait(D_SEARCH, __func__, "Room direction: %d", dir);
 
-  dwait (D_CONTROL | D_SEARCH, __func__, "Hall search done");
+    if (dir < 0) {
+	return;
+    }
+
+    if (dir % 4 == 0) { /* If horizontal dir */
+
+	if (dir == 0) {
+	    dirch = 'l';
+	} else {
+	    dirch = 'r';
+	}
+
+	inc = -deltc[dir];
+	rm = whichroom(r, c);
+	end1 = bounds[rm].top;
+	end2 = bounds[rm].bot;
+
+	if (inc < 0) {
+	    end = bounds[rm - 1].left;
+	} else {
+	    end = bounds[rm + 1].right;
+	}
+
+	end = end * inc;
+
+	for (j = c + inc; j * inc < end; j += inc) {
+	    for (i = end1; i <= end2; i++) {
+		if (debug(D_SCREEN | D_SEARCH | D_INFORM)) {
+		    mvaddch(i, j, dirch);
+		}
+
+		if (valrc(i, j)) {
+		    if (onrc(DOOR | WALL | ROOM | HALL, i, j)) {
+			/* Modified only to find doors on vertical walls */
+			if (onrc(DOOR, i, j) &&
+			    ((valrc(i - 1, j) && onrc(WALL, i - 1, j)) || (valrc(i + 1, j) && onrc(WALL, i + 1, j)))) {
+			    connectdoors(r, c + inc, i, j - inc);
+			}
+
+			dropout = 1;
+		    }
+		}
+	    }
+
+	    if (dropout) {
+		break;
+	    }
+	}
+
+    } else {
+
+	if (dir == 2) {
+	    dirch = 'd';
+	} else {
+	    dirch = 'u';
+	}
+
+	inc = -deltr[dir];
+	rm = whichroom(r, c);
+	end1 = bounds[rm].left;
+	end2 = bounds[rm].right;
+
+	if (inc < 0) {
+	    end = bounds[rm - 3].top;
+	} else {
+	    end = bounds[rm + 3].bot;
+	}
+
+	end = end * inc;
+
+	for (i = r + inc; i * inc < end; i += inc) {
+	    for (j = end1; j <= end2; j++) {
+		if (debug(D_SCREEN | D_SEARCH | D_INFORM)) {
+		    mvaddch(i, j, dirch);
+		}
+
+		if (valrc(i, j)) {
+		    if (onrc(DOOR | WALL | ROOM | HALL, i, j)) {
+			/* Modified only to find doors on horizontal walls */
+			if (onrc(DOOR, i, j) &&
+			    ((valrc(i, j - 1) && onrc(WALL, i, j - 1)) || (valrc(i, j + 1) && onrc(WALL, i, j + 1)))) {
+			    connectdoors(r + inc, c, i - inc, j);
+			}
+
+			dropout = 1;
+		    }
+		}
+	    }
+
+	    if (dropout) {
+		break;
+	    }
+	}
+    }
+
+    /* NOTE: If we set SEEN here on the three squares beyond the door, then
+     * we can prevent Rogomatic's persistence in searching out every
+     * corridor that leads to a secret door at the other end. Or, we could set
+     * a bit on the door to make it a preferred exploration target so that
+     * Rogomatic would ALWAYS search out every corridor leading to a secret
+     * door at the other end. The latter alternative is probably better
+     * unless we implement the inferred corridors so that we can infer a
+     * corridor which has a secret door and therefore we can traverse it
+     * more easily one way than the other. NOTE that we must have a flag to
+     * indicate why the search for a corridor failed: if it found a wall
+     * then we know there is a secret door; if it stopped for another reason
+     * then we don't know what we may find - maybe a room, maybe a path to a
+     * corridor.
+     */
+
+    dwait(D_CONTROL | D_SEARCH, __func__, "Hall search done");
 }
 
 static void
-connectdoors (int r1, int c1, int r2, int c2)
+connectdoors(int r1, int c1, int r2, int c2)
 {
-  int r, c;
-  int endr = max (r1, r2), endc = max (c1, c2);
+    int r, c;
+    int endr = max(r1, r2), endc = max(c1, c2);
 
-  dwait (D_INFORM, __func__, "Inferring hall (%d,%d) to (%d,%d)", r1, c1, r2, c2);
+    dwait(D_INFORM, __func__, "Inferring hall (%d,%d) to (%d,%d)", r1, c1, r2, c2);
 
-  for (r = min (r1, r2); r <= endr; r++)
-    for (c = min (c1, c2); c <= endc; c++)
-      if (valrc (r,c)) {
-	setrc (CANGO|SAFE, r, c);              /* Can go (somewhere) here */
-      }
+    for (r = min(r1, r2); r <= endr; r++) {
+	for (c = min(c1, c2); c <= endc; c++) {
+	    if (valrc(r, c)) {
+		setrc(CANGO | SAFE, r, c); /* Can go (somewhere) here */
+	    }
+	}
+    }
 
-  for (r = min (r1, r2) - 1; r <= endr + 1; r++)
-    for (c = min (c1, c2) - 1; c <= endc + 1; c++)
-      if (valrc (r,c)) {
-	setrc (SEEN, r, c);		     /* Nothing to see here */
-      }
+    for (r = min(r1, r2) - 1; r <= endr + 1; r++) {
+	for (c = min(c1, c2) - 1; c <= endc + 1; c++) {
+	    if (valrc(r, c)) {
+		setrc(SEEN, r, c); /* Nothing to see here */
+	    }
+	}
+    }
 }
 
 /*
@@ -1073,26 +1224,30 @@ connectdoors (int r1, int c1, int r2, int c2)
  */
 
 bool
-canbedoor (int deadr, int deadc)
+canbedoor(int deadr, int deadc)
 {
-  int r, c, dr, dc, k, count;
+    int r, c, dr, dc, k, count;
 
-  /* Check all orthogonal directions around the square */
-  for (k=0; k < 8; k+=2) {
-    dr = deltr[k]; dc = deltc[k];
-    r = deadr+dr; c = deadc+dc;
+    /* Check all orthogonal directions around the square */
+    for (k = 0; k < 8; k += 2) {
+	dr = deltr[k];
+	dc = deltc[k];
+	r = deadr + dr;
+	c = deadc + dc;
 
-    /* If there are four blank squares, then it could be a door */
-    for (count=0; count < 4 && valrc (r,c) && seerc (' ',r,c); count++) {
-	r+=dr;
-	c+=dc;
+	/* If there are four blank squares, then it could be a door */
+	for (count = 0; count < 4 && valrc(r, c) && seerc(' ', r, c); count++) {
+	    r += dr;
+	    c += dc;
+	}
+
+	if (count >= 4) {
+	    return true;
+	}
     }
 
-    if (count >= 4) return true;
-  }
-
-  /* Not enough room in any direction */
-  return false;
+    /* Not enough room in any direction */
+    return false;
 }
 
 /*
@@ -1100,43 +1255,70 @@ canbedoor (int deadr, int deadc)
  */
 
 int
-mazedoor (int row, int col)
+mazedoor(int row, int col)
 {
-  int r=row, c=col, dr, dc, k=0, dir = NONE;
+    int r = row, c = col, dr, dc, k = 0, dir = NONE;
 
-  if (valrc (r,c+1) && onrc (HALL,r,c+1)) {dir=0; k++; dr=0;   dc=1;}
+    if (valrc(r, c + 1) && onrc(HALL, r, c + 1)) {
+	dir = 0;
+	k++;
+	dr = 0;
+	dc = 1;
+    }
 
-  if (valrc (r-1,c) && onrc (HALL,r-1,c)) {dir=2; k++; dr= -1; dc=0;}
+    if (valrc(r - 1, c) && onrc(HALL, r - 1, c)) {
+	dir = 2;
+	k++;
+	dr = -1;
+	dc = 0;
+    }
 
-  if (valrc (r+1,c) && onrc (HALL,r+1,c)) {dir=6; k++; dr=1;   dc=0;}
+    if (valrc(r + 1, c) && onrc(HALL, r + 1, c)) {
+	dir = 6;
+	k++;
+	dr = 1;
+	dc = 0;
+    }
 
-  if (valrc (r,c-1) && onrc (HALL,r,c-1)) {dir=4; k++; dr=0,   dc= -1;}
+    if (valrc(r, c - 1) && onrc(HALL, r, c - 1)) {
+	dir = 4;
+	k++;
+	dr = 0, dc = -1;
+    }
 
-  if (k != 1) return (0);
+    if (k != 1) {
+	return (0);
+    }
 
-  /* Fail if no adjacent hall, or not double corridor */
-  if (valrc (r+dr+dr, c+dc+dc) && (onrc (HALL, r+dr+dr, c+dc+dc) == 0))
+    /* Fail if no adjacent hall, or not double corridor */
+    if (valrc(r + dr + dr, c + dc + dc) && (onrc(HALL, r + dr + dr, c + dc + dc) == 0)) {
+	return (0);
+    }
+
+    /* Must have two sets of double corridor */
+    if (!(((valrc(r + dr + deltr[(dir + 1) & 7], c + dc + deltc[(dir + 1) & 7]) &&
+	    onrc(HALL, r + dr + deltr[(dir + 1) & 7], c + dc + deltc[(dir + 1) & 7])) &&
+	   (valrc(r + dr + deltr[(dir + 2) & 7], c + dc + deltc[(dir + 2) & 7]) &&
+	    onrc(HALL, r + dr + deltr[(dir + 2) & 7], c + dc + deltc[(dir + 2) & 7]))) ||
+	  ((valrc(r + dr + deltr[(dir - 1) & 7], c + dc + deltc[(dir - 1) & 7]) &&
+	    onrc(HALL, r + dr + deltr[(dir - 1) & 7], c + dc + deltc[(dir - 1) & 7])) &&
+	   (valrc(r + dr + deltr[(dir - 2) & 7], c + dc + deltc[(dir - 2) & 7]) &&
+	    onrc(HALL, r + dr + deltr[(dir - 2) & 7], c + dc + deltc[(dir - 2) & 7]))))) {
+	return (0);
+    }
+
+    /* If there are four blank squares, then it could be a door */
+    for (r = row - dr, c = col - dc, k = 0; k < 4 && valrc(r, c) && seerc(' ', r, c); k++) {
+	r -= dr;
+	c -= dc;
+    }
+
+    if (k >= 4) {
+	return (1);
+    }
+
+    /* Not enough room for room */
     return (0);
-
-  /* Must have two sets of double corridor */
-  if (! (((     valrc (r+dr+deltr[(dir+1)&7], c+dc+deltc[(dir+1)&7]) &&
-	   onrc (HALL, r+dr+deltr[(dir+1)&7], c+dc+deltc[(dir+1)&7])) &&
-          (     valrc (r+dr+deltr[(dir+2)&7], c+dc+deltc[(dir+2)&7]) &&
-	   onrc (HALL, r+dr+deltr[(dir+2)&7], c+dc+deltc[(dir+2)&7]))) ||
-         ((     valrc (r+dr+deltr[(dir-1)&7], c+dc+deltc[(dir-1)&7]) &&
-	   onrc (HALL, r+dr+deltr[(dir-1)&7], c+dc+deltc[(dir-1)&7])) &&
-          (     valrc (r+dr+deltr[(dir-2)&7], c+dc+deltc[(dir-2)&7]) &&
-	   onrc (HALL, r+dr+deltr[(dir-2)&7], c+dc+deltc[(dir-2)&7])))))
-    return (0);
-
-  /* If there are four blank squares, then it could be a door */
-  for (r = row-dr, c = col-dc, k=0;  k < 4 && valrc (r,c) && seerc (' ',r,c);  k++)
-    { r-=dr; c-=dc; }
-
-  if (k >= 4) return (1);
-
-  /* Not enough room for room */
-  return (0);
 }
 
 /*
@@ -1144,31 +1326,39 @@ mazedoor (int row, int col)
  */
 
 int
-nextto (int type, int r, int c)
+nextto(int type, int r, int c)
 {
-  int result;
+    int result;
 
-  if (valrc (r-1, c)) {
-    result = onrc (type, r-1, c);
-    if (result) return (result);
-  }
+    if (valrc(r - 1, c)) {
+	result = onrc(type, r - 1, c);
+	if (result) {
+	    return (result);
+	}
+    }
 
-  if (valrc (r+1, c)) {
-    result = onrc (type, r+1, c);
-    if (result) return (result);
-  }
+    if (valrc(r + 1, c)) {
+	result = onrc(type, r + 1, c);
+	if (result) {
+	    return (result);
+	}
+    }
 
-  if (valrc (r, c-1)) {
-    result = onrc (type, r, c-1);
-    if (result) return (result);
-  }
+    if (valrc(r, c - 1)) {
+	result = onrc(type, r, c - 1);
+	if (result) {
+	    return (result);
+	}
+    }
 
-  if (valrc (r, c+1)) {
-    result = onrc (type, r, c+1);
-    if (result) return (result);
-  }
+    if (valrc(r, c + 1)) {
+	result = onrc(type, r, c + 1);
+	if (result) {
+	    return (result);
+	}
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -1180,12 +1370,10 @@ nextto (int type, int r, int c)
  */
 
 int
-nexttowall (int r, int c)
+nexttowall(int r, int c)
 {
-  return ((valrc (r-1,c) && onrc (DOOR | WALL, r-1, c) == WALL) ||
-          (valrc (r+1,c) && onrc (DOOR | WALL, r+1, c) == WALL) ||
-          (valrc (r,c-1) && onrc (DOOR | WALL, r, c-1) == WALL) ||
-          (valrc (r,c+1) && onrc (DOOR | WALL, r, c+1) == WALL));
+    return ((valrc(r - 1, c) && onrc(DOOR | WALL, r - 1, c) == WALL) || (valrc(r + 1, c) && onrc(DOOR | WALL, r + 1, c) == WALL) ||
+	    (valrc(r, c - 1) && onrc(DOOR | WALL, r, c - 1) == WALL) || (valrc(r, c + 1) && onrc(DOOR | WALL, r, c + 1) == WALL));
 }
 
 /*
@@ -1193,19 +1381,19 @@ nexttowall (int r, int c)
  */
 
 void
-dumpmazedoor (void)
+dumpmazedoor(void)
 {
-  int r, c;
+    int r, c;
 
-  for (r=2; r < R-2; r++) {
-    for (c=1; c < C-1; c++) {
-      if (((scrmap[r][c] & (BEEN|DOOR|HALL|ROOM|WALL|STAIRS)) == 0) &&
-          mazedoor (r, c))
-        mvaddch (r, c, 'M');
+    for (r = 2; r < R - 2; r++) {
+	for (c = 1; c < C - 1; c++) {
+	    if (((scrmap[r][c] & (BEEN | DOOR | HALL | ROOM | WALL | STAIRS)) == 0) && mazedoor(r, c)) {
+		mvaddch(r, c, 'M');
+	    }
+	}
     }
-  }
 
-  at (row, col);
+    at(row, col);
 }
 
 /*
@@ -1213,13 +1401,13 @@ dumpmazedoor (void)
  */
 
 void
-foundnew (void)
+foundnew(void)
 {
-  new_mark = true;
-  new_findroom = true;
-  new_search = true;
-  new_stairs = true;
-  reusepsd = teleported = 0;
-  cancelmove (SECRETDOOR);
-  unrest ();
+    new_mark = true;
+    new_findroom = true;
+    new_search = true;
+    new_stairs = true;
+    reusepsd = teleported = 0;
+    cancelmove(SECRETDOOR);
+    unrest();
 }

@@ -28,30 +28,30 @@
  * Rog-O-Matic log file.
  */
 
-# include <ctype.h>
-# include <string.h>
-# include <setjmp.h>
+#include <ctype.h>
+#include <string.h>
+#include <setjmp.h>
 
-# include "modern_curses.h"
-# include "types.h"
-# include "globals.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "globals.h"
 
-# define MAXNUMLEV 50
-# define FIRSTLEVSTR "\nR: "
-# define NEWLEVSTR "\nR: {ff}"
-# define POSITAT   "{ff}"
+#define MAXNUMLEV 50
+#define FIRSTLEVSTR "\nR: "
+#define NEWLEVSTR "\nR: {ff}"
+#define POSITAT "{ff}"
 
 struct levstruct {
-  long pos;
-  int  level, gold, hp, hpmax, str, strmax, ac, explev, exp;
+    long pos;
+    int level, gold, hp, hpmax, str, strmax, ac, explev, exp;
 } levpos[MAXNUMLEV];
 
 /* static declarations */
 static int numlev = 0;
 
-static int findlevel (FILE *f, struct levstruct *lvpos, int *nmlev, int maxnum);
-static void fillstruct (FILE *f, struct levstruct *lev);
-static int findmatch (FILE *f, char *s);
+static int findlevel(FILE *f, struct levstruct *lvpos, int *nmlev, int maxnum);
+static void fillstruct(FILE *f, struct levstruct *lev);
+static int findmatch(FILE *f, char *s);
 
 /*
  * positionreplay: Called when user has typed the 'R' command, it fills
@@ -60,69 +60,92 @@ static int findmatch (FILE *f, char *s);
  */
 
 void
-positionreplay (void)
+positionreplay(void)
 {
-  int curlev;
-  long curpos;
-  char cmd;
+    int curlev;
+    long curpos;
+    char cmd;
 
-  /* Prompt user for a command character, read it, and lower case it */
-  saynow ("Which level (f=first, p=previous, c=current, n=next, l=last): ");
+    /* Prompt user for a command character, read it, and lower case it */
+    saynow("Which level (f=first, p=previous, c=current, n=next, l=last): ");
 
-  if (isupper ((cmd = getch ()))) cmd = tolower (cmd);
-
-  /* Clear the prompt */
-  saynow (NULL);    /* NOTE: NULL ==> do not format / "say" anything, just refresh the screen */
-
-  /* If command is not in the list, clear the prompt and exit. */
-  switch (cmd) {
-    case 'f': case 'p': case 'c': case 'n': case 'l': break;
-    default:  return;
-  }
-
-  /* Save the current position in the file */
-  curpos = ftell (logfile);
-
-  /* Read the log file, if we have not already done so */
-  if (!logdigested) {
-    saynow ("Reading whole log file to find levels...");
-
-    if (!findlevel (logfile, levpos, &numlev, MAXNUMLEV)) {
-      saynow ("Findlevel failed! Let's try to get back to where we were...");
-      fseek (logfile, curpos, 0);
-      return;
+    if (isupper((cmd = getch()))) {
+	cmd = tolower(cmd);
     }
 
-    logdigested = true;
-  }
+    /* Clear the prompt */
+    saynow(NULL); /* NOTE: NULL ==> do not format / "say" anything, just refresh the screen */
 
-  /* Now figure out the current level (so relative commands will work) */
-  for (curlev = 0; curlev < numlev-1; curlev++)
-    if (levpos[curlev+1].pos > curpos) break;
+    /* If command is not in the list, clear the prompt and exit. */
+    switch (cmd) {
+    case 'f':
+    case 'p':
+    case 'c':
+    case 'n':
+    case 'l':
+	break;
+    default:
+	return;
+    }
 
-  /* Now clear the screen, position the log file, and return */
-  switch (cmd) {
-    case 'f': fseek (logfile, levpos[0].pos, 0); break;
+    /* Save the current position in the file */
+    curpos = ftell(logfile);
+
+    /* Read the log file, if we have not already done so */
+    if (!logdigested) {
+	saynow("Reading whole log file to find levels...");
+
+	if (!findlevel(logfile, levpos, &numlev, MAXNUMLEV)) {
+	    saynow("Findlevel failed! Let's try to get back to where we were...");
+	    fseek(logfile, curpos, 0);
+	    return;
+	}
+
+	logdigested = true;
+    }
+
+    /* Now figure out the current level (so relative commands will work) */
+    for (curlev = 0; curlev < numlev - 1; curlev++) {
+	if (levpos[curlev + 1].pos > curpos) {
+	    break;
+	}
+    }
+
+    /* Now clear the screen, position the log file, and return */
+    switch (cmd) {
+    case 'f':
+	fseek(logfile, levpos[0].pos, 0);
+	break;
 
     case 'p':
-      if (curlev > 0) fseek (logfile, levpos[curlev-1].pos, 0);
-      else            fseek (logfile, levpos[0].pos, 0);
+	if (curlev > 0) {
+	    fseek(logfile, levpos[curlev - 1].pos, 0);
+	} else {
+	    fseek(logfile, levpos[0].pos, 0);
+	}
 
-      break;
-    case 'c': fseek (logfile, levpos[curlev].pos, 0); break;
+	break;
+    case 'c':
+	fseek(logfile, levpos[curlev].pos, 0);
+	break;
 
     case 'n':
-      if (curlev < numlev-1) fseek (logfile, levpos[curlev+1].pos, 0);
-      else            fseek (logfile, levpos[curlev].pos, 0);
+	if (curlev < numlev - 1) {
+	    fseek(logfile, levpos[curlev + 1].pos, 0);
+	} else {
+	    fseek(logfile, levpos[curlev].pos, 0);
+	}
 
-      break;
-    case 'l': fseek (logfile, levpos[numlev-1].pos, 0);
-      break;
-    default:  fseek (logfile, 0L, 0);
-  }
+	break;
+    case 'l':
+	fseek(logfile, levpos[numlev - 1].pos, 0);
+	break;
+    default:
+	fseek(logfile, 0L, 0);
+    }
 
-  clearscreen ();	/* Clear the screen */
-  Level = -1;		/* Force a newlevel() call */
+    clearscreen(); /* Clear the screen */
+    Level = -1;	   /* Force a newlevel() call */
 }
 
 /*
@@ -131,37 +154,38 @@ positionreplay (void)
  */
 
 static int
-findlevel (FILE *f, struct levstruct *lvpos, int *nmlev, int maxnum)
+findlevel(FILE *f, struct levstruct *lvpos, int *nmlev, int maxnum)
 {
-  char ch;
-  int l=0;
+    char ch;
+    int l = 0;
 
-  *nmlev = 0;
+    *nmlev = 0;
 
-  /* Position file after first newline */
-  rewind (f);
+    /* Position file after first newline */
+    rewind(f);
 
-  while ((ch = getc (f)) != '\n' && (int) ch != EOF);
+    while ((ch = getc(f)) != '\n' && (int)ch != EOF)
+	;
 
-  /* This is that start of level one */
-  lvpos[l].pos = ftell (f);
+    /* This is that start of level one */
+    lvpos[l].pos = ftell(f);
 
-  if (!findmatch (f, FIRSTLEVSTR)) {
-    rewind (f);
-    return (FAILURE);
-  }
+    if (!findmatch(f, FIRSTLEVSTR)) {
+	rewind(f);
+	return (FAILURE);
+    }
 
-  fillstruct (f, &lvpos[l]);
+    fillstruct(f, &lvpos[l]);
 
-  while (++l <= maxnum && findmatch (f, NEWLEVSTR)) {
-    fseek (f, (long) -strlen (POSITAT), 1);
-    lvpos[l].pos = ftell (f);
-    fillstruct (f, &lvpos[l]);
-  }
+    while (++l <= maxnum && findmatch(f, NEWLEVSTR)) {
+	fseek(f, (long)-strlen(POSITAT), 1);
+	lvpos[l].pos = ftell(f);
+	fillstruct(f, &lvpos[l]);
+    }
 
-  *nmlev = l;
-  rewind (f);
-  return (SUCCESS);
+    *nmlev = l;
+    rewind(f);
+    return (SUCCESS);
 }
 
 /*
@@ -170,43 +194,55 @@ findlevel (FILE *f, struct levstruct *lvpos, int *nmlev, int maxnum)
  */
 
 static void
-fillstruct (FILE *f, struct levstruct *lev)
+fillstruct(FILE *f, struct levstruct *lev)
 {
-  lev->level  = 0;
-  lev->gold   = 0;
-  lev->hp     = 0;
-  lev->hpmax  = 0;
-  lev->str    = 0;
-  lev->strmax = 0;
-  lev->ac     = 0;
-  lev->explev = 0;
-  lev->exp    = 0;
+    lev->level = 0;
+    lev->gold = 0;
+    lev->hp = 0;
+    lev->hpmax = 0;
+    lev->str = 0;
+    lev->strmax = 0;
+    lev->ac = 0;
+    lev->explev = 0;
+    lev->exp = 0;
 
-  if (!findmatch (f, "Level:")) return;
+    if (!findmatch(f, "Level:")) {
+	return;
+    }
 
-  fscanf (f, "%d", &lev->level);
+    fscanf(f, "%d", &lev->level);
 
-  if (!findmatch (f, "Gold:")) return;
+    if (!findmatch(f, "Gold:")) {
+	return;
+    }
 
-  fscanf (f, "%d", &lev->gold);
+    fscanf(f, "%d", &lev->gold);
 
-  if (!findmatch (f, "Hp:")) return;
+    if (!findmatch(f, "Hp:")) {
+	return;
+    }
 
-  fscanf (f, "%d(%d)", &lev->hp, &lev->hpmax);
+    fscanf(f, "%d(%d)", &lev->hp, &lev->hpmax);
 
-  if (!findmatch (f, "Str:")) return;
+    if (!findmatch(f, "Str:")) {
+	return;
+    }
 
-  fscanf (f, "%d(%d)", &lev->str, &lev->strmax);
+    fscanf(f, "%d(%d)", &lev->str, &lev->strmax);
 
-  if (!findmatch (f, ":")) return;		/* Armor class */
+    if (!findmatch(f, ":")) {
+	return; /* Armor class */
+    }
 
-  fscanf (f, "%d", &lev->ac);
+    fscanf(f, "%d", &lev->ac);
 
-  if (!findmatch (f, "Exp:")) return;
+    if (!findmatch(f, "Exp:")) {
+	return;
+    }
 
-  fscanf (f, "%d/%d", &lev->explev, &lev->exp);
+    fscanf(f, "%d/%d", &lev->explev, &lev->exp);
 
-  saynow ("Found level %d, has %d gold...", lev->level, lev->gold);
+    saynow("Found level %d, has %d gold...", lev->level, lev->gold);
 }
 
 /*
@@ -218,13 +254,19 @@ fillstruct (FILE *f, struct levstruct *lev)
  */
 
 static int
-findmatch (FILE *f, char *s)
+findmatch(FILE *f, char *s)
 {
-  char *m = s, ch;
+    char *m = s, ch;
 
-  while (*m && (int) (ch = fgetc (f)) != EOF)
-    if (ch != *(m++)) m = s;
+    while (*m && (int)(ch = fgetc(f)) != EOF) {
+	if (ch != *(m++)) {
+	    m = s;
+	}
+    }
 
-  if (*m) return (0);
-  else    return (1);
+    if (*m) {
+	return (0);
+    } else {
+	return (1);
+    }
 }

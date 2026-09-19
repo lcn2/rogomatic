@@ -28,50 +28,50 @@
  * term memory"
  */
 
-# include <stdlib.h>
-# include <math.h>
-# include <string.h>
-# include <time.h>
-# include <setjmp.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+#include <time.h>
+#include <setjmp.h>
 
-# include "have_strlcat.h"
-# include "have_strlcpy.h"
-# include "strl.h"
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
-# include "install.h"
+#include "have_strlcat.h"
+#include "have_strlcpy.h"
+#include "strl.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
+#include "install.h"
 
 /* static declarations */
-static bool nosave = false;	    /* True ==> dont write ltm back out */
-static char ltmnam[TY_BUF + 1];	    /* Long term memory file name, +1 for paranoia */
+static bool nosave = false;	/* True ==> dont write ltm back out */
+static char ltmnam[TY_BUF + 1]; /* Long term memory file name, +1 for paranoia */
 
-static void readltm (void);
-static void parsemonster (char *monster);
-static void clearltm (ltmrec *ltmarr);
+static void readltm(void);
+static void parsemonster(char *monster);
+static void clearltm(ltmrec *ltmarr);
 
 /*
  * mapcharacter: Read a character help message
  */
 
 void
-mapcharacter (char ch, char *str)
+mapcharacter(char ch, char *str)
 {
-  dwait (D_CONTROL, __func__, "'%c' ==> '%s'", ch, str);
+    dwait(D_CONTROL, __func__, "'%c' ==> '%s'", ch, str);
 
-  /* Ancient versions of Rogue had no wands or staves */
-  if (ch == '/' && stlmatch (str, "unknown")) {
-    version = RV36A;
+    /* Ancient versions of Rogue had no wands or staves */
+    if (ch == '/' && stlmatch(str, "unknown")) {
+	version = RV36A;
 
-  /* Dont map any unknown character */
-  } else if (stlmatch (str, "unknown")) {
-    ;
+	/* Dont map any unknown character */
+    } else if (stlmatch(str, "unknown")) {
+	;
 
-  /* If it is a monster, set its array index */
-  } else if (ch >= 'a' && ch <= 'z') {
-    monindex[ch-'a'+ 1] = addmonhist (str);
-  }
+	/* If it is a monster, set its array index */
+    } else if (ch >= 'a' && ch <= 'z') {
+	monindex[ch - 'a' + 1] = addmonhist(str);
+    }
 }
 
 /*
@@ -80,20 +80,23 @@ mapcharacter (char ch, char *str)
  */
 
 int
-addmonhist (char *monster)
+addmonhist(char *monster)
 {
-  int m;
+    int m;
 
-  /* Search for the monsters entry in the table */
-  for (m=0; m<nextmon; m++)
-    if (streq (monster, monhist[m].m_name))
-      return (m);
+    /* Search for the monsters entry in the table */
+    for (m = 0; m < nextmon; m++) {
+	if (streq(monster, monhist[m].m_name)) {
+	    return (m);
+	}
+    }
 
-  if (nextmon >= MAXMON)			/* Check for overflow */
-    dwait (D_FATAL, __func__, "Overflowed monster array");
+    if (nextmon >= MAXMON) { /* Check for overflow */
+	dwait(D_FATAL, __func__, "Overflowed monster array");
+    }
 
-  strlcpy (monhist[nextmon].m_name, monster, sizeof(monhist[nextmon].m_name));	/* Copy in the name */
-  return (nextmon++);				/* Return the index */
+    strlcpy(monhist[nextmon].m_name, monster, sizeof(monhist[nextmon].m_name)); /* Copy in the name */
+    return (nextmon++);								/* Return the index */
 }
 
 /*
@@ -102,16 +105,18 @@ addmonhist (char *monster)
  */
 
 int
-findmonster (char *monster)
+findmonster(char *monster)
 {
-  int m;
+    int m;
 
-  /* Search for the monsters entry in the table */
-  for (m=0; m<nextmon; m++)
-    if (streq (monster, monhist[m].m_name))
-      return (m);
+    /* Search for the monsters entry in the table */
+    for (m = 0; m < nextmon; m++) {
+	if (streq(monster, monhist[m].m_name)) {
+	    return (m);
+	}
+    }
 
-  return (-1);
+    return (-1);
 }
 
 /*
@@ -121,51 +126,58 @@ findmonster (char *monster)
  */
 
 void
-saveltm (int score)
+saveltm(int score)
 {
-  int m;
-  FILE *ltmfil;
-  int lock_fd;
+    int m;
+    FILE *ltmfil;
+    int lock_fd;
 
-  if (nextmon < 1 || nosave) return;
-
-  dwait (D_CONTROL, __func__, "writing file: %s", ltmnam);
-
-  /* Disable interrupts and open the file for writing */
-  critical ();
-
-  /* lock */
-  lock_fd = lock_file (__func__, NULL, lock_path);
-
-  /* Only write out the new results if we can get write access */
-  if ((ltmfil = wopen (ltmnam, "w")) == NULL)
-    { dwait (D_WARNING, __func__, "Can't write long term memory file: %s", ltmnam); }
-  else {
-    /* Write the ltm file header */
-    fprintf (ltmfil, "Count %d, sum %d, start %d, saved %d\n",
-	     ltm.gamecnt+1, ltm.gamesum+score,
-	     ltm.inittime, ltm.timeswritten+1);
-
-    /* Now write a line for each monster */
-    for (m = 0; m < nextmon; m++) {
-      fprintf (ltmfil, "%s|", monhist[m].m_name);
-      writeprob (ltmfil, &monhist[m].wehit);    fprintf (ltmfil, "|");
-      writeprob (ltmfil, &monhist[m].theyhit);  fprintf (ltmfil, "|");
-      writeprob (ltmfil, &monhist[m].arrowhit); fprintf (ltmfil, "|");
-      writestat (ltmfil, &monhist[m].htokill);   fprintf (ltmfil, "|");
-      writestat (ltmfil, &monhist[m].damage);   fprintf (ltmfil, "|");
-      writestat (ltmfil, &monhist[m].atokill);  fprintf (ltmfil, "|\n");
+    if (nextmon < 1 || nosave) {
+	return;
     }
 
-    /* Close the file and unlock it */
-    fclose (ltmfil);
+    dwait(D_CONTROL, __func__, "writing file: %s", ltmnam);
 
-    /* unlock */
-    unlock_file (__func__, lock_fd);
-  }
+    /* Disable interrupts and open the file for writing */
+    critical();
 
-  /* Re-enable interrupts */
-  uncritical ();
+    /* lock */
+    lock_fd = lock_file(__func__, NULL, lock_path);
+
+    /* Only write out the new results if we can get write access */
+    if ((ltmfil = wopen(ltmnam, "w")) == NULL) {
+	dwait(D_WARNING, __func__, "Can't write long term memory file: %s", ltmnam);
+    } else {
+	/* Write the ltm file header */
+	fprintf(ltmfil, "Count %d, sum %d, start %d, saved %d\n", ltm.gamecnt + 1, ltm.gamesum + score, ltm.inittime,
+		ltm.timeswritten + 1);
+
+	/* Now write a line for each monster */
+	for (m = 0; m < nextmon; m++) {
+	    fprintf(ltmfil, "%s|", monhist[m].m_name);
+	    writeprob(ltmfil, &monhist[m].wehit);
+	    fprintf(ltmfil, "|");
+	    writeprob(ltmfil, &monhist[m].theyhit);
+	    fprintf(ltmfil, "|");
+	    writeprob(ltmfil, &monhist[m].arrowhit);
+	    fprintf(ltmfil, "|");
+	    writestat(ltmfil, &monhist[m].htokill);
+	    fprintf(ltmfil, "|");
+	    writestat(ltmfil, &monhist[m].damage);
+	    fprintf(ltmfil, "|");
+	    writestat(ltmfil, &monhist[m].atokill);
+	    fprintf(ltmfil, "|\n");
+	}
+
+	/* Close the file and unlock it */
+	fclose(ltmfil);
+
+	/* unlock */
+	unlock_file(__func__, lock_fd);
+    }
+
+    /* Re-enable interrupts */
+    uncritical();
 }
 
 /*
@@ -173,38 +185,37 @@ saveltm (int score)
  */
 
 void
-restoreltm (void)
+restoreltm(void)
 {
-  int lock_fd;
+    int lock_fd;
 
-  memset (ltmnam, 0, sizeof(ltmnam));
-  snprintf (ltmnam, sizeof(ltmnam)-1, "%s/ltm%d", rgmdir, version);
-  dwait (D_CONTROL, __func__, "reading file: %s", ltmnam);
+    memset(ltmnam, 0, sizeof(ltmnam));
+    snprintf(ltmnam, sizeof(ltmnam) - 1, "%s/ltm%d", rgmdir, version);
+    dwait(D_CONTROL, __func__, "reading file: %s", ltmnam);
 
-  clearltm (monhist);			/* Clear the original sums */
-  nextmon = 0;				/* Zero the list of monsters */
-  monindex[0] = addmonhist ("it");	/* Monster 0 is "it" */
+    clearltm(monhist);		    /* Clear the original sums */
+    nextmon = 0;		    /* Zero the list of monsters */
+    monindex[0] = addmonhist("it"); /* Monster 0 is "it" */
 
-  /* Disable interrupts and open the file for reading */
-  critical ();
+    /* Disable interrupts and open the file for reading */
+    critical();
 
-  /* lock */
-  lock_fd = lock_file (__func__, NULL, lock_path);
+    /* lock */
+    lock_fd = lock_file(__func__, NULL, lock_path);
 
-  /* Only read the long term memory if we can get access */
-  if (fexists (ltmnam))
-    readltm ();
-  else {
-    dwait (D_CONTROL | D_SAY,
-	   __func__, "Starting long term memory file: %s", ltmnam);
-    ltm.gamecnt = ltm.gamesum = ltm.timeswritten = 0;
-    ltm.inittime = time (0);
-  }
+    /* Only read the long term memory if we can get access */
+    if (fexists(ltmnam)) {
+	readltm();
+    } else {
+	dwait(D_CONTROL | D_SAY, __func__, "Starting long term memory file: %s", ltmnam);
+	ltm.gamecnt = ltm.gamesum = ltm.timeswritten = 0;
+	ltm.inittime = time(0);
+    }
 
-  /* unlock */
-  unlock_file (__func__, lock_fd);
+    /* unlock */
+    unlock_file(__func__, lock_fd);
 
-  uncritical ();
+    uncritical();
 }
 
 /*
@@ -213,29 +224,27 @@ restoreltm (void)
  */
 
 static void
-readltm (void)
+readltm(void)
 {
-  char buf[BUFSIZ];
-  FILE *ltmfil;
+    char buf[BUFSIZ];
+    FILE *ltmfil;
 
-  if ((ltmfil = fopen (ltmnam, "r")) == NULL) {
-    nosave = true;
-    dwait (D_WARNING | D_SAY,
-           __func__, "Could not read long term memory file: %s", ltmnam);
-  }
-  else {
-    /* Read the ltm file header */
-    if (fgets (buf, BUFSIZ, ltmfil))
-      sscanf (buf, "Count %d, sum %d, start %d, saved %d",
-              &ltm.gamecnt, &ltm.gamesum,
-              &ltm.inittime, &ltm.timeswritten);
+    if ((ltmfil = fopen(ltmnam, "r")) == NULL) {
+	nosave = true;
+	dwait(D_WARNING | D_SAY, __func__, "Could not read long term memory file: %s", ltmnam);
+    } else {
+	/* Read the ltm file header */
+	if (fgets(buf, BUFSIZ, ltmfil)) {
+	    sscanf(buf, "Count %d, sum %d, start %d, saved %d", &ltm.gamecnt, &ltm.gamesum, &ltm.inittime, &ltm.timeswritten);
+	}
 
-    /* Read each monster line */
-    while (fgets (buf, BUFSIZ, ltmfil))
-      parsemonster (buf);
+	/* Read each monster line */
+	while (fgets(buf, BUFSIZ, ltmfil)) {
+	    parsemonster(buf);
+	}
 
-    fclose (ltmfil);
-  }
+	fclose(ltmfil);
+    }
 }
 
 /*
@@ -243,26 +252,34 @@ readltm (void)
  */
 
 static void
-parsemonster (char *monster)
+parsemonster(char *monster)
 {
-  char *attrs;
-  int m;
+    char *attrs;
+    int m;
 
-  /* Separate the monster name from the attributes */
-  if ((attrs = index (monster, '|')) == NULL) return;
+    /* Separate the monster name from the attributes */
+    if ((attrs = index(monster, '|')) == NULL) {
+	return;
+    }
 
-  *attrs++ = '\0';
+    *attrs++ = '\0';
 
-  /* Find the monsters entry in long term memory */
-  m = addmonhist (monster);
+    /* Find the monsters entry in long term memory */
+    m = addmonhist(monster);
 
-  /* Now parse the probabilities and statistics */
-  parseprob (attrs, &monhist[m].wehit);		SKIPTO ('|', attrs);
-  parseprob (attrs, &monhist[m].theyhit);	SKIPTO ('|', attrs);
-  parseprob (attrs, &monhist[m].arrowhit);	SKIPTO ('|', attrs);
-  parsestat (attrs, &monhist[m].htokill);	SKIPTO ('|', attrs);
-  parsestat (attrs, &monhist[m].damage);	SKIPTO ('|', attrs);
-  parsestat (attrs, &monhist[m].atokill);	SKIPTO ('|', attrs);
+    /* Now parse the probabilities and statistics */
+    parseprob(attrs, &monhist[m].wehit);
+    SKIPTO('|', attrs);
+    parseprob(attrs, &monhist[m].theyhit);
+    SKIPTO('|', attrs);
+    parseprob(attrs, &monhist[m].arrowhit);
+    SKIPTO('|', attrs);
+    parsestat(attrs, &monhist[m].htokill);
+    SKIPTO('|', attrs);
+    parsestat(attrs, &monhist[m].damage);
+    SKIPTO('|', attrs);
+    parsestat(attrs, &monhist[m].atokill);
+    SKIPTO('|', attrs);
 }
 
 /*
@@ -270,19 +287,19 @@ parsemonster (char *monster)
  */
 
 static void
-clearltm (ltmrec *ltmarr)
+clearltm(ltmrec *ltmarr)
 {
-  int i;
+    int i;
 
-  for (i=0; i<MAXMON; i++) {
-    ltmarr[i].m_name[0] = '\0';
-    clearprob (&ltmarr[i].wehit);
-    clearprob (&ltmarr[i].theyhit);
-    clearprob (&ltmarr[i].arrowhit);
-    clearstat (&ltmarr[i].htokill);
-    clearstat (&ltmarr[i].damage);
-    clearstat (&ltmarr[i].atokill);
-  }
+    for (i = 0; i < MAXMON; i++) {
+	ltmarr[i].m_name[0] = '\0';
+	clearprob(&ltmarr[i].wehit);
+	clearprob(&ltmarr[i].theyhit);
+	clearprob(&ltmarr[i].arrowhit);
+	clearstat(&ltmarr[i].htokill);
+	clearstat(&ltmarr[i].damage);
+	clearstat(&ltmarr[i].atokill);
+    }
 }
 
 /*
@@ -290,30 +307,36 @@ clearltm (ltmrec *ltmarr)
  */
 
 void
-dumpmonstertable (void)
+dumpmonstertable(void)
 {
-  int m;
-  char monc;
+    int m;
+    char monc;
 
-  clear (); mvprintw (0,0,"Monster table:");
-  analyzeltm ();
+    clear();
+    mvprintw(0, 0, "Monster table:");
+    analyzeltm();
 
-  for (m=0, monc='A';  m<26;  m++, monc++) {
-    if (m < 13) at (m+2, 0);
-    else        at (m-11, 40);
+    for (m = 0, monc = 'A'; m < 26; m++, monc++) {
+	if (m < 13) {
+	    at(m + 2, 0);
+	} else {
+	    at(m - 11, 40);
+	}
 
-    printw ("%c: %s", monc, monname (monc));
+	printw("%c: %s", monc, monname(monc));
 
-    if (monhist[monindex[m+1]].damage.count > 0)
-      printw (" (%d,%d)", monatt[m].expdam, monatt[m].maxdam);
-    else
-      printw (" <%d>", monatt[m].maxdam);
+	if (monhist[monindex[m + 1]].damage.count > 0) {
+	    printw(" (%d,%d)", monatt[m].expdam, monatt[m].maxdam);
+	} else {
+	    printw(" <%d>", monatt[m].maxdam);
+	}
 
-    if (monhist[monindex[m+1]].atokill.count > 0)
-      printw (" [%d]", monatt[m].mtokill);
-  }
+	if (monhist[monindex[m + 1]].atokill.count > 0) {
+	    printw(" [%d]", monatt[m].mtokill);
+	}
+    }
 
-  pauserogue ();
+    pauserogue();
 }
 
 /*
@@ -321,42 +344,43 @@ dumpmonstertable (void)
  */
 
 void
-analyzeltm (void)
+analyzeltm(void)
 {
-  int m, i;
-  double avg_dam = 0.6*Level+3, max_dam = 7.0+Level, avg_arr = 4.0;
-  double phit, mean_dam, stdev_dam, three_dev;
+    int m, i;
+    double avg_dam = 0.6 * Level + 3, max_dam = 7.0 + Level, avg_arr = 4.0;
+    double phit, mean_dam, stdev_dam, three_dev;
 
-  /* Loop through each monster in this game (not whole ltm file) */
-  for (i=0; i<26; i++) {
-    m = monindex[i+1];
+    /* Loop through each monster in this game (not whole ltm file) */
+    for (i = 0; i < 26; i++) {
+	m = monindex[i + 1];
 
-    /* Calculate expected and maximum damage done by monster */
-    if (monhist[m].damage.count > 3) {
-      mean_dam = mean (&monhist[m].damage);
-      stdev_dam = stdev (&monhist[m].damage);
-      max_dam = monhist[m].damage.high;
+	/* Calculate expected and maximum damage done by monster */
+	if (monhist[m].damage.count > 3) {
+	    mean_dam = mean(&monhist[m].damage);
+	    stdev_dam = stdev(&monhist[m].damage);
+	    max_dam = monhist[m].damage.high;
 
-      avg_dam = mean_dam * prob (&monhist[m].theyhit);
-      three_dev = mean_dam + 3 * stdev_dam;
+	    avg_dam = mean_dam * prob(&monhist[m].theyhit);
+	    three_dev = mean_dam + 3 * stdev_dam;
 
-      if (max_dam > three_dev && monhist[m].damage.count > 10) {
-        max_dam = mean_dam + stdev_dam;
-        monhist[m].damage.high = max_dam;
-      }
+	    if (max_dam > three_dev && monhist[m].damage.count > 10) {
+		max_dam = mean_dam + stdev_dam;
+		monhist[m].damage.high = max_dam;
+	    }
+	} else if (monhist[m].damage.high > 0.0) {
+	    max_dam = monhist[m].damage.high;
+	}
+
+	/* Calculate average arrows fired to killed monster */
+	if (monhist[m].atokill.count > 2) {
+	    phit = prob(&monhist[m].arrowhit);
+	    phit = max(phit, 0.1);
+	    avg_arr = mean(&monhist[m].atokill) / phit;
+	}
+
+	/* Now store the information in the monster tables */
+	monatt[i].expdam = ceil(avg_dam * 10);
+	monatt[i].maxdam = ceil(max_dam);
+	monatt[i].mtokill = ceil(avg_arr);
     }
-    else if (monhist[m].damage.high > 0.0)
-      max_dam = monhist[m].damage.high;
-
-    /* Calculate average arrows fired to killed monster */
-    if (monhist[m].atokill.count > 2) {
-      phit = prob (&monhist[m].arrowhit); phit = max (phit, 0.1);
-      avg_arr = mean (&monhist[m].atokill) / phit;
-    }
-
-    /* Now store the information in the monster tables */
-    monatt[i].expdam = ceil (avg_dam*10);
-    monatt[i].maxdam = ceil (max_dam);
-    monatt[i].mtokill = ceil (avg_arr);
-  }
 }

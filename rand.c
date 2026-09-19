@@ -21,36 +21,36 @@
  * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# include <stdlib.h>
+#include <stdlib.h>
 
 void
-rogo_srand (unsigned int seed)
+rogo_srand(unsigned int seed)
 {
     srandom(seed);
     return;
 }
 
 int
-rogo_rand (void)
+rogo_rand(void)
 {
-  int result;
+    int result;
 
-  result = (int) random();
+    result = (int)random();
 
-  return result;
+    return result;
 }
 
 int
-rogo_randint (int beyond)
+rogo_randint(int beyond)
 {
-  int result;
+    int result;
 
-  /* firewall */
-  if (beyond == 0) {
-      return 0;
-  }
+    /* firewall */
+    if (beyond == 0) {
+	return 0;
+    }
 
-  result = rogo_rand() % beyond;
+    result = rogo_rand() % beyond;
 
-  return result;
+    return result;
 }

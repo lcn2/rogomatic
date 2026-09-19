@@ -27,41 +27,40 @@
  * This file contains the very basic search mechanisms for exploration etc.
  */
 
-# include <stdio.h>
-# include <string.h>
-# include <setjmp.h>
+#include <stdio.h>
+#include <string.h>
+#include <setjmp.h>
 
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
 
-# define QSIZE (4000)
+#define QSIZE (4000)
 
-# define QUEUEBREAK  (111)
-# define FROM         (20)
-# define UNREACHABLE  (12)
-# define NOTTRIED     (11)
-# define TARGET       (10)
+#define QUEUEBREAK (111)
+#define FROM (20)
+#define UNREACHABLE (12)
+#define NOTTRIED (11)
+#define TARGET (10)
 
-# define if_mvdir(r,c) (valrc((r), (c)) ? mvdir[r][c] : 0)
+#define if_mvdir(r, c) (valrc((r), (c)) ? mvdir[r][c] : 0)
 
 /* static declarations */
 
-static int moveavd[R][C + 1]; /* +1 for paranoia */
-static int moveval[R][C + 1]; /* +1 for paranoia */
-static int movecont[R][C + 1]; /* +1 for paranoia */
+static int moveavd[R][C + 1];	/* +1 for paranoia */
+static int moveval[R][C + 1];	/* +1 for paranoia */
+static int movecont[R][C + 1];	/* +1 for paranoia */
 static int movedepth[R][C + 1]; /* +1 for paranoia */
-static char mvdir[R][C + 1]; /* +1 for paranoia */
-static int mvtype=0;
-static int didinit=0;
+static char mvdir[R][C + 1];	/* +1 for paranoia */
+static int mvtype = 0;
+static int didinit = 0;
 
-static int validatemap (int movetype, int (*evalinit)(void),
-		       int (*evaluate)(int, int, int, int*, int*, int*));
-static int searchfrom (int row, int col,
-		       int (*evaluate)(int, int, int, int*, int*, int*), char dir[R][C+1], int *trow, int *tcol);
-static int searchto (int row, int col,
-		     int (*evaluate)(int, int, int, int*, int*, int*), char dir[R][C+1], int *trow, int *tcol);
+static int validatemap(int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int *, int *, int *));
+static int searchfrom(int row, int col, int (*evaluate)(int, int, int, int *, int *, int *), char dir[R][C + 1], int *trow,
+		      int *tcol);
+static int searchto(int row, int col, int (*evaluate)(int, int, int, int *, int *, int *), char dir[R][C + 1], int *trow,
+		    int *tcol);
 
 /*
  * makemove: repeat move from here towards some sort of target.
@@ -69,12 +68,13 @@ static int searchto (int row, int col,
  */
 
 int
-makemove (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int*, int*, int*), int reevaluate)
+makemove(int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int *, int *, int *), int reevaluate)
 {
-  if (findmove (movetype, evalinit, evaluate, reevaluate))
-    return (followmap (movetype));
+    if (findmove(movetype, evalinit, evaluate, reevaluate)) {
+	return (followmap(movetype));
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -83,42 +83,53 @@ makemove (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, in
  */
 
 int
-findmove (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int*, int*, int*), int reevaluate)
+findmove(int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int *, int *, int *), int reevaluate)
 {
-  int result;
+    int result;
 
-  didinit = ontarget = 0;
+    didinit = ontarget = 0;
 
-  if (!reevaluate) {	/* First try to reuse the movement map */
-    result = validatemap (movetype, evalinit, evaluate);
+    if (!reevaluate) { /* First try to reuse the movement map */
+	result = validatemap(movetype, evalinit, evaluate);
 
-    if (result == 1) return (1);	/* Success */
+	if (result == 1) {
+	    return (1); /* Success */
+	}
 
-    if (result == 2) return (0);	/* Evalinit failed, no move */
-  }
+	if (result == 2) {
+	    return (0); /* Evalinit failed, no move */
+	}
+    }
 
-  /* Must rebuild the movement map */
-  mvtype = 0;	/* Will become 'if (mvtype==movetype) movetype=0;' */
+    /* Must rebuild the movement map */
+    mvtype = 0; /* Will become 'if (mvtype==movetype) movetype=0;' */
 
-  dwait (D_SEARCH, __func__, "computing new search path");
+    dwait(D_SEARCH, __func__, "computing new search path");
 
-  /* currentrectangle(); */     /* always done after each move of the rogue */
+    /* currentrectangle(); */ /* always done after each move of the rogue */
 
-  searchstartr = atrow; searchstartc = atcol;
+    searchstartr = atrow;
+    searchstartc = atcol;
 
-  if (!(*evalinit)())    /* Compute evalinit from current location */
-    { dwait (D_SEARCH, __func__, "evalinit failed"); return (0); }
+    if (!(*evalinit)()) /* Compute evalinit from current location */
+    {
+	dwait(D_SEARCH, __func__, "evalinit failed");
+	return (0);
+    }
 
-  if (!searchfrom (atrow, atcol, evaluate, mvdir, &targetrow, &targetcol))
-    { return (0); }	/* move failed */
+    if (!searchfrom(atrow, atcol, evaluate, mvdir, &targetrow, &targetcol)) {
+	return (0);
+    } /* move failed */
 
-  if (targetrow == atrow && targetcol == atcol)
-    { ontarget = 1; return (0); }
+    if (targetrow == atrow && targetcol == atcol) {
+	ontarget = 1;
+	return (0);
+    }
 
-  /* <<copy the newly created map to save*[][]>> */
-  mvtype = movetype;	/* mvtype will be the type of saved map */
+    /* <<copy the newly created map to save*[][]>> */
+    mvtype = movetype; /* mvtype will be the type of saved map */
 
-  return (1);
+    return (1);
 }
 
 /*
@@ -131,74 +142,82 @@ findmove (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, in
  */
 
 int
-followmap (int movetype)
+followmap(int movetype)
 {
-  int dir, dr, dc, r, c;
-  int timemode, searchit, count=1;
+    int dir, dr, dc, r, c;
+    int timemode, searchit, count = 1;
 
-  dir = if_mvdir(atrow, atcol) - FROM;
-  if (dir >= TARGET) {
-    dir = dir - TARGET;
-  }
-  if (!valdir(dir)) {
-    return (0);				    /* broken direction */
-  }
-  dr = deltr[dir];
-  dc = deltc[dir];
-
-  r=atrow+dr; c=atcol+dc;		/* Save next square in registers */
-
-  /* If exploring and are moving to a new hall square, use fmove */
-  if (movetype == EXPLORE &&
-      if_onrc (HALL|BEEN, targetrow, targetcol) != (HALL|BEEN) &&
-      if_onrc (HALL,r,c) &&
-      !beingstalked)			/* Feb 10, 1985 - mlm */
-    { fmove (dir); return (1); }
-
-  /* Timemode tells why we are moving this way, T_RUNNING ==> no search */
-  timemode = (movetype == GOTOMOVE)    ? T_MOVING :
-             (movetype == EXPLORE)     ? T_EXPLORING :
-             (movetype == EXPLOREROOM) ? T_EXPLORING :
-             (movetype == FINDROOM)    ? T_EXPLORING :
-             (movetype == EXPLORERUN)  ? T_RUNNING :
-             (movetype == RUNTODOOR)   ? T_RUNNING :
-             (movetype == RUNAWAY)     ? T_RUNNING :
-             (movetype == UNPIN)       ? T_RUNNING :
-             (movetype == UNPINEXP)    ? T_RUNNING :
-             (movetype == RUNAWAY)     ? T_RUNNING :
-             (movetype == RUNDOWN)     ? T_RUNNING :
-             (movetype == ATTACKSLEEP) ? T_FIGHTING :  T_MOVING;
-
-  /* How many times do we wish to search each square before moving? */
-  /* Search up to k times if 2 or more foods and deeper than level 6 */
-  searchit = max (0, min (k_srch/20, min (larder - 1, Level - 6)));
-
-  /* Can we move more than one square at a time? Dont count scare monsters! */
-  if (compression) {
-    while ((if_mvdir(r,c)-FROM) == dir &&
-           (if_onrc (SAFE|SCAREM, r+=dr, c+=dc) == SAFE || !searchit)) {
-      count++;
+    dir = if_mvdir(atrow, atcol) - FROM;
+    if (dir >= TARGET) {
+	dir = dir - TARGET;
     }
-  }
+    if (!valdir(dir)) {
+	return (0); /* broken direction */
+    }
+    dr = deltr[dir];
+    dc = deltc[dir];
 
-  /* Maybe search unsafe square before moving onto it */
-  if (valrc(atrow+dr, atcol+dc)) {
-    if (timemode != T_RUNNING && !onrc (SAFE, atrow+dr, atcol+dc) &&
-	timessearched[atrow+dr][atcol+dc] < searchit)
-      { command (T_SEARCHING, "s"); return (1); }
-  }
+    r = atrow + dr;
+    c = atcol + dc; /* Save next square in registers */
 
-  /* Maybe take armor off before stepping on rust trap */
-  if (timemode != T_RUNNING && if_onrc (WATERAP, atrow+dr, atcol+dc) &&
-      currentarmor != NONE && willrust (currentarmor) && takeoff ())
-    { rmove (1, dir, timemode); return (1); }
+    /* If exploring and are moving to a new hall square, use fmove */
+    if (movetype == EXPLORE && if_onrc(HALL | BEEN, targetrow, targetcol) != (HALL | BEEN) && if_onrc(HALL, r, c) &&
+	!beingstalked) /* Feb 10, 1985 - mlm */
+    {
+	fmove(dir);
+	return (1);
+    }
 
-  /* If we are about to step onto a scare monster scroll, use the 'm' cmd */
-  if (version >= RV53A && if_onrc (SCAREM, atrow+dr, atcol+dc))
-    { mmove (dir, timemode); return (1); }
+    /* Timemode tells why we are moving this way, T_RUNNING ==> no search */
+    timemode = (movetype == GOTOMOVE)	   ? T_MOVING
+	       : (movetype == EXPLORE)	   ? T_EXPLORING
+	       : (movetype == EXPLOREROOM) ? T_EXPLORING
+	       : (movetype == FINDROOM)	   ? T_EXPLORING
+	       : (movetype == EXPLORERUN)  ? T_RUNNING
+	       : (movetype == RUNTODOOR)   ? T_RUNNING
+	       : (movetype == RUNAWAY)	   ? T_RUNNING
+	       : (movetype == UNPIN)	   ? T_RUNNING
+	       : (movetype == UNPINEXP)	   ? T_RUNNING
+	       : (movetype == RUNAWAY)	   ? T_RUNNING
+	       : (movetype == RUNDOWN)	   ? T_RUNNING
+	       : (movetype == ATTACKSLEEP) ? T_FIGHTING
+					   : T_MOVING;
 
-  /* Send the movement command and return success */
-  rmove (count, dir, timemode); return (1);
+    /* How many times do we wish to search each square before moving? */
+    /* Search up to k times if 2 or more foods and deeper than level 6 */
+    searchit = max(0, min(k_srch / 20, min(larder - 1, Level - 6)));
+
+    /* Can we move more than one square at a time? Dont count scare monsters! */
+    if (compression) {
+	while ((if_mvdir(r, c) - FROM) == dir && (if_onrc(SAFE | SCAREM, r += dr, c += dc) == SAFE || !searchit)) {
+	    count++;
+	}
+    }
+
+    /* Maybe search unsafe square before moving onto it */
+    if (valrc(atrow + dr, atcol + dc)) {
+	if (timemode != T_RUNNING && !onrc(SAFE, atrow + dr, atcol + dc) && timessearched[atrow + dr][atcol + dc] < searchit) {
+	    command(T_SEARCHING, "s");
+	    return (1);
+	}
+    }
+
+    /* Maybe take armor off before stepping on rust trap */
+    if (timemode != T_RUNNING && if_onrc(WATERAP, atrow + dr, atcol + dc) && currentarmor != NONE && willrust(currentarmor) &&
+	takeoff()) {
+	rmove(1, dir, timemode);
+	return (1);
+    }
+
+    /* If we are about to step onto a scare monster scroll, use the 'm' cmd */
+    if (version >= RV53A && if_onrc(SCAREM, atrow + dr, atcol + dc)) {
+	mmove(dir, timemode);
+	return (1);
+    }
+
+    /* Send the movement command and return success */
+    rmove(count, dir, timemode);
+    return (1);
 }
 
 /*
@@ -210,73 +229,72 @@ followmap (int movetype)
  */
 
 static int
-validatemap (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int*, int*, int*))
+validatemap(int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int, int *, int *, int *))
 {
-  int thedir, dir, r, c;
-  int val, avd, cont;
+    int thedir, dir, r, c;
+    int val, avd, cont;
 
-  dwait (D_CONTROL | D_SEARCH, __func__, "type: %d", movetype);
+    dwait(D_CONTROL | D_SEARCH, __func__, "type: %d", movetype);
 
-  if (mvtype != movetype) {
-    dwait (D_SEARCH, __func__, "move type mismatch, map invalid");
-    return (0);
-  }
-
-  thedir = if_mvdir(atrow,atcol) - FROM;
-
-  if (thedir > 7 || thedir < 0) {
-    dwait (D_SEARCH, __func__, "direction in map invalid");
-    return (0);  /* Something Broke */
-  }
-
-  /*
-   * Check that the planned path is still valid.  This is done by
-   * proceeding along it and checking that the value and avoidance
-   * returned from the evaluation function are the same as
-   * when the search was first performed.  The initialisation function
-   * is re-performed and then the evaluation function done.
-   */
-
-  if (!didinit && !(*evalinit)()) {
-    dwait (D_SEARCH, __func__, "evalinit failed");
-    return (2);  /* evalinit failed */
-  }
-
-  didinit=1;
-
-  r=atrow; c=atcol;
-
-  while (1) {
-    val = avd = cont = 0;
-
-    if (valrc(r, c) &&
-	(!(*evaluate)(r, c, movedepth[r][c], &val, &avd, &cont))) {
-      dwait (D_SEARCH, __func__, "evaluate failed");
-      return (0);
+    if (mvtype != movetype) {
+	dwait(D_SEARCH, __func__, "move type mismatch, map invalid");
+	return (0);
     }
 
-    if (valrc(r, c) &&
-	(!onrc (CANGO, r, c) ||
-         avd!=moveavd[r][c] || val!=moveval[r][c] || cont!=movecont[r][c])) {
-      dwait (D_SEARCH, __func__, "map invalidated");
-      return (0);
+    thedir = if_mvdir(atrow, atcol) - FROM;
+
+    if (thedir > 7 || thedir < 0) {
+	dwait(D_SEARCH, __func__, "direction in map invalid");
+	return (0); /* Something Broke */
     }
 
-    dir = if_mvdir(r, c) - FROM;
-    if (dir == TARGET) {
-      dwait (D_SEARCH, __func__, "existing map validated");
-      break;
+    /*
+     * Check that the planned path is still valid.  This is done by
+     * proceeding along it and checking that the value and avoidance
+     * returned from the evaluation function are the same as
+     * when the search was first performed.  The initialisation function
+     * is re-performed and then the evaluation function done.
+     */
+
+    if (!didinit && !(*evalinit)()) {
+	dwait(D_SEARCH, __func__, "evalinit failed");
+	return (2); /* evalinit failed */
     }
 
-    if (dir < 0 || dir > 7) {
-      dwait (D_SEARCH, __func__, "direction in map invalid");
-      return (0);
+    didinit = 1;
+
+    r = atrow;
+    c = atcol;
+
+    while (1) {
+	val = avd = cont = 0;
+
+	if (valrc(r, c) && (!(*evaluate)(r, c, movedepth[r][c], &val, &avd, &cont))) {
+	    dwait(D_SEARCH, __func__, "evaluate failed");
+	    return (0);
+	}
+
+	if (valrc(r, c) && (!onrc(CANGO, r, c) || avd != moveavd[r][c] || val != moveval[r][c] || cont != movecont[r][c])) {
+	    dwait(D_SEARCH, __func__, "map invalidated");
+	    return (0);
+	}
+
+	dir = if_mvdir(r, c) - FROM;
+	if (dir == TARGET) {
+	    dwait(D_SEARCH, __func__, "existing map validated");
+	    break;
+	}
+
+	if (dir < 0 || dir > 7) {
+	    dwait(D_SEARCH, __func__, "direction in map invalid");
+	    return (0);
+	}
+
+	r += deltr[dir];
+	c += deltc[dir];
     }
 
-    r += deltr[dir];  c += deltc[dir];
-  }
-
-  return (1);
+    return (1);
 }
 
 /*
@@ -284,9 +302,11 @@ validatemap (int movetype, int (*evalinit)(void), int (*evaluate)(int, int, int,
  */
 
 void
-cancelmove (int movetype)
+cancelmove(int movetype)
 {
-  if (movetype == mvtype) mvtype = 0;
+    if (movetype == mvtype) {
+	mvtype = 0;
+    }
 }
 
 /*
@@ -294,10 +314,10 @@ cancelmove (int movetype)
  */
 
 void
-setnewgoal (void)
+setnewgoal(void)
 {
-  mvtype = 0;
-  goalr = goalc = NONE;
+    mvtype = 0;
+    goalr = goalc = NONE;
 }
 
 /*
@@ -311,30 +331,35 @@ setnewgoal (void)
  */
 
 static int
-searchfrom (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), char dir[R][C+1], int *trow, int *tcol)
+searchfrom(int row, int col, int (*evaluate)(int, int, int, int *, int *, int *), char dir[R][C + 1], int *trow, int *tcol)
 {
-  int r, c, sdir, tempdir;
+    int r, c, sdir, tempdir;
 
-  if (!searchto (row, col, evaluate, dir, trow, tcol)) {
-    return (0);
-  }
+    if (!searchto(row, col, evaluate, dir, trow, tcol)) {
+	return (0);
+    }
 
-  for (r = *trow, c = *tcol, sdir = FROM+TARGET; ; ) {
-    tempdir = dir[r][c];
-    dir[r][c] = sdir;
+    for (r = *trow, c = *tcol, sdir = FROM + TARGET;;) {
+	tempdir = dir[r][c];
+	dir[r][c] = sdir;
 
-    if (debug (D_SCREEN | D_INFORM | D_SEARCH))
-      { at (r, c);  printw ("%c", ">/^\\</v\\  ~"[sdir-FROM]);}
+	if (debug(D_SCREEN | D_INFORM | D_SEARCH)) {
+	    at(r, c);
+	    printw("%c", ">/^\\</v\\  ~"[sdir - FROM]);
+	}
 
-    sdir = (tempdir + 4) % 8 + FROM;  /* reverse direction and offset */
+	sdir = (tempdir + 4) % 8 + FROM; /* reverse direction and offset */
 
-    if (tempdir == TARGET) break;
+	if (tempdir == TARGET) {
+	    break;
+	}
 
-    r += deltr[tempdir];  c += deltc[tempdir];
-  }
+	r += deltr[tempdir];
+	c += deltc[tempdir];
+    }
 
-  dwait (D_SEARCH, __func__, "wins");
-  return (1);
+    dwait(D_SEARCH, __func__, "wins");
+    return (1);
 }
 
 /*
@@ -363,150 +388,174 @@ searchfrom (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), 
  */
 
 static int
-searchto (int row, int col, int (*evaluate)(int, int, int, int*, int*, int*), char dir[R][C+1], int *trow, int *tcol)
+searchto(int row, int col, int (*evaluate)(int, int, int, int *, int *, int *), char dir[R][C + 1], int *trow, int *tcol)
 {
-  int searchcontinue = 10000000, type, havetarget=0, depth=0;
-  int r, c, nr, nc;
-  int k;
-  char begin[QSIZE], *end, *head, *tail;
-  int saveavd[R][C + 1]; /* +1 for paranoia */
-  int val, avd, cont;
-  int any;
-  static int sdirect[8] = {4, 6, 0, 2, 5, 7, 1, 3},
-             sdeltr[8]  = {0,-1, 0, 1,-1,-1, 1, 1},
-             sdeltc[8]  = {1, 0,-1, 0, 1,-1,-1, 1};
+    int searchcontinue = 10000000, type, havetarget = 0, depth = 0;
+    int r, c, nr, nc;
+    int k;
+    char begin[QSIZE], *end, *head, *tail;
+    int saveavd[R][C + 1]; /* +1 for paranoia */
+    int val, avd, cont;
+    int any;
+    static int sdirect[8] = {4, 6, 0, 2, 5, 7, 1, 3}, sdeltr[8] = {0, -1, 0, 1, -1, -1, 1, 1},
+	       sdeltc[8] = {1, 0, -1, 0, 1, -1, -1, 1};
 
-  head = tail = begin;
-  end = begin + QSIZE;
+    head = tail = begin;
+    end = begin + QSIZE;
 
-  /* initialize dir */
-  for (c=0; c < C; ++c) {
-      dir[0][c] = '\0';
-  }
-  dir[0][C] = '\0'; /* paranoia */
-  for (r=1; r < R; ++r) {
-    for (c=0; c < C; ++c) {
-      dir[r][c] = NOTTRIED;
+    /* initialize dir */
+    for (c = 0; c < C; ++c) {
+	dir[0][c] = '\0';
     }
-    dir[r][C] = '\0'; /* paranoia */
-  }
-
-  *(tail++) = row;  *(tail++) = col;
-  *(tail++) = QUEUEBREAK;  *(tail++) = QUEUEBREAK;
-  dir[row][col] = TARGET;  moveval[row][col] = NONE;
-  any = 1;
-
-  while (1) {
-    /* Process the next queued square. */
-    r = *(head++);  c = *(head++);
-
-    if (head == end) head = begin;  /* wrap-around queue */
-
-    if (r==QUEUEBREAK) {
-      /* If we have completed an evaluation loop */
-      if (searchcontinue <= 0 || !any) {
-        if (havetarget) dwait (D_SEARCH, __func__, "wins");
-        else dwait (D_SEARCH, __func__, "fails");
-
-        return (havetarget);  /* have found somewhere to go */
-      }
-
-      searchcontinue--;   depth++;
-
-      /* ----------------------------------------------------------------
-      if (debug (D_SCREEN))
-        dwait (D_SEARCH, __func__, "at queue break, cont: %d havetarget: %d",
-         searchcontinue, havetarget);
-      ---------------------------------------------------------------- */
-
-      any = 0;    /* None found in queue this time round */
-
-      *(tail++) = QUEUEBREAK;  *(tail++) = QUEUEBREAK;
-
-      if (tail == end) tail = begin;
-
-      continue;
+    dir[0][C] = '\0'; /* paranoia */
+    for (r = 1; r < R; ++r) {
+	for (c = 0; c < C; ++c) {
+	    dir[r][c] = NOTTRIED;
+	}
+	dir[r][C] = '\0'; /* paranoia */
     }
 
-    any = 1;   /* Something in queue */
-
-    if (moveval[r][c] == NONE) {
-      /* unevaluated: evaluate it */
-      val = avd = cont = 0;
-
-      if ((*evaluate)(r,c,depth,&val,&avd,&cont)) { /* Evaluate it. */
-        movedepth[r][c] = depth;
-        moveavd[r][c] = avd;
-        moveval[r][c] = val;
-        movecont[r][c] = cont;
-
-        if (avd >= ROGINFINITY) {
-          /* Infinite avoidance */
-          dir[r][c]=UNREACHABLE;  /* we cant get here */
-          continue;	/* discard the square from consideration. */
-        }
-        else {
-          saveavd[r][c]=avd;
-        }
-      }
-      else {	/* If evaluate fails, forget it for now. */
-        dwait (D_SEARCH, __func__, "evaluate failed");
-        continue;
-      }
-    }
-
-    if (saveavd[r][c]) {
-      /* If to be avoided, leave in queue for a while */
-      *(tail++) = r;  *(tail++) = c;   --(saveavd[r][c]);  /* Dec avoidance */
-
-      if (tail == end) tail = begin;
-
-      continue;
-    }
-
-    if (moveval[r][c] > havetarget) {
-      /* It becomes the target if it has value bigger than the best found
-      so far, and if it has a non-zero value.
-       */
-
-      if (debug (D_SCREEN | D_SEARCH | D_INFORM)) {
-        mvprintw (r, c, "=");
-        dwait (D_SEARCH, __func__, "target value: %d", moveval[r][c]);
-      }
-
-      searchcontinue = movecont[r][c];
-      *trow = r;  *tcol = c;  havetarget = moveval[r][c];
-    }
-
-    type = SAFE;
+    *(tail++) = row;
+    *(tail++) = col;
+    *(tail++) = QUEUEBREAK;
+    *(tail++) = QUEUEBREAK;
+    dir[row][col] = TARGET;
+    moveval[row][col] = NONE;
+    any = 1;
 
     while (1) {
-      for (k=0; k<8; k++) {
-        int S;
+	/* Process the next queued square. */
+	r = *(head++);
+	c = *(head++);
 
-        /* examine adjacent squares. */
-        nr = r + sdeltr[k];
-        nc = c + sdeltc[k];
-        S = scrmap[nr][nc];
+	if (head == end) {
+	    head = begin; /* wrap-around queue */
+	}
 
-        /* IF we have not considered stepping on the square yet */
-        /* and if it is accessible    THEN: Put it on the queue */
-        if (dir[nr][nc] == NOTTRIED && (CANGO&S) && (type&S) == type &&
-            (k<4 || (onrc (CANGO,r,nc) && onrc (CANGO,nr,c)))) {
-          moveval[nr][nc] = NONE;  /* flag unevaluated */
+	if (r == QUEUEBREAK) {
+	    /* If we have completed an evaluation loop */
+	    if (searchcontinue <= 0 || !any) {
+		if (havetarget) {
+		    dwait(D_SEARCH, __func__, "wins");
+		} else {
+		    dwait(D_SEARCH, __func__, "fails");
+		}
 
-          *(tail++) = nr;  *(tail++) = nc; if (tail == end) tail = begin;
+		return (havetarget); /* have found somewhere to go */
+	    }
 
-          dir[nr][nc] = sdirect[k];  /* direction we used to get here */
+	    searchcontinue--;
+	    depth++;
 
-          if (debug (D_SCREEN | D_SEARCH | D_INFORM))
-            { at (nr, nc); printw ("%c", ">/^\\</v\\  ~"[(int)(dir[nr][nc])]);}
-        }
-      }
+	    /* ----------------------------------------------------------------
+	    if (debug (D_SCREEN))
+	      dwait (D_SEARCH, __func__, "at queue break, cont: %d havetarget: %d",
+	       searchcontinue, havetarget);
+	    ---------------------------------------------------------------- */
 
-      if (type == 0) break;
+	    any = 0; /* None found in queue this time round */
 
-      type = 0;
+	    *(tail++) = QUEUEBREAK;
+	    *(tail++) = QUEUEBREAK;
+
+	    if (tail == end) {
+		tail = begin;
+	    }
+
+	    continue;
+	}
+
+	any = 1; /* Something in queue */
+
+	if (moveval[r][c] == NONE) {
+	    /* unevaluated: evaluate it */
+	    val = avd = cont = 0;
+
+	    if ((*evaluate)(r, c, depth, &val, &avd, &cont)) { /* Evaluate it. */
+		movedepth[r][c] = depth;
+		moveavd[r][c] = avd;
+		moveval[r][c] = val;
+		movecont[r][c] = cont;
+
+		if (avd >= ROGINFINITY) {
+		    /* Infinite avoidance */
+		    dir[r][c] = UNREACHABLE; /* we cant get here */
+		    continue;		     /* discard the square from consideration. */
+		} else {
+		    saveavd[r][c] = avd;
+		}
+	    } else { /* If evaluate fails, forget it for now. */
+		dwait(D_SEARCH, __func__, "evaluate failed");
+		continue;
+	    }
+	}
+
+	if (saveavd[r][c]) {
+	    /* If to be avoided, leave in queue for a while */
+	    *(tail++) = r;
+	    *(tail++) = c;
+	    --(saveavd[r][c]); /* Dec avoidance */
+
+	    if (tail == end) {
+		tail = begin;
+	    }
+
+	    continue;
+	}
+
+	if (moveval[r][c] > havetarget) {
+	    /* It becomes the target if it has value bigger than the best found
+	    so far, and if it has a non-zero value.
+	     */
+
+	    if (debug(D_SCREEN | D_SEARCH | D_INFORM)) {
+		mvprintw(r, c, "=");
+		dwait(D_SEARCH, __func__, "target value: %d", moveval[r][c]);
+	    }
+
+	    searchcontinue = movecont[r][c];
+	    *trow = r;
+	    *tcol = c;
+	    havetarget = moveval[r][c];
+	}
+
+	type = SAFE;
+
+	while (1) {
+	    for (k = 0; k < 8; k++) {
+		int S;
+
+		/* examine adjacent squares. */
+		nr = r + sdeltr[k];
+		nc = c + sdeltc[k];
+		S = scrmap[nr][nc];
+
+		/* IF we have not considered stepping on the square yet */
+		/* and if it is accessible    THEN: Put it on the queue */
+		if (dir[nr][nc] == NOTTRIED && (CANGO & S) && (type & S) == type &&
+		    (k < 4 || (onrc(CANGO, r, nc) && onrc(CANGO, nr, c)))) {
+		    moveval[nr][nc] = NONE; /* flag unevaluated */
+
+		    *(tail++) = nr;
+		    *(tail++) = nc;
+		    if (tail == end) {
+			tail = begin;
+		    }
+
+		    dir[nr][nc] = sdirect[k]; /* direction we used to get here */
+
+		    if (debug(D_SCREEN | D_SEARCH | D_INFORM)) {
+			at(nr, nc);
+			printw("%c", ">/^\\</v\\  ~"[(int)(dir[nr][nc])]);
+		    }
+		}
+	    }
+
+	    if (type == 0) {
+		break;
+	    }
+
+	    type = 0;
+	}
     }
-  }
 }

@@ -28,59 +28,62 @@
  * Rogue, this file and 'things.c' make up the effector interface.
  */
 
-# include <stdlib.h>
-# include <ctype.h>
-# include <string.h>
-# include <stdarg.h>
-# include <setjmp.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdarg.h>
+#include <setjmp.h>
 
-# include "have_strlcat.h"
-# include "have_strlcpy.h"
-# include "strl.h"
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
+#include "have_strlcat.h"
+#include "have_strlcpy.h"
+#include "strl.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
 
-# define EQUAL 0
+#define EQUAL 0
 
 /* static declarations */
 static int cmdonscreen = false;
-static int commandcount (char *cmd);
-static int functionesc (char *cmd);
-static char commandarg (char *cmd, int n);
-static void adjustpack (char *cmd);
-static void bumpsearchcount (void);
-static void clearcommand (void);
-static void usemsg (char *str, int obj);
+static int commandcount(char *cmd);
+static int functionesc(char *cmd);
+static char commandarg(char *cmd, int n);
+static void adjustpack(char *cmd);
+static void bumpsearchcount(void);
+static void clearcommand(void);
+static void usemsg(char *str, int obj);
 
 /* Move one square in direction 'd' */
 void
-move1 (int d)
+move1(int d)
 {
-  command (T_MOVING, "%c", keydir[d]);
+    command(T_MOVING, "%c", keydir[d]);
 }
 
 /* Move in direction 'd' until we find something */
 void
-fmove (int d)
+fmove(int d)
 {
-  if (version < RV53A)	command (T_MOVING, "f%c", keydir[d]);
-  else			command (T_MOVING, "%c", ctrl (keydir[d]));
+    if (version < RV53A) {
+	command(T_MOVING, "f%c", keydir[d]);
+    } else {
+	command(T_MOVING, "%c", ctrl(keydir[d]));
+    }
 }
 
 /* Move 'count' squares in direction 'd', with time use mode 'mode' */
 void
-rmove (int count, int d, int mode)
+rmove(int count, int d, int mode)
 {
-  command (mode, "%d%c", count, keydir[d]);
+    command(mode, "%d%c", count, keydir[d]);
 }
 
 /* Move one square in direction 'd' without picking anything up */
 void
-mmove (int d, int mode)
+mmove(int d, int mode)
 {
-  command (mode, "m%c", keydir[d]);
+    command(mode, "m%c", keydir[d]);
 }
 
 /*
@@ -90,65 +93,98 @@ mmove (int d, int mode)
  */
 
 void
-command (int tmode, char *f, ...)
+command(int tmode, char *f, ...)
 {
-  int times;
-  char cmd[MU_BUF + 1]; /* rogue command, +1 for paranoia */
-  va_list ap;
+    int times;
+    char cmd[MU_BUF + 1]; /* rogue command, +1 for paranoia */
+    va_list ap;
 
-  /* zeroize arrays */
-  memset (cmd, 0, sizeof(cmd)); /* paranoia */
+    /* zeroize arrays */
+    memset(cmd, 0, sizeof(cmd)); /* paranoia */
 
-  /* Build the command */
-  va_start (ap, f);
-  vsnprintf (cmd, MU_BUF, f, ap);
-  va_end (ap);
+    /* Build the command */
+    va_start(ap, f);
+    vsnprintf(cmd, MU_BUF, f, ap);
+    va_end(ap);
 
-  debuglog ("%s: rogue cmd: (%s)\n", __func__, cmd);
+    debuglog("%s: rogue cmd: (%s)\n", __func__, cmd);
 
-  /* Echo the command if in transparent mode */
-  if (transparent)		showcommand (cmd);
-  else if (cmdonscreen)		clearcommand ();
+    /* Echo the command if in transparent mode */
+    if (transparent) {
+	showcommand(cmd);
+    } else if (cmdonscreen) {
+	clearcommand();
+    }
 
-  /* Figure out whether and in which direction we are moving */
-  switch ((functionchar (cmd) & 037) | 0100) {
-    case 'L': movedir = 0; wakemonster (movedir); break;
-    case 'U': movedir = 1; wakemonster (movedir); break;
-    case 'K': movedir = 2; wakemonster (movedir); break;
-    case 'Y': movedir = 3; wakemonster (movedir); break;
-    case 'H': movedir = 4; wakemonster (movedir); break;
-    case 'B': movedir = 5; wakemonster (movedir); break;
-    case 'J': movedir = 6; wakemonster (movedir); break;
-    case 'N': movedir = 7; wakemonster (movedir); break;
-    default:  movedir = NOTAMOVE;
-  }
+    /* Figure out whether and in which direction we are moving */
+    switch ((functionchar(cmd) & 037) | 0100) {
+    case 'L':
+	movedir = 0;
+	wakemonster(movedir);
+	break;
+    case 'U':
+	movedir = 1;
+	wakemonster(movedir);
+	break;
+    case 'K':
+	movedir = 2;
+	wakemonster(movedir);
+	break;
+    case 'Y':
+	movedir = 3;
+	wakemonster(movedir);
+	break;
+    case 'H':
+	movedir = 4;
+	wakemonster(movedir);
+	break;
+    case 'B':
+	movedir = 5;
+	wakemonster(movedir);
+	break;
+    case 'J':
+	movedir = 6;
+	wakemonster(movedir);
+	break;
+    case 'N':
+	movedir = 7;
+	wakemonster(movedir);
+	break;
+    default:
+	movedir = NOTAMOVE;
+    }
 
-  /* If command takes time to execute, mark monsters as sleeping */
-  /* If they move, wakemonsters will mark them as awake */
-  if (tmode != T_OTHER)
-    sleepmonster ();
+    /* If command takes time to execute, mark monsters as sleeping */
+    /* If they move, wakemonsters will mark them as awake */
+    if (tmode != T_OTHER) {
+	sleepmonster();
+    }
 
-  /* Do time accounting */
-  times = commandcount (cmd);
+    /* Do time accounting */
+    times = commandcount(cmd);
 
-  if (tmode < T_OTHER || tmode >= T_LISTLEN) tmode = T_OTHER;
+    if (tmode < T_OTHER || tmode >= T_LISTLEN) {
+	tmode = T_OTHER;
+    }
 
-  turns += times;
-  timespent[Level].timestamp = turns;
-  timespent[Level].activity[tmode] += times > 1 ? times : 1;
+    turns += times;
+    timespent[Level].timestamp = turns;
+    timespent[Level].activity[tmode] += times > 1 ? times : 1;
 
-  /* Do the inventory stuff */
-  if (movedir == NOTAMOVE)
-    adjustpack (cmd);
-  else
-    diddrop = false;
+    /* Do the inventory stuff */
+    if (movedir == NOTAMOVE) {
+	adjustpack(cmd);
+    } else {
+	diddrop = false;
+    }
 
-  /* If we have a ring of searching, take that into account */
-  if (wearing ("searching") != NONE)
-    bumpsearchcount ();
+    /* If we have a ring of searching, take that into account */
+    if (wearing("searching") != NONE) {
+	bumpsearchcount();
+    }
 
-  rogo_send ("%s", cmd);
-  return;
+    rogo_send("%s", cmd);
+    return;
 }
 
 /*
@@ -156,11 +192,11 @@ command (int tmode, char *f, ...)
  */
 
 static int
-commandcount (char *cmd)
+commandcount(char *cmd)
 {
-  int times = atoi (cmd);
+    int times = atoi(cmd);
 
-  return (max (times, 1));
+    return (max(times, 1));
 }
 
 /*
@@ -168,13 +204,15 @@ commandcount (char *cmd)
  */
 
 char
-functionchar (char *cmd)
+functionchar(char *cmd)
 {
-  char *s = cmd;
+    char *s = cmd;
 
-  while (ISDIGIT (*s) || *s == 'f') s++;
+    while (ISDIGIT(*s) || *s == 'f') {
+	s++;
+    }
 
-  return (*s);
+    return (*s);
 }
 
 /*
@@ -183,14 +221,16 @@ functionchar (char *cmd)
  */
 
 static int
-functionesc (char *cmd)
+functionesc(char *cmd)
 {
-  char *s = cmd;
+    char *s = cmd;
 
-  while (ISDIGIT (*s) || *s == 'f') s++;
+    while (ISDIGIT(*s) || *s == 'f') {
+	s++;
+    }
 
-  s++;
-  return ((*s == ESC));
+    s++;
+    return ((*s == ESC));
 }
 
 /*
@@ -198,13 +238,15 @@ functionesc (char *cmd)
  */
 
 static char
-commandarg (char *cmd, int n)
+commandarg(char *cmd, int n)
 {
-  char *s = cmd;
+    char *s = cmd;
 
-  while (ISDIGIT (*s) || *s == 'f') s++;
+    while (ISDIGIT(*s) || *s == 'f') {
+	s++;
+    }
 
-  return (s[n]);
+    return (s[n]);
 }
 
 /*
@@ -212,138 +254,167 @@ commandarg (char *cmd, int n)
  */
 
 static void
-adjustpack (char *cmd)
+adjustpack(char *cmd)
 {
-  int neww, obj;
+    int neww, obj;
 
-  switch (functionchar (cmd)) {
-    case 'd':	if (!diddrop) {
-      setrc (STUFF | USELESS, atrow, atcol);
-      deleteinv (OBJECT (commandarg (cmd, 1)));
-      }
-      break;
+    switch (functionchar(cmd)) {
+    case 'd':
+	if (!diddrop) {
+	    setrc(STUFF | USELESS, atrow, atcol);
+	    deleteinv(OBJECT(commandarg(cmd, 1)));
+	}
+	break;
 
-    case 'e':   removeinv (OBJECT (commandarg (cmd, 1)));
-      Ms[0] = 'X'; newring = true;
-      lastate = turns;
-      break;
+    case 'e':
+	removeinv(OBJECT(commandarg(cmd, 1)));
+	Ms[0] = 'X';
+	newring = true;
+	lastate = turns;
+	break;
 
-    case 'i':	doresetinv ();
-      break;
+    case 'i':
+	doresetinv();
+	break;
 
-    case 'q':	lastobj = OBJECT (commandarg (cmd, 1));
-      usemsg ("Quaffing", lastobj);
-      strlcpy (lastname, inven[lastobj].str, sizeof(lastname));
-      useobj (inven[lastobj].str);
-      removeinv (lastobj);
-      break;
+    case 'q':
+	lastobj = OBJECT(commandarg(cmd, 1));
+	usemsg("Quaffing", lastobj);
+	strlcpy(lastname, inven[lastobj].str, sizeof(lastname));
+	useobj(inven[lastobj].str);
+	removeinv(lastobj);
+	break;
 
-    case 'r':	lastobj = OBJECT (commandarg (cmd, 1));
-      usemsg ("Reading", lastobj);
-      strlcpy (lastname, inven[lastobj].str, sizeof(lastname));
-      useobj (inven[lastobj].str);
-      removeinv (lastobj);
-      break;
+    case 'r':
+	lastobj = OBJECT(commandarg(cmd, 1));
+	usemsg("Reading", lastobj);
+	strlcpy(lastname, inven[lastobj].str, sizeof(lastname));
+	useobj(inven[lastobj].str);
+	removeinv(lastobj);
+	break;
 
-    case 't':	removeinv (OBJECT (commandarg (cmd, 2)));
-      hitstokill -= 1; /* Don't blame weapon if arrow misses */
-      break;
+    case 't':
+	removeinv(OBJECT(commandarg(cmd, 2)));
+	hitstokill -= 1; /* Don't blame weapon if arrow misses */
+	break;
 
-    case 'w': if (!functionesc (cmd)) {
-      if (currentweapon != NONE)
-        forget (currentweapon, INUSE);
+    case 'w':
+	if (!functionesc(cmd)) {
+	    if (currentweapon != NONE) {
+		forget(currentweapon, INUSE);
+	    }
 
-      neww = OBJECT (commandarg (cmd, 1));
-      usemsg ("About to wield", neww);
+	    neww = OBJECT(commandarg(cmd, 1));
+	    usemsg("About to wield", neww);
 
-      if (commandarg (cmd, 2) == 'w')
-        { lastdrop = currentweapon = neww; }
-      else
-        { lastdrop = currentweapon; currentweapon = neww; }
+	    if (commandarg(cmd, 2) == 'w') {
+		lastdrop = currentweapon = neww;
+	    } else {
+		lastdrop = currentweapon;
+		currentweapon = neww;
+	    }
 
-      remember (currentweapon, INUSE);
+	    remember(currentweapon, INUSE);
 
-      usingarrow = (inven[currentweapon].type == missile);
-      goodweapon = (weaponclass (currentweapon) >= 100);
+	    usingarrow = (inven[currentweapon].type == missile);
+	    goodweapon = (weaponclass(currentweapon) >= 100);
 
-      badarrow = false;
-      goodarrow = false;
-      poorarrow = false;
-      hitstokill = false;
-      newweapon = true;
-      setbonuses ();
-      }
-      break;
+	    badarrow = false;
+	    goodarrow = false;
+	    poorarrow = false;
+	    hitstokill = false;
+	    newweapon = true;
+	    setbonuses();
+	}
+	break;
 
-    case 'p': case 'z':
-      lastwand = OBJECT (commandarg (cmd, 2));
-      usemsg ("Pointing", lastwand);
-      strlcpy (lastname, inven[lastwand].str, sizeof(lastname));
-      useobj (inven[lastwand].str);
+    case 'p':
+    case 'z':
+	lastwand = OBJECT(commandarg(cmd, 2));
+	usemsg("Pointing", lastwand);
+	strlcpy(lastname, inven[lastwand].str, sizeof(lastname));
+	useobj(inven[lastwand].str);
 
-      /* Update number of charges */
-      if (inven[lastwand].charges > 0) {
-        if (version >= RV52A &&
-            stlmatch (inven[lastwand].str, "striking"))
-          inven[lastwand].charges -= 2;
-        else
-          inven[lastwand].charges--;
-      }
+	/* Update number of charges */
+	if (inven[lastwand].charges > 0) {
+	    if (version >= RV52A && stlmatch(inven[lastwand].str, "striking")) {
+		inven[lastwand].charges -= 2;
+	    } else {
+		inven[lastwand].charges--;
+	    }
+	}
 
-      hitstokill -= 1; /* Don't blame weapon if wand misses */
-      break;
+	hitstokill -= 1; /* Don't blame weapon if wand misses */
+	break;
 
-    case 's':   bumpsearchcount ();
-      break;
+    case 's':
+	bumpsearchcount();
+	break;
 
-    case 'P':	obj = OBJECT (commandarg (cmd, 1));
-      usemsg ("Putting on", obj);
+    case 'P':
+	obj = OBJECT(commandarg(cmd, 1));
+	usemsg("Putting on", obj);
 
-      if (commandarg (cmd, 2) == 'l')		leftring = obj;
-      else if (commandarg (cmd, 2) == 'r')	rightring = obj;
-      else if (leftring == NONE)		leftring = obj;
-      else					rightring = obj;
+	if (commandarg(cmd, 2) == 'l') {
+	    leftring = obj;
+	} else if (commandarg(cmd, 2) == 'r') {
+	    rightring = obj;
+	} else if (leftring == NONE) {
+	    leftring = obj;
+	} else {
+	    rightring = obj;
+	}
 
-      /* Check for putting on see invisible */
-      if (streq (inven[obj].str, "see invisible"))
-        { beingstalked = 0; putonseeinv = turns; }
+	/* Check for putting on see invisible */
+	if (streq(inven[obj].str, "see invisible")) {
+	    beingstalked = 0;
+	    putonseeinv = turns;
+	}
 
-      remember (obj, INUSE);
-      setbonuses ();
-      newarmor = true;
+	remember(obj, INUSE);
+	setbonuses();
+	newarmor = true;
 
-      break;
+	break;
 
-    case 'R':	if (commandarg (cmd, 1) == 'l')
-        { lastdrop = leftring; leftring = NONE; }
-      else if (commandarg (cmd, 1) == 'r')
-        { lastdrop = rightring; rightring = NONE; }
-      else if (leftring != NONE)
-        { lastdrop = leftring; leftring = NONE; }
-      else
-        { lastdrop = rightring; rightring = NONE; }
+    case 'R':
+	if (commandarg(cmd, 1) == 'l') {
+	    lastdrop = leftring;
+	    leftring = NONE;
+	} else if (commandarg(cmd, 1) == 'r') {
+	    lastdrop = rightring;
+	    rightring = NONE;
+	} else if (leftring != NONE) {
+	    lastdrop = leftring;
+	    leftring = NONE;
+	} else {
+	    lastdrop = rightring;
+	    rightring = NONE;
+	}
 
-      usemsg ("Taking off", lastdrop);
+	usemsg("Taking off", lastdrop);
 
-      forget (lastdrop, INUSE);
-      setbonuses ();
-      newarmor = true;
+	forget(lastdrop, INUSE);
+	setbonuses();
+	newarmor = true;
 
-      break;
+	break;
 
-    case 'T':   lastdrop = currentarmor;
-      usemsg ("About to take off", currentarmor);
-      forget (currentarmor, INUSE);
-      currentarmor = NONE;
-      newarmor = true;
-      break;
+    case 'T':
+	lastdrop = currentarmor;
+	usemsg("About to take off", currentarmor);
+	forget(currentarmor, INUSE);
+	currentarmor = NONE;
+	newarmor = true;
+	break;
 
-    case 'W':	currentarmor = OBJECT (commandarg (cmd, 1));
-      usemsg ("About to wear", currentarmor);
-      remember (currentarmor, INUSE);
-      newarmor = true;
-      break;
-  }
+    case 'W':
+	currentarmor = OBJECT(commandarg(cmd, 1));
+	usemsg("About to wear", currentarmor);
+	remember(currentarmor, INUSE);
+	newarmor = true;
+	break;
+    }
 }
 
 /*
@@ -351,13 +422,15 @@ adjustpack (char *cmd)
  */
 
 static void
-bumpsearchcount (void)
+bumpsearchcount(void)
 {
-  int dr, dc;
+    int dr, dc;
 
-  for (dr = -1; dr <= 1; dr++)
-    for (dc = -1; dc <= 1; dc++)
-      timessearched[atrow+dr][atcol+dc]++;
+    for (dr = -1; dr <= 1; dr++) {
+	for (dc = -1; dc <= 1; dc++) {
+	    timessearched[atrow + dr][atcol + dc]++;
+	}
+    }
 }
 
 /*
@@ -365,13 +438,13 @@ bumpsearchcount (void)
  */
 
 int
-replaycommand (void)
+replaycommand(void)
 {
-  char oldcmd[128];
+    char oldcmd[128];
 
-  getoldcommand (oldcmd);
-  command (T_OTHER, "%s", oldcmd);
-  return (1);
+    getoldcommand(oldcmd);
+    command(T_OTHER, "%s", oldcmd);
+    return (1);
 }
 
 /*
@@ -380,35 +453,39 @@ replaycommand (void)
  */
 
 void
-showcommand (char *cmd)
+showcommand(char *cmd)
 {
-  char *s;
-  int i = 72;
+    char *s;
+    int i = 72;
 
-  at (23,72); standout (); printw (" ");
+    at(23, 72);
+    standout();
+    printw(" ");
 
-  for (s=cmd; *s; s++) {
-    if ((i + strlen (unctrl(*s))) < 78) {
-      printw ("%s", unctrl (*s));
+    for (s = cmd; *s; s++) {
+	if ((i + strlen(unctrl(*s))) < 78) {
+	    printw("%s", unctrl(*s));
+	}
+	i += strlen(unctrl(*s));
     }
-    i += strlen (unctrl(*s));
-  }
 
-  printw (" ");
-  standend ();
-  clrtoeol ();
-  at (row, col);
-  if (!quiet) {
-    refresh ();
-  }
-  cmdonscreen = true;
+    printw(" ");
+    standend();
+    clrtoeol();
+    at(row, col);
+    if (!quiet) {
+	refresh();
+    }
+    cmdonscreen = true;
 }
 
 static void
-clearcommand (void)
+clearcommand(void)
 {
-  at (23,72); clrtoeol (); at (row, col);
-  cmdonscreen = false;
+    at(23, 72);
+    clrtoeol();
+    at(row, col);
+    cmdonscreen = false;
 }
 
 /*
@@ -416,9 +493,9 @@ clearcommand (void)
  */
 
 static void
-usemsg (char *str, int obj)
+usemsg(char *str, int obj)
 {
-  if (! dwait (D_INFORM, __func__, "%s (%s", str, itemstr (obj)))
-    saynow ("%s (%s", str, itemstr (obj));
+    if (!dwait(D_INFORM, __func__, "%s (%s", str, itemstr(obj))) {
+	saynow("%s (%s", str, itemstr(obj));
+    }
 }
-

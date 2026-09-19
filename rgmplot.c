@@ -28,23 +28,23 @@
  * and produces a scatter plot of the scores.
  */
 
-# include <stdlib.h>
-# include <stdio.h>
-# include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
-# include <sys/time.h>	/* for struct itimerval */
-# include <setjmp.h>	/* for sigjmp_buf */
-# include <errno.h>
+#include <sys/time.h> /* for struct itimerval */
+#include <setjmp.h>   /* for sigjmp_buf */
+#include <errno.h>
 
-# include "have_strlcat.h"
-# include "have_strlcpy.h"
-# include "strl.h"
-# include "types.h"
+#include "have_strlcat.h"
+#include "have_strlcpy.h"
+#include "strl.h"
+#include "types.h"
 
-# define WIDTH 50
-# define AVLEN 30
-# define SCALE(n) (((n)+100)/200)
-# define isdigit(c) ((c) >= '0' && (c) <= '9')
+#define WIDTH 50
+#define AVLEN 30
+#define SCALE(n) (((n) + 100) / 200)
+#define isdigit(c) ((c) >= '0' && (c) <= '9')
 
 /*
  * global declarations
@@ -52,12 +52,9 @@
 
 int creative = false;
 
-static char *month[] = {
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-};
+static char *month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-bool quiet = false;      /* true ==> quiet mode */
+bool quiet = false; /* true ==> quiet mode */
 
 /*
  * static declarations
@@ -66,168 +63,188 @@ bool quiet = false;      /* true ==> quiet mode */
 static int doavg = 0;
 static int minscore = -1;
 
-static int getlin (char *s);
-static int getscore (int *mm, int *dd, int *yy, char *player, int *score, char *creativity);
+static int getlin(char *s);
+static int getscore(int *mm, int *dd, int *yy, char *player, int *score, char *creativity);
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
-  int mm, dd, yy, score = 0, lastday = -1, lastmon = -1, lastyy = -1, h;
-  int sumscores = 0, numscores = 0, i;
-  int sum[AVLEN + 1]; /* daily score accumulated sum, +1 for paranoia */
-  int num[AVLEN + 1]; /* daily score, +1 for paranoia */
-  int rsum, rnum, davg, ravg;
-  char player[MU_BUF + 1]; /* rogue player, +1 for paranoia */
-  char plot[MU_BUF + 1]; /* plot string, +1 for paranoia */
-  char creative;
-  char buf[MU_BUF + 1]; /* message buffer, +1 for paranoia */
+    int mm, dd, yy, score = 0, lastday = -1, lastmon = -1, lastyy = -1, h;
+    int sumscores = 0, numscores = 0, i;
+    int sum[AVLEN + 1]; /* daily score accumulated sum, +1 for paranoia */
+    int num[AVLEN + 1]; /* daily score, +1 for paranoia */
+    int rsum, rnum, davg, ravg;
+    char player[MU_BUF + 1]; /* rogue player, +1 for paranoia */
+    char plot[MU_BUF + 1];   /* plot string, +1 for paranoia */
+    char creative;
+    char buf[MU_BUF + 1]; /* message buffer, +1 for paranoia */
 
-  /* zeroize arrays */
-  memset (player, 0, sizeof(player)); /* paranoia */
-  memset (plot, 0, sizeof(plot)); /* paranoia */
-  memset (buf, 0, sizeof(buf)); /* paranoia */
+    /* zeroize arrays */
+    memset(player, 0, sizeof(player)); /* paranoia */
+    memset(plot, 0, sizeof(plot));     /* paranoia */
+    memset(buf, 0, sizeof(buf));       /* paranoia */
 
-  /* Clear out the rolling average statistics */
-  memset (sum, 0, sizeof(sum));
-  memset (num, 0, sizeof(num));
+    /* Clear out the rolling average statistics */
+    memset(sum, 0, sizeof(sum));
+    memset(num, 0, sizeof(num));
 
-  /* Get the options */
-  while (--argc > 0 && (*++argv)[0] == '-')
-    while (*++(*argv)) {
-      switch (**argv) {
-        case 'c': creative = true; break; /* List creative games */
-        case 'a': doavg++; break; /* Print average */
-        default:  printf ("Usage: rgmplot [-ac] [mininum]\n");
-          exit (1);
-      }
+    /* Get the options */
+    while (--argc > 0 && (*++argv)[0] == '-') {
+	while (*++(*argv)) {
+	    switch (**argv) {
+	    case 'c':
+		creative = true;
+		break; /* List creative games */
+	    case 'a':
+		doavg++;
+		break; /* Print average */
+	    default:
+		printf("Usage: rgmplot [-ac] [mininum]\n");
+		exit(1);
+	    }
+	}
     }
 
-  if (argc > 0) minscore = atoi (argv[0]);
-
-  /*  Print out the header */
-  printf ("\t\t   Scatter Plot of Rog-O-Matic Scores versus time\n\n");
-
-  if (minscore > 0)
-    printf ("\t\t              Scores greater than %d\n\n", minscore);
-
-  printf ("\t\t0      2000      4000      6000      8000     10000\n");
-  printf ("\t\t|----+----|----+----|----+----|----+----|----+----|\n");
-
-
-  /* Build an empty plot line */
-  strlcpy (plot, "|                                                 |", sizeof(plot));
-
-  /* While more scores do action for each score */
-  while (getscore (&mm, &dd, &yy, player, &score, &creative) != EOF) {
-    /* Change days, overprint the average for day, rolling avg */
-    if ((dd != lastday || mm != lastmon || yy != lastyy) && lastday > 0) {
-      if (doavg) {
-        rsum = *sum; rnum = *num;
-
-        for (i = 1; i < AVLEN; i++)
-          { rsum += sum[i]; rnum += num[i]; }
-
-        davg = SCALE ((*num > 0) ? (*sum / *num) : 0);
-        ravg = SCALE ((rnum > 0) ? (rsum / rnum) : 0);
-
-        /* Roll the daily average statistics */
-        for (i = AVLEN-1; i > 0; i--)
-          { sum[i] = sum[i-1]; num[i] = num[i-1]; }
-
-        *sum = *num = 0;
-
-        /* Print a '*' for the daily average */
-        if (davg > 0 && davg < WIDTH)
-          plot[davg] = '*';
-
-        /* Print a '###' for the rolling average */
-        if (ravg > 0 && ravg < WIDTH-1)
-          plot[ravg-1] = plot[ravg] = plot[ravg+1] = '#';
-      }
-
-      printf ("%3s %2d %4d\t%s\n", month[lastmon-1], lastday, lastyy, plot);
-      strlcpy (plot, "|                                                 |", sizeof(plot));
-
+    if (argc > 0) {
+	minscore = atoi(argv[0]);
     }
 
-    if (score > EOF) {
-      if ((h = SCALE(score)) >= WIDTH) { snprintf (buf, MU_BUF, " %d", score);  strlcat(plot, buf, sizeof(plot)); }
-      else if (plot[h] == '9') {
-	;
-      } else if (isdigit(plot[h]))        plot[h]++;
-      else                              plot[h] = '1';
+    /*  Print out the header */
+    printf("\t\t   Scatter Plot of Rog-O-Matic Scores versus time\n\n");
 
-      *sum += score;
-      ++*num;
-
-      sumscores += score;
-      ++numscores;
-
-      lastday = dd; lastmon = mm; lastyy = yy;
+    if (minscore > 0) {
+	printf("\t\t              Scores greater than %d\n\n", minscore);
     }
-  }
 
-  printf ("\t\t|----+----|----+----|----+----|----+----|----+----|\n");
-  printf ("\t\t0      2000      4000      6000      8000     10000\n");
+    printf("\t\t0      2000      4000      6000      8000     10000\n");
+    printf("\t\t|----+----|----+----|----+----|----+----|----+----|\n");
 
+    /* Build an empty plot line */
+    strlcpy(plot, "|                                                 |", sizeof(plot));
 
-  if (numscores > 0)
-    printf ("\nAverage score %d, total games %d.\n\n",
-            sumscores/numscores, numscores);
+    /* While more scores do action for each score */
+    while (getscore(&mm, &dd, &yy, player, &score, &creative) != EOF) {
+	/* Change days, overprint the average for day, rolling avg */
+	if ((dd != lastday || mm != lastmon || yy != lastyy) && lastday > 0) {
+	    if (doavg) {
+		rsum = *sum;
+		rnum = *num;
 
-  printf ("1-9    Number of games in range.\n");
+		for (i = 1; i < AVLEN; i++) {
+		    rsum += sum[i];
+		    rnum += num[i];
+		}
 
-  if (doavg) {
-    printf (" *     Average of day's scores.\n");
-    printf ("###    Rolling %d day average.\n", AVLEN);
-  }
-}
+		davg = SCALE((*num > 0) ? (*sum / *num) : 0);
+		ravg = SCALE((rnum > 0) ? (rsum / rnum) : 0);
 
+		/* Roll the daily average statistics */
+		for (i = AVLEN - 1; i > 0; i--) {
+		    sum[i] = sum[i - 1];
+		    num[i] = num[i - 1];
+		}
 
-static int
-getlin (char *s)
-{
-  int ch, i;
-  static int endfile = 0;
+		*sum = *num = 0;
 
-  if (endfile) return (EOF);
+		/* Print a '*' for the daily average */
+		if (davg > 0 && davg < WIDTH) {
+		    plot[davg] = '*';
+		}
 
-  for (i=0; (ch = getchar()) != EOF && ch != '\n'; i++)
-    s[i] = ch;
+		/* Print a '###' for the rolling average */
+		if (ravg > 0 && ravg < WIDTH - 1) {
+		    plot[ravg - 1] = plot[ravg] = plot[ravg + 1] = '#';
+		}
+	    }
 
-  s[i] = '\0';
+	    printf("%3s %2d %4d\t%s\n", month[lastmon - 1], lastday, lastyy, plot);
+	    strlcpy(plot, "|                                                 |", sizeof(plot));
+	}
 
-  if (ch == EOF) {
-    endfile = 1;
-    strlcpy (s, "-1 -1, -1 string -1 ", TY_BUF); /* sizeof(line) is TY_BUF + 1 chars */
-    return (20);
-  }
+	if (score > EOF) {
+	    if ((h = SCALE(score)) >= WIDTH) {
+		snprintf(buf, MU_BUF, " %d", score);
+		strlcat(plot, buf, sizeof(plot));
+	    } else if (plot[h] == '9') {
+		;
+	    } else if (isdigit(plot[h])) {
+		plot[h]++;
+	    } else {
+		plot[h] = '1';
+	    }
 
-  return (i);
+	    *sum += score;
+	    ++*num;
+
+	    sumscores += score;
+	    ++numscores;
+
+	    lastday = dd;
+	    lastmon = mm;
+	    lastyy = yy;
+	}
+    }
+
+    printf("\t\t|----+----|----+----|----+----|----+----|----+----|\n");
+    printf("\t\t0      2000      4000      6000      8000     10000\n");
+
+    if (numscores > 0) {
+	printf("\nAverage score %d, total games %d.\n\n", sumscores / numscores, numscores);
+    }
+
+    printf("1-9    Number of games in range.\n");
+
+    if (doavg) {
+	printf(" *     Average of day's scores.\n");
+	printf("###    Rolling %d day average.\n", AVLEN);
+    }
 }
 
 static int
-getscore (int *mm, int *dd, int *yy, char *player, int *score, char *creativity)
+getlin(char *s)
 {
-  char line[TY_BUF + 1];
-  char reason[TY_BUF + 1];
+    int ch, i;
+    static int endfile = 0;
 
-  /* zeroize arrays */
-  memset(line, 0, sizeof(line));
-  memset(reason, 0, sizeof(reason));
+    if (endfile) {
+	return (EOF);
+    }
 
-  while (getlin (line) != EOF) {
-    sscanf (line, "%d %d, %d %10s%d%c%17s",
-            mm, dd, yy, player, score, creativity, reason);
+    for (i = 0; (ch = getchar()) != EOF && ch != '\n'; i++) {
+	s[i] = ch;
+    }
 
-    if ((*score >= minscore || *score < 0) &&
+    s[i] = '\0';
+
+    if (ch == EOF) {
+	endfile = 1;
+	strlcpy(s, "-1 -1, -1 string -1 ", TY_BUF); /* sizeof(line) is TY_BUF + 1 chars */
+	return (20);
+    }
+
+    return (i);
+}
+
+static int
+getscore(int *mm, int *dd, int *yy, char *player, int *score, char *creativity)
+{
+    char line[TY_BUF + 1];
+    char reason[TY_BUF + 1];
+
+    /* zeroize arrays */
+    memset(line, 0, sizeof(line));
+    memset(reason, 0, sizeof(reason));
+
+    while (getlin(line) != EOF) {
+	sscanf(line, "%d %d, %d %10s%d%c%17s", mm, dd, yy, player, score, creativity, reason);
+
+	if ((*score >= minscore || *score < 0) &&
 #if defined(NOTE_CREATIVE_MODE)
-        (*creativity != '*' || creative) &&
+	    (*creativity != '*' || creative) &&
 #endif
-        !stlmatch (reason, "saved") &&
-        (*score > 2000 || !stlmatch (reason, "user")))
-      return (1);
-  }
+	    !stlmatch(reason, "saved") && (*score > 2000 || !stlmatch(reason, "user")))
+	    return (1);
+    }
 
-  return (EOF);
+    return (EOF);
 }

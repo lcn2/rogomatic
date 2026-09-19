@@ -6,10 +6,8 @@
  * This version of Rog-O-Matic runs with Rogue version 5.3.
  */
 
-
 #if !defined(INCLUDE_INSTALL_H)
-#define INCLUDE_INSTALL_H
-
+#  define INCLUDE_INSTALL_H
 
 /*
  * This variable defines the version of Rogue we are assumed to be playing
@@ -18,8 +16,8 @@
  * the corresponding internal version code defined in types.h.
  */
 
-# define DEFVER		"5.4.5"
-# define DEFRV		RV54B
+#  define DEFVER "5.4.5"
+#  define DEFRV RV54B
 
 /*
  * This is the location of the player executable, which is the main
@@ -29,14 +27,14 @@
  * directory).
  */
 
-# define PLAYER		"/usr/local/bin/player"
+#  define PLAYER "/usr/local/bin/player"
 
 /*
  * This is the version of the "current" Rog-O-Matic, and is an uppercase
  * Roman numeral.  It must be defined.
  */
 
-# define RGMVER		"XIV"
+#  define RGMVER "XIV"
 
 /*
  * This directory must be defined.  It will contain logs of Rogomatic's
@@ -47,16 +45,15 @@
  * directory.
  */
 
-# if !defined(RGMDIR)
-#   define RGMDIR	"/usr/local/tmp/rogomatic"
-# endif
+#  if !defined(RGMDIR)
+#    define RGMDIR "/usr/local/tmp/rogomatic"
+#  endif
 
 /*
  * This file is created in the current directory if the snapshot command
  * is typed during a Rogue game.  It must be defined.
  */
 
-# define SNAPSHOT	"./snapshot.rgm"
-
+#  define SNAPSHOT "./snapshot.rgm"
 
 #endif

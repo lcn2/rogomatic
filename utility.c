@@ -28,46 +28,46 @@
  * determine the baud rate, time of day, etc.
  */
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <stdarg.h>
-# include <unistd.h>
-# include <pwd.h>
-# include <signal.h>
-# include <string.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <time.h>
-# include <fcntl.h>
-# include <sys/file.h>
-# include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <signal.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <errno.h>
 
-# include "have_strlcat.h"
-# include "have_strlcpy.h"
-# include "strl.h"
-# include "modern_curses.h"
-# include "types.h"
-# include "install.h"
+#include "have_strlcat.h"
+#include "have_strlcpy.h"
+#include "strl.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "install.h"
 
-static void  (*hstat)(int) = NULL;
-static void  (*istat)(int) = NULL;
-static void  (*pstat)(int) = NULL;
-static void  (*qstat)(int) = NULL;
-static void  (*tstat)(int) = NULL;
+static void (*hstat)(int) = NULL;
+static void (*istat)(int) = NULL;
+static void (*pstat)(int) = NULL;
+static void (*qstat)(int) = NULL;
+static void (*tstat)(int) = NULL;
 
-static bool final_newline = false;	/* True is endwin_and_ncurses_cleanup() has been called */
+static bool final_newline = false; /* True is endwin_and_ncurses_cleanup() has been called */
 
-extern unsigned int dnum;	/* rogue dungeon number */
-extern bool quiet;		/* True ==> quiet mode */
+extern unsigned int dnum; /* rogue dungeon number */
+extern bool quiet;	  /* True ==> quiet mode */
 
 /*
  * rogo_baudrate: Determine the baud rate of the terminal
  */
 
 int
-rogo_baudrate (void)
+rogo_baudrate(void)
 {
-  return (baudrate());
+    return (baudrate());
 }
 
 /*
@@ -75,42 +75,42 @@ rogo_baudrate (void)
  */
 
 char *
-getname (void)
+getname(void)
 {
-  static char name[MU_BUF + 1] = {'\0'}; /* +1 for paranoia */
-  struct passwd *pw;
+    static char name[MU_BUF + 1] = {'\0'}; /* +1 for paranoia */
+    struct passwd *pw;
 
-  /*
-   * do not modify name if it was already set
-   */
-  if (name[0] != '\0') {
-      return name;
-  }
+    /*
+     * do not modify name if it was already set
+     */
+    if (name[0] != '\0') {
+	return name;
+    }
 
-  /*
-   * lookup the password entry relating to the real user ID of the calling process
-   */
-  pw = getpwuid(getuid());
+    /*
+     * lookup the password entry relating to the real user ID of the calling process
+     */
+    pw = getpwuid(getuid());
 
-  /*
-   * pre-load player name with rogo-
-   */
-  memset(name, 0, sizeof(name)); /* paranoia */
-  strlcpy(name, "rogo-", sizeof(name));
+    /*
+     * pre-load player name with rogo-
+     */
+    memset(name, 0, sizeof(name)); /* paranoia */
+    strlcpy(name, "rogo-", sizeof(name));
 
-  /*
-   * paranoia check
-   *
-   * Only use the username of the real user ID of the calling process,
-   * if the username is a non-empty string
-   */
-  if (pw != NULL && pw->pw_name != NULL && pw->pw_name[0] != '\0') {
-      strlcat(name, pw->pw_name, sizeof(name));
-  } else {
-      strlcat(name, "nobody", sizeof(name));
-  }
+    /*
+     * paranoia check
+     *
+     * Only use the username of the real user ID of the calling process,
+     * if the username is a non-empty string
+     */
+    if (pw != NULL && pw->pw_name != NULL && pw->pw_name[0] != '\0') {
+	strlcat(name, pw->pw_name, sizeof(name));
+    } else {
+	strlcat(name, "nobody", sizeof(name));
+    }
 
-  return (name);
+    return (name);
 }
 
 /*
@@ -120,14 +120,14 @@ getname (void)
 FILE *
 wopen(char *fname, char *mode)
 {
-  int oldmask;
-  FILE *newlog;
+    int oldmask;
+    FILE *newlog;
 
-  oldmask = umask (0111);
-  newlog = fopen (fname, mode);
-  umask (oldmask);
+    oldmask = umask(0111);
+    newlog = fopen(fname, mode);
+    umask(oldmask);
 
-  return (newlog);
+    return (newlog);
 }
 
 /*
@@ -135,11 +135,11 @@ wopen(char *fname, char *mode)
  */
 
 int
-fexists (char *fn)
+fexists(char *fn)
 {
-  struct stat pbuf;
+    struct stat pbuf;
 
-  return (stat (fn, &pbuf) == 0);
+    return (stat(fn, &pbuf) == 0);
 }
 
 /*
@@ -147,90 +147,91 @@ fexists (char *fn)
  */
 
 int
-filelength (char *f)
+filelength(char *f)
 {
-  struct stat sbuf;
+    struct stat sbuf;
 
-  if (stat (f, &sbuf) == 0)
-    return (sbuf.st_size);
-  else
-    return (-1);
+    if (stat(f, &sbuf) == 0) {
+	return (sbuf.st_size);
+    } else {
+	return (-1);
+    }
 }
 
 /*
  * ncurses_delete - free up ncurses state space
  */
 void
-ncurses_delete (void)
+ncurses_delete(void)
 {
-    delwin (stdscr);
-    delwin (curscr);
+    delwin(stdscr);
+    delwin(curscr);
 }
 
 /*
  * endwin_and_ncurses_cleanup - flush output, shutdown ncurses if setup, and restore both echo + canonical mode
  */
 void
-endwin_and_ncurses_cleanup (void)
+endwin_and_ncurses_cleanup(void)
 {
-  /*
-   * flush all output
-   */
-  fflush (stdout);
-  fflush (stderr);
-
-  /*
-   * ncurses cleanup unless endwin() was already called
-   */
-  if (stdscr != NULL && !isendwin ()) {
+    /*
+     * flush all output
+     */
+    fflush(stdout);
+    fflush(stderr);
 
     /*
-     * move to corner of window
+     * ncurses cleanup unless endwin() was already called
      */
-    mvcur (0, C-1, R-1, 0);
+    if (stdscr != NULL && !isendwin()) {
 
-    /*
-     * turn on echo and turn off raw
-     */
-    if (!quiet) {
-      echo ();		/* turn on input echo mode */
-      nocbreak ();	/* turn off cbreak mode - input processing only after newline */
+	/*
+	 * move to corner of window
+	 */
+	mvcur(0, C - 1, R - 1, 0);
+
+	/*
+	 * turn on echo and turn off raw
+	 */
+	if (!quiet) {
+	    echo();	/* turn on input echo mode */
+	    nocbreak(); /* turn off cbreak mode - input processing only after newline */
+	}
+
+	/*
+	 * clean up and delete curses
+	 */
+	if (!quiet) {
+	    endwin(); /* end curses terminal processing */
+	}
+	ncurses_delete(); /* free up ncurses state space */
     }
 
     /*
-     * clean up and delete curses
+     * restore previously saved terminal attributes
      */
-    if (!quiet) {
-      endwin ();	/* end curses terminal processing */
+    restore_termattr(NULL);
+
+    /*
+     * output newline only once, even if this function is called several times
+     *
+     * NOTE: This function might be called via the atexit(3) facility, or as
+     *	     a result of a signal handler, or both.  As a result we have
+     *	     to guard against multiple calls to this function.
+     */
+    if (!final_newline && !quiet) {
+	putchar('\n');
     }
-    ncurses_delete ();	/* free up ncurses state space */
-  }
-
-  /*
-   * restore previously saved terminal attributes
-   */
-  restore_termattr (NULL);
-
-  /*
-    * output newline only once, even if this function is called several times
-    *
-    * NOTE: This function might be called via the atexit(3) facility, or as
-    *	     a result of a signal handler, or both.  As a result we have
-    *	     to guard against multiple calls to this function.
-    */
-  if (!final_newline && !quiet) {
-    putchar ('\n');
-  }
-  final_newline = true;
-  fflush (stdout);
+    final_newline = true;
+    fflush(stdout);
 }
 
 void
-inter_endwin_and_ncurses_cleanup (int sig __attribute__ ((__unused__)))
+inter_endwin_and_ncurses_cleanup(int sig __attribute__((__unused__)))
 {
-  endwin_and_ncurses_cleanup();
-  signal(sig, SIG_DFL);
-  raise(sig);
+    endwin_and_ncurses_cleanup();
+    signal(sig, SIG_DFL);
+    raise(sig);
 }
 
 /*
@@ -238,14 +239,14 @@ inter_endwin_and_ncurses_cleanup (int sig __attribute__ ((__unused__)))
  */
 
 void
-critical (void)
+critical(void)
 {
-  hstat = signal (SIGHUP, SIG_IGN);
-  istat = signal (SIGINT, SIG_IGN);
-  pstat = signal (SIGPIPE, SIG_IGN);
-  qstat = signal (SIGQUIT, SIG_IGN);
-  disable_alarm_use ();	/* ignore SIGALRM */
-  tstat = signal (SIGTERM, SIG_IGN);
+    hstat = signal(SIGHUP, SIG_IGN);
+    istat = signal(SIGINT, SIG_IGN);
+    pstat = signal(SIGPIPE, SIG_IGN);
+    qstat = signal(SIGQUIT, SIG_IGN);
+    disable_alarm_use(); /* ignore SIGALRM */
+    tstat = signal(SIGTERM, SIG_IGN);
 }
 
 /*
@@ -253,39 +254,39 @@ critical (void)
  */
 
 void
-uncritical (void)
+uncritical(void)
 {
-  if (hstat != NULL) {
-    signal (SIGHUP, hstat);
-  } else {
-    signal (SIGHUP, SIG_DFL);
-  }
+    if (hstat != NULL) {
+	signal(SIGHUP, hstat);
+    } else {
+	signal(SIGHUP, SIG_DFL);
+    }
 
-  if (istat != NULL) {
-    signal (SIGINT, istat);
-  } else {
-    signal (SIGINT, SIG_DFL);
-  }
+    if (istat != NULL) {
+	signal(SIGINT, istat);
+    } else {
+	signal(SIGINT, SIG_DFL);
+    }
 
-  if (pstat != NULL) {
-    signal (SIGPIPE, pstat);
-  } else {
-    signal (SIGPIPE, SIG_DFL);
-  }
+    if (pstat != NULL) {
+	signal(SIGPIPE, pstat);
+    } else {
+	signal(SIGPIPE, SIG_DFL);
+    }
 
-  if (qstat != NULL) {
-    signal (SIGQUIT, qstat);
-  } else {
-    signal (SIGQUIT, SIG_DFL);
-  }
+    if (qstat != NULL) {
+	signal(SIGQUIT, qstat);
+    } else {
+	signal(SIGQUIT, SIG_DFL);
+    }
 
-  enable_alarm_use ();	/* enable SIGALRM if timeout timer is > 0.0 seconds */
+    enable_alarm_use(); /* enable SIGALRM if timeout timer is > 0.0 seconds */
 
-  if (tstat != NULL) {
-    signal (SIGTERM, tstat);
-  } else {
-    signal (SIGTERM, SIG_DFL);
-  }
+    if (tstat != NULL) {
+	signal(SIGTERM, tstat);
+    } else {
+	signal(SIGTERM, SIG_DFL);
+    }
 }
 
 /*
@@ -293,14 +294,14 @@ uncritical (void)
  */
 
 void
-reset_int (void)
+reset_int(void)
 {
-  signal (SIGHUP, SIG_DFL);
-  signal (SIGINT, SIG_DFL);
-  signal (SIGPIPE, SIG_DFL);
-  signal (SIGQUIT, SIG_DFL);
-  signal (SIGALRM, SIG_DFL);
-  signal (SIGTERM, SIG_DFL);
+    signal(SIGHUP, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
+    signal(SIGPIPE, SIG_DFL);
+    signal(SIGQUIT, SIG_DFL);
+    signal(SIGALRM, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
 }
 
 /*
@@ -308,19 +309,31 @@ reset_int (void)
  */
 
 void
-int_exit (void (*exitproc)(int))
+int_exit(void (*exitproc)(int))
 {
-  if (signal (SIGHUP, SIG_IGN) != SIG_IGN)  signal (SIGHUP, exitproc);
+    if (signal(SIGHUP, SIG_IGN) != SIG_IGN) {
+	signal(SIGHUP, exitproc);
+    }
 
-  if (signal (SIGINT, SIG_IGN) != SIG_IGN)  signal (SIGINT, exitproc);
+    if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
+	signal(SIGINT, exitproc);
+    }
 
-  if (signal (SIGPIPE, SIG_IGN) != SIG_IGN) signal (SIGPIPE, exitproc);
+    if (signal(SIGPIPE, SIG_IGN) != SIG_IGN) {
+	signal(SIGPIPE, exitproc);
+    }
 
-  if (signal (SIGQUIT, SIG_IGN) != SIG_IGN) signal (SIGQUIT, exitproc);
+    if (signal(SIGQUIT, SIG_IGN) != SIG_IGN) {
+	signal(SIGQUIT, exitproc);
+    }
 
-  if (signal (SIGALRM, SIG_IGN) != SIG_IGN) signal (SIGALRM, exitproc);
+    if (signal(SIGALRM, SIG_IGN) != SIG_IGN) {
+	signal(SIGALRM, exitproc);
+    }
 
-  if (signal (SIGTERM, SIG_IGN) != SIG_IGN) signal (SIGTERM, exitproc);
+    if (signal(SIGTERM, SIG_IGN) != SIG_IGN) {
+	signal(SIGTERM, exitproc);
+    }
 }
 
 /*
@@ -337,54 +350,53 @@ int_exit (void (*exitproc)(int))
  * This function does NOT return on error.
  */
 char *
-form_path (const char *dir, const char *file)
+form_path(const char *dir, const char *file)
 {
-  char *path;	/* path to open */
-  int len;	/* length of path */
+    char *path; /* path to open */
+    int len;	/* length of path */
 
-  /* firewall */
-  /* dir can be NULL */
-  if (file == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u file is NULL\n",
-	     __func__, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
-
-  /* form path */
-  if (dir != NULL) {
-
-    /*
-     * empty dir string becomes RGMDIR
-     */
-    if (dir[0] == '\0') {
-      dir = RGMDIR;
+    /* firewall */
+    /* dir can be NULL */
+    if (file == NULL) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u file is NULL\n", __func__, __FILE__, __LINE__, dnum);
+	not_reached();
     }
-
-    /* form full path */
-    len = strlen (dir) + 1 + strlen (file);
-    path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
-    if (path == NULL) {
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc full path for %s/%s\n",
-	       __func__, __FILE__, __LINE__, dnum, dir, file);
-      not_reached ();
-    }
-    snprintf(path, len+1, "%s/%s", dir, file); /* +1 for NUL */
-
-  /* form file as a path */
-  } else {
 
     /* form path */
-    len = strlen (file);
-    path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
-    if (path == NULL) {
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc path for %s\n",
-	       __func__, __FILE__, __LINE__, dnum, file);
-      not_reached ();
-    }
-    strlcpy(path, file, len+1);
-  }
+    if (dir != NULL) {
 
-  return path;
+	/*
+	 * empty dir string becomes RGMDIR
+	 */
+	if (dir[0] == '\0') {
+	    dir = RGMDIR;
+	}
+
+	/* form full path */
+	len = strlen(dir) + 1 + strlen(file);
+	path = calloc(len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
+	if (path == NULL) {
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc full path for %s/%s\n", __func__, __FILE__,
+		 __LINE__, dnum, dir, file);
+	    not_reached();
+	}
+	snprintf(path, len + 1, "%s/%s", dir, file); /* +1 for NUL */
+
+	/* form file as a path */
+    } else {
+
+	/* form path */
+	len = strlen(file);
+	path = calloc(len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
+	if (path == NULL) {
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc path for %s\n", __func__, __FILE__, __LINE__, dnum,
+		 file);
+	    not_reached();
+	}
+	strlcpy(path, file, len + 1);
+    }
+
+    return path;
 }
 
 /*
@@ -399,52 +411,50 @@ form_path (const char *dir, const char *file)
  * This function does NOT return on error.
  */
 char *
-form_prefix_path (const char *dir, const char *prefix, const char *file)
+form_prefix_path(const char *dir, const char *prefix, const char *file)
 {
-  char *path;	/* path to open */
-  int len;	/* length of path */
+    char *path; /* path to open */
+    int len;	/* length of path */
 
-  /* firewall */
-  /* dir can be NULL */
-  if (prefix == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u prefix is NULL\n",
-	     __func__, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
-  if (file == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u file is NULL\n",
-	     __func__, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
-
-  /* form path */
-  if (dir != NULL) {
-
-    /* form full path */
-    len = strlen (dir) + 1 + strlen(prefix) + strlen (file);
-    path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
-    if (path == NULL) {
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc full path for %s/%s\n",
-	       __func__, __FILE__, __LINE__, dnum, dir, file);
-      not_reached ();
+    /* firewall */
+    /* dir can be NULL */
+    if (prefix == NULL) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u prefix is NULL\n", __func__, __FILE__, __LINE__, dnum);
+	not_reached();
     }
-    snprintf(path, len+1, "%s/%s%s", dir, prefix, file); /* +1 for NUL */
-
-  /* form file as a path */
-  } else {
+    if (file == NULL) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u file is NULL\n", __func__, __FILE__, __LINE__, dnum);
+	not_reached();
+    }
 
     /* form path */
-    len = strlen(prefix) + strlen (file);
-    path = calloc (len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
-    if (path == NULL) {
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc path for %s\n",
-	       __func__, __FILE__, __LINE__, dnum, file);
-      not_reached ();
-    }
-    snprintf(path, len+1, "%s%s", prefix, file); /* +1 for NUL */
-  }
+    if (dir != NULL) {
 
-  return path;
+	/* form full path */
+	len = strlen(dir) + 1 + strlen(prefix) + strlen(file);
+	path = calloc(len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
+	if (path == NULL) {
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc full path for %s/%s\n", __func__, __FILE__,
+		 __LINE__, dnum, dir, file);
+	    not_reached();
+	}
+	snprintf(path, len + 1, "%s/%s%s", dir, prefix, file); /* +1 for NUL */
+
+	/* form file as a path */
+    } else {
+
+	/* form path */
+	len = strlen(prefix) + strlen(file);
+	path = calloc(len + 1 + 1, 1); /* +1 for NUL, +1 for paranoia */
+	if (path == NULL) {
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to calloc path for %s\n", __func__, __FILE__, __LINE__, dnum,
+		 file);
+	    not_reached();
+	}
+	snprintf(path, len + 1, "%s%s", prefix, file); /* +1 for NUL */
+    }
+
+    return path;
 }
 
 /*
@@ -460,62 +470,60 @@ form_prefix_path (const char *dir, const char *prefix, const char *file)
  */
 
 int
-lock_file (const char *caller, const char *dir, const char *lokfil)
+lock_file(const char *caller, const char *dir, const char *lokfil)
 {
-  char *path;	     /* path to open */
-  int ret;	     /* flock return */
-  int lock_fd;	     /* opened locked file descriptor */
+    char *path;	 /* path to open */
+    int ret;	 /* flock return */
+    int lock_fd; /* opened locked file descriptor */
 
-  /* firewall */
-  if (caller == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n",
-	     __func__, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
-  /* is it OK for dir == NULL */
-  if (lokfil == NULL) {
-    quit (1, "ERROR: caller: %s: file: %s line: %d dungeon: %u lokfil is NULL\n",
-	     caller, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
+    /* firewall */
+    if (caller == NULL) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n", __func__, __FILE__, __LINE__, dnum);
+	not_reached();
+    }
+    /* is it OK for dir == NULL */
+    if (lokfil == NULL) {
+	quit(1, "ERROR: caller: %s: file: %s line: %d dungeon: %u lokfil is NULL\n", caller, __FILE__, __LINE__, dnum);
+	not_reached();
+    }
 
-  /*
-   * form lock path if needed
-   */
-  path = form_path (dir, lokfil);
+    /*
+     * form lock path if needed
+     */
+    path = form_path(dir, lokfil);
 
-  /*
-   * open lock file
-   */
-  lock_fd = open (path, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH); /* mode 0644 */
-  if (lock_fd < 0) {
-    /* failed to open and/or create the lock file */
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to open lock file: %s: %s\n",
-	     caller, __FILE__, __LINE__, dnum, path, strerror (errno));
-    not_reached ();
-  }
+    /*
+     * open lock file
+     */
+    lock_fd = open(path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode 0644 */
+    if (lock_fd < 0) {
+	/* failed to open and/or create the lock file */
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to open lock file: %s: %s\n", caller, __FILE__, __LINE__, dnum,
+	     path, strerror(errno));
+	not_reached();
+    }
 
-  /*
-   * lock the file
-   */
-  ret = flock (lock_fd, LOCK_EX);
-  if (ret < 0) {
-    /* failed to lock */
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to lock: %s: %s\n",
-	      caller, __FILE__, __LINE__, dnum, path, strerror (errno));
-    not_reached ();
-  }
+    /*
+     * lock the file
+     */
+    ret = flock(lock_fd, LOCK_EX);
+    if (ret < 0) {
+	/* failed to lock */
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to lock: %s: %s\n", caller, __FILE__, __LINE__, dnum, path,
+	     strerror(errno));
+	not_reached();
+    }
 
-  /* free memory */
-  if (path != NULL) {
-    free(path);
-    path = NULL;
-  }
+    /* free memory */
+    if (path != NULL) {
+	free(path);
+	path = NULL;
+    }
 
-  /*
-   * return the successful lock file descriptor
-   */
-  return lock_fd;
+    /*
+     * return the successful lock file descriptor
+     */
+    return lock_fd;
 }
 
 /*
@@ -532,70 +540,68 @@ lock_file (const char *caller, const char *dir, const char *lokfil)
  */
 
 int
-test_lock_file (const char *caller, const char *dir, const char *lokfil)
+test_lock_file(const char *caller, const char *dir, const char *lokfil)
 {
-  char *path;	     /* path to open */
-  int ret;	     /* flock return */
-  int lock_fd;	     /* opened locked file descriptor */
+    char *path;	 /* path to open */
+    int ret;	 /* flock return */
+    int lock_fd; /* opened locked file descriptor */
 
-  /* firewall */
-  if (caller == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n",
-	     __func__, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
-  /* is it OK for dir == NULL */
-  if (lokfil == NULL) {
-    quit (1, "ERROR: caller: %s: file: %s line: %d dungeon: %u lokfil is NULL\n",
-	     caller, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
+    /* firewall */
+    if (caller == NULL) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n", __func__, __FILE__, __LINE__, dnum);
+	not_reached();
+    }
+    /* is it OK for dir == NULL */
+    if (lokfil == NULL) {
+	quit(1, "ERROR: caller: %s: file: %s line: %d dungeon: %u lokfil is NULL\n", caller, __FILE__, __LINE__, dnum);
+	not_reached();
+    }
 
-  /*
-   * form lock path if needed
-   */
-  path = form_path (dir, lokfil);
+    /*
+     * form lock path if needed
+     */
+    path = form_path(dir, lokfil);
 
-  /*
-   * open lock file
-   */
-  lock_fd = open (path, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH); /* mode 0644 */
-  if (lock_fd < 0) {
+    /*
+     * open lock file
+     */
+    lock_fd = open(path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode 0644 */
+    if (lock_fd < 0) {
+	/* free memory */
+	if (path != NULL) {
+	    free(path);
+	    path = NULL;
+	}
+	/* return lock failure */
+	return lock_fd;
+    }
+
+    /*
+     * lock the file
+     */
+    ret = flock(lock_fd, LOCK_EX | LOCK_NB);
+    if (ret < 0) {
+	/* free memory */
+	if (path != NULL) {
+	    free(path);
+	    path = NULL;
+	}
+	/* close lock file */
+	close(lock_fd);
+	/* return lock failure */
+	return ret;
+    }
+
     /* free memory */
     if (path != NULL) {
-      free(path);
-      path = NULL;
+	free(path);
+	path = NULL;
     }
-    /* return lock failure */
+
+    /*
+     * return the successful lock file descriptor
+     */
     return lock_fd;
-  }
-
-  /*
-   * lock the file
-   */
-  ret = flock (lock_fd, LOCK_EX|LOCK_NB);
-  if (ret < 0) {
-    /* free memory */
-    if (path != NULL) {
-      free(path);
-      path = NULL;
-    }
-    /* close lock file */
-    close (lock_fd);
-    /* return lock failure */
-    return ret;
-  }
-
-  /* free memory */
-  if (path != NULL) {
-    free(path);
-    path = NULL;
-  }
-
-  /*
-   * return the successful lock file descriptor
-   */
-  return lock_fd;
 }
 
 /*
@@ -603,45 +609,43 @@ test_lock_file (const char *caller, const char *dir, const char *lokfil)
  */
 
 void
-unlock_file (const char *caller, int lock_fd)
+unlock_file(const char *caller, int lock_fd)
 {
-  int ret;	    /* flock return */
+    int ret; /* flock return */
 
-  /* firewall */
-  if (caller == NULL) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n",
-	     __func__, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
+    /* firewall */
+    if (caller == NULL) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u caller is NULL\n", __func__, __FILE__, __LINE__, dnum);
+	not_reached();
+    }
 
-  /*
-   * do nothing is lock file is not open
-   */
-  if (lock_fd < 0) {
-    /* not open for unlocking */
+    /*
+     * do nothing is lock file is not open
+     */
+    if (lock_fd < 0) {
+	/* not open for unlocking */
+	return;
+    }
+
+    /*
+     * unlock
+     */
+    ret = flock(lock_fd, LOCK_UN);
+    if (ret < 0) {
+	/* failed to lock */
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to unlock\n", caller, __FILE__, __LINE__, dnum);
+	not_reached();
+    }
+
+    /*
+     * close the lock
+     */
+    (void)close(lock_fd);
+
+    /*
+     * unlock successful
+     */
     return;
-  }
-
-  /*
-   * unlock
-   */
-  ret = flock (lock_fd, LOCK_UN);
-  if (ret < 0) {
-    /* failed to lock */
-    quit (1 , "ERROR: %s: file: %s line: %d dungeon: %u failed to unlock\n",
-	      caller, __FILE__, __LINE__, dnum);
-    not_reached ();
-  }
-
-  /*
-   * close the lock
-   */
-  (void) close (lock_fd);
-
-  /*
-   * unlock successful
-   */
-  return;
 }
 
 /*
@@ -649,25 +653,25 @@ unlock_file (const char *caller, int lock_fd)
  */
 
 void
-quit (int code, char *fmt, ...)
+quit(int code, char *fmt, ...)
 {
-  va_list ap;
+    va_list ap;
 
-  /* pre-output newline to be on the edge of the screen before printing error message */
-  fputc('\n', stderr);
+    /* pre-output newline to be on the edge of the screen before printing error message */
+    fputc('\n', stderr);
 
-  /* setup stdarg */
-  va_start (ap, fmt);
+    /* setup stdarg */
+    va_start(ap, fmt);
 
-  /* print error message to stderr */
-  vfprintf (stderr, fmt, ap);
-  fflush(stderr); /* paranoia */
+    /* print error message to stderr */
+    vfprintf(stderr, fmt, ap);
+    fflush(stderr); /* paranoia */
 
-  /* finish stdarg */
-  va_end (ap);
+    /* finish stdarg */
+    va_end(ap);
 
-  /* exit :-) */
-  exit (code);
+    /* exit :-) */
+    exit(code);
 }
 
 /*
@@ -690,17 +694,17 @@ quit (int code, char *fmt, ...)
  */
 
 int
-stlmatch (char *big, char *small)
+stlmatch(char *big, char *small)
 {
-  char *s, *b;
-  s = small;
-  b = big;
+    char *s, *b;
+    s = small;
+    b = big;
 
-  do {
-    if (*s == '\0')
-      return (1);
-  }
-  while (*s++ == *b++);
+    do {
+	if (*s == '\0') {
+	    return (1);
+	}
+    } while (*s++ == *b++);
 
-  return (0);
+    return (0);
 }

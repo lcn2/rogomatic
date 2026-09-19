@@ -29,7 +29,6 @@
  * Share and enjoy!  :-)
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -40,7 +39,6 @@
 
 #include "types.h"
 #include "config.h"
-
 
 /*
  * fork_exec: fork a while process and execute a command with args
@@ -72,52 +70,52 @@
  */
 
 int
-fork_exec (char *file, char *arglist[])
+fork_exec(char *file, char *arglist[])
 {
-  pid_t pid;		/* fork(2) return */
-  pid_t wait_ret;	/* waitpid(2) return */
-  int stat_loc;		/* status of the dead child process */
-  int ret = 0;		/* execvp(3) or child exit return code */
+    pid_t pid;	    /* fork(2) return */
+    pid_t wait_ret; /* waitpid(2) return */
+    int stat_loc;   /* status of the dead child process */
+    int ret = 0;    /* execvp(3) or child exit return code */
 
-  /*
-   * fork a child process
-   */
-  pid = fork ();
-  if (pid < 0) {
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u filed to fork: %s\n",
-	            __func__, __FILE__, __LINE__, dnum, strerror (errno));
-    not_reached ();
-  }
-
-  /*
-   * child process - exec the command
-   */
-  if (pid == 0) {
-    ret = execvp (file, arglist);
-    if (ret < 0) {
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to execvp: %s error: %s\n",
-		      __func__, __FILE__, __LINE__, dnum, file, strerror (errno));
-      not_reached ();
+    /*
+     * fork a child process
+     */
+    pid = fork();
+    if (pid < 0) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u filed to fork: %s\n", __func__, __FILE__, __LINE__, dnum,
+	     strerror(errno));
+	not_reached();
     }
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u child execvp returned with: %jd: error: %s\n",
-                     __func__, __FILE__, __LINE__, dnum, (intmax_t) pid, strerror (errno));
-    not_reached ();
 
-  /*
-   * parent process - monitor child process
-   */
-  } else {
-    wait_ret = waitpid (pid, &stat_loc, 0);
-    if (wait_ret < 0) {
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u failed to waitpid(%jd, &stat_loc, 0): %s\n",
-		      __func__, __FILE__, __LINE__, dnum, (intmax_t) pid, strerror (errno));
-      not_reached ();
+    /*
+     * child process - exec the command
+     */
+    if (pid == 0) {
+	ret = execvp(file, arglist);
+	if (ret < 0) {
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to execvp: %s error: %s\n", __func__, __FILE__, __LINE__,
+		 dnum, file, strerror(errno));
+	    not_reached();
+	}
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u child execvp returned with: %jd: error: %s\n", __func__, __FILE__,
+	     __LINE__, dnum, (intmax_t)pid, strerror(errno));
+	not_reached();
+
+	/*
+	 * parent process - monitor child process
+	 */
+    } else {
+	wait_ret = waitpid(pid, &stat_loc, 0);
+	if (wait_ret < 0) {
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u failed to waitpid(%jd, &stat_loc, 0): %s\n", __func__, __FILE__,
+		 __LINE__, dnum, (intmax_t)pid, strerror(errno));
+	    not_reached();
+	}
+	ret = WEXITSTATUS(stat_loc);
     }
-    ret = WEXITSTATUS(stat_loc);
-  }
 
-  /*
-   * return child exit code
-   */
-  return ret;
+    /*
+     * return child exit code
+     */
+    return ret;
 }

@@ -27,112 +27,114 @@
  * Initialize and summarize the gene pool
  */
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-# include <sys/time.h>	/* for struct itimerval */
-# include <setjmp.h>	/* for sigjmp_buf */
-# include <errno.h>
+#include <sys/time.h> /* for struct itimerval */
+#include <setjmp.h>   /* for sigjmp_buf */
+#include <errno.h>
 
-# include "types.h"
-# include "config.h"
-# include "install.h"
+#include "types.h"
+#include "config.h"
+#include "install.h"
 
 /*
  * external declarations
  */
 
-extern void set_rgmdir (bool time_subpath);
+extern void set_rgmdir(bool time_subpath);
 
 /*
  * global declarations
  */
 
-char genelock[TY_BUF + 1] = { '\0' };	/* Gene pool lock file, +1 for paranoia */
-char genepool[TY_BUF + 1] = { '\0' };	/* Gene pool, +1 for paranoia */
-char *knob_name[MAXKNOB] = {
-  "trap searching:   ",
-  "door searching:   ",
-  "resting:          ",
-  "using arrows:     ",
-  "experimenting:    ",
-  "retreating:       ",
-  "waking monsters:  ",
-  "hoarding food:    "
-};
-bool quiet = false;      /* true ==> quiet mode */
+char genelock[TY_BUF + 1] = {'\0'}; /* Gene pool lock file, +1 for paranoia */
+char genepool[TY_BUF + 1] = {'\0'}; /* Gene pool, +1 for paranoia */
+char *knob_name[MAXKNOB] = {"trap searching:   ", "door searching:   ", "resting:          ", "using arrows:     ",
+			    "experimenting:    ", "retreating:       ", "waking monsters:  ", "hoarding food:    "};
+bool quiet = false; /* true ==> quiet mode */
 
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
-  char genelog[TY_BUF + 1];	/* Genetic learning log file, +1 for paranoia */
-  int m=10, init=0, version=RV53A, full=0;
-  unsigned int seed = 0;
-  int lock_fd;
+    char genelog[TY_BUF + 1]; /* Genetic learning log file, +1 for paranoia */
+    int m = 10, init = 0, version = RV53A, full = 0;
+    unsigned int seed = 0;
+    int lock_fd;
 
-  /* zeroize arrays */
-  memset (genelock, 0, sizeof(genelock)); /* paranoia */
-  memset (genelog, 0, sizeof(genelog)); /* paranoia */
-  memset (genepool, 0, sizeof(genepool)); /* paranoia */
+    /* zeroize arrays */
+    memset(genelock, 0, sizeof(genelock)); /* paranoia */
+    memset(genelog, 0, sizeof(genelog));   /* paranoia */
+    memset(genepool, 0, sizeof(genepool)); /* paranoia */
 
-  /* Get the options */
-  while (--argc > 0 && (*++argv)[0] == '-') {
-    while (*++(*argv)) {
-      switch (**argv) {
-        case 'a':	full=2; break;
-        case 'i':	init++; break;
-        case 'f':	full=1; break;
-        case 'm':	m = atoi(*argv+1); SKIPARG;
-          printf ("Gene pool size %d.\n", m);
-          break;
-        case 's':	seed = (unsigned int) atoi(*argv+1); SKIPARG;
-          printf ("Random seed %d.\n", m);
-          break;
-        case 'v':	version = atoi(*argv+1); SKIPARG;
-          printf ("Rogue version %d.\n", version);
-          break;
-        default:
-	  quit (1, "Usage: gene [-if] [-m<<value>>] [-s<<value>>] [-v<<value>>] [genepool]\n");
-	  not_reached ();
-      }
+    /* Get the options */
+    while (--argc > 0 && (*++argv)[0] == '-') {
+	while (*++(*argv)) {
+	    switch (**argv) {
+	    case 'a':
+		full = 2;
+		break;
+	    case 'i':
+		init++;
+		break;
+	    case 'f':
+		full = 1;
+		break;
+	    case 'm':
+		m = atoi(*argv + 1);
+		SKIPARG;
+		printf("Gene pool size %d.\n", m);
+		break;
+	    case 's':
+		seed = (unsigned int)atoi(*argv + 1);
+		SKIPARG;
+		printf("Random seed %d.\n", m);
+		break;
+	    case 'v':
+		version = atoi(*argv + 1);
+		SKIPARG;
+		printf("Rogue version %d.\n", version);
+		break;
+	    default:
+		quit(1, "Usage: gene [-if] [-m<<value>>] [-s<<value>>] [-v<<value>>] [genepool]\n");
+		not_reached();
+	    }
+	}
     }
-  }
 
-  if (argc > 0) {
-    if (readgenes (argv[0]))		/* Read the gene pool */
-      analyzepool (full);		/* Print a summary */
-    else {
-      quit (0, "ERROR: %s: file: %s line: %d dungeon: %u Cannot read file: %s\n",
-	       __func__, __FILE__, __LINE__, dnum, argv[0]);
-      not_reached ();
+    if (argc > 0) {
+	if (readgenes(argv[0])) { /* Read the gene pool */
+	    analyzepool(full);	  /* Print a summary */
+	} else {
+	    quit(0, "ERROR: %s: file: %s line: %d dungeon: %u Cannot read file: %s\n", __func__, __FILE__, __LINE__, dnum,
+		 argv[0]);
+	    not_reached();
+	}
+
+	exit(0);
     }
 
-    exit (0);
-  }
+    /* No file argument, assign the gene log and pool file names */
+    snprintf(genelock, sizeof(genelock) - 1, "%s/GeneLock%d", rgmdir, version);
+    snprintf(genelog, sizeof(genelog) - 1, "%s/GeneLog%d", rgmdir, version);
+    snprintf(genepool, sizeof(genepool) - 1, "%s/GenePool%d", rgmdir, version);
 
-  /* No file argument, assign the gene log and pool file names */
-  snprintf (genelock, sizeof(genelock)-1, "%s/GeneLock%d", rgmdir, version);
-  snprintf (genelog, sizeof(genelog)-1, "%s/GeneLog%d", rgmdir, version);
-  snprintf (genepool, sizeof(genepool)-1, "%s/GenePool%d", rgmdir, version);
+    critical(); /* Disable interrupts */
 
-  critical ();				/* Disable interrupts */
+    lock_fd = lock_file(__func__, NULL, genelock);
+    if (init) {
+	rogo_srand(seed);	       /* Set the random number generator */
+	rogo_openlog(genelog);	       /* Open the gene log file */
+	initpool(MAXKNOB, m);	       /* Random starting point */
+	writegenes(genepool);	       /* Write out the gene pool */
+	rogo_closelog();	       /* Close the log file */
+    } else if (!readgenes(genepool)) { /* Read the gene pool */
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u Cannot read file '%s'\n", __func__, __FILE__, __LINE__, dnum, genepool);
+	not_reached();
+    }
+    unlock_file(__func__, lock_fd);
 
-  lock_fd = lock_file (__func__, NULL, genelock);
-  if (init) {
-    rogo_srand (seed);			/* Set the random number generator */
-    rogo_openlog (genelog);		/* Open the gene log file */
-    initpool (MAXKNOB, m);		/* Random starting point */
-    writegenes (genepool);		/* Write out the gene pool */
-    rogo_closelog ();			/* Close the log file */
-  }
-  else if (! readgenes (genepool)) {	/* Read the gene pool */
-    quit (1, "ERROR: %s: file: %s line: %d dungeon: %u Cannot read file '%s'\n",
-	      __func__, __FILE__, __LINE__, dnum, genepool);
-    not_reached ();
-  }
-  unlock_file (__func__, lock_fd);
-
-  uncritical ();			/* Re-enable interrupts */
-  analyzepool (full);			/* Print a summary */
+    uncritical();      /* Re-enable interrupts */
+    analyzepool(full); /* Print a summary */
 }

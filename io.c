@@ -27,221 +27,218 @@
  * This file contains all of the functions which deal with the real world.
  */
 
-# include <stdlib.h>
-# include <stdarg.h>
-# include <unistd.h>
-# include <ctype.h>
-# include <string.h>
-# include <sys/ioctl.h>
-# include <time.h>
-# include <sys/wait.h>
-# include <errno.h>
-# include <signal.h>
-# include <setjmp.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <time.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <signal.h>
+#include <setjmp.h>
 
-# include "have_strlcat.h"
-# include "have_strlcpy.h"
-# include "strl.h"
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
-# include "install.h"
-# include "termtokens.h"
-# include "getroguetoken.h"
+#include "have_strlcat.h"
+#include "have_strlcpy.h"
+#include "strl.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
+#include "install.h"
+#include "termtokens.h"
+#include "getroguetoken.h"
 
-# define ROGUE_SECONDS (4)  /* seconds to wait for rogue to exit */
+#define ROGUE_SECONDS (4) /* seconds to wait for rogue to exit */
 
-# define READ	0
+#define READ 0
 
 /*
  * Charonscreen returns the current character on the screen (using
  * curses(3)).  This macro is based on the winch(win) macro.
  */
-# define charonscreen(Y,X)	(A_CHARTEXT & mvwinch (stdscr, Y, X))
+#define charonscreen(Y, X) (A_CHARTEXT & mvwinch(stdscr, Y, X))
 
 /* static declarations */
-static char *month[] = {
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-};
+static char *month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 static char screen00 = ' ';
 
 /* Constants */
 
-# define SENDQ 256
+#define SENDQ 256
 
 /* potion quaffing state */
 enum p_state {
-  p_unset = 0,	    /* no multi-message potion quaffing in progress */
-  p_what = 1,	    /* "Quaff what? " seen */
-  p_list = 2,	    /* "(* for list): " seen */
-  p_more = 3,	    /* "--More--" seen */
-  p_call = 4,	    /* "Call it: " seen */
-  p_quest = 5,	    /* sent "?" reply to set proper name */
+    p_unset = 0, /* no multi-message potion quaffing in progress */
+    p_what = 1,	 /* "Quaff what? " seen */
+    p_list = 2,	 /* "(* for list): " seen */
+    p_more = 3,	 /* "--More--" seen */
+    p_call = 4,	 /* "Call it: " seen */
+    p_quest = 5, /* sent "?" reply to set proper name */
 };
 static enum p_state potion_state = p_unset;
 
 /* scroll reading state */
 enum s_state {
-  s_unset = 0,	    /* no multi-message scroll reading in progress */
-  s_what = 1,	    /* "Read what? " seen */
-  s_list = 2,	    /* "(* for list): " seen */
-  s_more = 3,	    /* "--More--" seen */
-  s_call = 4,	    /* "Call it: " seen */
-  s_quest = 5,	    /* sent "?" reply to set proper name */
+    s_unset = 0, /* no multi-message scroll reading in progress */
+    s_what = 1,	 /* "Read what? " seen */
+    s_list = 2,	 /* "(* for list): " seen */
+    s_more = 3,	 /* "--More--" seen */
+    s_call = 4,	 /* "Call it: " seen */
+    s_quest = 5, /* sent "?" reply to set proper name */
 };
 static enum s_state scroll_state = s_unset;
 
 /* The command queue */
 
-static char  queue[SENDQ];             /* stuff to be sent to Rogue */
+static char queue[SENDQ]; /* stuff to be sent to Rogue */
 
-static int s_row1 = -100;  /* start scroll regions way out of bounds */
-static int s_row2 = 100;   /* start scroll regions way out of bounds */
+static int s_row1 = -100; /* start scroll regions way out of bounds */
+static int s_row2 = 100;  /* start scroll regions way out of bounds */
 
-static void scrollup (void);
-static void scrolldown (void);
-static void printscreen (void);
-static void sendcnow (char c);
-static int pending (void);
-static void deadrogue (void);
-static void waitforspace (void);
+static void scrollup(void);
+static void scrolldown(void);
+static void printscreen(void);
+static void sendcnow(char c);
+static int pending(void);
+static void deadrogue(void);
+static void waitforspace(void);
 static char **helpline;
-static void putn (char c, FILE *f, int n);
+static void putn(char c, FILE *f, int n);
 
-static void waitforspace (void);
-static void sendcnow (char c);
+static void waitforspace(void);
+static void sendcnow(char c);
 
 static void
-scrollup (void)
+scrollup(void)
 {
-  int r;
-  int c;
+    int r;
+    int c;
 
-  newdoors = doorlist;
+    newdoors = doorlist;
 
-  for (r = s_row1; r < s_row2; r++) {
+    for (r = s_row1; r < s_row2; r++) {
+	for (c = 0; c < C; c++) {
+	    if (valrc(r, c) && valrc(r + 1, c)) {
+		screen[r][c] = screen[r + 1][c];
+		updatepos(screen[r][c], r, c);
+	    }
+	}
+    }
+
     for (c = 0; c < C; c++) {
-      if (valrc (r, c) && valrc (r+1, c)) {
-	screen[r][c] = screen[r+1][c];
-	updatepos (screen[r][c], r, c);
-      }
+	if (valrc(s_row2, c)) {
+	    screen[s_row2][c] = ' ';
+	    updatepos(screen[s_row2][c], s_row2, c);
+	}
     }
-  }
-
-  for (c = 0; c < C; c++) {
-    if (valrc (s_row2, c)) {
-      screen[s_row2][c] = ' ';
-      updatepos (screen[s_row2][c], s_row2, c);
-    }
-  }
 }
 
 static void
-scrolldown (void)
+scrolldown(void)
 {
-  int r;
-  int c;
+    int r;
+    int c;
 
-  for (r = s_row2; r > s_row1; r--) {
+    for (r = s_row2; r > s_row1; r--) {
+	for (c = 0; c < C; c++) {
+	    if (valrc(r, c) && valrc(r - 1, c)) {
+		screen[r][c] = screen[r - 1][c];
+		updatepos(screen[r][c], r, c);
+	    }
+	}
+    }
+
     for (c = 0; c < C; c++) {
-      if (valrc (r, c) && valrc (r-1, c)) {
-	screen[r][c] = screen[r-1][c];
-	updatepos (screen[r][c], r, c);
-      }
+	if (valrc(s_row1, c)) {
+	    screen[s_row1][c] = ' ';
+	    updatepos(screen[s_row1][c], s_row1, c);
+	}
     }
-  }
-
-  for (c = 0; c < C; c++) {
-    if (valrc (s_row1, c)) {
-      screen[s_row1][c] = ' ';
-      updatepos (screen[s_row1][c], s_row1, c);
-    }
-  }
 }
 
 static void
-printscreen (void)
+printscreen(void)
 {
-  int i, j;
+    int i, j;
 
-  /* firewall */
-  if (!valrc (row, col)) {
-    return;
-  }
-
-  debuglog ("-- cursor  [%2d, %2d] [%c] [%3d] -------------------------------------------------\n", row, col, screen[row][col], screen[row][col]);
-  debuglog ("             1111111111222222222233333333334444444444555555555566666666667777777777\n");
-  debuglog ("   01234567890123456789012345678901234567890123456789012345678901234567890123456789\n");
-
-  for (i=0; i < R; ++i) {
-    debuglog ("%02d", i);
-
-    if (i >= s_row1 && i <= s_row2) {
-      debuglog ("*");
-    }
-    else {
-      debuglog (" ");
+    /* firewall */
+    if (!valrc(row, col)) {
+	return;
     }
 
-    for (j = 0; j < C; ++j) {
-      if (i == row && j == col)
-        debuglog ("_");
-      else if (valrc (i,j)) {
-        debuglog ("%c", screen[i][j]);
-      }
+    debuglog("-- cursor  [%2d, %2d] [%c] [%3d] -------------------------------------------------\n", row, col, screen[row][col],
+	     screen[row][col]);
+    debuglog("             1111111111222222222233333333334444444444555555555566666666667777777777\n");
+    debuglog("   01234567890123456789012345678901234567890123456789012345678901234567890123456789\n");
+
+    for (i = 0; i < R; ++i) {
+	debuglog("%02d", i);
+
+	if (i >= s_row1 && i <= s_row2) {
+	    debuglog("*");
+	} else {
+	    debuglog(" ");
+	}
+
+	for (j = 0; j < C; ++j) {
+	    if (i == row && j == col) {
+		debuglog("_");
+	    } else if (valrc(i, j)) {
+		debuglog("%c", screen[i][j]);
+	    }
+	}
+
+	debuglog("\n");
     }
 
-    debuglog ("\n");
-  }
-
-  debuglog ("--------------------------------------------------------------------------------\n");
+    debuglog("--------------------------------------------------------------------------------\n");
 }
 
 static const char *
-p_state_name (enum p_state state)
+p_state_name(enum p_state state)
 {
-  switch (state) {
+    switch (state) {
     case p_unset:
-      return "p_unset";
+	return "p_unset";
     case p_what:
-      return "p_what";
+	return "p_what";
     case p_list:
-      return "p_list";
+	return "p_list";
     case p_more:
-      return "p_more";
+	return "p_more";
     case p_call:
-      return "p_call";
+	return "p_call";
     case p_quest:
-      return "p_quest";
+	return "p_quest";
     default:
-      break;
-  }
-  return "p_unknown";
+	break;
+    }
+    return "p_unknown";
 }
 
 static const char *
-s_state_name (enum s_state state)
+s_state_name(enum s_state state)
 {
-  switch (state) {
+    switch (state) {
     case s_unset:
-      return "s_unset";
+	return "s_unset";
     case s_what:
-      return "s_what";
+	return "s_what";
     case s_list:
-      return "s_list";
+	return "s_list";
     case s_more:
-      return "s_more";
+	return "s_more";
     case s_call:
-      return "s_call";
+	return "s_call";
     case s_quest:
-      return "s_quest";
+	return "s_quest";
     default:
-      break;
-  }
-  return "s_unknown";
+	break;
+    }
+    return "s_unknown";
 }
 
 /*
@@ -261,793 +258,797 @@ s_state_name (enum s_state state)
  *	  2 ==> [1] + send ';' when ever we eat a --More-- message
  */
 void
-getrogue (char *waitstr, int onat)
+getrogue(char *waitstr, int onat)
 {
-  char  ch;				/* rogue output character, or screen reading package token */
-  char *quaff_what = "Quaff what? ";	/* FSM to check for "Quaff what? " */
-  char *read_what = "Read what? ";	/* FSM to check for "Read what? " */
-  char *call_it = "Call it: ";		/* FSM to check for "Call it: " */
-  char *more = "--More--";		/* FSM to check for "--More--' */
-  char *for_list = "(* for list): ";	/* FSM to check for "(* for list): " prompt */
-  char *tombstone_grass = ")______";	/* FSM to check for ")______" (tombstone grass) */
-  char *wait_msg = waitstr;		/* FSM to check for the wait msg */
+    char ch;			       /* rogue output character, or screen reading package token */
+    char *quaff_what = "Quaff what? "; /* FSM to check for "Quaff what? " */
+    char *read_what = "Read what? ";   /* FSM to check for "Read what? " */
+    char *call_it = "Call it: ";       /* FSM to check for "Call it: " */
+    char *more = "--More--";	       /* FSM to check for "--More--' */
+    char *for_list = "(* for list): "; /* FSM to check for "(* for list): " prompt */
+    char *tombstone_grass = ")______"; /* FSM to check for ")______" (tombstone grass) */
+    char *wait_msg = waitstr;	       /* FSM to check for the wait msg */
 
-  bool botprinted = false;
-  int jump_ret;				/* sigsetjmp return value */
-  int wasmapped = didreadmap;
-  int *doors;
-  static bool moved = false;
-  static int jump_count = 0;            /* number of non-local jumps */
-  int r;
-  int c;
-  int i, j;
+    bool botprinted = false;
+    int jump_ret; /* sigsetjmp return value */
+    int wasmapped = didreadmap;
+    int *doors;
+    static bool moved = false;
+    static int jump_count = 0; /* number of non-local jumps */
+    int r;
+    int c;
+    int i, j;
 
-  /* firewall */
-  if (!valrc (row, col)) {
-    return;
-  }
-
-  newdoors = doorlist;			/* no new doors found yet */
-  atrow0 = atrow;			/* Save our current position */
-  atcol0 = atcol;			/* Save our current position */
-
-  if (moved) {				/* If we moved last time, put any */
-    sleepmonster ();			/* Old monsters to sleep */
-    moved = false;
-  }
-
-  /* debugging info */
-  if debug(D_MESSAGE) {
-    at (28,0);
-    clrtoeol ();
-    at (27,0);
-    clrtoeol ();
-    printw("getrogue: waitstr ->%s<-  onat %d.",
-           waitstr, onat);
-    at (row, col);
-    if (!quiet) {
-      refresh ();
+    /* firewall */
+    if (!valrc(row, col)) {
+	return;
     }
-  }
 
-  /* While we have not reached the end of the Rogue input, read */
-  /* characters from Rogue and figure out what they mean.       */
-  while ((*wait_msg) ||
-         ((!hasted || version != RV36A) &&
-	  onat && screen[row][col] != '@')) {
+    newdoors = doorlist; /* no new doors found yet */
+    atrow0 = atrow;	 /* Save our current position */
+    atcol0 = atcol;	 /* Save our current position */
 
-    /*
-     * jmp_point for the SIGALRM timer timeout if needed
-     */
-    if (is_timer_active ()) {
+    if (moved) {	/* If we moved last time, put any */
+	sleepmonster(); /* Old monsters to sleep */
+	moved = false;
+    }
 
-      /* establish the jmp_point for the SIGALRM timer timeout */
-      jump_ret = sigsetjmp (jmp_point, 1);
-
-      /*
-       * case: this is our first time here, note jmp_point is now ready
-       */
-      if (jump_ret == 0) {
-	jmp_point_ready = true;
-
-      /*
-       * case: note non-local jump
-       */
-      } else {
-
-	/* report non-local jump */
-	++jump_count;		    /* HINT: breakpoint here to catch a timer timeout */
-	debuglog ("SIGALRM: timer timeout jump number: %d\n", jump_count);
-
-	/* try to reset the state */
-	scroll_state = s_unset;
-	potion_state = p_unset;
-	quaff_what = "Quaff what? ";
-	read_what = "Read what? ";
-	for_list = "(* for list): ";
-
-	/* clear old commands in the send queue */
-	clearsendqueue ();
-
-	/* compel rogue to redraw the screen */
-	if (version < RV53A) {
-	  sendnow ("%c;%c//;", ESC, ctrl('l'));
-	} else {
-	  sendnow ("%c;%c;", ESC, ctrl('r'));
-	}
-
-	/* try to restore the screen to some sane state */
-	at (R,0);
-	clrtoeol ();
-	printw ("timeout!");
+    /* debugging info */
+    if debug (D_MESSAGE) {
+	at(28, 0);
+	clrtoeol();
+	at(27, 0);
+	clrtoeol();
+	printw("getrogue: waitstr ->%s<-  onat %d.", waitstr, onat);
+	at(row, col);
 	if (!quiet) {
-	  refresh ();
+	    refresh();
 	}
-      }
     }
 
-    /*
-     * get next rogue output character, or screen reading package token
-     */
-    set_alarm ();	/* in case we hang reading from rogue, set a timeout timer */
-    ch = getroguetoken ();
-    if (debug(D_MESSAGE)) {
-      at (28,col);
-      printw ("%s", unctrl(ch));
-      at (row, col);
-      if (!quiet) {
-	refresh ();
-      }
-    }
-    clear_alarm ();	/* we did not hang, cancel the timeout timer */
+    /* While we have not reached the end of the Rogue input, read */
+    /* characters from Rogue and figure out what they mean.       */
+    while ((*wait_msg) || ((!hasted || version != RV36A) && onat && screen[row][col] != '@')) {
 
-    /*
-     * Tokens used by the screen reading package are NOT processed
-     * for matching against various messages.  This is in case
-     * the ncurses system generates such token, such as a clear
-     * screen, or such as a cursor movement while rogue is
-     * printing a message.
-     */
-    if (!is_token (ch)) {
+	/*
+	 * jmp_point for the SIGALRM timer timeout if needed
+	 */
+	if (is_timer_active()) {
 
-      /*
-       * If message ends in "Quaff what? ", note it
-       */
-      if (ch == *quaff_what) {
-	++quaff_what;
-	if (*quaff_what == '\0') {
-
-	  /*
-	   * force the scroll reading state to be unset
-	   */
-	  if (scroll_state != s_unset) {
-	      debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Quaff what? \"\n",
-			__func__, __FILE__, __LINE__, s_state_name(scroll_state));
-	      scroll_state = s_unset;
-	  }
-
-	  /*
-	   * start the potion quaffing state
-	   */
-	  debuglog ("%s: file: %s line: %d potion_state: %s ==> p_what saw: \"Quaff what? \"\n",
-		    __func__, __FILE__, __LINE__, p_state_name(potion_state));
-	  potion_state = p_what;
-	}
-      } else {
-	quaff_what = "Quaff what? ";
-      }
-
-      /*
-       * If message ends in "Read what? ", note it
-       */
-      if (ch == *read_what) {
-	++read_what;
-	if (*read_what == '\0') {
-
-	  /*
-	   * force the potion quaffing state to be unset
-	   */
-	  if (potion_state != p_unset) {
-	      debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Read what? \"\n",
-			__func__, __FILE__, __LINE__, p_state_name(potion_state));
-	      potion_state = p_unset;
-	  }
-
-	  /*
-	   * start the scroll reading state
-	   */
-	  debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_what saw: \"Read what? \"\n",
-		    __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-	  scroll_state = s_what;
-	}
-      } else {
-	read_what = "Read what? ";
-      }
-
-      /*
-       * If message ends in "(* for list): ", call terpmes()
-       */
-      if (ch == *for_list) {
-	++for_list;
-	if (*for_list == '\0') {
-
-	  /*
-	   * advance the potion quaffing state if it was p_what
-	   */
-	  if (potion_state == p_what) {
+	    /* establish the jmp_point for the SIGALRM timer timeout */
+	    jump_ret = sigsetjmp(jmp_point, 1);
 
 	    /*
-	     * force the scroll reading state to be unset
+	     * case: this is our first time here, note jmp_point is now ready
 	     */
-	    if (scroll_state != s_unset) {
-              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"(* for list) \"\n",
-                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-              scroll_state = s_unset;
-	    }
+	    if (jump_ret == 0) {
+		jmp_point_ready = true;
 
-	    /*
-	     * advance potion quaff state
-	     */
-	    potion_state = p_list;
-	    debuglog ("%s: file: %s line: %d potion_state: p_what ==> %s saw: \"(* for list) \"\n",
-		      __func__, __FILE__, __LINE__, p_state_name(potion_state));
-
-	  /*
-	   * advance the scroll reading state if it was s_what
-	   */
-	  } else if (scroll_state == s_what) {
-
-	    /*
-	     * force the potion quaffing state to be unset
-	     */
-	    if (potion_state != p_unset) {
-              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"(* for list) \"\n",
-                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
-              potion_state = p_unset;
-	    }
-
-	    /*
-	     * advance scroll reading state
-	     */
-	    scroll_state = s_list;
-	    debuglog ("%s: file: %s line: %d scroll_state: s_what ==> %s saw: \"(* for list) \"\n",
-		      __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-
-	  /*
-	   * otherwise force the scroll reading, and force the potion quaffing state to be unset
-	   */
-	  } else {
-
-	    /*
-	     * force the scroll reading state to be unset
-	     */
-	    if (scroll_state != s_unset) {
-              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"(* for list) \"\n",
-                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-              scroll_state = s_unset;
-	    }
-
-	    /*
-	     * force the potion quaffing state to be unset
-	     */
-	    if (potion_state != p_unset) {
-              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"(* for list) \"\n",
-                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
-              potion_state = p_unset;
-	    }
-	  }
-
-	  /*
-	   * parse top line message from rogue
-	   */
-	  terpmes ();
-	}
-      } else {
-	for_list = "(* for list): ";
-      }
-
-      /*
-       * If the message has a "--More--", strip it off and call terpmes()
-       */
-      if (ch == *more) {
-	++more;
-	if (*more == '\0') {
-
-	  /*
-	   * advance the potion quaffing state if it was p_list
-	   */
-	  if (potion_state == p_list) {
-
-	    /*
-	     * force the scroll reading state to be unset
-	     */
-	    if (scroll_state != s_unset) {
-              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"--More--\"\n",
-                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-              scroll_state = s_unset;
-	    }
-
-	    /*
-	     * advance potion quaff state
-	     */
-	    potion_state = p_more;
-	    debuglog ("%s: file: %s line: %d potion_state: p_list ==> %s saw: \"--More--\"\n",
-		      __func__, __FILE__, __LINE__, p_state_name(potion_state));
-
-	  /*
-	   * advance the scroll reading state if it was s_list
-	   */
-	  } else if (scroll_state == s_list) {
-
-	    /*
-	     * force the potion quaffing state to be unset
-	     */
-	    if (potion_state != p_unset) {
-              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"--More--\"\n",
-                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
-              potion_state = p_unset;
-	    }
-
-	    /*
-	     * advance scroll reading state
-	     */
-	    scroll_state = s_more;
-	    debuglog ("%s: file: %s line: %d scroll_state: s_list ==> %s saw: \"--More--\"\n",
-		      __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-
-	  /*
-	   * otherwise force the scroll reading, and force the potion quaffing state to be unset
-	   */
-	  } else {
-
-	    /*
-	     * force the scroll reading state to be unset
-	     */
-	    if (scroll_state != s_unset) {
-              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"--More--\"\n",
-                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-              scroll_state = s_unset;
-	    }
-
-	    /*
-	     * force the potion quaffing state to be unset
-	     */
-	    if (potion_state != p_unset) {
-              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"--More--\"\n",
-                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
-              potion_state = p_unset;
-	    }
-	  }
-
-	  /* More than 50 messages since last command ==> start logging */
-	  ++morecount;
-	  if (morecount > 50 && !logging) {
-	    toggleecho ();
-	    dwait (D_WARNING, __func__, "Started logging --More-- loop");
-	  }
-
-	  /* Send a space (and possibly a semicolon) to clear the message */
-	  if (onat == 2) {
-	    if (version >= RV54B && potion_state == p_more) {
-	      sendnow (" ");
+		/*
+		 * case: note non-local jump
+		 */
 	    } else {
-	      sendnow (" ;");
-	    }
-	  } else {
-	    sendnow (" ");
-	  }
 
-	  /* Clear the "--More--" of the end of the message */
-	  for (i = col - 7; i < col; ++i) {
-	    if (valrc (0,i)) {
-	      screen[0][i] = ' ';
-	    }
-	  }
+		/* report non-local jump */
+		++jump_count; /* HINT: breakpoint here to catch a timer timeout */
+		debuglog("SIGALRM: timer timeout jump number: %d\n", jump_count);
 
-	  terpmes ();			/* Interpret the message */
+		/* try to reset the state */
+		scroll_state = s_unset;
+		potion_state = p_unset;
+		quaff_what = "Quaff what? ";
+		read_what = "Read what? ";
+		for_list = "(* for list): ";
+
+		/* clear old commands in the send queue */
+		clearsendqueue();
+
+		/* compel rogue to redraw the screen */
+		if (version < RV53A) {
+		    sendnow("%c;%c//;", ESC, ctrl('l'));
+		} else {
+		    sendnow("%c;%c;", ESC, ctrl('r'));
+		}
+
+		/* try to restore the screen to some sane state */
+		at(R, 0);
+		clrtoeol();
+		printw("timeout!");
+		if (!quiet) {
+		    refresh();
+		}
+	    }
 	}
-      } else {
-	more = "--More--";
-      }
 
-      /*
-       * If the message is "Call it: ", clear or process the call it the request
-       */
-      if (ch == *call_it) {
-	++call_it;
-	if (*call_it == '\0') {
-
-	  /*
-	   * advance the potion quaffing state if it was p_more
-	   */
-	  if (potion_state == p_list || potion_state == p_more) {
-
-	    /*
-	     * force the scroll reading state to be unset
-	     */
-	    if (scroll_state != s_unset) {
-              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Call it: \"\n",
-                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-              scroll_state = s_unset;
+	/*
+	 * get next rogue output character, or screen reading package token
+	 */
+	set_alarm(); /* in case we hang reading from rogue, set a timeout timer */
+	ch = getroguetoken();
+	if (debug(D_MESSAGE)) {
+	    at(28, col);
+	    printw("%s", unctrl(ch));
+	    at(row, col);
+	    if (!quiet) {
+		refresh();
 	    }
-
-	    /*
-	     * advance potion quaff state
-	     */
-	    if (potion_state == p_list) {
-	      potion_state = p_call;
-	      debuglog ("%s: file: %s line: %d potion_state: p_list ==> %s saw: \"Call it: \"\n",
-			__func__, __FILE__, __LINE__, p_state_name(potion_state));
-	    } else if (potion_state == p_more) {
-	      potion_state = p_call;
-	      debuglog ("%s: file: %s line: %d potion_state: p_more ==> %s saw: \"Call it: \"\n",
-			__func__, __FILE__, __LINE__, p_state_name(potion_state));
-	    }
-
-	  /*
-	   * advance the scroll reading state if it was s_more
-	   */
-	  } else if (scroll_state == s_list || scroll_state == s_more) {
-
-	    /*
-	     * force the potion quaffing state to be unset
-	     */
-	    if (potion_state != p_unset) {
-              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Call it: \"\n",
-                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
-              potion_state = p_unset;
-	    }
-
-	    /*
-	     * advance scroll reading state
-	     */
-	    if (scroll_state == s_list) {
-	      scroll_state = s_call;
-	      debuglog ("%s: file: %s line: %d scroll_state: s_list ==> %s saw: \"Call it: \"\n",
-			__func__, __FILE__, __LINE__, s_state_name(scroll_state));
-	    } else if (scroll_state == s_more) {
-	      scroll_state = s_call;
-	      debuglog ("%s: file: %s line: %d scroll_state: s_more ==> %s saw: \"Call it: \"\n",
-			__func__, __FILE__, __LINE__, s_state_name(scroll_state));
-	    }
-
-	  /*
-	   * otherwise force the scroll reading, and force the potion quaffing state to be unset
-	   */
-	  } else {
-
-	    /*
-	     * force the scroll reading state to be unset
-	     */
-	    if (scroll_state != s_unset) {
-              debuglog ("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Call it: \"\n",
-                        __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-              scroll_state = s_unset;
-	    }
-
-	    /*
-	     * force the potion quaffing state to be unset
-	     */
-	    if (potion_state != p_unset) {
-              debuglog ("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Call it: \"\n",
-                        __func__, __FILE__, __LINE__, p_state_name(potion_state));
-              potion_state = p_unset;
-	    }
-	  }
-
-	  /*
-	   * process a "Call it: " message
-	   */
-	  if (onat == 2) {
-
-	    /*
-	     * advance the potion quaffing state
-	     */
-	    if (version >= RV54B) {
-
-	      if (potion_state == p_call) {
-
-		/*
-		 * advance potion quaffing state to p_quest
-		 */
-		potion_state = p_quest;
-		debuglog ("%s: file: %s line: %d potion_state: p_call ==> %s saw: \"Call it: \"\n",
-			  __func__, __FILE__, __LINE__, p_state_name(potion_state));
-
-		/* since rogue 5.4.5, calling something ? sets the proper name be set automatically */
-		debuglog ("%s: file: %s line: %d sending: \"?{nl};\"\n", __func__, __FILE__, __LINE__);
-		sendnow ("?\n;");
-
-	      /*
-	       * advance the scroll reading state
-	       */
-	      } else if (scroll_state == s_call) {
-
-		/*
-		 * advance scroll reading state to s_quest
-		 */
-		scroll_state = s_quest;
-		debuglog ("%s: file: %s line: %d scroll_state: s_call ==> %s saw: \"Call it: \"\n",
-			  __func__, __FILE__, __LINE__, s_state_name(scroll_state));
-
-		/* since rogue 5.4.5, calling something ? sets the proper name be set automatically */
-		debuglog ("%s: file: %s line: %d sending: \"?{nl};\"\n", __func__, __FILE__, __LINE__);
-		sendnow ("?\n;");
-	      }
-	    }
-
-	    /* Send an escape and semicolon to clear the message */
-	    debuglog ("%s: file: %s line: %d sending: \"ESC;\"\n", __func__, __FILE__, __LINE__);
-	    sendnow ("%c;", ESC);
-
-	  } else {
-
-	      /* Send an escape to clear the message */
-	      debuglog ("%s: file: %s line: %d sending: \"ESC\"\n", __func__, __FILE__, __LINE__);
-	      sendnow ("%c", ESC);
-	  }
 	}
-      } else {
-	call_it = "Call it: ";
-      }
+	clear_alarm(); /* we did not hang, cancel the timeout timer */
 
-      /*
-       * Rogomatic now keys off of the grass under the Tombstone to
-       * detect that it has been killed. This was done because the
-       * "Press return" prompt only happens if there is a score file
-       * Available on that system. Hopefully the grass is the same
-       * in all versions of Rogue!
-       */
-      if (ch == *tombstone_grass) {
-	++tombstone_grass;
-	if (*tombstone_grass == '\0') {
-	  debuglog ("%s: file: %s line: %d saw: \")_______\"\n", __func__, __FILE__, __LINE__);
-	  addch (ch);
-	  debuglog ("%s: file: %s line: %d calling: deadrogue()\n", __func__, __FILE__, __LINE__);
-	  deadrogue ();
-	  return;
-	}
-      } else {
-	tombstone_grass = ")_______";
-      }
+	/*
+	 * Tokens used by the screen reading package are NOT processed
+	 * for matching against various messages.  This is in case
+	 * the ncurses system generates such token, such as a clear
+	 * screen, or such as a cursor movement while rogue is
+	 * printing a message.
+	 */
+	if (!is_token(ch)) {
 
-      /*
-       * Check to see whether we have read the synchronization string
-       */
-      if (*wait_msg) {
-	if (ch == *wait_msg) {
-	  wait_msg++;
-	} else {
-	  wait_msg = waitstr;
+	    /*
+	     * If message ends in "Quaff what? ", note it
+	     */
+	    if (ch == *quaff_what) {
+		++quaff_what;
+		if (*quaff_what == '\0') {
+
+		    /*
+		     * force the scroll reading state to be unset
+		     */
+		    if (scroll_state != s_unset) {
+			debuglog("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Quaff what? \"\n", __func__, __FILE__,
+				 __LINE__, s_state_name(scroll_state));
+			scroll_state = s_unset;
+		    }
+
+		    /*
+		     * start the potion quaffing state
+		     */
+		    debuglog("%s: file: %s line: %d potion_state: %s ==> p_what saw: \"Quaff what? \"\n", __func__, __FILE__,
+			     __LINE__, p_state_name(potion_state));
+		    potion_state = p_what;
+		}
+	    } else {
+		quaff_what = "Quaff what? ";
+	    }
+
+	    /*
+	     * If message ends in "Read what? ", note it
+	     */
+	    if (ch == *read_what) {
+		++read_what;
+		if (*read_what == '\0') {
+
+		    /*
+		     * force the potion quaffing state to be unset
+		     */
+		    if (potion_state != p_unset) {
+			debuglog("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Read what? \"\n", __func__, __FILE__,
+				 __LINE__, p_state_name(potion_state));
+			potion_state = p_unset;
+		    }
+
+		    /*
+		     * start the scroll reading state
+		     */
+		    debuglog("%s: file: %s line: %d scroll_state: %s ==> s_what saw: \"Read what? \"\n", __func__, __FILE__,
+			     __LINE__, s_state_name(scroll_state));
+		    scroll_state = s_what;
+		}
+	    } else {
+		read_what = "Read what? ";
+	    }
+
+	    /*
+	     * If message ends in "(* for list): ", call terpmes()
+	     */
+	    if (ch == *for_list) {
+		++for_list;
+		if (*for_list == '\0') {
+
+		    /*
+		     * advance the potion quaffing state if it was p_what
+		     */
+		    if (potion_state == p_what) {
+
+			/*
+			 * force the scroll reading state to be unset
+			 */
+			if (scroll_state != s_unset) {
+			    debuglog("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"(* for list) \"\n", __func__,
+				     __FILE__, __LINE__, s_state_name(scroll_state));
+			    scroll_state = s_unset;
+			}
+
+			/*
+			 * advance potion quaff state
+			 */
+			potion_state = p_list;
+			debuglog("%s: file: %s line: %d potion_state: p_what ==> %s saw: \"(* for list) \"\n", __func__, __FILE__,
+				 __LINE__, p_state_name(potion_state));
+
+			/*
+			 * advance the scroll reading state if it was s_what
+			 */
+		    } else if (scroll_state == s_what) {
+
+			/*
+			 * force the potion quaffing state to be unset
+			 */
+			if (potion_state != p_unset) {
+			    debuglog("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"(* for list) \"\n", __func__,
+				     __FILE__, __LINE__, p_state_name(potion_state));
+			    potion_state = p_unset;
+			}
+
+			/*
+			 * advance scroll reading state
+			 */
+			scroll_state = s_list;
+			debuglog("%s: file: %s line: %d scroll_state: s_what ==> %s saw: \"(* for list) \"\n", __func__, __FILE__,
+				 __LINE__, s_state_name(scroll_state));
+
+			/*
+			 * otherwise force the scroll reading, and force the potion quaffing state to be unset
+			 */
+		    } else {
+
+			/*
+			 * force the scroll reading state to be unset
+			 */
+			if (scroll_state != s_unset) {
+			    debuglog("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"(* for list) \"\n", __func__,
+				     __FILE__, __LINE__, s_state_name(scroll_state));
+			    scroll_state = s_unset;
+			}
+
+			/*
+			 * force the potion quaffing state to be unset
+			 */
+			if (potion_state != p_unset) {
+			    debuglog("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"(* for list) \"\n", __func__,
+				     __FILE__, __LINE__, p_state_name(potion_state));
+			    potion_state = p_unset;
+			}
+		    }
+
+		    /*
+		     * parse top line message from rogue
+		     */
+		    terpmes();
+		}
+	    } else {
+		for_list = "(* for list): ";
+	    }
+
+	    /*
+	     * If the message has a "--More--", strip it off and call terpmes()
+	     */
+	    if (ch == *more) {
+		++more;
+		if (*more == '\0') {
+
+		    /*
+		     * advance the potion quaffing state if it was p_list
+		     */
+		    if (potion_state == p_list) {
+
+			/*
+			 * force the scroll reading state to be unset
+			 */
+			if (scroll_state != s_unset) {
+			    debuglog("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"--More--\"\n", __func__, __FILE__,
+				     __LINE__, s_state_name(scroll_state));
+			    scroll_state = s_unset;
+			}
+
+			/*
+			 * advance potion quaff state
+			 */
+			potion_state = p_more;
+			debuglog("%s: file: %s line: %d potion_state: p_list ==> %s saw: \"--More--\"\n", __func__, __FILE__,
+				 __LINE__, p_state_name(potion_state));
+
+			/*
+			 * advance the scroll reading state if it was s_list
+			 */
+		    } else if (scroll_state == s_list) {
+
+			/*
+			 * force the potion quaffing state to be unset
+			 */
+			if (potion_state != p_unset) {
+			    debuglog("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"--More--\"\n", __func__, __FILE__,
+				     __LINE__, p_state_name(potion_state));
+			    potion_state = p_unset;
+			}
+
+			/*
+			 * advance scroll reading state
+			 */
+			scroll_state = s_more;
+			debuglog("%s: file: %s line: %d scroll_state: s_list ==> %s saw: \"--More--\"\n", __func__, __FILE__,
+				 __LINE__, s_state_name(scroll_state));
+
+			/*
+			 * otherwise force the scroll reading, and force the potion quaffing state to be unset
+			 */
+		    } else {
+
+			/*
+			 * force the scroll reading state to be unset
+			 */
+			if (scroll_state != s_unset) {
+			    debuglog("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"--More--\"\n", __func__, __FILE__,
+				     __LINE__, s_state_name(scroll_state));
+			    scroll_state = s_unset;
+			}
+
+			/*
+			 * force the potion quaffing state to be unset
+			 */
+			if (potion_state != p_unset) {
+			    debuglog("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"--More--\"\n", __func__, __FILE__,
+				     __LINE__, p_state_name(potion_state));
+			    potion_state = p_unset;
+			}
+		    }
+
+		    /* More than 50 messages since last command ==> start logging */
+		    ++morecount;
+		    if (morecount > 50 && !logging) {
+			toggleecho();
+			dwait(D_WARNING, __func__, "Started logging --More-- loop");
+		    }
+
+		    /* Send a space (and possibly a semicolon) to clear the message */
+		    if (onat == 2) {
+			if (version >= RV54B && potion_state == p_more) {
+			    sendnow(" ");
+			} else {
+			    sendnow(" ;");
+			}
+		    } else {
+			sendnow(" ");
+		    }
+
+		    /* Clear the "--More--" of the end of the message */
+		    for (i = col - 7; i < col; ++i) {
+			if (valrc(0, i)) {
+			    screen[0][i] = ' ';
+			}
+		    }
+
+		    terpmes(); /* Interpret the message */
+		}
+	    } else {
+		more = "--More--";
+	    }
+
+	    /*
+	     * If the message is "Call it: ", clear or process the call it the request
+	     */
+	    if (ch == *call_it) {
+		++call_it;
+		if (*call_it == '\0') {
+
+		    /*
+		     * advance the potion quaffing state if it was p_more
+		     */
+		    if (potion_state == p_list || potion_state == p_more) {
+
+			/*
+			 * force the scroll reading state to be unset
+			 */
+			if (scroll_state != s_unset) {
+			    debuglog("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Call it: \"\n", __func__, __FILE__,
+				     __LINE__, s_state_name(scroll_state));
+			    scroll_state = s_unset;
+			}
+
+			/*
+			 * advance potion quaff state
+			 */
+			if (potion_state == p_list) {
+			    potion_state = p_call;
+			    debuglog("%s: file: %s line: %d potion_state: p_list ==> %s saw: \"Call it: \"\n", __func__, __FILE__,
+				     __LINE__, p_state_name(potion_state));
+			} else if (potion_state == p_more) {
+			    potion_state = p_call;
+			    debuglog("%s: file: %s line: %d potion_state: p_more ==> %s saw: \"Call it: \"\n", __func__, __FILE__,
+				     __LINE__, p_state_name(potion_state));
+			}
+
+			/*
+			 * advance the scroll reading state if it was s_more
+			 */
+		    } else if (scroll_state == s_list || scroll_state == s_more) {
+
+			/*
+			 * force the potion quaffing state to be unset
+			 */
+			if (potion_state != p_unset) {
+			    debuglog("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Call it: \"\n", __func__, __FILE__,
+				     __LINE__, p_state_name(potion_state));
+			    potion_state = p_unset;
+			}
+
+			/*
+			 * advance scroll reading state
+			 */
+			if (scroll_state == s_list) {
+			    scroll_state = s_call;
+			    debuglog("%s: file: %s line: %d scroll_state: s_list ==> %s saw: \"Call it: \"\n", __func__, __FILE__,
+				     __LINE__, s_state_name(scroll_state));
+			} else if (scroll_state == s_more) {
+			    scroll_state = s_call;
+			    debuglog("%s: file: %s line: %d scroll_state: s_more ==> %s saw: \"Call it: \"\n", __func__, __FILE__,
+				     __LINE__, s_state_name(scroll_state));
+			}
+
+			/*
+			 * otherwise force the scroll reading, and force the potion quaffing state to be unset
+			 */
+		    } else {
+
+			/*
+			 * force the scroll reading state to be unset
+			 */
+			if (scroll_state != s_unset) {
+			    debuglog("%s: file: %s line: %d scroll_state: %s ==> s_unset saw: \"Call it: \"\n", __func__, __FILE__,
+				     __LINE__, s_state_name(scroll_state));
+			    scroll_state = s_unset;
+			}
+
+			/*
+			 * force the potion quaffing state to be unset
+			 */
+			if (potion_state != p_unset) {
+			    debuglog("%s: file: %s line: %d potion_state: %s ==> p_unset saw: \"Call it: \"\n", __func__, __FILE__,
+				     __LINE__, p_state_name(potion_state));
+			    potion_state = p_unset;
+			}
+		    }
+
+		    /*
+		     * process a "Call it: " message
+		     */
+		    if (onat == 2) {
+
+			/*
+			 * advance the potion quaffing state
+			 */
+			if (version >= RV54B) {
+
+			    if (potion_state == p_call) {
+
+				/*
+				 * advance potion quaffing state to p_quest
+				 */
+				potion_state = p_quest;
+				debuglog("%s: file: %s line: %d potion_state: p_call ==> %s saw: \"Call it: \"\n", __func__,
+					 __FILE__, __LINE__, p_state_name(potion_state));
+
+				/* since rogue 5.4.5, calling something ? sets the proper name be set automatically */
+				debuglog("%s: file: %s line: %d sending: \"?{nl};\"\n", __func__, __FILE__, __LINE__);
+				sendnow("?\n;");
+
+				/*
+				 * advance the scroll reading state
+				 */
+			    } else if (scroll_state == s_call) {
+
+				/*
+				 * advance scroll reading state to s_quest
+				 */
+				scroll_state = s_quest;
+				debuglog("%s: file: %s line: %d scroll_state: s_call ==> %s saw: \"Call it: \"\n", __func__,
+					 __FILE__, __LINE__, s_state_name(scroll_state));
+
+				/* since rogue 5.4.5, calling something ? sets the proper name be set automatically */
+				debuglog("%s: file: %s line: %d sending: \"?{nl};\"\n", __func__, __FILE__, __LINE__);
+				sendnow("?\n;");
+			    }
+			}
+
+			/* Send an escape and semicolon to clear the message */
+			debuglog("%s: file: %s line: %d sending: \"ESC;\"\n", __func__, __FILE__, __LINE__);
+			sendnow("%c;", ESC);
+
+		    } else {
+
+			/* Send an escape to clear the message */
+			debuglog("%s: file: %s line: %d sending: \"ESC\"\n", __func__, __FILE__, __LINE__);
+			sendnow("%c", ESC);
+		    }
+		}
+	    } else {
+		call_it = "Call it: ";
+	    }
+
+	    /*
+	     * Rogomatic now keys off of the grass under the Tombstone to
+	     * detect that it has been killed. This was done because the
+	     * "Press return" prompt only happens if there is a score file
+	     * Available on that system. Hopefully the grass is the same
+	     * in all versions of Rogue!
+	     */
+	    if (ch == *tombstone_grass) {
+		++tombstone_grass;
+		if (*tombstone_grass == '\0') {
+		    debuglog("%s: file: %s line: %d saw: \")_______\"\n", __func__, __FILE__, __LINE__);
+		    addch(ch);
+		    debuglog("%s: file: %s line: %d calling: deadrogue()\n", __func__, __FILE__, __LINE__);
+		    deadrogue();
+		    return;
+		}
+	    } else {
+		tombstone_grass = ")_______";
+	    }
+
+	    /*
+	     * Check to see whether we have read the synchronization string
+	     */
+	    if (*wait_msg) {
+		if (ch == *wait_msg) {
+		    wait_msg++;
+		} else {
+		    wait_msg = waitstr;
+		}
+	    }
 	}
-      }
+
+	/* Now figure out what the token means */
+	switch (ch) {
+	case BS_TOK:
+	    col--;
+	    debuglog("BS_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case CB_TOK:
+	    for (i = 0; i < col; i++) {
+		updatepos(' ', row, i);
+		screen[row][i] = ' ';
+	    }
+
+	    debuglog("CB_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case CE_TOK:
+	    if (row && row < R - 1) {
+		for (i = col; i < C; i++) {
+		    updatepos(' ', row, i);
+		    screen[row][i] = ' ';
+		}
+	    } else {
+		for (i = col; i < C; i++) {
+		    screen[row][i] = ' ';
+		}
+	    }
+
+	    if (row) {
+		at(row, col);
+		clrtoeol();
+	    } else if (col == 0) {
+		screen00 = ' ';
+	    }
+
+	    debuglog("CE_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case CH_TOK:
+	    debuglog("CH_TOK [%d, %d] [%d, %d]\n", number1, number2, row, col);
+	    s_row1 = number1 - 1;
+	    s_row2 = number2 - 1;
+	    debuglog("CH_TOK scroll region %d - %d\n", s_row1, s_row2);
+	    break;
+
+	case CL_TOK:
+	    clearscreen();
+	    row = 0;
+	    col = 0;
+	    debuglog("CL_TOK [%d, %d]\n", row, col);
+	    break;
+
+	case CM_TOK:
+	    screen00 = screen[0][0];
+	    row = number1 - 1;
+	    col = number2 - 1;
+	    debuglog("CM_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case CR_TOK:
+	    /* Handle missing '--more--' between inventories  MLM 24-Jun-83 */
+	    /* --more-- doesn't seem too be missing anymore NYM 3/29/08
+	     * if (row==0 && screen[0][1]==')' && screen[0][col-1] != '-')
+	     *   terpmes ();
+	     */
+	    col = 0;
+	    debuglog("CR_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case ER_TOK:
+	    break;
+
+	case LF_TOK:
+	    row++;
+	    debuglog("LF_TOK      check for scroll %d > %d\n", row, s_row2);
+
+	    if (row > s_row2) {
+		debuglog("LF_TOK      scroll up\n");
+		scrollup();
+	    }
+
+	    debuglog("LF_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case ND_TOK:
+	    row += number1;
+	    debuglog("ND_TOK [%2d] [%2d, %2d] [%c]\n", number1, row, col, screen[row][col]);
+	    break;
+
+	case SE_TOK:
+	    debuglog("SE_TOK\n");
+	    revvideo = false;
+	    standend();
+	    break;
+
+	case SO_TOK:
+	    debuglog("SO_TOK\n");
+	    revvideo = true;
+	    standout();
+	    break;
+
+	case TA_TOK:
+	    col = 8 * (1 + col / 8);
+	    debuglog("TA_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case EOF:
+	    if (interrupted) {
+		return;
+	    }
+
+	    if (!replaying || !logdigested) {
+		playing = false;
+		return;
+	    }
+
+	    saynow("End of rogomatic game log, type 'Q' to exit.");
+	    return;
+	    break;
+
+	case UP_TOK:
+	    row--;
+	    debuglog("UP_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case HM_TOK:
+	    col = 0;
+	    row = 0;
+	    debuglog("HM_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
+	    break;
+
+	case NU_TOK:
+	    row -= number1;
+	    debuglog("NU_TOK [%2d] [%2d, %2d] [%c]\n", number1, row, col, screen[row][col]);
+	    break;
+
+	case NR_TOK:
+	    col += number1;
+	    debuglog("NR_TOK [%2d] [%2d, %2d] [%c]\n", number1, row, col, screen[row][col]);
+	    break;
+
+	case NL_TOK:
+	    debuglog("NL_TOK\n");
+	    col -= number1;
+	    debuglog("NL_TOK [%2d] [%2d, %2d] [%c]\n", number1, row, col, screen[row][col]);
+	    break;
+
+	case SC_TOK:
+	    debuglog("SC_TOK      [%2d, %2d]\n", row, col);
+	    break;
+
+	case RC_TOK:
+	    debuglog("RC_TOK      [%2d, %2d]\n", row, col);
+	    break;
+
+	case SR_TOK:
+	    debuglog("SR_TOK      [%2d, %2d]\n", row, col);
+	    scrolldown();
+	    break;
+
+	default:
+	    if (ch < ' ') {
+		waitforspace();
+	    } else if (row) {
+		at(row, col);
+
+		if (!emacs && !terse) {
+		    addch(ch);
+		}
+
+		if (row == R - 1) {
+		    botprinted = true;
+		} else {
+		    updatepos(ch, row, col);
+		}
+	    } else if (col == 0) {
+		screen00 = screen[0][0];
+	    } else if (col == 1 && ch == 'l' && screen[0][0] == 'I') {
+		screen[0][0] = screen00;
+
+		if (screen00 != ' ') {
+		    terpmes();
+		}
+
+		screen[0][0] = 'I';
+	    }
+
+	    screen[row][col++] = ch;
+	    debuglog("OTHER   [%c] [%2d, %2d] [%c]\n", ch, row, (col - 1), screen[row][col - 1]);
+	    break;
+	}
     }
 
-    /* Now figure out what the token means */
-    switch (ch) {
-      case BS_TOK:
-        col--;
-        debuglog ("BS_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
-        break;
-
-      case CB_TOK:
-        for (i =0; i < col; i++) {
-          updatepos (' ', row, i);
-          screen[row][i] = ' ';
-        }
-
-        debuglog ("CB_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
-        break;
-
-      case CE_TOK:
-        if (row && row < R-1)
-          for (i = col; i < C; i++) {
-            updatepos (' ', row, i);
-            screen[row][i] = ' ';
-          }
-        else
-          for (i = col; i < C; i++)
-            screen[row][i] = ' ';
-
-        if (row) {
-	  at (row, col);
-	  clrtoeol ();
-	} else if (col == 0) {
-	  screen00 = ' ';
-	}
-
-        debuglog ("CE_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
-        break;
-
-      case CH_TOK:
-        debuglog ("CH_TOK [%d, %d] [%d, %d]\n",number1, number2, row, col);
-        s_row1 = number1-1;
-        s_row2 = number2-1;
-        debuglog ("CH_TOK scroll region %d - %d\n",s_row1, s_row2);
-        break;
-
-      case CL_TOK:
-        clearscreen ();
-        row = 0;
-        col = 0;
-        debuglog ("CL_TOK [%d, %d]\n", row, col);
-        break;
-
-      case CM_TOK:
-        screen00 = screen[0][0];
-        row = number1 - 1;
-        col = number2 - 1;
-        debuglog ("CM_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
-        break;
-
-      case CR_TOK:
-        /* Handle missing '--more--' between inventories  MLM 24-Jun-83 */
-        /* --more-- doesn't seem too be missing anymore NYM 3/29/08
-         * if (row==0 && screen[0][1]==')' && screen[0][col-1] != '-')
-         *   terpmes ();
-         */
-        col = 0;
-        debuglog ("CR_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
-        break;
-
-      case ER_TOK:
-        break;
-
-      case LF_TOK:
-        row++;
-        debuglog ("LF_TOK      check for scroll %d > %d\n",row, s_row2);
-
-        if (row > s_row2) {
-          debuglog ("LF_TOK      scroll up\n");
-          scrollup ();
-        }
-
-        debuglog ("LF_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
-        break;
-
-      case ND_TOK:
-        row += number1;
-        debuglog ("ND_TOK [%2d] [%2d, %2d] [%c]\n", number1, row, col, screen[row][col]);
-        break;
-
-      case SE_TOK:
-        debuglog ("SE_TOK\n");
-        revvideo = false;
-        standend ();
-        break;
-
-      case SO_TOK:
-        debuglog ("SO_TOK\n");
-        revvideo = true;
-        standout ();
-        break;
-
-      case TA_TOK:
-        col = 8 * (1 + col / 8);
-        debuglog ("TA_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
-        break;
-
-      case EOF:
-        if (interrupted) return;
-
-        if (!replaying || !logdigested) {
-	  playing = false;
-	  return;
-	}
-
-        saynow ("End of rogomatic game log, type 'Q' to exit.");
-        return;
-        break;
-
-      case UP_TOK:
-        row--;
-        debuglog ("UP_TOK      [%2d, %2d] [%c]\n", row, col,screen[row][col]);
-        break;
-
-      case HM_TOK:
-        col = 0;
-        row = 0;
-        debuglog ("HM_TOK      [%2d, %2d] [%c]\n", row, col, screen[row][col]);
-        break;
-
-      case NU_TOK:
-        row -= number1;
-        debuglog ("NU_TOK [%2d] [%2d, %2d] [%c]\n", number1, row, col, screen[row][col]);
-        break;
-
-      case NR_TOK:
-        col += number1;
-        debuglog ("NR_TOK [%2d] [%2d, %2d] [%c]\n", number1, row, col, screen[row][col]);
-        break;
-
-      case NL_TOK:
-        debuglog ("NL_TOK\n");
-        col -= number1;
-        debuglog ("NL_TOK [%2d] [%2d, %2d] [%c]\n", number1, row, col, screen[row][col]);
-        break;
-
-      case SC_TOK:
-        debuglog ("SC_TOK      [%2d, %2d]\n", row, col);
-        break;
-
-      case RC_TOK:
-        debuglog ("RC_TOK      [%2d, %2d]\n", row, col);
-        break;
-
-      case SR_TOK:
-        debuglog ("SR_TOK      [%2d, %2d]\n", row, col);
-        scrolldown ();
-        break;
-
-      default:
-        if (ch < ' ') {
-          waitforspace ();
-        }
-        else if (row) {
-          at (row, col);
-
-          if (!emacs && !terse) {
-	    addch (ch);
-	  }
-
-          if (row == R-1) {
-	    botprinted = true;
-	  } else {
-	    updatepos (ch, row, col);
-	  }
-        }
-        else if (col == 0) {
-	  screen00 = screen[0][0];
-	} else if (col == 1 && ch == 'l' && screen[0][0] == 'I') {
-          screen[0][0] = screen00;
-
-          if (screen00 != ' ') {
-	    terpmes ();
-	  }
-
-          screen[0][0] = 'I';
-        }
-
-        screen[row][col++] = ch;
-        debuglog ("OTHER   [%c] [%2d, %2d] [%c]\n", ch, row, (col-1), screen[row][col-1]);
-        break;
+    if (botprinted) {
+	terpbot();
     }
-  }
 
-  if (botprinted) terpbot ();
-
-  if (atrow != atrow0 || atcol != atcol0) {
-    updateat ();	/* Changed position, record the move */
-    moved = true;	/* Indicate that we moved */
-    wakemonster (8);	/* Wake up adjacent mean monsters */
-    currentrectangle();	/* Keep current rectangle up to date.   LGCH */
-  }
-
-  if (!usesynch && !pending ()) {
-    usesynch = true;
-    lastobj = NONE;
-    resetinv();
-  }
-
-  if (version < RV53A && checkrange && !pending ()) {
-    command (T_OTHER, "Iz");
-    checkrange = false;
-  }
-
-  /* If mapping status has changed */
-  if (wasmapped != didreadmap) {
-    dwait (D_CONTROL | D_SEARCH, __func__, "wasmapped: %d != didreadmap: %d",
-           wasmapped, didreadmap);
-
-    mapinfer ();
-  }
-
-  if (didreadmap != Level) {
-    doors = doorlist;
-
-    while (doors != newdoors) {
-      r = *doors++; c = *doors++;
-      dwait (D_INFORM, __func__, "new door at (%d,%d)", r, c);
-      inferhall (r, c);
+    if (atrow != atrow0 || atcol != atcol0) {
+	updateat();	    /* Changed position, record the move */
+	moved = true;	    /* Indicate that we moved */
+	wakemonster(8);	    /* Wake up adjacent mean monsters */
+	currentrectangle(); /* Keep current rectangle up to date.   LGCH */
     }
-  }
 
-  if (!blinded)
-    for (i = atrow-1; i <= atrow+1; i++)         /* For blanks around the  */
-      for (j = atcol-1; j <= atcol+1; j++)       /* rogue...               */
-        if (valrc (i,j) && seerc(' ',i,j) && onrc(CANGO,i,j)) { /* CANGO+BLANK impossible */
-          unsetrc (CANGO | SAFE, i, j);          /* Infer cant go and...   */
-          setnewgoal ();		         /* invalidate the map.    */
-        }
+    if (!usesynch && !pending()) {
+	usesynch = true;
+	lastobj = NONE;
+	resetinv();
+    }
 
-  at (row, col);
+    if (version < RV53A && checkrange && !pending()) {
+	command(T_OTHER, "Iz");
+	checkrange = false;
+    }
 
-  if (!emacs && !terse && !quiet) {
-    refresh ();
-  }
+    /* If mapping status has changed */
+    if (wasmapped != didreadmap) {
+	dwait(D_CONTROL | D_SEARCH, __func__, "wasmapped: %d != didreadmap: %d", wasmapped, didreadmap);
 
-  printscreen ();
-  return;
+	mapinfer();
+    }
+
+    if (didreadmap != Level) {
+	doors = doorlist;
+
+	while (doors != newdoors) {
+	    r = *doors++;
+	    c = *doors++;
+	    dwait(D_INFORM, __func__, "new door at (%d,%d)", r, c);
+	    inferhall(r, c);
+	}
+    }
+
+    if (!blinded) {
+	for (i = atrow - 1; i <= atrow + 1; i++) {			    /* For blanks around the  */
+	    for (j = atcol - 1; j <= atcol + 1; j++) {			    /* rogue...               */
+		if (valrc(i, j) && seerc(' ', i, j) && onrc(CANGO, i, j)) { /* CANGO+BLANK impossible */
+		    unsetrc(CANGO | SAFE, i, j);			    /* Infer cant go and...   */
+		    setnewgoal();					    /* invalidate the map.    */
+		}
+	    }
+	}
+    }
+
+    at(row, col);
+
+    if (!emacs && !terse && !quiet) {
+	refresh();
+    }
+
+    printscreen();
+    return;
 }
 
 /*
@@ -1057,100 +1058,114 @@ getrogue (char *waitstr, int onat)
  */
 
 void
-terpbot (void)
+terpbot(void)
 {
-  char sstr[MU_BUF + 1];	/* scanned string, +1 for paranoia */
-  char modeline[SM_BUF + 1];	/* mode line, +1 for paranoia */
-  int oldlev = Level, oldgold = Gold, oldhp = Hp, Str18 = 0;
-  extern int geneid;
-  int i, oldstr = Str, oldAc = Ac, oldExp = Explev;
+    char sstr[MU_BUF + 1];     /* scanned string, +1 for paranoia */
+    char modeline[SM_BUF + 1]; /* mode line, +1 for paranoia */
+    int oldlev = Level, oldgold = Gold, oldhp = Hp, Str18 = 0;
+    extern int geneid;
+    int i, oldstr = Str, oldAc = Ac, oldExp = Explev;
 
-  /* zeroize arrays */
-  memset (sstr, 0, sizeof(sstr)); /* paranoia */
-  memset (modeline, 0, sizeof(modeline)); /* paranoia */
+    /* zeroize arrays */
+    memset(sstr, 0, sizeof(sstr));	   /* paranoia */
+    memset(modeline, 0, sizeof(modeline)); /* paranoia */
 
-  /* Since we use scanf to read this field, it must not be left blank */
-  if (screen[R-1][C-2] == ' ') screen[R-1][C-2] = 'X';
-
-  /* Read the bottom line, there are three versions of the status line */
-  if (version < RV52A) {	/* Rogue 3.6, Rogue 4.7? */
-    sscanf (screen[R-1],
-            " Level: %d Gold: %d Hp: %d(%d) Str: %s Ac: %d Exp: %d/%d %s",
-            &Level, &Gold, &Hp, &Hpmax, sstr, &Ac, &Explev, &Exp, Ms);
-    sscanf (sstr, "%d/%d", &Str, &Str18);
-    Str = Str * 100 + Str18;
-
-    if (Str > Strmax) Strmax = Str;
-  }
-  else if (version < RV53A) {	/* Rogue 5.2 (versions A and B) */
-    sscanf (screen[R-1],
-            " Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Ac: %d Exp: %d/%d %s",
-            &Level, &Gold, &Hp, &Hpmax, &Str, &Strmax, &Ac, &Explev, &Exp, Ms);
-
-    Str = Str * 100; Strmax = Strmax * 100;
-  }
-  else {			/* Rogue 5.3 (and beyond???) */
-    sscanf (screen[R-1],
-            " Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Arm: %d Exp: %d/%d %s",
-            &Level, &Gold, &Hp, &Hpmax, &Str, &Strmax, &Ac, &Explev, &Exp, Ms);
-
-    Str = Str * 100; Strmax = Strmax * 100; Ac = 10 - Ac;
-  }
-
-  /* Monitor changes in some variables */
-  if (screen[R-1][C-2] == 'X') screen[R-1][C-2] = ' ';	/* Restore blank */
-
-  if (oldlev != Level)       newlevel ();
-
-  if (Level > MaxLevel)      MaxLevel = Level;
-
-  if (oldgold < Gold)        deletestuff (atrow, atcol);
-
-  if (oldhp < Hp)            newring = true;
-
-  lastdamage = max (0, oldhp - Hp);
-
-  /*
-   * Insert code here to monitor changes in attributes due to special
-   * attacks					MLM October 26, 1983.
-   */
-
-  setbonuses ();
-
-  /*
-   * If in special output modes, generate output line
-   */
-
-  if ((oldlev != Level || oldgold != Gold || oldstr != Str ||
-       oldAc != Ac || oldExp != Explev)) {
-    /* Stuff the new values into the argument space (for ps command) */
-    snprintf (modeline, SM_BUF, "Rgm %d: Id%d L%d %d %d(%d) s%d a%d e%d    ",
-              rogpid, geneid, Level, Gold, Hp, Hpmax, Str / 100, 10-Ac, Explev);
-
-    /* Handle Emacs and Terse mode */
-    if (emacs || terse) {
-      /* Skip backward over blanks and nulls */
-      for (i = C-1; (i >= 0) && (screen[R-1][i] == ' ' || screen[R-1][i] == '\0'); i--);
-      if (i < C-1) {
-	  screen[R-1][i+1] = '\0';
-      }
-      screen[R-1][C] = '\0'; /* paranoia */
-
-      if (emacs) {
-        snprintf (modeline, SM_BUF, " %s (%%b)", screen[R-1]);
-
-        if (strlen (modeline) > C-8) snprintf (modeline, SM_BUF, " %s", screen[R-1]);
-
-	if (!quiet) {
-	  fprintf (realstdout, "%s", modeline);
-	  fflush (realstdout);
-	}
-      } else if (terse && oldlev != Level && !quiet) {
-	fprintf (realstdout, "%s\n", screen[R-1]);
-	fflush (realstdout);
-      }
+    /* Since we use scanf to read this field, it must not be left blank */
+    if (screen[R - 1][C - 2] == ' ') {
+	screen[R - 1][C - 2] = 'X';
     }
-  }
+
+    /* Read the bottom line, there are three versions of the status line */
+    if (version < RV52A) { /* Rogue 3.6, Rogue 4.7? */
+	sscanf(screen[R - 1], " Level: %d Gold: %d Hp: %d(%d) Str: %s Ac: %d Exp: %d/%d %s", &Level, &Gold, &Hp, &Hpmax, sstr, &Ac,
+	       &Explev, &Exp, Ms);
+	sscanf(sstr, "%d/%d", &Str, &Str18);
+	Str = Str * 100 + Str18;
+
+	if (Str > Strmax) {
+	    Strmax = Str;
+	}
+    } else if (version < RV53A) { /* Rogue 5.2 (versions A and B) */
+	sscanf(screen[R - 1], " Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Ac: %d Exp: %d/%d %s", &Level, &Gold, &Hp, &Hpmax, &Str,
+	       &Strmax, &Ac, &Explev, &Exp, Ms);
+
+	Str = Str * 100;
+	Strmax = Strmax * 100;
+    } else { /* Rogue 5.3 (and beyond???) */
+	sscanf(screen[R - 1], " Level: %d Gold: %d Hp: %d(%d) Str: %d(%d) Arm: %d Exp: %d/%d %s", &Level, &Gold, &Hp, &Hpmax, &Str,
+	       &Strmax, &Ac, &Explev, &Exp, Ms);
+
+	Str = Str * 100;
+	Strmax = Strmax * 100;
+	Ac = 10 - Ac;
+    }
+
+    /* Monitor changes in some variables */
+    if (screen[R - 1][C - 2] == 'X') {
+	screen[R - 1][C - 2] = ' '; /* Restore blank */
+    }
+
+    if (oldlev != Level) {
+	newlevel();
+    }
+
+    if (Level > MaxLevel) {
+	MaxLevel = Level;
+    }
+
+    if (oldgold < Gold) {
+	deletestuff(atrow, atcol);
+    }
+
+    if (oldhp < Hp) {
+	newring = true;
+    }
+
+    lastdamage = max(0, oldhp - Hp);
+
+    /*
+     * Insert code here to monitor changes in attributes due to special
+     * attacks					MLM October 26, 1983.
+     */
+
+    setbonuses();
+
+    /*
+     * If in special output modes, generate output line
+     */
+
+    if ((oldlev != Level || oldgold != Gold || oldstr != Str || oldAc != Ac || oldExp != Explev)) {
+	/* Stuff the new values into the argument space (for ps command) */
+	snprintf(modeline, SM_BUF, "Rgm %d: Id%d L%d %d %d(%d) s%d a%d e%d    ", rogpid, geneid, Level, Gold, Hp, Hpmax, Str / 100,
+		 10 - Ac, Explev);
+
+	/* Handle Emacs and Terse mode */
+	if (emacs || terse) {
+	    /* Skip backward over blanks and nulls */
+	    for (i = C - 1; (i >= 0) && (screen[R - 1][i] == ' ' || screen[R - 1][i] == '\0'); i--)
+		;
+	    if (i < C - 1) {
+		screen[R - 1][i + 1] = '\0';
+	    }
+	    screen[R - 1][C] = '\0'; /* paranoia */
+
+	    if (emacs) {
+		snprintf(modeline, SM_BUF, " %s (%%b)", screen[R - 1]);
+
+		if (strlen(modeline) > C - 8) {
+		    snprintf(modeline, SM_BUF, " %s", screen[R - 1]);
+		}
+
+		if (!quiet) {
+		    fprintf(realstdout, "%s", modeline);
+		    fflush(realstdout);
+		}
+	    } else if (terse && oldlev != Level && !quiet) {
+		fprintf(realstdout, "%s\n", screen[R - 1]);
+		fflush(realstdout);
+	    }
+	}
+    }
 }
 
 /*
@@ -1158,48 +1173,51 @@ terpbot (void)
  */
 
 void
-dumpwalls (void)
+dumpwalls(void)
 {
-  int   r, c, S;
-  char ch;
+    int r, c, S;
+    char ch;
 
-  printexplored ();
+    printexplored();
 
-  for (r = 1; r < R-1; r++) {
-    for (c = 0; c < C; c++) {
-      if (valrc (r, c)) {
-	S=scrmap[r][c];
-	ch = (ARROW&S)                   ? 'a' :
-	     (TELTRAP&S)                 ? 't' :
-	     (TRAPDOR&S)                 ? 'v' :
-	     (GASTRAP&S)                 ? 'g' :
-	     (BEARTRP&S)                 ? 'b' :
-	     (DARTRAP&S)                 ? 's' :
-	     (WATERAP&S)                 ? 'w' :
-	     (TRAP&S)                    ? '^' :
-	     (STAIRS&S)                  ? '>' :
-	     (RUNOK&S)                   ? '%' :
-	     (((DOOR+BEEN)&S)==DOOR+BEEN)  ? 'D' :
-	     (DOOR&S)                    ? 'd' :
-	     (((BOUNDARY+BEEN)&S)==BOUNDARY+BEEN) ? 'B' :
-	     (((ROOM+BEEN)&S)==ROOM+BEEN)  ? 'R' :
-	     (BEEN&S)                    ? ':' :
-	     (HALL&S)                    ? '#' :
-	     (((BOUNDARY+WALL)&S)==BOUNDARY+WALL) ? 'W' :
-	     (BOUNDARY&S)                ? 'b' :
-	     (ROOM&S)                    ? 'r' :
-	     (CANGO&S)                   ? '.' :
-	     (WALL&S)                    ? 'W' :
-	     (S)                         ? 'X' : '\0';
+    for (r = 1; r < R - 1; r++) {
+	for (c = 0; c < C; c++) {
+	    if (valrc(r, c)) {
+		S = scrmap[r][c];
+		ch = (ARROW & S)				    ? 'a'
+		     : (TELTRAP & S)				    ? 't'
+		     : (TRAPDOR & S)				    ? 'v'
+		     : (GASTRAP & S)				    ? 'g'
+		     : (BEARTRP & S)				    ? 'b'
+		     : (DARTRAP & S)				    ? 's'
+		     : (WATERAP & S)				    ? 'w'
+		     : (TRAP & S)				    ? '^'
+		     : (STAIRS & S)				    ? '>'
+		     : (RUNOK & S)				    ? '%'
+		     : (((DOOR + BEEN) & S) == DOOR + BEEN)	    ? 'D'
+		     : (DOOR & S)				    ? 'd'
+		     : (((BOUNDARY + BEEN) & S) == BOUNDARY + BEEN) ? 'B'
+		     : (((ROOM + BEEN) & S) == ROOM + BEEN)	    ? 'R'
+		     : (BEEN & S)				    ? ':'
+		     : (HALL & S)				    ? '#'
+		     : (((BOUNDARY + WALL) & S) == BOUNDARY + WALL) ? 'W'
+		     : (BOUNDARY & S)				    ? 'b'
+		     : (ROOM & S)				    ? 'r'
+		     : (CANGO & S)				    ? '.'
+		     : (WALL & S)				    ? 'W'
+		     : (S)					    ? 'X'
+								    : '\0';
 
-	if (ch) mvaddch (r, c, ch);
-      }
+		if (ch) {
+		    mvaddch(r, c, ch);
+		}
+	    }
+	}
     }
-  }
 
-  if (valrc (row, col)) {
-    at (row, col);
-  }
+    if (valrc(row, col)) {
+	at(row, col);
+    }
 }
 
 /*
@@ -1207,21 +1225,23 @@ dumpwalls (void)
  */
 
 void
-sendnow (char *f, ...)
+sendnow(char *f, ...)
 {
-  char cmd[MU_BUF + 1];	/* command string, +1 for paranoia */
-  char *s = cmd;
-  va_list ap;
+    char cmd[MU_BUF + 1]; /* command string, +1 for paranoia */
+    char *s = cmd;
+    va_list ap;
 
-  /* zeroize arrays */
-  memset (cmd, 0, sizeof(cmd)); /* paranoia */
+    /* zeroize arrays */
+    memset(cmd, 0, sizeof(cmd)); /* paranoia */
 
-  /* setup stdarg */
-  va_start (ap, f);
-  vsnprintf (cmd, MU_BUF, f, ap);
-  va_end (ap);
+    /* setup stdarg */
+    va_start(ap, f);
+    vsnprintf(cmd, MU_BUF, f, ap);
+    va_end(ap);
 
-  while (*s) sendcnow (*s++);
+    while (*s) {
+	sendcnow(*s++);
+    }
 }
 
 /*
@@ -1230,27 +1250,28 @@ sendnow (char *f, ...)
  */
 
 static void
-sendcnow (char c)
+sendcnow(char c)
 {
-  if (replaying)
-    return;
+    if (replaying) {
+	return;
+    }
 
-  /*
-   * slow down the display by waiting usleep_usec microseconds
-   *
-   * By default usleep_usec is USLEEP.  The -U usec command line option
-   * may change this value.
-   *
-   * If usleep_usec <= 0, then no sleeping is performed.
-   */
+    /*
+     * slow down the display by waiting usleep_usec microseconds
+     *
+     * By default usleep_usec is USLEEP.  The -U usec command line option
+     * may change this value.
+     *
+     * If usleep_usec <= 0, then no sleeping is performed.
+     */
 
-  if ((usleep_usec > 0) && (!noterm)) {
-    usleep (usleep_usec);
-  }
+    if ((usleep_usec > 0) && (!noterm)) {
+	usleep(usleep_usec);
+    }
 
-  rogue_log_write_command (c);
+    rogue_log_write_command(c);
 
-  fprintf (trogue, "%c", c);
+    fprintf(trogue, "%c", c);
 }
 
 /*
@@ -1258,29 +1279,30 @@ sendcnow (char c)
  * commands are sent one at a time by the resend routine.
  */
 
-# define bump(p,sizeq) (p)=((p)+1)%sizeq
+#define bump(p, sizeq) (p) = ((p) + 1) % sizeq
 
 /* VARARGS1 */
 void
-rogo_send (char *f, ...)
+rogo_send(char *f, ...)
 {
-  char cmd[MU_BUF + 1]; /* command string, +1 for paranoia */
-  char *s = cmd;
-  va_list ap;
+    char cmd[MU_BUF + 1]; /* command string, +1 for paranoia */
+    char *s = cmd;
+    va_list ap;
 
-  /* zeroize arrays */
-  memset (cmd, 0, sizeof(cmd)); /* paranoia */
+    /* zeroize arrays */
+    memset(cmd, 0, sizeof(cmd)); /* paranoia */
 
-  va_start (ap, f);
-  vsnprintf (s, MU_BUF, f, ap);
-  va_end (ap);
+    va_start(ap, f);
+    vsnprintf(s, MU_BUF, f, ap);
+    va_end(ap);
 
-  for (; *s; bump (tail, SENDQ))
-    queue[tail] = *(s++);
+    for (; *s; bump(tail, SENDQ)) {
+	queue[tail] = *(s++);
+    }
 
-  /* Appends NUL, so resend will treat as a unit */
-  queue[tail] = '\0';
-  bump (tail, SENDQ);
+    /* Appends NUL, so resend will treat as a unit */
+    queue[tail] = '\0';
+    bump(tail, SENDQ);
 }
 
 /*
@@ -1288,22 +1310,26 @@ rogo_send (char *f, ...)
  */
 
 int
-resend (void)
+resend(void)
 {
-  char *l=lastcmd;			/* Ptr into last command */
+    char *l = lastcmd; /* Ptr into last command */
 
-  morecount = 0;			/* Clear message count */
+    morecount = 0; /* Clear message count */
 
-  if (head == tail) return (0);		/* Fail if no commands */
+    if (head == tail) {
+	return (0); /* Fail if no commands */
+    }
 
-  /* Send all queued characters until the next queued NULL */
-  while (queue[head])
-    { sendcnow (*l++ = queue[head]); bump (head, SENDQ); }
+    /* Send all queued characters until the next queued NULL */
+    while (queue[head]) {
+	sendcnow(*l++ = queue[head]);
+	bump(head, SENDQ);
+    }
 
-  bump (head, SENDQ);
-  *l = '\0';
+    bump(head, SENDQ);
+    *l = '\0';
 
-  return (1);				/* Return success */
+    return (1); /* Return success */
 }
 
 /*
@@ -1312,9 +1338,9 @@ resend (void)
  */
 
 static int
-pending (void)
+pending(void)
 {
-  return (head != tail);
+    return (head != tail);
 }
 
 /*
@@ -1322,13 +1348,13 @@ pending (void)
  */
 
 void
-at (int r, int c)
+at(int r, int c)
 {
-  if (!valrc (r, c)) {
-    return;
-  }
+    if (!valrc(r, c)) {
+	return;
+    }
 
-  move (r, c);
+    move(r, c);
 }
 
 /*
@@ -1338,38 +1364,41 @@ at (int r, int c)
  * game.
  */
 
-# define GOLDROW 15
-# define KILLROW 17
-# define TOMBCOL 19
+#define GOLDROW 15
+#define KILLROW 17
+#define TOMBCOL 19
 
 static void
-deadrogue (void)
+deadrogue(void)
 {
-  int    mh;
-  char  *killer, *killend;
+    int mh;
+    char *killer, *killend;
 
-  printw ("\n\nOh dear, %s died while inside the dungeon!",
-	  (playername[0] == '\0') ? "((rogo-rogue))" : playername);
-  if (!quiet) {
-    refresh ();
-  }
+    printw("\n\nOh dear, %s died while inside the dungeon!", (playername[0] == '\0') ? "((rogo-rogue))" : playername);
+    if (!quiet) {
+	refresh();
+    }
 
-  sscanf (&screen[GOLDROW][TOMBCOL], "%18d", &Gold);
+    sscanf(&screen[GOLDROW][TOMBCOL], "%18d", &Gold);
 
-  killer = &screen[KILLROW][TOMBCOL];
-  killend = killer+17;
+    killer = &screen[KILLROW][TOMBCOL];
+    killend = killer + 17;
 
-  while (*killer==' ') ++killer;
+    while (*killer == ' ') {
+	++killer;
+    }
 
-  while (*killend==' ') *(killend--) = '\0';
+    while (*killend == ' ') {
+	*(killend--) = '\0';
+    }
 
-  /* Record the death blow if killed by a monster */
-  if ((mh = findmonster (killer)) != NONE) {
-    addprob (&monhist[mh].theyhit, SUCCESS);
-    addstat (&monhist[mh].damage, Hp);
-  }
+    /* Record the death blow if killed by a monster */
+    if ((mh = findmonster(killer)) != NONE) {
+	addprob(&monhist[mh].theyhit, SUCCESS);
+	addstat(&monhist[mh].damage, Hp);
+    }
 
-  quitrogue (killer, Gold, DIED);
+    quitrogue(killer, Gold, DIED);
 }
 
 /*
@@ -1381,184 +1410,188 @@ deadrogue (void)
 /* gid - What is the final score */
 /* terminationtype - SAVED, FINSISHED, or DIED */
 void
-quitrogue (char *reason, int gld, int terminationtype)
+quitrogue(char *reason, int gld, int terminationtype)
 {
-  struct tm *ts;
-  long clock;
-  char  *k, *r;
-  int stat_loc = -1;	/* waitpid() information on rogpid */
-  int options;		/* waitpid() options */
-  int quarter_seconds;	/* 1/4 seconds spent waiting */
-  int ret;		/* waitpid() return */
+    struct tm *ts;
+    long clock;
+    char *k, *r;
+    int stat_loc = -1;	 /* waitpid() information on rogpid */
+    int options;	 /* waitpid() options */
+    int quarter_seconds; /* 1/4 seconds spent waiting */
+    int ret;		 /* waitpid() return */
 
-  /* Save the killer and score */
-  for (k=ourkiller, r=reason; *r && *r != ' '; ++k, ++r) *k = *r;
+    /* Save the killer and score */
+    for (k = ourkiller, r = reason; *r && *r != ' '; ++k, ++r) {
+	*k = *r;
+    }
 
-  *k = '\0';
-  ourscore = gld;
+    *k = '\0';
+    ourscore = gld;
 
-  /* Don't need to make up any more commands */
-  if (!replaying || !logdigested)
-    playing = false;
+    /* Don't need to make up any more commands */
+    if (!replaying || !logdigested) {
+	playing = false;
+    }
 
-  /* Now get the current time, so we can date the score */
-  clock = time(&clock);
-  ts = localtime(&clock);
+    /* Now get the current time, so we can date the score */
+    clock = time(&clock);
+    ts = localtime(&clock);
 
-  /* Build a summary line */
-  memset (sumline, 0, sizeof(sumline)); /* paranoia */
+    /* Build a summary line */
+    memset(sumline, 0, sizeof(sumline)); /* paranoia */
 #if defined(NOTE_CREATIVE_MODE)
-  snprintf (sumline, SM_BUF, "%4d %3s %02d %02d:%02d:%02d %-.32s %7d%s%-17.17s %3d %3d ",
-	   1900 + ts -> tm_year, month[ts -> tm_mon], ts -> tm_mday,
-	   ts -> tm_hour, ts -> tm_min, ts -> tm_sec,
-           getname (), gld, creative ? "*" : " ", reason, MaxLevel, Hpmax);
+    snprintf(sumline, SM_BUF, "%4d %3s %02d %02d:%02d:%02d %-.32s %7d%s%-17.17s %3d %3d ", 1900 + ts->tm_year, month[ts->tm_mon],
+	     ts->tm_mday, ts->tm_hour, ts->tm_min, ts->tm_sec, getname(), gld, creative ? "*" : " ", reason, MaxLevel, Hpmax);
 #else
-  snprintf (sumline, SM_BUF, "%4d %3s %02d %02d:%02d:%02d %-.32s %7d%s%-17.17s %3d %3d ",
-	   1900 + ts -> tm_year, month[ts -> tm_mon], ts -> tm_mday,
-	   ts -> tm_hour, ts -> tm_min, ts -> tm_sec,
-           getname (), gld, " ", reason, MaxLevel, Hpmax);
+    snprintf(sumline, SM_BUF, "%4d %3s %02d %02d:%02d:%02d %-.32s %7d%s%-17.17s %3d %3d ", 1900 + ts->tm_year, month[ts->tm_mon],
+	     ts->tm_mday, ts->tm_hour, ts->tm_min, ts->tm_sec, getname(), gld, " ", reason, MaxLevel, Hpmax);
 #endif
 
-  memset (sumline2, 0, sizeof(sumline2)); /* paranoia */
-  if (Str % 100)
-    snprintf (sumline2, BIGBUF, "%.*s%2d.%2d", SM_BUF, sumline, Str/100, Str%100);
-  else
-    snprintf (sumline2, BIGBUF, "%.*s  %2d ", SM_BUF, sumline, Str/100);
-
-  memset (sumline, 0, sizeof(sumline)); /* paranoia */
-  snprintf (sumline, BIGBUF, "%.*s %2d %2d/%-6d %6d %-10u",
-            SM_BUF, sumline2, Ac, Explev, Exp, ltm.gamecnt, dnum);
-
-  /* Now write the summary line to the log file */
-  at (R-1, 0); clrtoeol ();
-  if (!quiet) {
-    refresh ();
-  }
-
-  /* R-2 is index of score in sumline */
-  if (!replaying)
-    add_score (sumline, versionstr, (terse || emacs || noterm));
-
-  /* Set the termination message based on the termination method */
-  if (stlmatch (reason, "total winner"))
-    termination = "victorius";
-  else if (stlmatch (reason, "user typing quit"))
-    termination = "abortivus";
-  else if (stlmatch (reason, "gave up"))
-    termination = "inops consilii";
-  else if (stlmatch (reason, "quit (scoreboard)"))
-    termination = "callidus";
-  else if (stlmatch (reason, "saved"))
-    termination = "suspendus";
-
-  /*
-   * record the final state to the end of the level log
-   */
-  levellog_append (reason);
-
-  /* Send the requisite handshaking to Rogue */
-  critical (); /* avoid SIGPIPE if rogue process as exited */
-  if (terminationtype == DIED)
-    if (version >= RV54A)
-      sendnow ("\n\n");
-    else
-      sendnow ("\n");
-  else if (terminationtype == FINISHED)
-    sendnow ("Qy\n");
-  else
-    sendnow ("Syy"); /* Must send two yesses,  R5.2 MLM */
-  uncritical (); /* restore interrupts */
-
-  /*
-   * look for a rogue process, either running, or stopped, or a killed zombie process
-   */
-  if (rogpid < 0) {
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u no rogue pid to wait for: %d\n",
-	       __func__, __FILE__, __LINE__, dnum, rogpid);
-      not_reached ();
-  }
-  options = (WNOHANG | WUNTRACED);
-  quarter_seconds = 0;
-  usleep (250000); /* sleep 0.25 seconds to allow rogue(6) to exit before our 1st waitpid() call */
-  do {
-
-      /* look for a rogue process status */
-      ++quarter_seconds;
-      errno = 0;
-      ret = waitpid (rogpid, &stat_loc, options);
-
-      /* if there is not yet rogue status, wait for a second */
-      if (ret == 0) {
-	if (quarter_seconds > 4) {
-	  fprintf(stderr, "still waiting after %.2f seconds for rogue pid %d to exit\n",
-			  (double)quarter_seconds/4.0, rogpid);
-	}
-	if (quarter_seconds*4 > ROGUE_SECONDS) {
-	  break;
-	}
-        usleep (250000); /* sleep 0.25 seconds */
-      }
-  } while ((ret == 0 && quarter_seconds*4 <= ROGUE_SECONDS) || (ret < 0 && errno == EINTR));
-  if (ret < 0) {
-    switch (errno) {
-    case EINVAL:
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) invalid options: %s\n",
-	       __func__, __FILE__, __LINE__, dnum, rogpid, options, strerror(errno));
-      not_reached ();
-      break;
-
-    case ECHILD:
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) cannot obtain process status: %s\n",
-	       __func__, __FILE__, __LINE__, dnum, rogpid, options, strerror(errno));
-      not_reached ();
-      break;
-
-    default:
-      quit (1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) returned: %d: %s\n",
-	       __func__, __FILE__, __LINE__, dnum, rogpid, options, ret, strerror(errno));
-      not_reached ();
-      break;
-    }
-  }
-
-  /*
-   * analyze the status of the rogue process as returned by waitpid()
-   *
-   * We need to be sure that the rogue process quit.  If the rogue process is still running,
-   * try to kill it nicely (with a SIGHUP) before terminating it.
-   */
-  if (stat_loc == -1) {
-    fprintf(stderr, "\nrogue pid %d appears to have previously exited\n", rogpid);
-    return;
-  }
-  if (ret == 0 || WIFSTOPPED(stat_loc) || WIFCONTINUED(stat_loc)) {
-
-    /* we waited ROGUE_SECONDS seconds for rogue status to become available, assume rogue is stuck and SIGHUP it */
-    fprintf(stderr, "\nattempting to kill rogue pid %d with SIGHUP...\n", rogpid);
-    errno = 0;
-    ret = kill (rogpid, SIGHUP);
-    if (ret < 0 && errno == ESRCH) {
-      fprintf(stderr, "\nrogue pid %d exited before the SIGHUP attempt\n", rogpid);
-      return;
+    memset(sumline2, 0, sizeof(sumline2)); /* paranoia */
+    if (Str % 100) {
+	snprintf(sumline2, BIGBUF, "%.*s%2d.%2d", SM_BUF, sumline, Str / 100, Str % 100);
+    } else {
+	snprintf(sumline2, BIGBUF, "%.*s  %2d ", SM_BUF, sumline, Str / 100);
     }
 
-    /* look for a rogue process status */
-    errno = 0;
-    ret = waitpid (rogpid, &stat_loc, options);
+    memset(sumline, 0, sizeof(sumline)); /* paranoia */
+    snprintf(sumline, BIGBUF, "%.*s %2d %2d/%-6d %6d %-10u", SM_BUF, sumline2, Ac, Explev, Exp, ltm.gamecnt, dnum);
 
-    /* if there is not yet rogue status, kill SIGTERM it */
-    if (ret == 0) {
+    /* Now write the summary line to the log file */
+    at(R - 1, 0);
+    clrtoeol();
+    if (!quiet) {
+	refresh();
+    }
 
-      fprintf(stderr, "\nattempting to kill rogue pid %d with SIGTERM...\n", rogpid);
-      errno = 0;
-      ret = kill (rogpid, SIGTERM);
-      if (ret < 0 && errno == ESRCH) {
-	fprintf(stderr, "\nrogue pid %d exited after the SIGHUP kill attempt\n", rogpid);
+    /* R-2 is index of score in sumline */
+    if (!replaying) {
+	add_score(sumline, versionstr, (terse || emacs || noterm));
+    }
+
+    /* Set the termination message based on the termination method */
+    if (stlmatch(reason, "total winner")) {
+	termination = "victorius";
+    } else if (stlmatch(reason, "user typing quit")) {
+	termination = "abortivus";
+    } else if (stlmatch(reason, "gave up")) {
+	termination = "inops consilii";
+    } else if (stlmatch(reason, "quit (scoreboard)")) {
+	termination = "callidus";
+    } else if (stlmatch(reason, "saved")) {
+	termination = "suspendus";
+    }
+
+    /*
+     * record the final state to the end of the level log
+     */
+    levellog_append(reason);
+
+    /* Send the requisite handshaking to Rogue */
+    critical(); /* avoid SIGPIPE if rogue process as exited */
+    if (terminationtype == DIED) {
+	if (version >= RV54A) {
+	    sendnow("\n\n");
+	} else {
+	    sendnow("\n");
+	}
+    } else if (terminationtype == FINISHED) {
+	sendnow("Qy\n");
+    } else {
+	sendnow("Syy"); /* Must send two yesses,  R5.2 MLM */
+    }
+    uncritical(); /* restore interrupts */
+
+    /*
+     * look for a rogue process, either running, or stopped, or a killed zombie process
+     */
+    if (rogpid < 0) {
+	quit(1, "ERROR: %s: file: %s line: %d dungeon: %u no rogue pid to wait for: %d\n", __func__, __FILE__, __LINE__, dnum,
+	     rogpid);
+	not_reached();
+    }
+    options = (WNOHANG | WUNTRACED);
+    quarter_seconds = 0;
+    usleep(250000); /* sleep 0.25 seconds to allow rogue(6) to exit before our 1st waitpid() call */
+    do {
+
+	/* look for a rogue process status */
+	++quarter_seconds;
+	errno = 0;
+	ret = waitpid(rogpid, &stat_loc, options);
+
+	/* if there is not yet rogue status, wait for a second */
+	if (ret == 0) {
+	    if (quarter_seconds > 4) {
+		fprintf(stderr, "still waiting after %.2f seconds for rogue pid %d to exit\n", (double)quarter_seconds / 4.0,
+			rogpid);
+	    }
+	    if (quarter_seconds * 4 > ROGUE_SECONDS) {
+		break;
+	    }
+	    usleep(250000); /* sleep 0.25 seconds */
+	}
+    } while ((ret == 0 && quarter_seconds * 4 <= ROGUE_SECONDS) || (ret < 0 && errno == EINTR));
+    if (ret < 0) {
+	switch (errno) {
+	case EINVAL:
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) invalid options: %s\n", __func__,
+		 __FILE__, __LINE__, dnum, rogpid, options, strerror(errno));
+	    not_reached();
+	    break;
+
+	case ECHILD:
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) cannot obtain process status: %s\n",
+		 __func__, __FILE__, __LINE__, dnum, rogpid, options, strerror(errno));
+	    not_reached();
+	    break;
+
+	default:
+	    quit(1, "ERROR: %s: file: %s line: %d dungeon: %u waitpid (%d, &stat_loc, 0x%x) returned: %d: %s\n", __func__,
+		 __FILE__, __LINE__, dnum, rogpid, options, ret, strerror(errno));
+	    not_reached();
+	    break;
+	}
+    }
+
+    /*
+     * analyze the status of the rogue process as returned by waitpid()
+     *
+     * We need to be sure that the rogue process quit.  If the rogue process is still running,
+     * try to kill it nicely (with a SIGHUP) before terminating it.
+     */
+    if (stat_loc == -1) {
+	fprintf(stderr, "\nrogue pid %d appears to have previously exited\n", rogpid);
 	return;
-      }
     }
-  }
-  return;
+    if (ret == 0 || WIFSTOPPED(stat_loc) || WIFCONTINUED(stat_loc)) {
+
+	/* we waited ROGUE_SECONDS seconds for rogue status to become available, assume rogue is stuck and SIGHUP it */
+	fprintf(stderr, "\nattempting to kill rogue pid %d with SIGHUP...\n", rogpid);
+	errno = 0;
+	ret = kill(rogpid, SIGHUP);
+	if (ret < 0 && errno == ESRCH) {
+	    fprintf(stderr, "\nrogue pid %d exited before the SIGHUP attempt\n", rogpid);
+	    return;
+	}
+
+	/* look for a rogue process status */
+	errno = 0;
+	ret = waitpid(rogpid, &stat_loc, options);
+
+	/* if there is not yet rogue status, kill SIGTERM it */
+	if (ret == 0) {
+
+	    fprintf(stderr, "\nattempting to kill rogue pid %d with SIGTERM...\n", rogpid);
+	    errno = 0;
+	    ret = kill(rogpid, SIGTERM);
+	    if (ret < 0 && errno == ESRCH) {
+		fprintf(stderr, "\nrogue pid %d exited after the SIGHUP kill attempt\n", rogpid);
+		return;
+	    }
+	}
+    }
+    return;
 }
 
 /*
@@ -1572,16 +1605,19 @@ quitrogue (char *reason, int gld, int terminationtype)
  */
 
 void
-waitfor (char *mess)
+waitfor(char *mess)
 {
-  char *m = mess;
+    char *m = mess;
 
-  set_alarm ();	/* in case we hang reading from rogue, set a timeout timer */
-  while (*m) {
-    if (getroguetoken () == *m) m++;
-    else m = mess;
-  }
-  clear_alarm ();	/* we did not hang, cancel the timeout timer */
+    set_alarm(); /* in case we hang reading from rogue, set a timeout timer */
+    while (*m) {
+	if (getroguetoken() == *m) {
+	    m++;
+	} else {
+	    m = mess;
+	}
+    }
+    clear_alarm(); /* we did not hang, cancel the timeout timer */
 }
 
 /*
@@ -1589,25 +1625,27 @@ waitfor (char *mess)
  */
 
 void
-say (char *f, ...)
+say(char *f, ...)
 {
-  char buf[BUFSIZ + 1]; /* message buffer, +1 for paranoia */
-  char *b;
-  va_list ap;
+    char buf[BUFSIZ + 1]; /* message buffer, +1 for paranoia */
+    char *b;
+    va_list ap;
 
-  if (!emacs && !terse && !quiet) {
-    memset (buf, 0, sizeof(buf)); /* paranoia */
-    va_start (ap, f);
-    vsnprintf (buf, BUFSIZ, f, ap);
-    va_end (ap);
+    if (!emacs && !terse && !quiet) {
+	memset(buf, 0, sizeof(buf)); /* paranoia */
+	va_start(ap, f);
+	vsnprintf(buf, BUFSIZ, f, ap);
+	va_end(ap);
 
-    at (0,0);
+	at(0, 0);
 
-    for (b=buf; *b; b++) printw ("%s", unctrl (*b));
+	for (b = buf; *b; b++) {
+	    printw("%s", unctrl(*b));
+	}
 
-    clrtoeol ();
-    at (row, col);
-  }
+	clrtoeol();
+	at(row, col);
+    }
 }
 
 /*
@@ -1618,30 +1656,32 @@ say (char *f, ...)
  */
 
 void
-saynow (char *f, ...)
+saynow(char *f, ...)
 {
-  char buf[BUFSIZ + 1]; /* message buffer, +1 for paranoia */
-  char *b;
-  va_list ap;
+    char buf[BUFSIZ + 1]; /* message buffer, +1 for paranoia */
+    char *b;
+    va_list ap;
 
-  if (!emacs && !terse && !quiet) {
-    memset (buf, 0, sizeof(buf)); /* paranoia */
-    if (f != NULL) {
-      va_start (ap, f);
-      vsnprintf (buf, BUFSIZ, f, ap);
-      va_end (ap);
+    if (!emacs && !terse && !quiet) {
+	memset(buf, 0, sizeof(buf)); /* paranoia */
+	if (f != NULL) {
+	    va_start(ap, f);
+	    vsnprintf(buf, BUFSIZ, f, ap);
+	    va_end(ap);
+	}
+
+	at(0, 0);
+
+	for (b = buf; *b; b++) {
+	    printw("%s", unctrl(*b));
+	}
+
+	clrtoeol();
+	at(row, col);
     }
-
-    at (0,0);
-
-    for (b=buf; *b; b++) printw ("%s", unctrl (*b));
-
-    clrtoeol ();
-    at (row, col);
-  }
-  if (!quiet) {
-    refresh ();
-  }
+    if (!quiet) {
+	refresh();
+    }
 }
 
 /*
@@ -1650,25 +1690,25 @@ saynow (char *f, ...)
  */
 
 static void
-waitforspace (void)
+waitforspace(void)
 {
-  char ch;
+    char ch;
 
-  if (!quiet) {
-    refresh ();
-  }
-
-  if (!noterm) {
-    set_alarm ();	/* in case we hang reading from rogue, set a timeout timer */
-    while ((ch = fgetc (stdin)) != ' ') {
-      if (ch == '/') {
-	dosnapshot ();
-      }
+    if (!quiet) {
+	refresh();
     }
-    clear_alarm ();	/* we did not hang, cancel the timeout timer */
-  }
 
-  at (row, col);
+    if (!noterm) {
+	set_alarm(); /* in case we hang reading from rogue, set a timeout timer */
+	while ((ch = fgetc(stdin)) != ' ') {
+	    if (ch == '/') {
+		dosnapshot();
+	    }
+	}
+	clear_alarm(); /* we did not hang, cancel the timeout timer */
+    }
+
+    at(row, col);
 }
 
 /*
@@ -1676,27 +1716,27 @@ waitforspace (void)
  * help message in a sequence of help messages. Nexthelp is an
  */
 
-static char *nexthelp[] = {
-  "Rgm commands: t=toggle run mode, e=logging, i=inventory, -=status    [?]",
-  "Rgm commands: <ret>=singlestep, `=summary, /=snapshot, R=replay      [?]",
-  "Rgm commands: m=long term memory display, G=display gene settings    [?]",
-  "Rogue cmds: S=Save, Q=Quit, h j k l H J K L b n u y N B U Y f s < >  [?]",
-  "Wizard: d=debug, !=show items, @=show monsters, #=show level flags   [?]",
-  "Wizard: ~=version, ^=bowrank, %%=armorrank, $=weaponrank, ==ringrank  [?]",
-  "Wizard: (=database, )=cycles, +=possible secret doors, :=chicken     [?]",
-  "Wizard: [=weapstat, ]=rustproof armor, r=resetinv, &=object count    [?]",
-  "Wizard: *=toggle blind, C=toggle cosmic, M=mazedoor, A=attempt, {=flags",
-  NULL
-};
+static char *nexthelp[] = {"Rgm commands: t=toggle run mode, e=logging, i=inventory, -=status    [?]",
+			   "Rgm commands: <ret>=singlestep, `=summary, /=snapshot, R=replay      [?]",
+			   "Rgm commands: m=long term memory display, G=display gene settings    [?]",
+			   "Rogue cmds: S=Save, Q=Quit, h j k l H J K L b n u y N B U Y f s < >  [?]",
+			   "Wizard: d=debug, !=show items, @=show monsters, #=show level flags   [?]",
+			   "Wizard: ~=version, ^=bowrank, %%=armorrank, $=weaponrank, ==ringrank  [?]",
+			   "Wizard: (=database, )=cycles, +=possible secret doors, :=chicken     [?]",
+			   "Wizard: [=weapstat, ]=rustproof armor, r=resetinv, &=object count    [?]",
+			   "Wizard: *=toggle blind, C=toggle cosmic, M=mazedoor, A=attempt, {=flags",
+			   NULL};
 
 static char **helpline = nexthelp;
 
 void
-givehelp (void)
+givehelp(void)
 {
-  if (*helpline == NULL) helpline = nexthelp;
+    if (*helpline == NULL) {
+	helpline = nexthelp;
+    }
 
-  saynow ("%s", *helpline++);
+    saynow("%s", *helpline++);
 }
 
 /*
@@ -1706,18 +1746,18 @@ givehelp (void)
  */
 
 void
-pauserogue (void)
+pauserogue(void)
 {
-  at (R-1, 0);
-  addstr ("--More--");
-  clrtoeol ();
-  if (!quiet) {
-    refresh ();
-  }
+    at(R - 1, 0);
+    addstr("--More--");
+    clrtoeol();
+    if (!quiet) {
+	refresh();
+    }
 
-  waitforspace ();
+    waitforspace();
 
-  redrawscreen ();
+    redrawscreen();
 }
 
 /*
@@ -1730,63 +1770,73 @@ pauserogue (void)
  * Get version from first 2000 chars of a log file	Feb 9, 1985 - mlm
  */
 
-# define VERMSG	"ersion "
+#define VERMSG "ersion "
 
 void
-getrogver (void)
+getrogver(void)
 {
-  char *vstr = versionstr, *m = VERMSG;
-  int cnt = 2000, ch;
+    char *vstr = versionstr, *m = VERMSG;
+    int cnt = 2000, ch;
 
-  if (replaying) {		/* Look for version string in log */
-    while (cnt-- > 0 && *m)
-      { if (fgetc (logfile) == *m) m++; else m = VERMSG;}
+    if (replaying) { /* Look for version string in log */
+	while (cnt-- > 0 && *m) {
+	    if (fgetc(logfile) == *m) {
+		m++;
+	    } else {
+		m = VERMSG;
+	    }
+	}
 
-    if (*m == '\0') {		/* Found VERMSG, get version string */
-      while ((ch = fgetc (logfile)) != ' ') *(vstr++) = ch;
+	if (*m == '\0') { /* Found VERMSG, get version string */
+	    while ((ch = fgetc(logfile)) != ' ') {
+		*(vstr++) = ch;
+	    }
 
-      *--vstr = '\0';
+	    *--vstr = '\0';
+	} else {				       /* Use default version */
+	    memset(versionstr, 0, sizeof(versionstr)); /* paranoia */
+	    snprintf(versionstr, MU_BUF, DEFVER);
+	}
+
+	rewind(logfile); /* Put log file back to start */
+
+    } else { /* Execute the version command */
+	sendnow("v");
+	waitfor("ersion ");
+
+	set_alarm(); /* in case we hang reading from rogue, set a timeout timer */
+	while ((ch = getroguetoken()) != ' ') {
+	    *vstr = ch;
+	    vstr++;
+	}
+	clear_alarm(); /* we did not hang, cancel the timeout timer */
     }
-    else {				/* Use default version */
-      memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
-      snprintf (versionstr, MU_BUF, DEFVER);
+
+    if (stlmatch(versionstr, "3.6")) {
+	version = RV36B;
+    } else if (stlmatch(versionstr, "5.2")) {
+	version = RV52A;
+    } else if (stlmatch(versionstr, "5.3")) {
+	version = RV53A;
+    } else if (stlmatch(versionstr, "5.4.4")) {
+	version = RV54A;
+    } else if (stlmatch(versionstr, "5.4.5")) {
+	version = RV54B;
+	creative = true; /* rogue 5.4.5 or later enables creative mode by default */
+    } else {
+
+	/*
+	 * unable too parse the rogue version
+	 */
+	saynow("What a strange version of Rogue! ");
+
+	/* use the default rogue version number */
+	version = DEFRV;
+
+	/* use the default rogue version string */
+	memset(versionstr, 0, sizeof(versionstr)); /* paranoia */
+	snprintf(versionstr, MU_BUF, DEFVER);
     }
-
-    rewind (logfile);			/* Put log file back to start */
-
-  } else {				/* Execute the version command */
-    sendnow ("v");
-    waitfor ("ersion ");
-
-    set_alarm ();	/* in case we hang reading from rogue, set a timeout timer */
-    while ((ch = getroguetoken ()) != ' ') {
-      *vstr = ch;
-      vstr++;
-    }
-    clear_alarm ();	/* we did not hang, cancel the timeout timer */
-  }
-
-  if (stlmatch (versionstr, "3.6"))		version = RV36B;
-  else if (stlmatch (versionstr, "5.2"))	version = RV52A;
-  else if (stlmatch (versionstr, "5.3"))	version = RV53A;
-  else if (stlmatch (versionstr, "5.4.4"))	version = RV54A;
-  else if (stlmatch (versionstr, "5.4.5")) {
-      version = RV54B;
-      creative = true;	    /* rogue 5.4.5 or later enables creative mode by default */
-  } else {
-
-    /*
-     * unable too parse the rogue version
-     */
-    saynow ("What a strange version of Rogue! ");
-
-    /* use the default rogue version number */
-    version = DEFRV;
-
-    /* use the default rogue version string */
-    memset (versionstr, 0, sizeof(versionstr)); /* paranoia */
-    snprintf (versionstr, MU_BUF, DEFVER);
-  }
 }
 
 /*
@@ -1796,20 +1846,22 @@ getrogver (void)
  */
 
 int
-charsavail (void)
+charsavail(void)
 {
-  long n;
-  int retc;
+    long n;
+    int retc;
 
-  retc = ioctl (READ, FIONREAD, &n);
-  if (retc) {
-    saynow ("Ioctl returns %d, n=%ld.\n", retc, n);
-    n=0;
-  }
+    retc = ioctl(READ, FIONREAD, &n);
+    if (retc) {
+	saynow("Ioctl returns %d, n=%ld.\n", retc, n);
+	n = 0;
+    }
 
-  if (n > 0) noterm = false;
+    if (n > 0) {
+	noterm = false;
+    }
 
-  return ((int) n);
+    return ((int)n);
 }
 
 /*
@@ -1817,21 +1869,26 @@ charsavail (void)
  */
 
 void
-redrawscreen (void)
+redrawscreen(void)
 {
-  int i, j;
-  char ch;
+    int i, j;
+    char ch;
 
-  clear ();
+    clear();
 
-  for (i = 1; i < R; i++) for (j = 0; j < C; j++)
-      if ((ch = screen[i][j]) > ' ') mvaddch(i, j, ch);
+    for (i = 1; i < R; i++) {
+	for (j = 0; j < C; j++) {
+	    if ((ch = screen[i][j]) > ' ') {
+		mvaddch(i, j, ch);
+	    }
+	}
+    }
 
-  at (row, col);
+    at(row, col);
 
-  if (!quiet) {
-    refresh ();
-  }
+    if (!quiet) {
+	refresh();
+    }
 }
 
 /*
@@ -1840,35 +1897,39 @@ redrawscreen (void)
  */
 
 void
-toggleecho (void)
+toggleecho(void)
 {
-  if (replaying) return;
-
-  logging = !logging;
-
-  if (logging) {
-    if (! rogue_log_open (gamelog_path)) {
-      logging = false;
-      saynow ("can't open %s", gamelog_path);
+    if (replaying) {
+	return;
     }
-    else {
-      saynow ("Logging to file %s", gamelog_path);
 
-      if (*versionstr) command (T_OTHER, "v");
+    logging = !logging;
+
+    if (logging) {
+	if (!rogue_log_open(gamelog_path)) {
+	    logging = false;
+	    saynow("can't open %s", gamelog_path);
+	} else {
+	    saynow("Logging to file %s", gamelog_path);
+
+	    if (*versionstr) {
+		command(T_OTHER, "v");
+	    }
+	}
+    } else {
+	rogue_log_close();
+
+	if (playing) {
+	    saynow("File %s closed", gamelog_path);
+	}
     }
-  }
-  else {
-    rogue_log_close ();
 
-    if (playing) saynow ("File %s closed", gamelog_path);
-  }
-
-  if (playing) {
-    at (row, col);
-    if (!quiet) {
-      refresh ();
+    if (playing) {
+	at(row, col);
+	if (!quiet) {
+	    refresh();
+	}
     }
-  }
 }
 
 /*
@@ -1876,9 +1937,9 @@ toggleecho (void)
  */
 
 void
-clearsendqueue (void)
+clearsendqueue(void)
 {
-  head = tail;
+    head = tail;
 }
 
 /*
@@ -1886,12 +1947,12 @@ clearsendqueue (void)
  */
 
 void
-startreplay (FILE **logf, char *logfname)
+startreplay(FILE **logf, char *logfname)
 {
-  if ((*logf = fopen (logfname, "r")) == NULL) {
-    fprintf (stderr, "Can't open '%s'.\n", logfname);
-    exit(1);
-  }
+    if ((*logf = fopen(logfname, "r")) == NULL) {
+	fprintf(stderr, "Can't open '%s'.\n", logfname);
+	exit(1);
+    }
 }
 
 /*
@@ -1899,10 +1960,11 @@ startreplay (FILE **logf, char *logfname)
  */
 
 static void
-putn (char c, FILE *f, int n)
+putn(char c, FILE *f, int n)
 {
-  while (n--)
-    putc (c, f);
+    while (n--) {
+	putc(c, f);
+    }
 }
 
 /*
@@ -1910,44 +1972,46 @@ putn (char c, FILE *f, int n)
  */
 
 void
-printsnap (FILE *f)
+printsnap(FILE *f)
 {
-  int i, j, length;
-  struct tm *ts;
-  long clock;
+    int i, j, length;
+    struct tm *ts;
+    long clock;
 
-  /* Now get the current time, so we can date the snapshot */
-  clock = time(&clock);
-  ts = localtime(&clock);
+    /* Now get the current time, so we can date the snapshot */
+    clock = time(&clock);
+    ts = localtime(&clock);
 
-  /* Print snapshot timestamp */
-  fprintf (f, "\nSnapshot taken on %s %d, %d at %02d:%02d:%02d:\n\n",
-           month[ts -> tm_mon], ts -> tm_mday, 1900 + ts -> tm_year,
-           ts -> tm_hour, ts -> tm_min, ts -> tm_sec);
+    /* Print snapshot timestamp */
+    fprintf(f, "\nSnapshot taken on %s %d, %d at %02d:%02d:%02d:\n\n", month[ts->tm_mon], ts->tm_mday, 1900 + ts->tm_year,
+	    ts->tm_hour, ts->tm_min, ts->tm_sec);
 
-  /* Print the current map */
-  putn ('-', f, C-1);
-  fprintf (f, "\n");
+    /* Print the current map */
+    putn('-', f, C - 1);
+    fprintf(f, "\n");
 
-  for (i = 0; i < R; i++) {
-    for (length = C-1; length >= 0 && charonscreen(i,length) == ' '; length--);
+    for (i = 0; i < R; i++) {
+	for (length = C - 1; length >= 0 && charonscreen(i, length) == ' '; length--)
+	    ;
 
-    for (j=0; j <= length; j++) fprintf (f, "%c", charonscreen(i,j));
+	for (j = 0; j <= length; j++) {
+	    fprintf(f, "%c", charonscreen(i, j));
+	}
 
-    fprintf (f, "\n");
-  }
+	fprintf(f, "\n");
+    }
 
-  putn ('-', f, C-1);
+    putn('-', f, C - 1);
 
-  /* Print status variables */
-  fprintf (f, "\n\n%s\n\n", statusline ());
+    /* Print status variables */
+    fprintf(f, "\n\n%s\n\n", statusline());
 
-  /* Print the inventory */
+    /* Print the inventory */
 
-  dumpinv (f);
-  fprintf (f, "\n");
-  putn ('-', f, C-1);
-  fprintf (f, "\n");
+    dumpinv(f);
+    fprintf(f, "\n");
+    putn('-', f, C - 1);
+    fprintf(f, "\n");
 }
 
 /*
@@ -1955,15 +2019,15 @@ printsnap (FILE *f)
  */
 
 void
-dosnapshot (void)
+dosnapshot(void)
 {
-  if ((snapshot = wopen (SNAPSHOT, "a")) == NULL)
-    saynow ("Cannot write file %s.", SNAPSHOT);
-  else {
-    printsnap (snapshot);
-    fclose (snapshot);
-    saynow ("Snapshot added to %s.", SNAPSHOT);
-  }
+    if ((snapshot = wopen(SNAPSHOT, "a")) == NULL) {
+	saynow("Cannot write file %s.", SNAPSHOT);
+    } else {
+	printsnap(snapshot);
+	fclose(snapshot);
+	saynow("Snapshot added to %s.", SNAPSHOT);
+    }
 }
 
 /*
@@ -1973,22 +2037,23 @@ dosnapshot (void)
  */
 
 void
-clearscreen (void)
+clearscreen(void)
 {
-  int i, j;
+    int i, j;
 
-  row = col = 0;
-  clear ();
-  screen00 = ' ';
+    row = col = 0;
+    clear();
+    screen00 = ' ';
 
-  for (i = 0; i < R; i++)
-    for (j = 0; j < C; j++) {
-      screen[i][j] = ' ';
-      scrmap[i][j] = SCRMINIT;
+    for (i = 0; i < R; i++) {
+	for (j = 0; j < C; j++) {
+	    screen[i][j] = ' ';
+	    scrmap[i][j] = SCRMINIT;
+	}
     }
 
-  initstufflist ();
-  mlistlen = 0;  /* initmonsterlist (); temp hack MLM */
+    initstufflist();
+    mlistlen = 0; /* initmonsterlist (); temp hack MLM */
 }
 
 /*
@@ -1997,59 +2062,87 @@ clearscreen (void)
  */
 
 char *
-statusline (void)
+statusline(void)
 {
-  static char staticarea[BIGBUF + 1]; /* +1 for paranoia */
-  static char staticarea2[BIGBUF + 1]; /* +1 for paranoia */
-  char *ret;	/* static buffer to return as a NUL terminated string */
+    static char staticarea[BIGBUF + 1];	 /* +1 for paranoia */
+    static char staticarea2[BIGBUF + 1]; /* +1 for paranoia */
+    char *ret;				 /* static buffer to return as a NUL terminated string */
 
-  memset (staticarea, 0, sizeof(staticarea)); /* paranoia */
-  strlcpy (staticarea, "Status: ", sizeof(staticarea));
+    memset(staticarea, 0, sizeof(staticarea)); /* paranoia */
+    strlcpy(staticarea, "Status: ", sizeof(staticarea));
 
-  if (aggravated)		strlcat (staticarea, "aggravated, ", sizeof(staticarea));
+    if (aggravated) {
+	strlcat(staticarea, "aggravated, ", sizeof(staticarea));
+    }
 
-  if (beingheld)		strlcat (staticarea, "being held, ", sizeof(staticarea));
+    if (beingheld) {
+	strlcat(staticarea, "being held, ", sizeof(staticarea));
+    }
 
-  if (blinded)			strlcat (staticarea, "blind, ", sizeof(staticarea));
+    if (blinded) {
+	strlcat(staticarea, "blind, ", sizeof(staticarea));
+    }
 
-  if (confused)			strlcat (staticarea, "confused, ", sizeof(staticarea));
+    if (confused) {
+	strlcat(staticarea, "confused, ", sizeof(staticarea));
+    }
 
-  if (cosmic)			strlcat (staticarea, "cosmic, ", sizeof(staticarea));
+    if (cosmic) {
+	strlcat(staticarea, "cosmic, ", sizeof(staticarea));
+    }
 
-  if (cursedarmor)		strlcat (staticarea, "cursed armor, ", sizeof(staticarea));
+    if (cursedarmor) {
+	strlcat(staticarea, "cursed armor, ", sizeof(staticarea));
+    }
 
-  if (cursedweapon)		strlcat (staticarea, "cursed weapon, ", sizeof(staticarea));
+    if (cursedweapon) {
+	strlcat(staticarea, "cursed weapon, ", sizeof(staticarea));
+    }
 
-  if (doublehasted)		strlcat (staticarea, "perm hasted, ", sizeof(staticarea));
+    if (doublehasted) {
+	strlcat(staticarea, "perm hasted, ", sizeof(staticarea));
+    }
 
-  if (droppedscare)		strlcat (staticarea, "dropped scare, ", sizeof(staticarea));
+    if (droppedscare) {
+	strlcat(staticarea, "dropped scare, ", sizeof(staticarea));
+    }
 
-  if (diddrop)			strlcat (staticarea, "dropped something, ", sizeof(staticarea));
+    if (diddrop) {
+	strlcat(staticarea, "dropped something, ", sizeof(staticarea));
+    }
 
-  if (floating)			strlcat (staticarea, "floating, ", sizeof(staticarea));
+    if (floating) {
+	strlcat(staticarea, "floating, ", sizeof(staticarea));
+    }
 
-  if (hasted)			strlcat (staticarea, "hasted, ", sizeof(staticarea));
+    if (hasted) {
+	strlcat(staticarea, "hasted, ", sizeof(staticarea));
+    }
 
-  if (protected)		strlcat (staticarea, "protected, ", sizeof(staticarea));
+    if (protected) {
+	strlcat(staticarea, "protected, ", sizeof(staticarea));
+    }
 
-  if (redhands)			strlcat (staticarea, "red hands, ", sizeof(staticarea));
+    if (redhands) {
+	strlcat(staticarea, "red hands, ", sizeof(staticarea));
+    }
 
-  if (Level == didreadmap)	strlcat (staticarea, "mapped, ", sizeof(staticarea));
+    if (Level == didreadmap) {
+	strlcat(staticarea, "mapped, ", sizeof(staticarea));
+    }
 
-  memset (staticarea2, 0, sizeof(staticarea2)); /* paranoia */
-  if (*genocided)
-  { snprintf (staticarea2, SM_BUF, "%.*sgenocided '%.*s', ", MU_BUF, staticarea, MU_BUF, genocided);
-    snprintf (staticarea, BIGBUF, "%.*s%d food%s, %d missile%s, %d turn%s, (%d,%d %d,%d) bonus",
-              SM_BUF, staticarea2, larder, plural(larder), ammo, plural(ammo), turns,
-              plural(turns), gplushit, gplusdam, wplushit, wplusdam);
-    ret = staticarea;
-  }
-  else
-  { snprintf (staticarea2, BIGBUF, "%.*s%d food%.*s, %d missile%.*s, %d turn%.*s, (%d,%d %d,%d) bonus",
-	      SM_BUF, staticarea, larder, MU_BUF, plural(larder), ammo, MU_BUF, plural(ammo), turns,
-	      MU_BUF, plural(turns), gplushit, gplusdam, wplushit, wplusdam);
-    ret = staticarea2;
-  }
+    memset(staticarea2, 0, sizeof(staticarea2)); /* paranoia */
+    if (*genocided) {
+	snprintf(staticarea2, SM_BUF, "%.*sgenocided '%.*s', ", MU_BUF, staticarea, MU_BUF, genocided);
+	snprintf(staticarea, BIGBUF, "%.*s%d food%s, %d missile%s, %d turn%s, (%d,%d %d,%d) bonus", SM_BUF, staticarea2, larder,
+		 plural(larder), ammo, plural(ammo), turns, plural(turns), gplushit, gplusdam, wplushit, wplusdam);
+	ret = staticarea;
+    } else {
+	snprintf(staticarea2, BIGBUF, "%.*s%d food%.*s, %d missile%.*s, %d turn%.*s, (%d,%d %d,%d) bonus", SM_BUF, staticarea,
+		 larder, MU_BUF, plural(larder), ammo, MU_BUF, plural(ammo), turns, MU_BUF, plural(turns), gplushit, gplusdam,
+		 wplushit, wplusdam);
+	ret = staticarea2;
+    }
 
-  return (ret);
+    return (ret);
 }

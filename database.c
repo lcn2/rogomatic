@@ -35,31 +35,31 @@
  *
  */
 
-# include <string.h>
-# include <setjmp.h>
+#include <string.h>
+#include <setjmp.h>
 
-# include "have_strlcat.h"
-# include "have_strlcpy.h"
-# include "strl.h"
-# include "modern_curses.h"
-# include "types.h"
-# include "globals.h"
+#include "have_strlcat.h"
+#include "have_strlcpy.h"
+#include "strl.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "globals.h"
 
-# define TABLESIZE 101
-# define NOTFOUND  (-1)
+#define TABLESIZE 101
+#define NOTFOUND (-1)
 
-struct  {
-  int   used;
-  int   pack_index;
-  stuff item_type;
-  char  fakename[NAMSIZ];
-  char  realname[NAMSIZ];
+struct {
+    int used;
+    int pack_index;
+    stuff item_type;
+    char fakename[NAMSIZ];
+    char realname[NAMSIZ];
 } dbase[TABLESIZE];
 
 int datalen = 0;
 
 /* static declarations */
-static int findfake (char *string, stuff item_type);
+static int findfake(char *string, stuff item_type);
 #if 0 /* unused code */
 static char *realname (char *codename);
 #endif
@@ -70,25 +70,26 @@ static char *realname (char *codename);
  */
 
 static int
-findfake (char *string, stuff item_type)
+findfake(char *string, stuff item_type)
 {
-  int i;
+    int i;
 
-  for (i = 0; i < datalen; i++)
-    if (streq (dbase[i].fakename, string) &&
-       (dbase[i].item_type == item_type))
-      return (i);
-    else {
-      if (dbase[i].pack_index != -1) {
-        if (inven[dbase[i].pack_index].type != dbase[i].item_type)
-          dbase[i].pack_index = -1;
-        else if (!(streq (inven[dbase[i].pack_index].str, dbase[i].fakename) ||
-          streq (inven[dbase[i].pack_index].str, dbase[i].realname)))
-          dbase[i].pack_index = -1;
-      }
+    for (i = 0; i < datalen; i++) {
+	if (streq(dbase[i].fakename, string) && (dbase[i].item_type == item_type)) {
+	    return (i);
+	} else {
+	    if (dbase[i].pack_index != -1) {
+		if (inven[dbase[i].pack_index].type != dbase[i].item_type) {
+		    dbase[i].pack_index = -1;
+		} else if (!(streq(inven[dbase[i].pack_index].str, dbase[i].fakename) ||
+			     streq(inven[dbase[i].pack_index].str, dbase[i].realname))) {
+		    dbase[i].pack_index = -1;
+		}
+	    }
+	}
     }
 
-  return (NOTFOUND);
+    return (NOTFOUND);
 }
 
 /*
@@ -96,16 +97,17 @@ findfake (char *string, stuff item_type)
  */
 
 int
-findentry (char *string)
+findentry(char *string)
 {
-  int i;
+    int i;
 
-  for (i = 0; i < datalen; i++)
-    if (streq (dbase[i].fakename, string) ||
-        (*dbase[i].realname && streq (dbase[i].realname, string)))
-      return (i);
+    for (i = 0; i < datalen; i++) {
+	if (streq(dbase[i].fakename, string) || (*dbase[i].realname && streq(dbase[i].realname, string))) {
+	    return (i);
+	}
+    }
 
-  return (NOTFOUND);
+    return (NOTFOUND);
 }
 
 /*
@@ -115,17 +117,18 @@ findentry (char *string)
  */
 
 char *
-findentry_getfakename (char *string, stuff item_type)
+findentry_getfakename(char *string, stuff item_type)
 {
-  int i;
+    int i;
 
-  for (i = 0; i < datalen; i++)
-    if ((dbase[i].item_type == item_type) &&
-       (streq (dbase[i].fakename, string) ||
-        (*dbase[i].realname && streq (dbase[i].realname, string))))
-      return (dbase[i].fakename);
+    for (i = 0; i < datalen; i++) {
+	if ((dbase[i].item_type == item_type) &&
+	    (streq(dbase[i].fakename, string) || (*dbase[i].realname && streq(dbase[i].realname, string)))) {
+	    return (dbase[i].fakename);
+	}
+    }
 
-  return ("");
+    return ("");
 }
 
 /*
@@ -135,17 +138,18 @@ findentry_getfakename (char *string, stuff item_type)
  */
 
 char *
-findentry_getrealname (char *string, stuff item_type)
+findentry_getrealname(char *string, stuff item_type)
 {
-  int i;
+    int i;
 
-  for (i = 0; i < datalen; i++)
-    if ((dbase[i].item_type == item_type) &&
-       (streq (dbase[i].fakename, string) ||
-        (*dbase[i].realname && streq (dbase[i].realname, string))))
-      return (dbase[i].realname);
+    for (i = 0; i < datalen; i++) {
+	if ((dbase[i].item_type == item_type) &&
+	    (streq(dbase[i].fakename, string) || (*dbase[i].realname && streq(dbase[i].realname, string)))) {
+	    return (dbase[i].realname);
+	}
+    }
 
-  return ("");
+    return ("");
 }
 
 /*
@@ -153,16 +157,16 @@ findentry_getrealname (char *string, stuff item_type)
  */
 
 void
-addobj (char *codename, int pack_index, stuff item_type)
+addobj(char *codename, int pack_index, stuff item_type)
 {
-  if (findfake (codename, item_type) == NOTFOUND) {
-    dbase[datalen].pack_index = pack_index;
-    dbase[datalen].item_type = item_type;
-    memset (dbase[datalen].fakename, 0, sizeof(dbase[datalen].fakename));
-    strlcpy (dbase[datalen].fakename, codename, sizeof(dbase[datalen].fakename));
-    memset (dbase[datalen].realname, 0, sizeof(dbase[datalen].realname));
-    datalen++;
-  }
+    if (findfake(codename, item_type) == NOTFOUND) {
+	dbase[datalen].pack_index = pack_index;
+	dbase[datalen].item_type = item_type;
+	memset(dbase[datalen].fakename, 0, sizeof(dbase[datalen].fakename));
+	strlcpy(dbase[datalen].fakename, codename, sizeof(dbase[datalen].fakename));
+	memset(dbase[datalen].realname, 0, sizeof(dbase[datalen].realname));
+	datalen++;
+    }
 }
 
 /*
@@ -171,13 +175,13 @@ addobj (char *codename, int pack_index, stuff item_type)
  */
 
 void
-useobj (char *string)
+useobj(char *string)
 {
-  int i = findentry (string);
+    int i = findentry(string);
 
-  if (i != NOTFOUND) {
-    dbase[i].used = true;
-  }
+    if (i != NOTFOUND) {
+	dbase[i].used = true;
+    }
 }
 
 /*
@@ -187,32 +191,29 @@ useobj (char *string)
  */
 
 void
-infername (char *codename, char *name, stuff item_type)
+infername(char *codename, char *name, stuff item_type)
 {
-  int i;
+    int i;
 
-  i = findfake (codename, item_type);
+    i = findfake(codename, item_type);
 
-  if (i == NOTFOUND) {
-    dbase[datalen].item_type = item_type;
-    memset (dbase[datalen].fakename, 0, sizeof(dbase[datalen].fakename));
-    strlcpy (dbase[datalen].fakename, codename, sizeof(dbase[datalen].fakename));
-    memset (dbase[datalen].realname, 0, sizeof(dbase[datalen].realname));
-    strlcpy (dbase[datalen].realname, name, sizeof(dbase[datalen].realname));
-    datalen++;
-  }
-  else {
-    if (*dbase[i].realname && strcmp (dbase[i].realname, name))
-	dwait (D_ERROR, __func__, "codename: %s dbase[%d].fakename: %s dbase[%d].realname: %s != name: %s",
-			(codename == NULL ? "((NULL))" : codename),
-			i, (dbase[i].fakename[0] == '\0' ? "((empty))" : dbase[i].fakename),
-			i, (dbase[i].realname[0] == '\0' ? "((empty))" : dbase[i].realname),
-			(name == NULL ? "((NULL))" : name));
-    else {
-      memset (dbase[i].realname, 0, sizeof(dbase[i].realname));
-      strlcpy (dbase[i].realname, name, sizeof(dbase[i].realname));
+    if (i == NOTFOUND) {
+	dbase[datalen].item_type = item_type;
+	memset(dbase[datalen].fakename, 0, sizeof(dbase[datalen].fakename));
+	strlcpy(dbase[datalen].fakename, codename, sizeof(dbase[datalen].fakename));
+	memset(dbase[datalen].realname, 0, sizeof(dbase[datalen].realname));
+	strlcpy(dbase[datalen].realname, name, sizeof(dbase[datalen].realname));
+	datalen++;
+    } else {
+	if (*dbase[i].realname && strcmp(dbase[i].realname, name)) {
+	    dwait(D_ERROR, __func__, "codename: %s dbase[%d].fakename: %s dbase[%d].realname: %s != name: %s",
+		  (codename == NULL ? "((NULL))" : codename), i, (dbase[i].fakename[0] == '\0' ? "((empty))" : dbase[i].fakename),
+		  i, (dbase[i].realname[0] == '\0' ? "((empty))" : dbase[i].realname), (name == NULL ? "((NULL))" : name));
+	} else {
+	    memset(dbase[i].realname, 0, sizeof(dbase[i].realname));
+	    strlcpy(dbase[i].realname, name, sizeof(dbase[i].realname));
+	}
     }
-  }
 }
 
 /*
@@ -220,14 +221,16 @@ infername (char *codename, char *name, stuff item_type)
  */
 
 int
-used (char *codename)
+used(char *codename)
 {
-  int i;
+    int i;
 
-  for (i = 0; i < datalen; i++)
-    if (streq (dbase[i].fakename, codename))
-      return (dbase[i].used);
-  return false;
+    for (i = 0; i < datalen; i++) {
+	if (streq(dbase[i].fakename, codename)) {
+	    return (dbase[i].used);
+	}
+    }
+    return false;
 }
 
 /*
@@ -235,15 +238,17 @@ used (char *codename)
  */
 
 int
-know (char *name)
+know(char *name)
 {
-  int i;
+    int i;
 
-  for (i = 0; i < datalen; i++)
-    if (*dbase[i].realname && streq (dbase[i].realname, name))
-      return (true);
+    for (i = 0; i < datalen; i++) {
+	if (*dbase[i].realname && streq(dbase[i].realname, name)) {
+	    return (true);
+	}
+    }
 
-  return (false);
+    return (false);
 }
 
 #if 0 /* unused code */
@@ -269,14 +274,13 @@ realname (char *codename)
  */
 
 void
-dumpdatabase (void)
+dumpdatabase(void)
 {
-  int i;
+    int i;
 
-  for (i = 0; i < datalen; i++) {
-    at (i+1, 0);
-    printw ("%02d %c|%01d|%01d %-32s %02d '%s'",
-      i, (dbase[i].pack_index != -1) ? LETTER(dbase[i].pack_index) : ' ', dbase[i].item_type, dbase[i].used,
-      dbase[i].realname, i, dbase[i].fakename);
-  }
+    for (i = 0; i < datalen; i++) {
+	at(i + 1, 0);
+	printw("%02d %c|%01d|%01d %-32s %02d '%s'", i, (dbase[i].pack_index != -1) ? LETTER(dbase[i].pack_index) : ' ',
+	       dbase[i].item_type, dbase[i].used, dbase[i].realname, i, dbase[i].fakename);
+    }
 }

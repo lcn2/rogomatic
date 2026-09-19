@@ -20,22 +20,22 @@
  * along with Rog-O-Matic.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <unistd.h>
-# include <string.h>
-# include <errno.h>
-# include <sys/stat.h>
-# include <fcntl.h>
-# include <setjmp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <setjmp.h>
 
-# include "types.h"
-# include "config.h"
-# include "globals.h"
-# include "termtokens.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
+#include "termtokens.h"
 
-# define GETLOGCHAR	fgetc(logfile)
-# define ISPRT(c)	((c) >= ' ' && (c) <= '~')
+#define GETLOGCHAR fgetc(logfile)
+#define ISPRT(c) ((c) >= ' ' && (c) <= '~')
 
 int number1 = 0;
 int number2 = 0;
@@ -47,9 +47,9 @@ static int number3 = 0;
 static bool cecho = false;
 
 /* Game record file 'echo' option */
-static FILE  *fecho = NULL;
+static FILE *fecho = NULL;
 
-static void rogue_log_write_token (char ch);
+static void rogue_log_write_token(char ch);
 static FILE *froguelog;
 #if 0 /* unused code */
 static void open_frogue_fd_debuglog (int frogue_fd_dl);
@@ -60,12 +60,12 @@ static void open_frogue (const char *file);
 static void close_frogue (void);
 #endif
 
-static int errlog = -1;		/* error log open file descriptor, or <0 ==> not open */
+static int errlog = -1; /* error log open file descriptor, or <0 ==> not open */
 
-static int fetchnum (char ch);
-static int match2 (char ch1, char ch2);
-static int match3 (char ch1, char ch2, char ch3);
-static int match4 (char ch1, char ch2, char ch3, char ch4);
+static int fetchnum(char ch);
+static int match2(char ch1, char ch2);
+static int match3(char ch1, char ch2, char ch3);
+static int match4(char ch1, char ch2, char ch3, char ch4);
 #if 0 /* unused code */
 static int match5 (char ch1, char ch2, char ch3, char ch4, char ch5);
 #endif
@@ -75,62 +75,61 @@ static int getlogtoken(void);
  * rogue_log_open - open the rogomatic game log
  */
 int
-rogue_log_open (const char *filename)
+rogue_log_open(const char *filename)
 {
-  /* just return true if rogomatic game log is already open */
-  if (fecho != NULL) {
-    return true;
-  }
+    /* just return true if rogomatic game log is already open */
+    if (fecho != NULL) {
+	return true;
+    }
 
-  fecho = fopen (filename, "w");
+    fecho = fopen(filename, "w");
 
-  if (fecho != NULL) {
-    fprintf (fecho, "Rogomatic Game Log\n\n"); fflush (fecho);
-    cecho = true;
-  }
+    if (fecho != NULL) {
+	fprintf(fecho, "Rogomatic Game Log\n\n");
+	fflush(fecho);
+	cecho = true;
+    }
 
-  return (fecho != NULL);
+    return (fecho != NULL);
 }
 
 /*
  * rogue_log_close - close the rogomatic game log
  */
 void
-rogue_log_close (void)
+rogue_log_close(void)
 {
-  if (fecho != NULL) {
-    if (logging) {
-      if (cecho) {
-	fprintf (fecho, "\n");
-      }
-      else {
-	fprintf (fecho, "\"\n");
-      }
-    }
+    if (fecho != NULL) {
+	if (logging) {
+	    if (cecho) {
+		fprintf(fecho, "\n");
+	    } else {
+		fprintf(fecho, "\"\n");
+	    }
+	}
 
-    fflush (fecho);
-    fclose (fecho);
-    fecho = NULL;
-  }
+	fflush(fecho);
+	fclose(fecho);
+	fecho = NULL;
+    }
 }
 
 /*
  * rogue_log_write_command - append a rogomatic command (to be send to rogue) to rogomatic game log
  */
 void
-rogue_log_write_command (char c)
+rogue_log_write_command(char c)
 {
-  if (logging && fecho != NULL) {
-    if (cecho) {
-      fprintf (fecho, "\nC: \"%c", c);
-      cecho = !cecho;
-    }
-    else {
-      fprintf (fecho, "%c", c);
-    }
+    if (logging && fecho != NULL) {
+	if (cecho) {
+	    fprintf(fecho, "\nC: \"%c", c);
+	    cecho = !cecho;
+	} else {
+	    fprintf(fecho, "%c", c);
+	}
 
-    fflush (fecho);
-  }
+	fflush(fecho);
+    }
 }
 
 /*
@@ -144,9 +143,9 @@ rogue_log_write_command (char c)
  */
 
 bool
-is_token (char ch)
+is_token(char ch)
 {
-  switch (ch) {
+    switch (ch) {
     case BS_TOK:
     case CE_TOK:
     case CL_TOK:
@@ -168,82 +167,124 @@ is_token (char ch)
     case RC_TOK:
     case SR_TOK:
     case CB_TOK:
-      return true;
+	return true;
     default:
-      break;
-  }
-  return false;
+	break;
+    }
+    return false;
 }
 
 static void
-rogue_log_write_token (char ch)
+rogue_log_write_token(char ch)
 {
-  /* Log the tokens */
-  if (logging && fecho != NULL) {
-    if (!cecho) {
-      fprintf (fecho, "\"\nR: ");
-      cecho = !cecho;
-    }
+    /* Log the tokens */
+    if (logging && fecho != NULL) {
+	if (!cecho) {
+	    fprintf(fecho, "\"\nR: ");
+	    cecho = !cecho;
+	}
 
-    if (ISPRT (ch))
-      fprintf (fecho, "%c", ch);
-    else {
-      switch (ch) {
-        case BS_TOK: fprintf (fecho, "{bs}");                   break;
-        case CE_TOK: fprintf (fecho, "{ce}");                   break;
-        case CL_TOK: fprintf (fecho, "{ff}");                   break;
-        case CM_TOK: fprintf (fecho, "{cm(%d,%d)}", number1, number2);  break;
-        case CR_TOK: fprintf (fecho, "{cr}");                   break;
-        case ER_TOK: fprintf (fecho, "{ERRESC}");               break;
-        case LF_TOK: fprintf (fecho, "{lf}");                   break;
-        case ND_TOK: fprintf (fecho, "{nd(%d)}", number1);      break;
-        case SE_TOK: fprintf (fecho, "{se}");                   break;
-        case SO_TOK: fprintf (fecho, "{so}");                   break;
-        case TA_TOK: fprintf (fecho, "{ta}");                   break;
-        case UP_TOK: fprintf (fecho, "{up}");                   break;
-        case HM_TOK: fprintf (fecho, "{hm}");                   break;
-        case CH_TOK: fprintf (fecho, "{ch(%d,%d)}", number1, number2); break;
-        case NU_TOK: fprintf (fecho, "{nu(%d)}", number1);      break;
-        case NR_TOK: fprintf (fecho, "{nr(%d)}", number1);      break;
-        case NL_TOK: fprintf (fecho, "{nl(%d)}", number1);      break;
-        case SC_TOK: fprintf (fecho, "{sc}");                   break;
-        case RC_TOK: fprintf (fecho, "{rc}");                   break;
-        case SR_TOK: fprintf (fecho, "{sr}");                   break;
-        case CB_TOK: fprintf (fecho, "{cb}");                   break;
-        default:     fprintf (fecho, "{ERR%o}", ch);
-          ch = ER_TOK;
-      }
-    }
+	if (ISPRT(ch)) {
+	    fprintf(fecho, "%c", ch);
+	} else {
+	    switch (ch) {
+	    case BS_TOK:
+		fprintf(fecho, "{bs}");
+		break;
+	    case CE_TOK:
+		fprintf(fecho, "{ce}");
+		break;
+	    case CL_TOK:
+		fprintf(fecho, "{ff}");
+		break;
+	    case CM_TOK:
+		fprintf(fecho, "{cm(%d,%d)}", number1, number2);
+		break;
+	    case CR_TOK:
+		fprintf(fecho, "{cr}");
+		break;
+	    case ER_TOK:
+		fprintf(fecho, "{ERRESC}");
+		break;
+	    case LF_TOK:
+		fprintf(fecho, "{lf}");
+		break;
+	    case ND_TOK:
+		fprintf(fecho, "{nd(%d)}", number1);
+		break;
+	    case SE_TOK:
+		fprintf(fecho, "{se}");
+		break;
+	    case SO_TOK:
+		fprintf(fecho, "{so}");
+		break;
+	    case TA_TOK:
+		fprintf(fecho, "{ta}");
+		break;
+	    case UP_TOK:
+		fprintf(fecho, "{up}");
+		break;
+	    case HM_TOK:
+		fprintf(fecho, "{hm}");
+		break;
+	    case CH_TOK:
+		fprintf(fecho, "{ch(%d,%d)}", number1, number2);
+		break;
+	    case NU_TOK:
+		fprintf(fecho, "{nu(%d)}", number1);
+		break;
+	    case NR_TOK:
+		fprintf(fecho, "{nr(%d)}", number1);
+		break;
+	    case NL_TOK:
+		fprintf(fecho, "{nl(%d)}", number1);
+		break;
+	    case SC_TOK:
+		fprintf(fecho, "{sc}");
+		break;
+	    case RC_TOK:
+		fprintf(fecho, "{rc}");
+		break;
+	    case SR_TOK:
+		fprintf(fecho, "{sr}");
+		break;
+	    case CB_TOK:
+		fprintf(fecho, "{cb}");
+		break;
+	    default:
+		fprintf(fecho, "{ERR%o}", ch);
+		ch = ER_TOK;
+	    }
+	}
 
-    fflush (fecho);
-  }
+	fflush(fecho);
+    }
 }
-
 
 /* Debuglog for the frogue */
 static FILE *froguelog = NULL;
 
 void
-open_frogue_debuglog (const char *dir, const char *file)
+open_frogue_debuglog(const char *dir, const char *file)
 {
-  char *path = NULL; /* path to open */
+    char *path = NULL; /* path to open */
 
-  /* form full path */
-  path = form_path (dir, file);
+    /* form full path */
+    path = form_path(dir, file);
 
-  /* open the log file */
-  froguelog = fopen (path, "w");
-  if (froguelog == NULL) {
-    fprintf (stderr, "ERROR: %s file: %s line: %d dungeon: %u failed to open for writing: %s: %s\n",
-		     __func__, __FILE__, __LINE__, dnum, path, strerror (errno));
-    exit (1);
-  }
+    /* open the log file */
+    froguelog = fopen(path, "w");
+    if (froguelog == NULL) {
+	fprintf(stderr, "ERROR: %s file: %s line: %d dungeon: %u failed to open for writing: %s: %s\n", __func__, __FILE__,
+		__LINE__, dnum, path, strerror(errno));
+	exit(1);
+    }
 
-  /* free memory */
-  if (path != NULL) {
-    free(path);
-    path = NULL;
-  }
+    /* free memory */
+    if (path != NULL) {
+	free(path);
+	path = NULL;
+    }
 }
 
 #if 0 /* unused code */
@@ -254,15 +295,21 @@ open_frogue_fd_debuglog (int frogue_fd_dl)
 }
 #endif
 
-#define PUTDEBUGCHAR(c) {if (froguelog != NULL) {fputc(c,froguelog); fflush (froguelog);}}
+#define PUTDEBUGCHAR(c)          \
+    {                            \
+	if (froguelog != NULL) { \
+	    fputc(c, froguelog); \
+	    fflush(froguelog);   \
+	}                        \
+    }
 
 void
-close_frogue_debuglog (void)
+close_frogue_debuglog(void)
 {
-  if (froguelog != NULL)
-    fclose (froguelog);
+    if (froguelog != NULL) {
+	fclose(froguelog);
+    }
 }
-
 
 /* Log from rogue */
 static FILE *frogue = NULL;
@@ -276,9 +323,9 @@ open_frogue (const char *file)
 #endif
 
 void
-open_frogue_fd (int frogue_fd)
+open_frogue_fd(int frogue_fd)
 {
-  frogue = fdopen (frogue_fd, "r");
+    frogue = fdopen(frogue_fd, "r");
 }
 
 #define GETROGUECHAR fgetc(frogue);
@@ -292,9 +339,10 @@ close_frogue (void)
 }
 #endif
 
-static int matchnum (char ch)
+static int
+matchnum(char ch)
 {
-  switch (ch) {
+    switch (ch) {
     case '0':
     case '1':
     case '2':
@@ -305,110 +353,106 @@ static int matchnum (char ch)
     case '7':
     case '8':
     case '9':
-      return 1;
-      break;
-  }
-
-  return 0;
-}
-
-static int
-fetchnum (char ch)
-{
-  char num[MU_BUF + 1]; /* +1 for paranoia */
-  int ind = 1;
-  bool done = false;
-
-  /* zeroize arrays */
-  memset(num, 0, sizeof(num));
-  num[0] = ch;
-
-  while (! done) {
-    int ch2 = GETROGUECHAR;
-
-    if (matchnum (ch2)) {
-      /* firewall */
-      if (ind >= MU_BUF) {
-	quit (1, "ERROR: %s: file: %s line: %d dungeon: %u ind: %d > MU_BUF: %d\n",
-		 __func__, __FILE__, __LINE__, dnum, ind, MU_BUF);
-	not_reached ();
-      }
-      num[ind] = ch2;
-      ++ind;
-      PUTDEBUGCHAR (ch2);
+	return 1;
+	break;
     }
-    else {
-      UNGETROGUECHAR (ch2);
-      done = true;
+
+    return 0;
+}
+
+static int
+fetchnum(char ch)
+{
+    char num[MU_BUF + 1]; /* +1 for paranoia */
+    int ind = 1;
+    bool done = false;
+
+    /* zeroize arrays */
+    memset(num, 0, sizeof(num));
+    num[0] = ch;
+
+    while (!done) {
+	int ch2 = GETROGUECHAR;
+
+	if (matchnum(ch2)) {
+	    /* firewall */
+	    if (ind >= MU_BUF) {
+		quit(1, "ERROR: %s: file: %s line: %d dungeon: %u ind: %d > MU_BUF: %d\n", __func__, __FILE__, __LINE__, dnum, ind,
+		     MU_BUF);
+		not_reached();
+	    }
+	    num[ind] = ch2;
+	    ++ind;
+	    PUTDEBUGCHAR(ch2);
+	} else {
+	    UNGETROGUECHAR(ch2);
+	    done = true;
+	}
     }
-  }
 
-  num[ind] = '\0';
+    num[ind] = '\0';
 
-  return atoi (num);
+    return atoi(num);
 }
 
 static int
-match2 (char ch1, char ch2)
+match2(char ch1, char ch2)
 {
-  char mch1 = GETROGUECHAR;
-  char mch2 = GETROGUECHAR;
+    char mch1 = GETROGUECHAR;
+    char mch2 = GETROGUECHAR;
 
-  if (ch1 == mch1 && ch2 == mch2) {
-    PUTDEBUGCHAR (mch1);
-    PUTDEBUGCHAR (mch2);
-    return 1;
-  }
-  else {
-    UNGETROGUECHAR (mch2);
-    UNGETROGUECHAR (mch1);
-    return 0;
-  }
+    if (ch1 == mch1 && ch2 == mch2) {
+	PUTDEBUGCHAR(mch1);
+	PUTDEBUGCHAR(mch2);
+	return 1;
+    } else {
+	UNGETROGUECHAR(mch2);
+	UNGETROGUECHAR(mch1);
+	return 0;
+    }
 }
 
 static int
-match3 (char ch1, char ch2, char ch3)
+match3(char ch1, char ch2, char ch3)
 {
-  char mch1 = GETROGUECHAR;
-  char mch2 = GETROGUECHAR;
-  char mch3 = GETROGUECHAR;
+    char mch1 = GETROGUECHAR;
+    char mch2 = GETROGUECHAR;
+    char mch3 = GETROGUECHAR;
 
-  if (ch1 == mch1 && ch2 == mch2 && ch3 == mch3) {
-    PUTDEBUGCHAR (mch1);
-    PUTDEBUGCHAR (mch2);
-    PUTDEBUGCHAR (mch3);
-    return 1;
-  }
-  else {
-    UNGETROGUECHAR (mch3);
-    UNGETROGUECHAR (mch2);
-    UNGETROGUECHAR (mch1);
-    return 0;
-  }
+    if (ch1 == mch1 && ch2 == mch2 && ch3 == mch3) {
+	PUTDEBUGCHAR(mch1);
+	PUTDEBUGCHAR(mch2);
+	PUTDEBUGCHAR(mch3);
+	return 1;
+    } else {
+	UNGETROGUECHAR(mch3);
+	UNGETROGUECHAR(mch2);
+	UNGETROGUECHAR(mch1);
+	return 0;
+    }
 }
 
 static int
-match4 (char ch1, char ch2, char ch3, char ch4)
+match4(char ch1, char ch2, char ch3, char ch4)
 {
-  char mch1 = GETROGUECHAR;
-  char mch2 = GETROGUECHAR;
-  char mch3 = GETROGUECHAR;
-  char mch4 = GETROGUECHAR;
+    char mch1 = GETROGUECHAR;
+    char mch2 = GETROGUECHAR;
+    char mch3 = GETROGUECHAR;
+    char mch4 = GETROGUECHAR;
 
-  if (ch1 == mch1 && ch2 == mch2 && ch3 == mch3 && ch4 == mch4) {
-    PUTDEBUGCHAR (mch1);
-    PUTDEBUGCHAR (mch2);
-    PUTDEBUGCHAR (mch3);
-    PUTDEBUGCHAR (mch4);
-    return 1;
-  }
-  else {
-    UNGETROGUECHAR (mch4);
-    UNGETROGUECHAR (mch3);
-    UNGETROGUECHAR (mch2);
-    UNGETROGUECHAR (mch1);
-    return 0;
-  }
+    if (ch1 == mch1 && ch2 == mch2 && ch3 == mch3 && ch4 == mch4) {
+	PUTDEBUGCHAR(mch1);
+	PUTDEBUGCHAR(mch2);
+	PUTDEBUGCHAR(mch3);
+	PUTDEBUGCHAR(mch4);
+	return 1;
+    } else {
+	UNGETROGUECHAR(mch4);
+	UNGETROGUECHAR(mch3);
+	UNGETROGUECHAR(mch2);
+	UNGETROGUECHAR(mch1);
+	return 0;
+    }
 }
 
 #if 0 /* unused code */
@@ -438,8 +482,6 @@ match5 (char ch1, char ch2, char ch3, char ch4, char ch5)
   }
 }
 #endif
-
-
 
 /*
    Cap-   TCap    Variable              Description
@@ -497,224 +539,214 @@ match5 (char ch1, char ch2, char ch3, char ch4, char ch5)
  * cursor motion sequence).
  */
 char
-getroguetoken (void)
+getroguetoken(void)
 {
-  char ch, ch2;
+    char ch, ch2;
 
-  if (replaying)
-    return (getlogtoken());
-
-  ch = GETROGUECHAR; PUTDEBUGCHAR (ch);
-
-  if (ch == ESC) {
-    /* ^[ */
-    ch = GETROGUECHAR; PUTDEBUGCHAR (ch);
-
-    switch (ch) {
-        /* ^[ */
-      case '[':
-        ch2 = GETROGUECHAR; PUTDEBUGCHAR (ch2);
-
-        switch (ch2) {
-            /* ^[[A    UP_TOK */
-          case 'A':
-            ch = UP_TOK;
-            break;
-            /* ^[[H        HM_TOK */
-            /* ^[[H^[[J    CL_TOK */
-          case 'H': {
-            if (match3 (ESC, '[', 'J')) {
-              ch = CL_TOK;
-            }
-            else {
-              ch = HM_TOK;
-            }
-          }
-          break;
-          /* ^[[K        CE_TOK */
-          case 'K':
-            ch = CE_TOK;
-            break;
-            /* ^[[m        SE_TOK */
-          case 'm':
-            ch = SE_TOK;
-            break;
-            /* ^[[?7h            turn on automatic margins       */
-            /* ^[[?1h^[=         enter 'keyboard_transmit' mode  */
-            /* ^[[?1l^[>         leave 'keyboard_transmit' mode  */
-          case '?': {
-            if (match2 ('7', 'h')) {
-              ch = ER_TOK;
-            }
-            else if (match4 ('1', 'h', ESC, '=')) {
-              ch = ER_TOK;
-            }
-            else if (match4 ('1', 'l', ESC, '>')) {
-              ch = ER_TOK;
-            }
-            else {
-              ch = GETROGUECHAR; PUTDEBUGCHAR (ch);
-              debuglog ("UNRECOGNIZED 1 : ^[[?%c\n",ch);
-            }
-          }
-          break;
-          /* ^[[#A             up #1 lines                         */
-          /* ^[[#B             down #1 lines                       */
-          /* ^[[#C      RT_TOK move #1 characters to the right     */
-          /* ^[[#D      LT_TOK move #1 characters to the left      */
-          /* ^[[1K      CB_TOK Clear to beginning of line          */
-          /* ^[[7m      SO_TOK begin standout mode */
-          /* ^[[#;#H    CM_TOK move to row #1 columns #2           */
-          /* ^[[#;#r    CH_TOK change region to line #1 to line #2 */
-          default:
-
-            if (matchnum (ch2)) {
-              number1 = fetchnum (ch2);
-              char nch = GETROGUECHAR; PUTDEBUGCHAR (nch);
-
-              switch (nch) {
-                case 'm':
-
-                  if (number1 == 7) {
-                    /* Start standout mode */
-                    ch = SO_TOK;
-                  }
-                  else {
-                    ch = ER_TOK;
-                  }
-
-                  break;
-
-                case 'A':
-                  /* move up by number1 */
-                  ch = NU_TOK;
-                  break;
-                case 'B':
-                  /* move down by number1 */
-                  ch = ND_TOK;
-                  break;
-                case 'C':
-                  /* move right by number1 */
-                  ch = NR_TOK;
-                  break;
-                case 'D':
-                  /* move left by number1 */
-                  ch = NL_TOK;
-                  break;
-                case 'K':
-
-                  if (number1 == 1) {
-                    /* Clear to beginning of line */
-                    ch = CB_TOK;
-                  }
-                  else {
-                    ch = ER_TOK;
-                  }
-
-                  break;
-                case ';': {
-                  char ch3 = GETROGUECHAR; PUTDEBUGCHAR (ch3);
-
-                  if (matchnum (ch3)) {
-                    number2 = fetchnum (ch3);
-                    char nch2 = GETROGUECHAR; PUTDEBUGCHAR (nch2);
-
-                    switch (nch2) {
-                      case 'H':
-                        /* move to position number1, number2 */
-                        ch = CM_TOK;
-                        break;
-                      case 'r':
-                        /* change scroll region */
-                        ch = CH_TOK;
-                        break;
-                      case ';': {
-                        char ch4 = GETROGUECHAR;
-                        PUTDEBUGCHAR (ch4);
-
-                        if (matchnum (ch4)) {
-                          number3 = fetchnum (ch4);
-                          char ch5 = GETROGUECHAR;
-                          PUTDEBUGCHAR (ch5);
-
-                          switch (ch5) {
-                            case 'm': {
-                              char ch6 = GETROGUECHAR;
-                              PUTDEBUGCHAR (ch6);
-                              ch = ER_TOK;
-                            }
-                            break;
-                            default:
-                              debuglog ("UNRECOGNIZED 7\n");
-                              break;
-                          }
-                        }
-                      }
-                      break;
-                      default:
-                        debuglog ("UNRECOGNIZED 2\n");
-                        break;
-                    }
-                  }
-                }
-                break;
-                default:
-                  debuglog ("UNRECOGNIZED 3\n");
-                  break;
-              }
-            }
-            else {
-              debuglog ("UNRECOGNIZED 4\n");
-            }
-        }
-
-        break;
-      case '(':
-
-        if (match4 ('B', ESC, ')', '0')) {
-          ch = ER_TOK;
-        }
-        else {
-          debuglog ("UNRECOGNIZED 5\n");
-        }
-
-        break;
-        /* ^[7 save cursor */
-      case '7':
-        ch = SC_TOK;
-        break;
-        /* ^[8 restore cursor */
-      case '8':
-        ch = RC_TOK;
-        break;
-        /* ^[M scroll_reverse */
-      case 'M':
-        ch = SR_TOK;
-        break;
-
-      default:
-        debuglog ("UNRECOGNIZED 6 ^[%c\n",ch);
+    if (replaying) {
+	return (getlogtoken());
     }
-  }
-  else if (ch == ctrl('O')) {
-    ch = ER_TOK;
-  }
-  else if (ch == ctrl('H')) {
-    ch = BS_TOK;
-  }
-  else if (ch == ctrl('J')) {
-    ch = LF_TOK;
-  }
-  else if (ch == ctrl('M')) {
-    ch = CR_TOK;
-  }
-  else if (ch == ctrl('I')) {
-    ch = TA_TOK;
-  }
 
-  rogue_log_write_token (ch);
+    ch = GETROGUECHAR;
+    PUTDEBUGCHAR(ch);
 
-  return (ch);
+    if (ch == ESC) {
+	/* ^[ */
+	ch = GETROGUECHAR;
+	PUTDEBUGCHAR(ch);
+
+	switch (ch) {
+	    /* ^[ */
+	case '[':
+	    ch2 = GETROGUECHAR;
+	    PUTDEBUGCHAR(ch2);
+
+	    switch (ch2) {
+		/* ^[[A    UP_TOK */
+	    case 'A':
+		ch = UP_TOK;
+		break;
+		/* ^[[H        HM_TOK */
+		/* ^[[H^[[J    CL_TOK */
+	    case 'H': {
+		if (match3(ESC, '[', 'J')) {
+		    ch = CL_TOK;
+		} else {
+		    ch = HM_TOK;
+		}
+	    } break;
+	    /* ^[[K        CE_TOK */
+	    case 'K':
+		ch = CE_TOK;
+		break;
+		/* ^[[m        SE_TOK */
+	    case 'm':
+		ch = SE_TOK;
+		break;
+		/* ^[[?7h            turn on automatic margins       */
+		/* ^[[?1h^[=         enter 'keyboard_transmit' mode  */
+		/* ^[[?1l^[>         leave 'keyboard_transmit' mode  */
+	    case '?': {
+		if (match2('7', 'h')) {
+		    ch = ER_TOK;
+		} else if (match4('1', 'h', ESC, '=')) {
+		    ch = ER_TOK;
+		} else if (match4('1', 'l', ESC, '>')) {
+		    ch = ER_TOK;
+		} else {
+		    ch = GETROGUECHAR;
+		    PUTDEBUGCHAR(ch);
+		    debuglog("UNRECOGNIZED 1 : ^[[?%c\n", ch);
+		}
+	    } break;
+	    /* ^[[#A             up #1 lines                         */
+	    /* ^[[#B             down #1 lines                       */
+	    /* ^[[#C      RT_TOK move #1 characters to the right     */
+	    /* ^[[#D      LT_TOK move #1 characters to the left      */
+	    /* ^[[1K      CB_TOK Clear to beginning of line          */
+	    /* ^[[7m      SO_TOK begin standout mode */
+	    /* ^[[#;#H    CM_TOK move to row #1 columns #2           */
+	    /* ^[[#;#r    CH_TOK change region to line #1 to line #2 */
+	    default:
+
+		if (matchnum(ch2)) {
+		    number1 = fetchnum(ch2);
+		    char nch = GETROGUECHAR;
+		    PUTDEBUGCHAR(nch);
+
+		    switch (nch) {
+		    case 'm':
+
+			if (number1 == 7) {
+			    /* Start standout mode */
+			    ch = SO_TOK;
+			} else {
+			    ch = ER_TOK;
+			}
+
+			break;
+
+		    case 'A':
+			/* move up by number1 */
+			ch = NU_TOK;
+			break;
+		    case 'B':
+			/* move down by number1 */
+			ch = ND_TOK;
+			break;
+		    case 'C':
+			/* move right by number1 */
+			ch = NR_TOK;
+			break;
+		    case 'D':
+			/* move left by number1 */
+			ch = NL_TOK;
+			break;
+		    case 'K':
+
+			if (number1 == 1) {
+			    /* Clear to beginning of line */
+			    ch = CB_TOK;
+			} else {
+			    ch = ER_TOK;
+			}
+
+			break;
+		    case ';': {
+			char ch3 = GETROGUECHAR;
+			PUTDEBUGCHAR(ch3);
+
+			if (matchnum(ch3)) {
+			    number2 = fetchnum(ch3);
+			    char nch2 = GETROGUECHAR;
+			    PUTDEBUGCHAR(nch2);
+
+			    switch (nch2) {
+			    case 'H':
+				/* move to position number1, number2 */
+				ch = CM_TOK;
+				break;
+			    case 'r':
+				/* change scroll region */
+				ch = CH_TOK;
+				break;
+			    case ';': {
+				char ch4 = GETROGUECHAR;
+				PUTDEBUGCHAR(ch4);
+
+				if (matchnum(ch4)) {
+				    number3 = fetchnum(ch4);
+				    char ch5 = GETROGUECHAR;
+				    PUTDEBUGCHAR(ch5);
+
+				    switch (ch5) {
+				    case 'm': {
+					char ch6 = GETROGUECHAR;
+					PUTDEBUGCHAR(ch6);
+					ch = ER_TOK;
+				    } break;
+				    default:
+					debuglog("UNRECOGNIZED 7\n");
+					break;
+				    }
+				}
+			    } break;
+			    default:
+				debuglog("UNRECOGNIZED 2\n");
+				break;
+			    }
+			}
+		    } break;
+		    default:
+			debuglog("UNRECOGNIZED 3\n");
+			break;
+		    }
+		} else {
+		    debuglog("UNRECOGNIZED 4\n");
+		}
+	    }
+
+	    break;
+	case '(':
+
+	    if (match4('B', ESC, ')', '0')) {
+		ch = ER_TOK;
+	    } else {
+		debuglog("UNRECOGNIZED 5\n");
+	    }
+
+	    break;
+	    /* ^[7 save cursor */
+	case '7':
+	    ch = SC_TOK;
+	    break;
+	    /* ^[8 restore cursor */
+	case '8':
+	    ch = RC_TOK;
+	    break;
+	    /* ^[M scroll_reverse */
+	case 'M':
+	    ch = SR_TOK;
+	    break;
+
+	default:
+	    debuglog("UNRECOGNIZED 6 ^[%c\n", ch);
+	}
+    } else if (ch == ctrl('O')) {
+	ch = ER_TOK;
+    } else if (ch == ctrl('H')) {
+	ch = BS_TOK;
+    } else if (ch == ctrl('J')) {
+	ch = LF_TOK;
+    } else if (ch == ctrl('M')) {
+	ch = CR_TOK;
+    } else if (ch == ctrl('I')) {
+	ch = TA_TOK;
+    }
+
+    rogue_log_write_token(ch);
+
+    return (ch);
 }
 
 /*
@@ -722,23 +754,26 @@ getroguetoken (void)
  */
 
 void
-getoldcommand (char *s)
+getoldcommand(char *s)
 {
-  int charcount = 0;
-  char ch = ' ', term = '"', *startpat = "\nC: ";
+    int charcount = 0;
+    char ch = ' ', term = '"', *startpat = "\nC: ";
 
-  while (*startpat && (int) ch != EOF)
-    { if ((ch = GETLOGCHAR) != *(startpat++)) startpat = "\nC: "; }
-
-  if ((int) ch != EOF) {
-    term = ch = GETLOGCHAR;
-
-    while ((ch = GETLOGCHAR) != term && (int) ch != EOF && charcount++ < 128) {
-      *(s++) = ch;
+    while (*startpat && (int)ch != EOF) {
+	if ((ch = GETLOGCHAR) != *(startpat++)) {
+	    startpat = "\nC: ";
+	}
     }
-  }
 
-  *s = '\0';
+    if ((int)ch != EOF) {
+	term = ch = GETLOGCHAR;
+
+	while ((ch = GETLOGCHAR) != term && (int)ch != EOF && charcount++ < 128) {
+	    *(s++) = ch;
+	}
+    }
+
+    *s = '\0';
 }
 
 /*
@@ -750,201 +785,233 @@ getoldcommand (char *s)
 static int
 getlogtoken(void)
 {
-  bool acceptline;
-  int ch = GETLOGCHAR;
-  int ch1, ch2, dig;
+    bool acceptline;
+    int ch = GETLOGCHAR;
+    int ch1, ch2, dig;
 
-  while (ch == NEWLINE) {
-    acceptline = false;
+    while (ch == NEWLINE) {
+	acceptline = false;
 
-    if ((ch = GETLOGCHAR) == 'R')
-      if ((ch = GETLOGCHAR) == ':')
-        if ((ch = GETLOGCHAR) == ' ') {
-          ch = GETLOGCHAR;
-          acceptline = true;
-        }
+	if ((ch = GETLOGCHAR) == 'R') {
+	    if ((ch = GETLOGCHAR) == ':') {
+		if ((ch = GETLOGCHAR) == ' ') {
+		    ch = GETLOGCHAR;
+		    acceptline = true;
+		}
+	    }
+	}
 
-    if (!acceptline)
-      while ((int) ch != NEWLINE && (int) ch != EOF)
-        ch = GETLOGCHAR;
-  }
-
-  if (ch == '{') {
-    ch1 = GETLOGCHAR;
-    ch2 = GETLOGCHAR;
-    ch = GETLOGCHAR;   /* Ignore the closing '}' */
-
-    switch (ch1) {
-      case 'b': ch = BS_TOK; break;
-      case 'c':
-
-        switch (ch2) {
-          case 'e': ch = CE_TOK; break;
-          case 'm':
-            ch = CM_TOK;
-            number1 = 0;
-
-            while ((dig = GETLOGCHAR) != ',') {
-              number1 = number1 * 10 + dig - '0';
-            }
-
-            number2 = 0;
-
-            while ((dig = GETLOGCHAR) != ')')
-              { number2 = number2 * 10 + dig - '0'; }
-
-            GETLOGCHAR;		/* Ignore '}' */
-            break;
-          case 'r': ch = CR_TOK; break;
-          case 'h':
-            ch = CH_TOK;
-            number1 = 0;
-
-            while ((dig = GETLOGCHAR) != ',') {
-              number1 = number1 * 10 + dig - '0';
-            }
-
-            number2 = 0;
-
-            while ((dig = GETLOGCHAR) != ')')
-              { number2 = number2 * 10 + dig - '0'; }
-
-            GETLOGCHAR;		/* Ignore '}' */
-            break;
-          case 'b': ch = CB_TOK; break;
-        }
-
-        break;
-      case 'f': ch = CL_TOK; break;
-      case 'h': ch = HM_TOK; break;
-      case 'l': ch = LF_TOK; break;
-      case 'n':
-
-        switch (ch2) {
-          case 'd':
-            ch = ND_TOK;
-            number1 = 0;
-
-            while ((dig = GETLOGCHAR) != ')') {
-              number1 = number1 * 10 + dig - '0';
-            }
-
-            GETLOGCHAR;		/* Ignore '}' */
-            break;
-          case 'u':
-            ch = NU_TOK;
-            number1 = 0;
-
-            while ((dig = GETLOGCHAR) != ')') {
-              number1 = number1 * 10 + dig - '0';
-            }
-
-            GETLOGCHAR;		/* Ignore '}' */
-            break;
-          case 'r':
-            ch = NR_TOK;
-            number1 = 0;
-
-            while ((dig = GETLOGCHAR) != ')') {
-              number1 = number1 * 10 + dig - '0';
-            }
-
-            GETLOGCHAR;		/* Ignore '}' */
-            break;
-          case 'l':
-            ch = NL_TOK;
-            number1 = 0;
-
-            while ((dig = GETLOGCHAR) != ')') {
-              number1 = number1 * 10 + dig - '0';
-            }
-
-            GETLOGCHAR;		/* Ignore '}' */
-            break;
-        }
-
-        break;
-      case 's':
-
-        switch (ch2) {
-          case 'e': ch = SE_TOK; break;
-          case 'o': ch = SO_TOK; break;
-          case 'c': ch = SC_TOK; break;
-          case 'r': ch = SR_TOK; break;
-        }
-
-        break;
-      case 't': ch = TA_TOK; break;
-      case 'u': ch = UP_TOK; break;
-      case 'E':
-
-        while (GETLOGCHAR != '}')
-          ;
-
-        ch = ER_TOK;
-        break;
+	if (!acceptline) {
+	    while ((int)ch != NEWLINE && (int)ch != EOF) {
+		ch = GETLOGCHAR;
+	    }
+	}
     }
-  }
 
-  return (ch);
+    if (ch == '{') {
+	ch1 = GETLOGCHAR;
+	ch2 = GETLOGCHAR;
+	ch = GETLOGCHAR; /* Ignore the closing '}' */
+
+	switch (ch1) {
+	case 'b':
+	    ch = BS_TOK;
+	    break;
+	case 'c':
+
+	    switch (ch2) {
+	    case 'e':
+		ch = CE_TOK;
+		break;
+	    case 'm':
+		ch = CM_TOK;
+		number1 = 0;
+
+		while ((dig = GETLOGCHAR) != ',') {
+		    number1 = number1 * 10 + dig - '0';
+		}
+
+		number2 = 0;
+
+		while ((dig = GETLOGCHAR) != ')') {
+		    number2 = number2 * 10 + dig - '0';
+		}
+
+		GETLOGCHAR; /* Ignore '}' */
+		break;
+	    case 'r':
+		ch = CR_TOK;
+		break;
+	    case 'h':
+		ch = CH_TOK;
+		number1 = 0;
+
+		while ((dig = GETLOGCHAR) != ',') {
+		    number1 = number1 * 10 + dig - '0';
+		}
+
+		number2 = 0;
+
+		while ((dig = GETLOGCHAR) != ')') {
+		    number2 = number2 * 10 + dig - '0';
+		}
+
+		GETLOGCHAR; /* Ignore '}' */
+		break;
+	    case 'b':
+		ch = CB_TOK;
+		break;
+	    }
+
+	    break;
+	case 'f':
+	    ch = CL_TOK;
+	    break;
+	case 'h':
+	    ch = HM_TOK;
+	    break;
+	case 'l':
+	    ch = LF_TOK;
+	    break;
+	case 'n':
+
+	    switch (ch2) {
+	    case 'd':
+		ch = ND_TOK;
+		number1 = 0;
+
+		while ((dig = GETLOGCHAR) != ')') {
+		    number1 = number1 * 10 + dig - '0';
+		}
+
+		GETLOGCHAR; /* Ignore '}' */
+		break;
+	    case 'u':
+		ch = NU_TOK;
+		number1 = 0;
+
+		while ((dig = GETLOGCHAR) != ')') {
+		    number1 = number1 * 10 + dig - '0';
+		}
+
+		GETLOGCHAR; /* Ignore '}' */
+		break;
+	    case 'r':
+		ch = NR_TOK;
+		number1 = 0;
+
+		while ((dig = GETLOGCHAR) != ')') {
+		    number1 = number1 * 10 + dig - '0';
+		}
+
+		GETLOGCHAR; /* Ignore '}' */
+		break;
+	    case 'l':
+		ch = NL_TOK;
+		number1 = 0;
+
+		while ((dig = GETLOGCHAR) != ')') {
+		    number1 = number1 * 10 + dig - '0';
+		}
+
+		GETLOGCHAR; /* Ignore '}' */
+		break;
+	    }
+
+	    break;
+	case 's':
+
+	    switch (ch2) {
+	    case 'e':
+		ch = SE_TOK;
+		break;
+	    case 'o':
+		ch = SO_TOK;
+		break;
+	    case 'c':
+		ch = SC_TOK;
+		break;
+	    case 'r':
+		ch = SR_TOK;
+		break;
+	    }
+
+	    break;
+	case 't':
+	    ch = TA_TOK;
+	    break;
+	case 'u':
+	    ch = UP_TOK;
+	    break;
+	case 'E':
+
+	    while (GETLOGCHAR != '}')
+		;
+
+	    ch = ER_TOK;
+	    break;
+	}
+    }
+
+    return (ch);
 }
 
 void
-redirect_stderr (const char *dir, const char *file)
+redirect_stderr(const char *dir, const char *file)
 {
-  char *path = NULL; /* error log path to open */
+    char *path = NULL; /* error log path to open */
 
-  /* form full path to an error log */
-  path = form_path (dir, file);
+    /* form full path to an error log */
+    path = form_path(dir, file);
 
-  /*
-   * be sure that the error log exists, writable at the end of file, and mode 0644 under umask
-   *
-   * Even though we will freopen(3) next, we want to first open(2) the error log file
-   * as this will give us better control over the file if needs to be created.
-   */
-  errlog = open (path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-  if (errlog < 0) {
-    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't open error log %s: %s\n",
-		     __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
-    exit(1);
-  }
+    /*
+     * be sure that the error log exists, writable at the end of file, and mode 0644 under umask
+     *
+     * Even though we will freopen(3) next, we want to first open(2) the error log file
+     * as this will give us better control over the file if needs to be created.
+     */
+    errlog = open(path, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if (errlog < 0) {
+	fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't open error log %s: %s\n", __func__, __FILE__, __LINE__,
+		dnum, path, strerror(errno));
+	exit(1);
+    }
 
-  /*
-   * reopen error log as stderr, appending as needed
-   *
-   * Too bad there isn't a fdreopen(3) function as technically there is a race between the above open(2)
-   * call, and the freopen(3) call below.  On the other hand, such a call wouldn't have the open parameter
-   * control we have over t above open(2) call, AND the race is do no real consequence to future stderr output.
-   */
-  if (freopen(path, "a", stderr) == NULL) {
-    fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't freopen error log: %s onto stderr: %s\n",
-		     __func__, __FILE__, __LINE__, dnum, path, strerror(errno));
-    exit(1);
-  }
+    /*
+     * reopen error log as stderr, appending as needed
+     *
+     * Too bad there isn't a fdreopen(3) function as technically there is a race between the above open(2)
+     * call, and the freopen(3) call below.  On the other hand, such a call wouldn't have the open parameter
+     * control we have over t above open(2) call, AND the race is do no real consequence to future stderr output.
+     */
+    if (freopen(path, "a", stderr) == NULL) {
+	fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u Couldn't freopen error log: %s onto stderr: %s\n", __func__,
+		__FILE__, __LINE__, dnum, path, strerror(errno));
+	exit(1);
+    }
 
-  /*
-   * make sure that stderr is still unbuffered
-   */
-  setbuf (stderr, NULL);
+    /*
+     * make sure that stderr is still unbuffered
+     */
+    setbuf(stderr, NULL);
 
-  /* free memory */
-  if (path != NULL) {
-    free(path);
-    path = NULL;
-  }
+    /* free memory */
+    if (path != NULL) {
+	free(path);
+	path = NULL;
+    }
 }
 
 void
-close_errlog (void)
+close_errlog(void)
 {
-  if (errlog >= 0) {
-    if (fclose (stderr) != 0) {
-      fprintf (stderr, "ERROR: %s: file: %s line: %d dungeon: %u Failed to fclose error log via stderr: %s\n",
-		       __func__, __FILE__, __LINE__, dnum, strerror(errno));
-      exit(1);
+    if (errlog >= 0) {
+	if (fclose(stderr) != 0) {
+	    fprintf(stderr, "ERROR: %s: file: %s line: %d dungeon: %u Failed to fclose error log via stderr: %s\n", __func__,
+		    __FILE__, __LINE__, dnum, strerror(errno));
+	    exit(1);
+	}
+	(void)close(errlog); /* paranoia */
+	errlog = -1;
     }
-    (void) close (errlog); /* paranoia */
-    errlog = -1;
-  }
 }

@@ -46,19 +46,19 @@
  *	writestat:	Write a statistic to a file.
  */
 
-# include <stdio.h>
-# include <math.h>
+#include <stdio.h>
+#include <math.h>
 
-# include "types.h"
+#include "types.h"
 
 /*
  * clearprob: zero a probability structure.
  */
 
 void
-clearprob (probability *p)
+clearprob(probability *p)
 {
-  p->fail = p->win = 0;
+    p->fail = p->win = 0;
 }
 
 /*
@@ -66,10 +66,13 @@ clearprob (probability *p)
  */
 
 void
-addprob (probability *p, int success)
+addprob(probability *p, int success)
 {
-  if (success)	p->win++;
-  else		p->fail++;
+    if (success) {
+	p->win++;
+    } else {
+	p->fail++;
+    }
 }
 
 /*
@@ -77,12 +80,15 @@ addprob (probability *p, int success)
  */
 
 double
-prob (probability *p)
+prob(probability *p)
 {
-  int trials = p->fail + p->win;
+    int trials = p->fail + p->win;
 
-  if (trials < 1)	return (0.0);
-  else			return ((double) p->win / trials);
+    if (trials < 1) {
+	return (0.0);
+    } else {
+	return ((double)p->win / trials);
+    }
 }
 
 /*
@@ -90,10 +96,10 @@ prob (probability *p)
  */
 
 void
-parseprob (char *buf, probability *p)
+parseprob(char *buf, probability *p)
 {
-  p->win = p->fail = 0;
-  sscanf (buf, "%d %d", &p->fail, &p->win);
+    p->win = p->fail = 0;
+    sscanf(buf, "%d %d", &p->fail, &p->win);
 }
 
 /*
@@ -101,9 +107,9 @@ parseprob (char *buf, probability *p)
  */
 
 void
-writeprob (FILE *f, probability *p)
+writeprob(FILE *f, probability *p)
 {
-  fprintf (f, "%d %d", p->fail, p->win);
+    fprintf(f, "%d %d", p->fail, p->win);
 }
 
 /*
@@ -111,10 +117,10 @@ writeprob (FILE *f, probability *p)
  */
 
 void
-clearstat (statistic *s)
+clearstat(statistic *s)
 {
-  s->count = 0;
-  s->sum = s->sumsq = s->low = s->high = 0.0;
+    s->count = 0;
+    s->sum = s->sumsq = s->low = s->high = 0.0;
 }
 
 /*
@@ -122,17 +128,21 @@ clearstat (statistic *s)
  */
 
 void
-addstat (statistic *s, int datum)
+addstat(statistic *s, int datum)
 {
-  double d = (double) datum;
+    double d = (double)datum;
 
-  s->count++;
-  s->sum += d;
-  s->sumsq += d*d;
+    s->count++;
+    s->sum += d;
+    s->sumsq += d * d;
 
-  if (s->count < 2)	s->low = s->high = d;
-  else if (d < s->low)	s->low = d;
-  else if (d > s->high)	s->high = d;
+    if (s->count < 2) {
+	s->low = s->high = d;
+    } else if (d < s->low) {
+	s->low = d;
+    } else if (d > s->high) {
+	s->high = d;
+    }
 }
 
 /*
@@ -140,10 +150,13 @@ addstat (statistic *s, int datum)
  */
 
 double
-mean (statistic *s)
+mean(statistic *s)
 {
-  if (s->count < 1)	return (0.0);
-  else			return (s->sum / s->count);
+    if (s->count < 1) {
+	return (0.0);
+    } else {
+	return (s->sum / s->count);
+    }
 }
 
 /*
@@ -151,12 +164,15 @@ mean (statistic *s)
  */
 
 double
-stdev (statistic *s)
+stdev(statistic *s)
 {
-  int n = s->count;
+    int n = s->count;
 
-  if (n < 2)	return (0.0);
-  else		return (sqrt ((n * s->sumsq - s->sum * s->sum) / (n * (n-1))));
+    if (n < 2) {
+	return (0.0);
+    } else {
+	return (sqrt((n * s->sumsq - s->sum * s->sum) / (n * (n - 1))));
+    }
 }
 
 /*
@@ -164,12 +180,11 @@ stdev (statistic *s)
  */
 
 void
-parsestat (char *buf, statistic *s)
+parsestat(char *buf, statistic *s)
 {
-  s->count = 0;
-  s->sum = s->sumsq = s->low = s->high = 0.0;
-  sscanf (buf, "%d %lf %lf %lf %lf",
-          &s->count, &s->sum, &s->sumsq, &s->low, &s->high);
+    s->count = 0;
+    s->sum = s->sumsq = s->low = s->high = 0.0;
+    sscanf(buf, "%d %lf %lf %lf %lf", &s->count, &s->sum, &s->sumsq, &s->low, &s->high);
 }
 
 /*
@@ -177,8 +192,7 @@ parsestat (char *buf, statistic *s)
  */
 
 void
-writestat (FILE *f, statistic *s)
+writestat(FILE *f, statistic *s)
 {
-  fprintf (f, "%d %lg %lg %lg %lg",
-           s->count, s->sum, s->sumsq, s->low, s->high);
+    fprintf(f, "%d %lg %lg %lg %lg", s->count, s->sum, s->sumsq, s->low, s->high);
 }

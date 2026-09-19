@@ -27,36 +27,38 @@
  * This file contains much of the code to handle Rog-O-Matics inventory.
  */
 
-# include <ctype.h>
-# include <string.h>
-# include <setjmp.h>
+#include <ctype.h>
+#include <string.h>
+#include <setjmp.h>
 
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
 
 /* static declarations */
 
-static int destroyjunk (int obj);
+static int destroyjunk(int obj);
 
 /*
  * wear: This primitive function issues a command to put on armor.
  */
 
 int
-wear (int obj)
+wear(int obj)
 {
-  if (currentarmor != NONE) {
-    dwait (D_FATAL, __func__, "Trying wear 2nd armor");
-    return (0);
-  }
+    if (currentarmor != NONE) {
+	dwait(D_FATAL, __func__, "Trying wear 2nd armor");
+	return (0);
+    }
 
-  if (cursedarmor) return (0);
+    if (cursedarmor) {
+	return (0);
+    }
 
-  command (T_HANDLING, "W%c", LETTER (obj));
-  usesynch = false;
-  return (1);
+    command(T_HANDLING, "W%c", LETTER(obj));
+    usesynch = false;
+    return (1);
 }
 
 /*
@@ -64,18 +66,20 @@ wear (int obj)
  */
 
 int
-takeoff (void)
+takeoff(void)
 {
-  if (currentarmor == NONE) {
-    dwait (D_ERROR, __func__, "No armor to remove");
-    return (0);
-  }
+    if (currentarmor == NONE) {
+	dwait(D_ERROR, __func__, "No armor to remove");
+	return (0);
+    }
 
-  if (cursedarmor) return (0);
+    if (cursedarmor) {
+	return (0);
+    }
 
-  command (T_HANDLING, "T");
-  usesynch = false;
-  return (1);
+    command(T_HANDLING, "T");
+    usesynch = false;
+    return (1);
 }
 
 /*
@@ -83,53 +87,52 @@ takeoff (void)
  */
 
 int
-wield (int obj)
+wield(int obj)
 {
-  if (cursedweapon) return (0);
-
-  if (version >= RV54A) {
-
-    if (itemis(currentweapon, CURSED)) {
-      cursedweapon = true;
-      return (0);
-    }
-    else if (currentweapon == NONE) {
-      command (T_HANDLING, "w%c", LETTER (obj));
-    }
-    else if (itemis(currentweapon, UNCURSED)) {
-      cursedweapon = false;
-      command (T_HANDLING, "w%c", LETTER (obj));
-    }
-    else if (itemis(currentweapon, ENCHANTED)) {
-      remember(currentweapon, UNCURSED);
-      cursedweapon = false;
-      command (T_HANDLING, "w%c", LETTER (obj));
-    }
-    else {
-
-      /* current weapon might be cursed */
-      if (currentweapon != NONE) {
-        lastdrop = currentweapon;
-        command (T_HANDLING, "w%c;", ESC);
-      }
-    return (0);
+    if (cursedweapon) {
+	return (0);
     }
 
-  /* send 2 escapes because I needed to patch the new rogue to not hang
-   * momentarily on the first escape
-   */
-  } else if (version == RV53A)
-    command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('p'));
-  else if (version >= RV54A)
-    /*
-     * For rogue version RV54A or later, we issue ";" to
-     * cause the "Illegal command ';'" sync message to be generated.
-     */
-    command (T_HANDLING, "w%c;w%c;%c", LETTER (obj), ESC, ctrl('r'));
-  else
-    command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('r'));
+    if (version >= RV54A) {
 
-  return (1);
+	if (itemis(currentweapon, CURSED)) {
+	    cursedweapon = true;
+	    return (0);
+	} else if (currentweapon == NONE) {
+	    command(T_HANDLING, "w%c", LETTER(obj));
+	} else if (itemis(currentweapon, UNCURSED)) {
+	    cursedweapon = false;
+	    command(T_HANDLING, "w%c", LETTER(obj));
+	} else if (itemis(currentweapon, ENCHANTED)) {
+	    remember(currentweapon, UNCURSED);
+	    cursedweapon = false;
+	    command(T_HANDLING, "w%c", LETTER(obj));
+	} else {
+
+	    /* current weapon might be cursed */
+	    if (currentweapon != NONE) {
+		lastdrop = currentweapon;
+		command(T_HANDLING, "w%c;", ESC);
+	    }
+	    return (0);
+	}
+
+	/* send 2 escapes because I needed to patch the new rogue to not hang
+	 * momentarily on the first escape
+	 */
+    } else if (version == RV53A) {
+	command(T_HANDLING, "w%cw%c%c", LETTER(obj), ESC, ctrl('p'));
+    } else if (version >= RV54A) {
+	/*
+	 * For rogue version RV54A or later, we issue ";" to
+	 * cause the "Illegal command ';'" sync message to be generated.
+	 */
+	command(T_HANDLING, "w%c;w%c;%c", LETTER(obj), ESC, ctrl('r'));
+    } else {
+	command(T_HANDLING, "w%cw%c%c", LETTER(obj), ESC, ctrl('r'));
+    }
+
+    return (1);
 }
 
 /*
@@ -139,13 +142,14 @@ wield (int obj)
  */
 
 static int
-destroyjunk (int obj)
+destroyjunk(int obj)
 {
 
-  if ((obj != NONE) && (gotocorner () || throw (obj, 7)))
-    return (1);
+    if ((obj != NONE) && (gotocorner() || throw(obj, 7))) {
+	return (1);
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -154,50 +158,41 @@ destroyjunk (int obj)
  */
 
 int
-drop (int obj)
+drop(int obj)
 {
-  /* Can't if not there, in use, or on something else or
-     dropped something else already */
-  if (inven[obj].count < 1 ||
-      itemis (obj, INUSE) ||
-      on (STUFF | TRAP | STAIRS | DOOR) ||
-      diddrop)
-    return (0);
+    /* Can't if not there, in use, or on something else or
+       dropped something else already */
+    if (inven[obj].count < 1 || itemis(obj, INUSE) || on(STUFF | TRAP | STAIRS | DOOR) || diddrop) {
+	return (0);
+    }
 
-  if ((obj != NONE) && (inven[obj].type == wand))
-    return (destroyjunk (obj));
+    if ((obj != NONE) && (inven[obj].type == wand)) {
+	return (destroyjunk(obj));
+    }
 
-  /* read unknown scrolls or good scrolls rather than dropping them */
-  if (inven[obj].type == Scroll &&
-      (!itemis (obj, KNOWN) ||
-       (stlmatch (inven[obj].str, "identify") && prepareident (pickident (), obj)) ||
-       stlmatch (inven[obj].str, "enchant") ||
-       stlmatch (inven[obj].str, "genocide") ||
-       stlmatch (inven[obj].str, "gold detection") ||
-       stlmatch (inven[obj].str, "hold monster") ||
-       stlmatch (inven[obj].str, "light") ||
-       stlmatch (inven[obj].str, "magic mapping") ||
-       stlmatch (inven[obj].str, "monster confusion") ||
-       stlmatch (inven[obj].str, "remove curse")) &&
-      reads (obj))
-    { return (1); }
+    /* read unknown scrolls or good scrolls rather than dropping them */
+    if (inven[obj].type == Scroll &&
+	(!itemis(obj, KNOWN) || (stlmatch(inven[obj].str, "identify") && prepareident(pickident(), obj)) ||
+	 stlmatch(inven[obj].str, "enchant") || stlmatch(inven[obj].str, "genocide") ||
+	 stlmatch(inven[obj].str, "gold detection") || stlmatch(inven[obj].str, "hold monster") ||
+	 stlmatch(inven[obj].str, "light") || stlmatch(inven[obj].str, "magic mapping") ||
+	 stlmatch(inven[obj].str, "monster confusion") || stlmatch(inven[obj].str, "remove curse")) &&
+	reads(obj)) {
+	return (1);
+    }
 
-  /* quaff unknown potions or good potions rather than dropping them */
-  if (inven[obj].type == potion &&
-      (!itemis (obj, KNOWN) ||
-       stlmatch (inven[obj].str, "magic detection") ||
-       stlmatch (inven[obj].str, "monster detection") ||
-       stlmatch (inven[obj].str, "raise level") ||
-       stlmatch (inven[obj].str, "healing") ||
-       (stlmatch (inven[obj].str, "haste self") && !hasted) ||
-       stlmatch (inven[obj].str, "extra healing") ||
-       stlmatch (inven[obj].str, "restore strength") ||
-       stlmatch (inven[obj].str, "gain strength")) &&
-      quaff (obj))
-    { return (1); }
+    /* quaff unknown potions or good potions rather than dropping them */
+    if (inven[obj].type == potion &&
+	(!itemis(obj, KNOWN) || stlmatch(inven[obj].str, "magic detection") || stlmatch(inven[obj].str, "monster detection") ||
+	 stlmatch(inven[obj].str, "raise level") || stlmatch(inven[obj].str, "healing") ||
+	 (stlmatch(inven[obj].str, "haste self") && !hasted) || stlmatch(inven[obj].str, "extra healing") ||
+	 stlmatch(inven[obj].str, "restore strength") || stlmatch(inven[obj].str, "gain strength")) &&
+	quaff(obj)) {
+	return (1);
+    }
 
-  command (T_HANDLING, "d%c", LETTER (obj));
-  return (1);
+    command(T_HANDLING, "d%c", LETTER(obj));
+    return (1);
 }
 
 /*
@@ -205,16 +200,16 @@ drop (int obj)
  */
 
 int
-quaff (int obj)
+quaff(int obj)
 {
-  if (inven[obj].type != potion) {
-    dwait (D_ERROR, __func__, "Trying to quaff: %c", LETTER (obj));
-    usesynch = false;
-    return (0);
-  }
+    if (inven[obj].type != potion) {
+	dwait(D_ERROR, __func__, "Trying to quaff: %c", LETTER(obj));
+	usesynch = false;
+	return (0);
+    }
 
-  command (T_HANDLING, "q%c", LETTER (obj));
-  return (1);
+    command(T_HANDLING, "q%c", LETTER(obj));
+    return (1);
 }
 
 /*
@@ -222,16 +217,16 @@ quaff (int obj)
  */
 
 int
-reads (int obj)
+reads(int obj)
 {
-  if (inven[obj].type != Scroll) {
-    dwait (D_ERROR, __func__, "Trying to read: %c", LETTER (obj));
-    usesynch = false;
-    return (0);
-  }
+    if (inven[obj].type != Scroll) {
+	dwait(D_ERROR, __func__, "Trying to read: %c", LETTER(obj));
+	usesynch = false;
+	return (0);
+    }
 
-  command (T_HANDLING, "r%c", LETTER (obj));
-  return (1);
+    command(T_HANDLING, "r%c", LETTER(obj));
+    return (1);
 }
 
 /*
@@ -239,21 +234,20 @@ reads (int obj)
  */
 
 int
-point (int obj, int dir)
+point(int obj, int dir)
 {
-  if (inven[obj].type != wand) {
-    dwait (D_ERROR, __func__, "Trying to point: %c", LETTER (obj));
-    return (0);
-  }
+    if (inven[obj].type != wand) {
+	dwait(D_ERROR, __func__, "Trying to point: %c", LETTER(obj));
+	return (0);
+    }
 
-  if (itemis (obj, USELESS))
-    return (0);
-  else {
-    command (T_HANDLING, "%c%c%c",
-             (version < RV52A) ? 'p' : 'z',	/* R5.2 MLM */
-             keydir[dir], LETTER (obj));
-    return (1);
-  }
+    if (itemis(obj, USELESS)) {
+	return (0);
+    } else {
+	command(T_HANDLING, "%c%c%c", (version < RV52A) ? 'p' : 'z', /* R5.2 MLM */
+		keydir[dir], LETTER(obj));
+	return (1);
+    }
 }
 
 /*
@@ -261,15 +255,15 @@ point (int obj, int dir)
  */
 
 int
-throw (int obj, int dir)
+throw(int obj, int dir)
 {
-  if (obj < 0 || obj >= invcount) {
-    dwait (D_ERROR, __func__, "Trying to throw: %c", LETTER (obj));
-    return (0);
-  }
+    if (obj < 0 || obj >= invcount) {
+	dwait(D_ERROR, __func__, "Trying to throw: %c", LETTER(obj));
+	return (0);
+    }
 
-  command (T_HANDLING, "t%c%c", keydir[dir], LETTER (obj));
-  return (1);
+    command(T_HANDLING, "t%c%c", keydir[dir], LETTER(obj));
+    return (1);
 }
 
 /*
@@ -277,15 +271,19 @@ throw (int obj, int dir)
  */
 
 int
-puton (int obj)
+puton(int obj)
 {
-  if (leftring == NONE && rightring == NONE)
-    { command (T_HANDLING, "P%cl", LETTER (obj)); return (1); }
+    if (leftring == NONE && rightring == NONE) {
+	command(T_HANDLING, "P%cl", LETTER(obj));
+	return (1);
+    }
 
-  if (leftring == NONE || rightring == NONE)
-    { command (T_HANDLING, "P%c", LETTER (obj)); return (1); }
+    if (leftring == NONE || rightring == NONE) {
+	command(T_HANDLING, "P%c", LETTER(obj));
+	return (1);
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -293,18 +291,24 @@ puton (int obj)
  */
 
 int
-removering (int obj)
+removering(int obj)
 {
-  if (leftring != NONE && rightring != NONE && leftring == obj)
-    { command (T_HANDLING, "Rl"); return (1); }
+    if (leftring != NONE && rightring != NONE && leftring == obj) {
+	command(T_HANDLING, "Rl");
+	return (1);
+    }
 
-  if (leftring != NONE && rightring != NONE && rightring == obj)
-    { command (T_HANDLING, "Rr"); return (1); }
+    if (leftring != NONE && rightring != NONE && rightring == obj) {
+	command(T_HANDLING, "Rr");
+	return (1);
+    }
 
-  if (leftring == obj || rightring == obj)
-    { command (T_HANDLING, "R"); return (1); }
+    if (leftring == obj || rightring == obj) {
+	command(T_HANDLING, "R");
+	return (1);
+    }
 
-  return (0);
+    return (0);
 }
 
 /*
@@ -312,9 +316,9 @@ removering (int obj)
  */
 
 void
-initstufflist (void)
+initstufflist(void)
 {
-  slistlen = 0;
+    slistlen = 0;
 }
 
 /*
@@ -322,19 +326,22 @@ initstufflist (void)
  */
 
 void
-addstuff (char ch, int row, int col)
+addstuff(char ch, int row, int col)
 {
-  /* if (seerc ('@', row, col)) return (0); */ /* Removed MLM 10/28/83 */
-  if (onrc (STUFF, row, col))
-    deletestuff (row, col);
+    /* if (seerc ('@', row, col)) return (0); */ /* Removed MLM 10/28/83 */
+    if (onrc(STUFF, row, col)) {
+	deletestuff(row, col);
+    }
 
-  slist[slistlen].what = translate[(int)ch];
-  slist[slistlen].srow = row;
-  slist[slistlen].scol = col;
+    slist[slistlen].what = translate[(int)ch];
+    slist[slistlen].srow = row;
+    slist[slistlen].scol = col;
 
-  if (++slistlen >= MAXSTUFF) dwait (D_FATAL, __func__, "Too much stuff");
+    if (++slistlen >= MAXSTUFF) {
+	dwait(D_FATAL, __func__, "Too much stuff");
+    }
 
-  setrc (STUFF, row, col);
+    setrc(STUFF, row, col);
 }
 
 /*
@@ -342,15 +349,16 @@ addstuff (char ch, int row, int col)
  */
 
 void
-deletestuff (int row, int col)
+deletestuff(int row, int col)
 {
-  int   i;
-  unsetrc (STUFF, row, col);
+    int i;
+    unsetrc(STUFF, row, col);
 
-  for (i = 0; i < slistlen; ++i)
-    if (slist[i].scol == col && slist[i].srow == row) {
-      slist[i] = slist[--slistlen];
-      i--;					/* MLM 10/23/82 */
+    for (i = 0; i < slistlen; ++i) {
+	if (slist[i].scol == col && slist[i].srow == row) {
+	    slist[i] = slist[--slistlen];
+	    i--; /* MLM 10/23/82 */
+	}
     }
 }
 
@@ -359,20 +367,19 @@ deletestuff (int row, int col)
  */
 
 void
-dumpstuff (void)
+dumpstuff(void)
 {
-  int   i;
-  at (1, 0);
+    int i;
+    at(1, 0);
 
-  for (i = 0; i < slistlen; ++i)
-    if (valrc (slist[i].srow, slist[i].scol)) {
-      printw ("%d at %d,%d (%c)\n",
-	      slist[i].what, slist[i].srow, slist[i].scol,
-	      screen[slist[i].srow][slist[i].scol]);
+    for (i = 0; i < slistlen; ++i) {
+	if (valrc(slist[i].srow, slist[i].scol)) {
+	    printw("%d at %d,%d (%c)\n", slist[i].what, slist[i].srow, slist[i].scol, screen[slist[i].srow][slist[i].scol]);
+	}
     }
 
-  printw ("You are at %d,%d.", atrow, atcol);
-  at (row, col);
+    printw("You are at %d,%d.", atrow, atcol);
+    at(row, col);
 }
 
 /*
@@ -380,10 +387,10 @@ dumpstuff (void)
  */
 
 void
-display (char *s)
+display(char *s)
 {
-  saynow ("%s", s);
-  msgonscreen = true;
+    saynow("%s", s);
+    msgonscreen = true;
 }
 
 /*
@@ -391,11 +398,11 @@ display (char *s)
  */
 
 int
-prepareident (int obj, int iscroll)
+prepareident(int obj, int iscroll)
 {
-  nextid = LETTER (obj);
-  afterid = (iscroll > obj || inven[iscroll].count > 1) ? nextid : nextid-1;
-  return (nextid >= 'a' && afterid >= 'a');
+    nextid = LETTER(obj);
+    afterid = (iscroll > obj || inven[iscroll].count > 1) ? nextid : nextid - 1;
+    return (nextid >= 'a' && afterid >= 'a');
 }
 
 /*
@@ -405,29 +412,29 @@ prepareident (int obj, int iscroll)
  */
 
 int
-pickident (void)
+pickident(void)
 {
-  int obj;
+    int obj;
 
-  if      ((obj=unknown      (ring))   != NONE) {
-    ;
-  } else if ((obj=unidentified (wand))   != NONE) {
-    ;
-  } else if ((obj=unidentified (Scroll)) != NONE) {
-    ;
-  } else if ((obj=unidentified (potion)) != NONE) {
-    ;
-  } else if ((obj=unknown      (Scroll)) != NONE) {
-    ;
-  } else if ((obj=unknown      (potion)) != NONE) {
-    ;
-  } else if ((obj=unknown      (hitter)) != NONE) {
-    ;
-  } else {
-    obj = 0;
-  }
+    if ((obj = unknown(ring)) != NONE) {
+	;
+    } else if ((obj = unidentified(wand)) != NONE) {
+	;
+    } else if ((obj = unidentified(Scroll)) != NONE) {
+	;
+    } else if ((obj = unidentified(potion)) != NONE) {
+	;
+    } else if ((obj = unknown(Scroll)) != NONE) {
+	;
+    } else if ((obj = unknown(potion)) != NONE) {
+	;
+    } else if ((obj = unknown(hitter)) != NONE) {
+	;
+    } else {
+	obj = 0;
+    }
 
-  return (obj);
+    return (obj);
 }
 
 /*
@@ -435,17 +442,17 @@ pickident (void)
  */
 
 int
-unknown (stuff otype)
+unknown(stuff otype)
 {
-  int i;
+    int i;
 
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        (inven[i].type == otype) &&
-        (itemis (i, KNOWN) == 0))
-      return (i);
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && (inven[i].type == otype) && (itemis(i, KNOWN) == 0)) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -453,18 +460,17 @@ unknown (stuff otype)
  */
 
 int
-unidentified (stuff otype)
+unidentified(stuff otype)
 {
-  int i;
+    int i;
 
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        (inven[i].type == otype) &&
-        (itemis (i, KNOWN) == 0) &&
-        (used (inven[i].str)))
-      return (i);
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && (inven[i].type == otype) && (itemis(i, KNOWN) == 0) && (used(inven[i].str))) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -473,18 +479,17 @@ unidentified (stuff otype)
  */
 
 int
-haveother (stuff otype, int other)
+haveother(stuff otype, int other)
 {
-  int i;
+    int i;
 
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        (inven[i].type == otype) &&
-        (itemis (i, KNOWN) == 0) &&
-        (i != other))
-      return (i);
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && (inven[i].type == otype) && (itemis(i, KNOWN) == 0) && (i != other)) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -492,15 +497,17 @@ haveother (stuff otype, int other)
  */
 
 int
-have (stuff otype)
+have(stuff otype)
 {
-  int i;
+    int i;
 
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        inven[i].type == otype) return (i);
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && inven[i].type == otype) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -509,18 +516,17 @@ have (stuff otype)
  */
 
 int
-havenamed (stuff otype, char *name)
+havenamed(stuff otype, char *name)
 {
-  int i;
+    int i;
 
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        inven[i].type == otype &&
-        (*name == 0 || streq (inven[i].str,name)) &&
-        !itemis (i, INUSE))
-      return (i);
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && inven[i].type == otype && (*name == 0 || streq(inven[i].str, name)) && !itemis(i, INUSE)) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -528,27 +534,25 @@ havenamed (stuff otype, char *name)
  */
 
 int
-havewand (char *name)
+havewand(char *name)
 {
-  int i;
+    int i;
 
-  /* Find one with positive charges */
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        inven[i].type == wand &&
-        (*name == 0 || streq (inven[i].str,name)) &&
-        (inven[i].charges > 0))
-      return (i);
+    /* Find one with positive charges */
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && inven[i].type == wand && (*name == 0 || streq(inven[i].str, name)) && (inven[i].charges > 0)) {
+	    return (i);
+	}
+    }
 
-  /* Find one with unknown charges */
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        inven[i].type == wand &&
-        (*name == 0 || streq (inven[i].str,name)) &&
-        inven[i].charges == UNKNOWN)
-      return (i);
+    /* Find one with unknown charges */
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && inven[i].type == wand && (*name == 0 || streq(inven[i].str, name)) && inven[i].charges == UNKNOWN) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -556,20 +560,18 @@ havewand (char *name)
  */
 
 int
-wearing (char *name)
+wearing(char *name)
 {
-  int result = NONE;
+    int result = NONE;
 
-  if (leftring != NONE && itemis (leftring, INUSE) &&
-      streq (inven[leftring].str, name)) {
-    result = leftring;
+    if (leftring != NONE && itemis(leftring, INUSE) && streq(inven[leftring].str, name)) {
+	result = leftring;
 
-  } else if (rightring != NONE && itemis (rightring, INUSE) &&
-           streq (inven[rightring].str, name)) {
-    result = rightring;
-  }
+    } else if (rightring != NONE && itemis(rightring, INUSE) && streq(inven[rightring].str, name)) {
+	result = rightring;
+    }
 
-  return (result);
+    return (result);
 }
 
 /*
@@ -579,18 +581,18 @@ wearing (char *name)
  */
 
 int
-havemult (stuff otype, char *name, int count)
+havemult(stuff otype, char *name, int count)
 {
-  int i, num=count;
+    int i, num = count;
 
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        inven[i].type == otype &&
-        (*name == 0 || streq (inven[i].str,name)) &&
-        (num -= inven[i].count) <= 0)
-      return (i);
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && inven[i].type == otype && (*name == 0 || streq(inven[i].str, name)) &&
+	    (num -= inven[i].count) <= 0) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -599,17 +601,17 @@ havemult (stuff otype, char *name, int count)
  */
 
 int
-haveminus (void)
+haveminus(void)
 {
-  int i;
+    int i;
 
-  for (i=0; i<invcount; ++i)
-    if (inven[i].count &&
-        inven[i].phit != UNKNOWN &&
-        inven[i].phit < 0)
-      return (i);
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count && inven[i].phit != UNKNOWN && inven[i].phit < 0) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -630,57 +632,48 @@ haveminus (void)
  */
 
 int
-haveuseless (void)
+haveuseless(void)
 {
-  int i;
+    int i;
 
-  for (i=0; i<invcount; ++i) {
-    if (inven[i].count > 0) {
-      if ((inven[i].type == wand && inven[i].charges == 0) ||
-          stlmatch (inven[i].str, "teleport to") ||
-          stlmatch (inven[i].str, "haste monster") ||
-          (itemis (i, WORTHLESS) && streq (inven[i].str, "arrow")))
-        return (i);
-      else if (inven[i].type == potion &&
-        (stlmatch (inven[i].str, "blindness") ||
-         stlmatch (inven[i].str, "poison") ||
-         stlmatch (inven[i].str, "confusion") ||
-         stlmatch (inven[i].str, "magic detection") ||
-         stlmatch (inven[i].str, "paralysis") ||
-         stlmatch (inven[i].str, "hallucination") ||
-         stlmatch (inven[i].str, "thirst") ||
-         stlmatch (inven[i].str, "food detection") ||
-         stlmatch (inven[i].str, "monster detection")))
-        return (i);
-      else if (inven[i].type == Scroll &&
-        (stlmatch (inven[i].str, "sleep") ||
-         stlmatch (inven[i].str, "blank") ||
-         stlmatch (inven[i].str, "create monster") ||
-         stlmatch (inven[i].str, "gold detection") ||
-         stlmatch (inven[i].str, "aggravate monsters")))
-        return (i);
-      else if (!itemis (i, INUSE) && itemis (i, KNOWN) &&
-        (inven[i].type == missile) &&
-        (((inven[i].phit != UNKNOWN) && (inven[i].phit < 0)) ||
-         ((inven[i].pdam != UNKNOWN) && (inven[i].pdam < 0))))
-        return (i);
-      else if (inven[i].type == ring &&
-        (stlmatch (inven[i].str, "teleport") ||
-         stlmatch (inven[i].str, "adornment") ||
-         stlmatch (inven[i].str, "aggravate monster")))
-        return (i);
+    for (i = 0; i < invcount; ++i) {
+	if (inven[i].count > 0) {
+	    if ((inven[i].type == wand && inven[i].charges == 0) || stlmatch(inven[i].str, "teleport to") ||
+		stlmatch(inven[i].str, "haste monster") || (itemis(i, WORTHLESS) && streq(inven[i].str, "arrow"))) {
+		return (i);
+	    } else if (inven[i].type == potion &&
+		       (stlmatch(inven[i].str, "blindness") || stlmatch(inven[i].str, "poison") ||
+			stlmatch(inven[i].str, "confusion") || stlmatch(inven[i].str, "magic detection") ||
+			stlmatch(inven[i].str, "paralysis") || stlmatch(inven[i].str, "hallucination") ||
+			stlmatch(inven[i].str, "thirst") || stlmatch(inven[i].str, "food detection") ||
+			stlmatch(inven[i].str, "monster detection"))) {
+		return (i);
+	    } else if (inven[i].type == Scroll &&
+		       (stlmatch(inven[i].str, "sleep") || stlmatch(inven[i].str, "blank") ||
+			stlmatch(inven[i].str, "create monster") || stlmatch(inven[i].str, "gold detection") ||
+			stlmatch(inven[i].str, "aggravate monsters"))) {
+		return (i);
+	    } else if (!itemis(i, INUSE) && itemis(i, KNOWN) && (inven[i].type == missile) &&
+		       (((inven[i].phit != UNKNOWN) && (inven[i].phit < 0)) ||
+			((inven[i].pdam != UNKNOWN) && (inven[i].pdam < 0)))) {
+		return (i);
+	    } else if (inven[i].type == ring && (stlmatch(inven[i].str, "teleport") || stlmatch(inven[i].str, "adornment") ||
+						 stlmatch(inven[i].str, "aggravate monster"))) {
+		return (i);
+	    }
+	}
     }
-  }
-  if (Level > 14) {
-    if (((i = havearmor (3, NOPRINT, ANY)) != NONE) && (!itemis (i, INUSE)))
-      return (i);
-    else if (((i = haveweapon (3, NOPRINT)) != NONE) && (!itemis (i, INUSE)))
-      return (i);
-    else if (((i = havebow (3, NOPRINT)) != NONE) && (!itemis (i, INUSE)))
-      return (i);
-  }
+    if (Level > 14) {
+	if (((i = havearmor(3, NOPRINT, ANY)) != NONE) && (!itemis(i, INUSE))) {
+	    return (i);
+	} else if (((i = haveweapon(3, NOPRINT)) != NONE) && (!itemis(i, INUSE))) {
+	    return (i);
+	} else if (((i = havebow(3, NOPRINT)) != NONE) && (!itemis(i, INUSE))) {
+	    return (i);
+	}
+    }
 
-  return (NONE);
+    return (NONE);
 }
 
 /*
@@ -688,12 +681,10 @@ haveuseless (void)
  */
 
 int
-willrust (int obj)
+willrust(int obj)
 {
-  return (! (protected ||
-             armorclass (obj) > 8 || armorclass (obj) < -5 ||
-             itemis (obj, PROTECTED) ||
-             (stlmatch (inven[obj].str, "leather") && version > RV36B)));
+    return (!(protected || armorclass(obj) > 8 || armorclass(obj) < -5 || itemis(obj, PROTECTED) ||
+	      (stlmatch(inven[obj].str, "leather") && version > RV36B)));
 }
 
 /*
@@ -701,9 +692,9 @@ willrust (int obj)
  */
 
 int
-wielding (stuff otype)
+wielding(stuff otype)
 {
-  return (inven[currentweapon].type == otype);
+    return (inven[currentweapon].type == otype);
 }
 
 /*
@@ -711,9 +702,9 @@ wielding (stuff otype)
  */
 
 int
-hungry (void)
+hungry(void)
 {
-  return (*Ms == 'H' || *Ms == 'W' || *Ms == 'F');
+    return (*Ms == 'H' || *Ms == 'W' || *Ms == 'F');
 }
 
 /*
@@ -721,9 +712,9 @@ hungry (void)
  */
 
 int
-weak (void)
+weak(void)
 {
-  return (*Ms == 'W' || *Ms == 'F');
+    return (*Ms == 'W' || *Ms == 'F');
 }
 
 /*
@@ -731,9 +722,9 @@ weak (void)
  */
 
 int
-fainting (void)
+fainting(void)
 {
-  return (*Ms == 'F');
+    return (*Ms == 'F');
 }
 
 /*
@@ -743,19 +734,22 @@ fainting (void)
  */
 
 int
-havefood (int n)
+havefood(int n)
 {
-  int remaining, foodest, desired;
+    int remaining, foodest, desired;
 
-  if (hungry () || weak () || fainting ())
-    return (0);
+    if (hungry() || weak() || fainting()) {
+	return (0);
+    }
 
-  remaining = 800 - turns + lastate;
+    remaining = 800 - turns + lastate;
 
-  if (remaining < 0) remaining = 0;
+    if (remaining < 0) {
+	remaining = 0;
+    }
 
-  foodest = larder * 1000 + remaining;
-  desired = n * 1000 * 50 / (100-k_food);
+    foodest = larder * 1000 + remaining;
+    desired = n * 1000 * 50 / (100 - k_food);
 
-  return (foodest > desired);
+    return (foodest > desired);
 }

@@ -35,33 +35,35 @@
  * there was no door there.
  */
 
-# include <stdio.h>
-# include <ctype.h>
-# include <setjmp.h>
-# include <string.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <setjmp.h>
+#include <string.h>
 
-# include "modern_curses.h"
-# include "types.h"
-# include "config.h"
-# include "globals.h"
+#include "modern_curses.h"
+#include "types.h"
+#include "config.h"
+#include "globals.h"
 
-# define SO	  1
-# define SE	  0
+#define SO 1
+#define SE 0
 
-# define highlight(rowcol,stand)	\
-  if (print || debug (D_SCREEN)) {	\
-    at((rowcol)/C,(rowcol)%C);		\
-    if (stand) standout ();		\
-    printw("%c",screen[0][rowcol]);	\
-    if (stand) standend ();		\
-    if (!quiet) {			\
-      refresh ();			\
-    }					\
-  }
+#define highlight(rowcol, stand)         \
+    if (print || debug(D_SCREEN)) {      \
+	at((rowcol) / C, (rowcol) % C);  \
+	if (stand)                       \
+	    standout();                  \
+	printw("%c", screen[0][rowcol]); \
+	if (stand)                       \
+	    standend();                  \
+	if (!quiet) {                    \
+	    refresh();                   \
+	}                                \
+    }
 
 /* static declarations */
 
-static void markchokepts (void);
+static void markchokepts(void);
 
 /*
  * markcycles: evokes fond memories of an earlier time, when Andrew
@@ -74,91 +76,101 @@ static void markchokepts (void);
  */
 
 int
-markcycles (int print)
+markcycles(int print)
 {
-  short mark[R_C+1]; /* +1 for paranoia */
-  struct {short where,door,dirs;} st[SM_BUF+1+1]; /* +1 for fencepost, +1 for paranoia */
-  int sp,newsquare; int *Scr; int whichdir; int D;
+    short mark[R_C + 1]; /* +1 for paranoia */
+    struct {
+	short where, door, dirs;
+    } st[SM_BUF + 1 + 1]; /* +1 for fencepost, +1 for paranoia */
+    int sp, newsquare;
+    int *Scr;
+    int whichdir;
+    int D;
 
-  if (!new_mark) return (0);
-
-  Scr=scrmap[0];
-
-  markchokepts ();
-
-  memset (mark, 0, sizeof(mark)); /* paranoia */
-  memset (st, 0, sizeof(st)); /* paranoia */
-  sp=1; st[1].where=atrow*C+atcol; st[1].dirs=1; st[1].door=0;
-
-  for (D = 0; D < 8; D += 2) {
-    newsquare = st[1].where + deltrc[dirmask(D^4)];
-    if (valr_c(newsquare) && (Scr[newsquare] & CANGO)) {
-      if (mark[newsquare]) {
-        int stop, i;
-
-        if (mark[newsquare] < sp) {
-          for (stop=st[mark[newsquare]].door,
-               i=(Scr[st[sp].where] & CHOKE) ? sp : st[sp].door;
-               i!=stop;
-               i=st[i].door) {
-	    if (valr_c(st[i].where)) {
-	      Scr[st[i].where] |= RUNOK;
-	      highlight (st[i].where, SO);
-	    }
-          }
-	}
-      } else if ((sp > 1) && (sp < SM_BUF)) {
-	sp++; mark[newsquare] = sp;
-	highlight (newsquare, SO);
-	st[sp].where = newsquare;
-	st[sp].dirs = 1; st[1].dirs= -1;
-	st[sp].door = (valr_c(st[sp-1].where) && (Scr[st[sp-1].where] & CHOKE)) ? sp-1 : st[sp-1].door;
-      }
+    if (!new_mark) {
+	return (0);
     }
 
-    while ((sp > 1) && (sp < SM_BUF)) {
-      whichdir = ((st[sp].dirs++) << 1);
-      if (whichdir < 8) {
-        /* whichdir is 6,2, or 4. */
-        newsquare = st[sp].where + deltrc[dirmask(whichdir+D)];
-        if (valr_c(newsquare) && (Scr[newsquare] & CANGO)) {
-          if (mark[newsquare]) {
-            int stop, i;
+    Scr = scrmap[0];
 
-            if (mark[newsquare] < sp) {
-              for (stop=st[mark[newsquare]].door,
-                   i=(Scr[st[sp].where]&CHOKE)?sp:st[sp].door;
-                   i!=stop;
-                   i=st[i].door) {
-		if (valr_c(st[i].where)) {
-		  Scr[st[i].where] |= RUNOK;
-		  highlight (st[i].where, SO);
+    markchokepts();
+
+    memset(mark, 0, sizeof(mark)); /* paranoia */
+    memset(st, 0, sizeof(st));	   /* paranoia */
+    sp = 1;
+    st[1].where = atrow * C + atcol;
+    st[1].dirs = 1;
+    st[1].door = 0;
+
+    for (D = 0; D < 8; D += 2) {
+	newsquare = st[1].where + deltrc[dirmask(D ^ 4)];
+	if (valr_c(newsquare) && (Scr[newsquare] & CANGO)) {
+	    if (mark[newsquare]) {
+		int stop, i;
+
+		if (mark[newsquare] < sp) {
+		    for (stop = st[mark[newsquare]].door, i = (Scr[st[sp].where] & CHOKE) ? sp : st[sp].door; i != stop;
+			 i = st[i].door) {
+			if (valr_c(st[i].where)) {
+			    Scr[st[i].where] |= RUNOK;
+			    highlight(st[i].where, SO);
+			}
+		    }
 		}
-              }
-            }
-          }
-	  else if ((sp < SM_BUF) && valr_c(newsquare)) {
-	    sp++; mark[newsquare] = sp;
-	    highlight (newsquare, SO);
-	    st[sp].where = newsquare;
-	    st[sp].dirs = 1; D += whichdir+4;
-	    st[sp].door = (Scr[st[sp-1].where] & CHOKE) ? sp-1 : st[sp-1].door;
-          }
-        }
-      }
-      else {
-        if (! (Scr[st[sp].where] & RUNOK)) highlight (st[sp].where, SE);
-        sp--;
+	    } else if ((sp > 1) && (sp < SM_BUF)) {
+		sp++;
+		mark[newsquare] = sp;
+		highlight(newsquare, SO);
+		st[sp].where = newsquare;
+		st[sp].dirs = 1;
+		st[1].dirs = -1;
+		st[sp].door = (valr_c(st[sp - 1].where) && (Scr[st[sp - 1].where] & CHOKE)) ? sp - 1 : st[sp - 1].door;
+	    }
+	}
 
-        D -= 4+((st[sp].dirs-1)<<1);
-      }
+	while ((sp > 1) && (sp < SM_BUF)) {
+	    whichdir = ((st[sp].dirs++) << 1);
+	    if (whichdir < 8) {
+		/* whichdir is 6,2, or 4. */
+		newsquare = st[sp].where + deltrc[dirmask(whichdir + D)];
+		if (valr_c(newsquare) && (Scr[newsquare] & CANGO)) {
+		    if (mark[newsquare]) {
+			int stop, i;
+
+			if (mark[newsquare] < sp) {
+			    for (stop = st[mark[newsquare]].door, i = (Scr[st[sp].where] & CHOKE) ? sp : st[sp].door; i != stop;
+				 i = st[i].door) {
+				if (valr_c(st[i].where)) {
+				    Scr[st[i].where] |= RUNOK;
+				    highlight(st[i].where, SO);
+				}
+			    }
+			}
+		    } else if ((sp < SM_BUF) && valr_c(newsquare)) {
+			sp++;
+			mark[newsquare] = sp;
+			highlight(newsquare, SO);
+			st[sp].where = newsquare;
+			st[sp].dirs = 1;
+			D += whichdir + 4;
+			st[sp].door = (Scr[st[sp - 1].where] & CHOKE) ? sp - 1 : st[sp - 1].door;
+		    }
+		}
+	    } else {
+		if (!(Scr[st[sp].where] & RUNOK)) {
+		    highlight(st[sp].where, SE);
+		}
+		sp--;
+
+		D -= 4 + ((st[sp].dirs - 1) << 1);
+	    }
+	}
     }
-  }
 
-  highlight (st[1].where, SE);
+    highlight(st[1].where, SE);
 
-  new_mark = false;
-  return (1);
+    new_mark = false;
+    return (1);
 }
 
 /*
@@ -169,34 +181,35 @@ markcycles (int print)
  */
 
 static void
-markchokepts (void)
+markchokepts(void)
 {
-  int *Scr, *ScrEnd;
+    int *Scr, *ScrEnd;
 
-  for (Scr = scrmap[0], ScrEnd = &Scr[1920]; Scr<ScrEnd; Scr++) {
-    if (*Scr & DOOR) *Scr |= CHOKE;
-    else if (*Scr & HALL) {
-      int nbrs = 0, k;
+    for (Scr = scrmap[0], ScrEnd = &Scr[1920]; Scr < ScrEnd; Scr++) {
+	if (*Scr & DOOR) {
+	    *Scr |= CHOKE;
+	} else if (*Scr & HALL) {
+	    int nbrs = 0, k;
 
-      for (k=0; k<8; k++)
-        { if (Scr[deltrc[k]] & CANGO) nbrs++; }
+	    for (k = 0; k < 8; k++) {
+		if (Scr[deltrc[k]] & CANGO) {
+		    nbrs++;
+		}
+	    }
 
-      if (nbrs < 4 ||
-          ! (Scr[ 1] & Scr[-(C-1)] & Scr[-C] & CANGO ||
-             Scr[-C] & Scr[-(C+1)] & Scr[-1] & CANGO ||
-             Scr[-1] & Scr[  C-1 ] & Scr[ C] & CANGO ||
-             Scr[ C] & Scr[  C+1 ] & Scr[ 1] & CANGO)) {
-        *Scr |= CHOKE;
+	    if (nbrs < 4 || !(Scr[1] & Scr[-(C - 1)] & Scr[-C] & CANGO || Scr[-C] & Scr[-(C + 1)] & Scr[-1] & CANGO ||
+			      Scr[-1] & Scr[C - 1] & Scr[C] & CANGO || Scr[C] & Scr[C + 1] & Scr[1] & CANGO)) {
+		*Scr |= CHOKE;
 
-        if (debug (D_SCREEN)) {
-          int rowcol = Scr - scrmap[0];
-          standout ();
-          mvprintw (rowcol/C, rowcol%C, "C");
-          standend ();
-        }
-      }
+		if (debug(D_SCREEN)) {
+		    int rowcol = Scr - scrmap[0];
+		    standout();
+		    mvprintw(rowcol / C, rowcol % C, "C");
+		    standend();
+		}
+	    }
+	}
     }
-  }
 }
 
 /*
@@ -204,22 +217,24 @@ markchokepts (void)
  */
 
 int
-runaway (void)
+runaway(void)
 {
-  if (on (SCAREM)) {
-    dwait (D_BATTLE, __func__, "Not running, on scare monster scroll");
-    return (0);
-  }
+    if (on(SCAREM)) {
+	dwait(D_BATTLE, __func__, "Not running, on scare monster scroll");
+	return (0);
+    }
 
-  dwait (D_BATTLE | D_SEARCH, __func__, "Run away!!!!");
+    dwait(D_BATTLE | D_SEARCH, __func__, "Run away!!!!");
 
-  if (on (STAIRS) && !floating)		/* Go up or down */
-    return (goupstairs (RUNNING) || godownstairs (RUNNING));
+    if (on(STAIRS) && !floating) { /* Go up or down */
+	return (goupstairs(RUNNING) || godownstairs(RUNNING));
+    }
 
-  if (canrun ())		/* If canrun finds a move, use it */
-    return (followmap (RUNAWAY));
+    if (canrun()) { /* If canrun finds a move, use it */
+	return (followmap(RUNAWAY));
+    }
 
-  return (0);			/* Cant run away */
+    return (0); /* Cant run away */
 }
 
 /*
@@ -227,18 +242,19 @@ runaway (void)
  */
 
 int
-canrun (void)
+canrun(void)
 {
-  int result, oldcomp = compression;
+    int result, oldcomp = compression;
 
-  if (on (STAIRS)) return (1);		/* Can run down stairs */
+    if (on(STAIRS)) {
+	return (1); /* Can run down stairs */
+    }
 
-  compression = false;			/* Be tense when fleeing */
-  result = (findmove (RUNAWAY, runinit, runvalue, REEVAL) ||
-            findmove (EXPLORERUN, expruninit, exprunvalue, REEVAL));
+    compression = false; /* Be tense when fleeing */
+    result = (findmove(RUNAWAY, runinit, runvalue, REEVAL) || findmove(EXPLORERUN, expruninit, exprunvalue, REEVAL));
 
-  compression = oldcomp;
-  return (result);
+    compression = oldcomp;
+    return (result);
 }
 
 /*
@@ -251,31 +267,32 @@ canrun (void)
  */
 
 int
-unpin (void)
+unpin(void)
 {
-  int result, oldcomp = compression;
+    int result, oldcomp = compression;
 
-  if (on (SCAREM)) {
-    dwait (D_BATTLE, __func__, "Not unpinning, on scare monster scroll");
-    return (0);
-  }
+    if (on(SCAREM)) {
+	dwait(D_BATTLE, __func__, "Not unpinning, on scare monster scroll");
+	return (0);
+    }
 
-  if (on (STAIRS) && !floating) {
-    if (!goupstairs (RUNNING)) godownstairs (RUNNING);
+    if (on(STAIRS) && !floating) {
+	if (!goupstairs(RUNNING)) {
+	    godownstairs(RUNNING);
+	}
 
-    return (1);
-  }
+	return (1);
+    }
 
-  dwait (D_BATTLE, __func__, "Pinned");
+    dwait(D_BATTLE, __func__, "Pinned");
 
-  /* currentrectangle ();   // always done after each move of the rogue // */
+    /* currentrectangle ();   // always done after each move of the rogue // */
 
-  compression = false;	/* Be tense when fleeing */
-  result = (makemove (UNPIN, unpininit, runvalue, REEVAL) ||
-            makemove (UNPINEXP, expunpininit, expunpinvalue, REEVAL));
+    compression = false; /* Be tense when fleeing */
+    result = (makemove(UNPIN, unpininit, runvalue, REEVAL) || makemove(UNPINEXP, expunpininit, expunpinvalue, REEVAL));
 
-  compression = oldcomp;
-  return (result);
+    compression = oldcomp;
+    return (result);
 }
 
 /*
@@ -284,40 +301,45 @@ unpin (void)
  */
 
 int
-backtodoor (int dist)
+backtodoor(int dist)
 {
-  static int lastcall= -10, stillcount=0, notmoving=0, closest=99;
+    static int lastcall = -10, stillcount = 0, notmoving = 0, closest = 99;
 
-  /*
-   * Keep track of the opponents distance.  If they stop advancing on us,
-   * disable the rule for 10 turns.
-   */
+    /*
+     * Keep track of the opponents distance.  If they stop advancing on us,
+     * disable the rule for 10 turns.
+     */
 
-  if (turns-lastcall > 20)
-    { notmoving=0; closest=99; stillcount=0; }
-  else if (dist < closest)
-    { closest=dist; stillcount=0; }
-  else if (++stillcount > 5)
-    { notmoving++; }
+    if (turns - lastcall > 20) {
+	notmoving = 0;
+	closest = 99;
+	stillcount = 0;
+    } else if (dist < closest) {
+	closest = dist;
+	stillcount = 0;
+    } else if (++stillcount > 5) {
+	notmoving++;
+    }
 
-  lastcall = turns;
+    lastcall = turns;
 
-  /*
-   * Now check whether we try to move back to the door
-   */
+    /*
+     * Now check whether we try to move back to the door
+     */
 
-  if (notmoving) {
-    dwait (D_BATTLE, __func__, "monsters not moving");
+    if (notmoving) {
+	dwait(D_BATTLE, __func__, "monsters not moving");
 
-  } else if (on (SCAREM)) {
-    dwait (D_BATTLE, __func__, "Not backing up, on scare monster scroll");
+    } else if (on(SCAREM)) {
+	dwait(D_BATTLE, __func__, "Not backing up, on scare monster scroll");
 
-  } else if (dist > 0 && (on (DOOR) || nextto (DOOR, atrow, atcol))) {
-    dwait (D_BATTLE, __func__, "next to door, have time");
+    } else if (dist > 0 && (on(DOOR) || nextto(DOOR, atrow, atcol))) {
+	dwait(D_BATTLE, __func__, "next to door, have time");
 
-  } else if (makemove (RUNTODOOR, rundoorinit, rundoorvalue, REEVAL)) {
-    dwait (D_BATTLE, __func__, "Back to the door"); return (1);
-  }
+    } else if (makemove(RUNTODOOR, rundoorinit, rundoorvalue, REEVAL)) {
+	dwait(D_BATTLE, __func__, "Back to the door");
+	return (1);
+    }
 
-  return (0);
+    return (0);
 }
