@@ -60,9 +60,6 @@ int datalen = 0;
 
 /* static declarations */
 static int findfake(char *string, stuff item_type);
-#if 0 /* unused code */
-static char *realname (char *codename);
-#endif
 
 /*
  * findfake: find the fakename database entry for 'string'
@@ -250,24 +247,6 @@ know(char *name)
 
     return (false);
 }
-
-#if 0 /* unused code */
-/*
- * realname: Returns the real name of an object named 'codename'.
- */
-
-static char *
-realname (char *codename)
-{
-  int i;
-
-  for (i = 0; i < datalen; i++)
-    if (*dbase[i].realname && streq (dbase[i].fakename, codename))
-      return (dbase[i].realname);
-
-  return ("");
-}
-#endif
 
 /*
  * dumpdatabase: Debugging, dump the database on the screen.

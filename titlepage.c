@@ -126,13 +126,6 @@ animate(char *movie[])
 
 	/* Do NOT Ring the Bell */
 	if (r == '}') {
-#if 0 /* no beep */
-      beep();
-      flash();
-      if (!quiet) {
-	refresh ();				/* Write out screen */
-      }
-#endif
 
 	    /* Update the screen and delay until one timestep is gone */
 	} else if (r == '~') {

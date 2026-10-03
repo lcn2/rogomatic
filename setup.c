@@ -63,6 +63,7 @@ bool quiet = false; /* true ==> quiet mode */
  * static declarations
  */
 
+// clang-format off
 static const char *const usage =
 "usage: %s [-h] [-V] [-a secs] [-c] [-d] [-D rgmdir] [-e] [-E] [-f rogue] [-G goodlvl]\n"
     "                   [-H] [-p] [-P player] [-q] [-r] [-S ROGOSEED] [-t] [-u] [-U usec] [-w]\n"
@@ -109,6 +110,7 @@ static const char *const usage =
     " >= 10        internal error\n"
     "\n"
     "%s version: %s\n";
+// clang-format on
 
 static int frogue = -1; /* from rogue(6) read pipe file descriptor */
 static int trogue = -1; /* to rogue(6) write pipe file descriptor */

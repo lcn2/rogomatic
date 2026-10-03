@@ -26,13 +26,7 @@
 extern int number1;
 extern int number2;
 
-#  if 0 /* unused code */
-extern void open_frogue (const char *dir, const char *file);
-#  endif
 extern void open_frogue_fd(int frogue_fd);
-#  if 0 /* unused code */
-extern void close_frogue (void);
-#  endif
 extern char getroguetoken(void);
 
 #endif

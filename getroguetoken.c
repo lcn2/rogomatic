@@ -51,14 +51,7 @@ static FILE *fecho = NULL;
 
 static void rogue_log_write_token(char ch);
 static FILE *froguelog;
-#if 0 /* unused code */
-static void open_frogue_fd_debuglog (int frogue_fd_dl);
-#endif
 static FILE *frogue;
-#if 0 /* unused code */
-static void open_frogue (const char *file);
-static void close_frogue (void);
-#endif
 
 static int errlog = -1; /* error log open file descriptor, or <0 ==> not open */
 
@@ -66,9 +59,6 @@ static int fetchnum(char ch);
 static int match2(char ch1, char ch2);
 static int match3(char ch1, char ch2, char ch3);
 static int match4(char ch1, char ch2, char ch3, char ch4);
-#if 0 /* unused code */
-static int match5 (char ch1, char ch2, char ch3, char ch4, char ch5);
-#endif
 static int getlogtoken(void);
 
 /*
@@ -287,14 +277,6 @@ open_frogue_debuglog(const char *dir, const char *file)
     }
 }
 
-#if 0 /* unused code */
-static void
-open_frogue_fd_debuglog (int frogue_fd_dl)
-{
-  froguelog = fdopen (frogue_fd_dl,"w");
-}
-#endif
-
 #define PUTDEBUGCHAR(c)          \
     {                            \
 	if (froguelog != NULL) { \
@@ -314,14 +296,6 @@ close_frogue_debuglog(void)
 /* Log from rogue */
 static FILE *frogue = NULL;
 
-#if 0 /* unused code */
-static void
-open_frogue (const char *file)
-{
-  frogue = fopen (file, "r");
-}
-#endif
-
 void
 open_frogue_fd(int frogue_fd)
 {
@@ -330,14 +304,6 @@ open_frogue_fd(int frogue_fd)
 
 #define GETROGUECHAR fgetc(frogue);
 #define UNGETROGUECHAR(c) ungetc(c, frogue);
-
-#if 0 /* unused code */
-static void
-close_frogue (void)
-{
-  fclose (frogue);
-}
-#endif
 
 static int
 matchnum(char ch)
@@ -454,34 +420,6 @@ match4(char ch1, char ch2, char ch3, char ch4)
 	return 0;
     }
 }
-
-#if 0 /* unused code */
-static int
-match5 (char ch1, char ch2, char ch3, char ch4, char ch5)
-{
-  char mch1 = GETROGUECHAR;
-  char mch2 = GETROGUECHAR;
-  char mch3 = GETROGUECHAR;
-  char mch4 = GETROGUECHAR;
-  char mch5 = GETROGUECHAR;
-
-  if (ch1 == mch1 && ch2 == mch2 && ch3 == mch3 && ch4 == mch4 && ch5 == mch5) {
-    PUTDEBUGCHAR (mch1);
-    PUTDEBUGCHAR (mch2);
-    PUTDEBUGCHAR (mch3);
-    PUTDEBUGCHAR (mch4);
-    PUTDEBUGCHAR (mch5);
-    return 1;
-  } else {
-    UNGETROGUECHAR (mch5);
-    UNGETROGUECHAR (mch4);
-    UNGETROGUECHAR (mch3);
-    UNGETROGUECHAR (mch2);
-    UNGETROGUECHAR (mch1);
-    return 0;
-  }
-}
-#endif
 
 /*
    Cap-   TCap    Variable              Description
